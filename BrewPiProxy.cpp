@@ -8,6 +8,7 @@
 #include "PiLink.h"
 
 #include "Version.h"
+#include "Temperatureformats.h"
 #include "TempControl.h"
 #include "Display.h"
 #include "JsonKeys.h"
@@ -65,18 +66,18 @@ void BrewPiProxy::loop(void)
 
 void BrewPiProxy::getTemperature(float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet)
 {
-	*pBeerTemp=tempControl.getBeerTemp();
-	*pBeerSet=tempControl.getBeerSetting();
-	*pFridgeTemp = tempControl.getFridgeTemp();
-	*pFridgeSet = tempControl.getFridgeSetting();
+	*pBeerTemp=temperatureFloatValue(tempControl.getBeerTemp());
+	*pBeerSet=temperatureFloatValue(tempControl.getBeerSetting());
+	*pFridgeTemp = temperatureFloatValue(tempControl.getFridgeTemp());
+	*pFridgeSet = temperatureFloatValue(tempControl.getFridgeSetting());
 }
 
 void BrewPiProxy::getControlParameter(char *pUnit,char *pMode,float *pBeerSet, float *pFridgeSet)
 {
 	*pUnit=tempControl.cc.tempFormat;
 	*pMode=tempControl.cs.mode;
-	*pBeerSet=tempControl.getBeerSetting();
-	*pFridgeSet=tempControl.getFridgeSetting();
+	*pBeerSet=temperatureFloatValue(tempControl.getBeerSetting());
+	*pFridgeSet=temperatureFloatValue(tempControl.getFridgeSetting());
 
 }
 

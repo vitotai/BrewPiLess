@@ -32,12 +32,15 @@
 
 //}brewpi
 
+#include "espconfig.h"
 
 #include <Ticker.h>
 #include "SNTPTime.h"
 #include "SNTPClock.h"
 #include "BrewKeeper.h"
+#ifdef GSLOGGING
 #include "GSLogger.h"
+#endif
 
 extern "C" {
 #include <sntp.h>
@@ -49,7 +52,6 @@ extern "C" {
 #include "AsyncServerSideEvent.h"
 #include "BrewPiProxy.h"
 
-#include "espconfig.h"
 
 
 /**************************************************************************************/
@@ -85,7 +87,11 @@ R"END(
 #define SSE_PATH 		"/getline"
 #define POLLING_PATH 	"/getline_p"
 #define PUTLINE_PATH	"/putline"
+
+
+#ifdef GSLOGGING
 #define LOGGING_PATH	"/log"
+#endif
 
 #define CONFIG_PATH		"/config"
 #define TIME_PATH       "/time"
@@ -108,7 +114,9 @@ char hostnetworkname[32];
 AsyncWebServer server(80);
 BrewPiProxy brewPi;
 BrewKeeper brewKeeper([](const char* str){ brewPi.putLine(str);});
+#ifdef GSLOGGING
 GSLogger gslogger;
+#endif
 
 AsyncServerSideEventServer sse(SSE_PATH);
 
@@ -275,12 +283,15 @@ public:
 	        return request->requestAuthentication();
 	 	
 			handleFilePuts(request);
+			
+	 	#ifdef GSLOGGING
 	 	}else if (request->url() == LOGGING_PATH){
 	 		if(request->method() == HTTP_POST){
 		 		gslogger.updateSetting(request);
 	 		}else{
 	 			gslogger.getSettings(request);
-	 		}	 			
+	 		}	 		
+	 	#endif	
 	 	}else if(request->method() == HTTP_GET){
 	 	
 			String path=request->url();
@@ -310,7 +321,11 @@ public:
 	 
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET){
-	 		if(request->url() == POLLING_PATH || request->url() == CONFIG_PATH || request->url() == TIME_PATH || request->url() == LOGGING_PATH){
+	 		if(request->url() == POLLING_PATH || request->url() == CONFIG_PATH || request->url() == TIME_PATH 
+	 		#ifdef GSLOGGING
+	 		|| request->url() == LOGGING_PATH
+	 		#endif
+	 		){
 	 			return true;
 			}else{
 				// get file
@@ -322,7 +337,11 @@ public:
 				return true;
 	 	}else if(request->method() == HTTP_POST){
 	 		if(request->url() == PUTLINE_PATH || request->url() == CONFIG_PATH 
-	 			|| request->url() ==  FPUTS_PATH || request->url() == FLIST_PATH || request->url() == LOGGING_PATH)
+	 			|| request->url() ==  FPUTS_PATH || request->url() == FLIST_PATH 
+	 			#ifdef GSLOGGING
+	 			|| request->url() == LOGGING_PATH
+	 			#endif
+	 			)
 	 			return true;	 	
 		}
 		return false;
@@ -553,7 +572,9 @@ void setup(void){
   		strcpy(password,root["pass"]);
   		passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
   	}
+	#ifdef GSLOGGING
   	gslogger.loadConfig();
+  	#endif
 	//1. Start WiFi 
 	WiFiSetup::begin(hostnetworkname);
 
@@ -636,10 +657,13 @@ void loop(void){
   	brewKeeper.keep(now,unit,mode,beerSet);
   	
   	brewPi.loop();
+ 	
+ 	#ifdef GSLOGGING
+
  	gslogger.loop(now,[](float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet){
  			brewPi.getTemperature(pBeerTemp,pBeerSet,pFridgeTemp,pFridgeSet);
  		});
- 	
+ 	#endif
  	if(WiFi.status() != WL_CONNECTED && !IS_RESTARTING)
  	{
  		if(_wifiState==WiFiStateConnected)

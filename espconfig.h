@@ -16,6 +16,7 @@
 #define DBG_PRINTF(...) 
 #endif
 
+//#define GSLOGGING
 
 /**************************************************************************************/
 /*  Advanced Configuration:  														  */

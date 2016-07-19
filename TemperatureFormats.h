@@ -159,7 +159,8 @@ inline long_temperature convertToInternalTemp(long_temperature rawTemp) {
 inline long_temperature convertFromInternalTemp(long_temperature rawTemp) {
     return convertFromInternalTempImpl(rawTemp, true);
 }
-
-
+//new ESP8266_ONE
+float temperatureFloatValue(temperature t);
+//new
 #define OPTIMIZE_TEMPERATURE_FORMATS 1 && OPTIMIZE_GLOBAL
 

@@ -10,11 +10,11 @@
 
 //const char *GScriptId = "AKfycbyakVKf5sIrXz8fuxDBQAJzg1saqEYCI71eY-QaGqQQ-QziXclm";
 //https://script.google.com/macros/s/AKfycbyakVKf5sIrXz8fuxDBQAJzg1saqEYCI71eY-QaGqQQ-QziXclm/exec
-//const char* fingerprint = "39 6B 80 5A C1 F6 FD 8A 1E 2A AA 02 B8 99 98 32 2B 1F 10 83";
+const char* fingerprint = "39 6B 80 5A C1 F6 FD 8A 1E 2A AA 02 B8 99 98 32 2B 1F 10 83";
 
 #define GSLogConfigFile "/gslog.cfg"
 
-const char* fingerprint = "39:6B:80:5A:C1:F6:FD:8A:1E:2A:AA:02:B8:99:98:32:2B:1F:10:83";
+//const char* fingerprint = "39:6B:80:5A:C1:F6:FD:8A:1E:2A:AA:02:B8:99:98:32:2B:1F:10:83";
 // Write to Google Spreadsheet
 //String data=String("bt=28.3&bs=18.0&ft=28.1&fs=1.0&ss=1Zq2vR8DL5Xr_95H6LiLrpHZqwIm9rbvMX84UeI6hhNU&st=bluemoon&pc=thisistest");
 
@@ -43,6 +43,7 @@ void GSLogger::loop(time_t now,void (*getTemp)(float *pBeerTemp,float *pBeerSet,
  	_http.begin(url,fingerprint);
 
 	DBG_PRINTF("[HTTPS] POST...\n");
+	DBG_PRINTF("url: %s, data:%s\n", url.c_str(),data.c_str());
     // start connection and send HTTP header
     int code = _http.POST(data);
     

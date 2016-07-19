@@ -36,6 +36,23 @@ strchrnul(const char *s, int c_in)
 }
 #endif
 
+//new  ESP8266_ONE
+float temperatureFloatValue(temperature t)
+{
+	long_temperature rawValue = convertFromInternalTemp(t);
+
+	float sign=1.0;
+	if(rawValue < 0l){
+		sign=-1.0;
+		rawValue = -rawValue;
+	}
+
+	int intPart = longTempDiffToInt(rawValue); // rawValue is supposed to be without internal offset
+	uint16_t fracPart;
+	fracPart = ((rawValue & TEMP_FIXED_POINT_MASK) * 1000 + TEMP_FIXED_POINT_SCALE/2) >> TEMP_FIXED_POINT_BITS; // add 256 for rounding
+	return sign *((float)intPart +(float)fracPart/1000.0);
+}
+//new
 
 // See header file for details about the temp format used.
 
