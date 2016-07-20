@@ -24,6 +24,14 @@
 #include "SpiLcd.h"
 #include "NullLcdDriver.h"
 
+#ifdef BREWPI_IIC_LCD
+#include <Wire.h> 
+#include "IicLcd.h"
+#endif
+
+#if defined(BREWPI_IIC_LCD)
+	typedef IIClcd	LcdDriver;	
+#else
 #if BREWPI_EMULATE || !BREWPI_LCD || !ARDUINO
 	typedef NullLcdDriver LcdDriver;
 #elif !BREWPI_SHIFT_LCD
@@ -31,6 +39,7 @@
 typedef OLEDFourBit LcdDriver;
 #else
 	typedef SpiLcd		LcdDriver;	
+#endif
 #endif
 
 class LcdDisplay DISPLAY_SUPERCLASS
@@ -78,7 +87,9 @@ class LcdDisplay DISPLAY_SUPERCLASS
 	DISPLAY_METHOD void printAt_P(uint8_t x, uint8_t y, const char* text);
 	
 	DISPLAY_METHOD void setBufferOnly(bool bufferOnly) {
+	#ifndef BREWPI_IIC_LCD
 		lcd.setBufferOnly(bufferOnly);
+	#endif
 	}
 	
 	DISPLAY_METHOD void resetBacklightTimer() { lcd.resetBacklightTimer(); }

@@ -33,7 +33,12 @@
 
 uint8_t LcdDisplay::stateOnDisplay;
 uint8_t LcdDisplay::flags;
+
+#ifdef BREWPI_IIC_LCD
+LcdDriver LcdDisplay::lcd(IIC_LCD_ADDRESS,20,4);
+#else
 LcdDriver LcdDisplay::lcd;
+#endif
 
 // Constant strings used multiple times
 static const char STR_Beer_[] PROGMEM = "Beer ";
@@ -47,6 +52,9 @@ static const char STR__time_left[] PROGMEM = " time left";
 static const char STR_empty_string[] PROGMEM = "";
 
 void LcdDisplay::init(void){
+#ifdef BREWPI_IIC_LCD
+	Wire.begin(PIN_SDA,PIN_SCL);
+#endif
 	stateOnDisplay = 0xFF; // set to unknown state to force update
 	flags = LCD_FLAG_ALTERNATE_ROOM;
 	lcd.init(); // initialize LCD

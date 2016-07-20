@@ -129,6 +129,11 @@
 #ifndef BREWPI_LCD
 #define BREWPI_LCD 0
 #endif
+#define PIN_SDA 4
+#define PIN_SCL 5
+#define IIC_LCD_ADDRESS 0x3F
+#define BREWPI_IIC_LCD 1
+
 //
 //////////////////////////////////////////////////////////////////////////
 
