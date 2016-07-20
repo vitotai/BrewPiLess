@@ -29,6 +29,8 @@
 // Anti-clockwise step.
 #define DIR_CCW 0x20
 
+
+
 class RotaryEncoder
 {
 	public:
@@ -44,6 +46,7 @@ class RotaryEncoder
 	}
 
 	static bool pushed(void){
+	Serial.printf("pused:%d\n",digitalRead(rotarySwitchPin));
 		return pushFlag;
 	}
 
@@ -59,6 +62,7 @@ class RotaryEncoder
 	static int16_t minimum;
 	static volatile int16_t steps;
 	static volatile bool pushFlag;
+
 };
 
 extern RotaryEncoder rotaryEncoder;

@@ -129,12 +129,6 @@
 #ifndef BREWPI_LCD
 #define BREWPI_LCD 0
 #endif
-#define PIN_SDA 4
-#define PIN_SCL 5
-#define IIC_LCD_ADDRESS 0x3F
-#define BREWPI_IIC_LCD 1
-
-#define BACKLIGHT_AUTO_OFF_PERIOD 0 //600
 
 //
 //////////////////////////////////////////////////////////////////////////
@@ -150,7 +144,7 @@
 //////////////////////////////////////////////////////////////////////////
 //
 // #ifndef BREWPI_ROTARY_ENCODER
-#define BREWPI_ROTARY_ENCODER 0
+#define BREWPI_ROTARY_ENCODER 1
 // #endif
 //
 //////////////////////////////////////////////////////////////////////////
@@ -213,11 +207,23 @@
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 
 
+#define PIN_SDA 4
+#define PIN_SCL 5
+#define IIC_LCD_ADDRESS 0x3F
+#define BREWPI_IIC_LCD 1
+
+#define BACKLIGHT_AUTO_OFF_PERIOD 0 //600
+
+
 // Pay attention when changing the pins for the rotary encoder.
 // They should be connected to external interrupt INT0, INT1 and INT3
 //#define rotaryAPin 2 // INT1
 //#define rotaryBPin 1 // INT3
 //#define rotarySwitchPin 0 // INT2
+
+#define rotaryAPin NODEMCU_PIN_D5
+#define rotaryBPin NODEMCU_PIN_D7
+#define rotarySwitchPin NODEMCU_PIN_D4
 
 
 #ifdef ESP8266

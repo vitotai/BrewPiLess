@@ -27,6 +27,7 @@
 #include "Brewpi.h"
 #include "TempControl.h"
 
+
 RotaryEncoder rotaryEncoder;
 
 int16_t RotaryEncoder::maximum;
@@ -34,6 +35,8 @@ int16_t RotaryEncoder::minimum;
 volatile int16_t RotaryEncoder::steps;
 volatile bool RotaryEncoder::pushFlag;
 
+
+#ifndef ESP8266
 #if BREWPI_STATIC_CONFIG!=BREWPI_SHIELD_DIY
 	#if rotarySwitchPin != 7
 		#error Review interrupt vectors when not using pin 7 for menu push
@@ -59,6 +62,7 @@ volatile bool RotaryEncoder::pushFlag;
 #if BREWPI_ROTARY_ENCODER
 #if BREWPI_BOARD!=BREWPI_BOARD_LEONARDO && BREWPI_BOARD!=BREWPI_BOARD_STANDARD
 	#error Rotary encoder code is not compatible with boards other than leonardo or uno yet.
+#endif
 #endif
 #endif
 
@@ -184,6 +188,16 @@ const uint8_t PROGMEM ttable[7][4] = {
 };
 
 #if BREWPI_ROTARY_ENCODER
+
+#ifdef ESP8266
+
+static void isr_rotary(void) { rotaryEncoder.process(); }
+static void isr_push(void) { 
+	if(! digitalRead(rotarySwitchPin))
+		rotaryEncoder.setPushed(); 
+}
+
+#else
 #include "util/atomic.h"
 #include "FastDigitalPin.h"
 
@@ -218,11 +232,17 @@ ISR(PCINT0_vect){
 #else
 	#error board/processor not supported by rotary encoder code. Disable or fix the rotary encoder.
 #endif
-
+#endif //#ifdef ESP8266
 
 void RotaryEncoder::process(void){
 	static uint8_t state=R_START;
 	// Grab state of input pins.
+
+	#ifdef ESP8266
+	uint8_t currPinA = ! digitalRead(rotaryAPin);
+	uint8_t currPinB = ! digitalRead(rotaryBPin);
+	
+	#else // #ifdef ESP8266
 	#if BREWPI_STATIC_CONFIG == BREWPI_SHIELD_DIY
 	uint8_t currPinA = !bitRead(PIND,2);
 	uint8_t currPinB = !bitRead(PIND,3);
@@ -233,6 +253,7 @@ void RotaryEncoder::process(void){
 	uint8_t currPinA = !bitRead(PINB,0);
 	uint8_t currPinB = !bitRead(PINB,1);
 	#endif
+	#endif //#ifdef ESP8266
 	
 	unsigned char pinstate = (currPinB << 1) | currPinA;
 
@@ -268,6 +289,19 @@ void RotaryEncoder::setPushed(void){
 
 
 void RotaryEncoder::init(void){
+#ifdef ESP8266
+	#define BREWPI_INPUT_PULLUP (USE_INTERNAL_PULL_UP_RESISTORS ? INPUT_PULLUP : INPUT)
+
+	pinMode(rotaryAPin, INPUT_PULLUP);
+	pinMode(rotaryBPin, INPUT_PULLUP);
+	pinMode(rotarySwitchPin, INPUT_PULLUP);
+	
+	
+	attachInterrupt(rotaryAPin, isr_rotary, CHANGE);
+	attachInterrupt(rotaryBPin, isr_rotary, CHANGE);
+	attachInterrupt(rotarySwitchPin, isr_push, CHANGE);
+	
+#else //#ifdef ESP8266
 #if BREWPI_ROTARY_ENCODER
 	#define BREWPI_INPUT_PULLUP (USE_INTERNAL_PULL_UP_RESISTORS ? INPUT_PULLUP : INPUT)
 	fastPinMode(rotaryAPin, BREWPI_INPUT_PULLUP);
@@ -295,18 +329,27 @@ void RotaryEncoder::init(void){
 		PCMSK2 |= (1<<PCINT23);
 	#endif
 #endif	
+#endif // #ifdef ESP8266
 }
 
 
 void RotaryEncoder::setRange(int16_t start, int16_t minVal, int16_t maxVal){
 #if BREWPI_ROTARY_ENCODER    
+#ifdef ESP8266
+	noInterrupts();
+#else
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+#endif
 		// this part cannot be interrupted
 		// Multiply by two to convert to half steps
 		steps = start;
 		minimum = minVal;
 		maximum = maxVal; // +1 to make sure that one step is still two half steps at overflow
-	}		
+#ifdef ESP8266
+	interrupts();
+#else
+	}
+#endif
 #endif        
 }
 
@@ -325,11 +368,15 @@ bool RotaryEncoder::changed(void){
 }
 
 int16_t RotaryEncoder::read(void){
+#ifdef ESP8266
+	return steps;
+#else
 #if BREWPI_ROTARY_ENCODER
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
 		return steps;		
 	}
 #endif
 	return 0;		
+#endif
 }
 
