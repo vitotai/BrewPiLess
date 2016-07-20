@@ -46,7 +46,6 @@ class RotaryEncoder
 	}
 
 	static bool pushed(void){
-	Serial.printf("pused:%d\n",digitalRead(rotarySwitchPin));
 		return pushFlag;
 	}
 
