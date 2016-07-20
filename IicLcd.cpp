@@ -24,7 +24,6 @@ extern "C" {
 }
 #endif
 
-#define BACKLIGHT_AUTO_OFF_PERIOD 600
 // When the display powers up, it is configured as follows:
 //
 // 1. Display clear
@@ -300,6 +299,9 @@ void IIClcd::resetBacklightTimer(void) {
 }
 
 void IIClcd::updateBacklight(void) {
+	#if BACKLIGHT_AUTO_OFF_PERIOD == 0
+	backlight();
+	#else
     // True = OFF, False = ON
     bool backLightOutput = BREWPI_SIMULATE || ticks.timeSince(_backlightTime) > BACKLIGHT_AUTO_OFF_PERIOD;
     if(backLightOutput) {
@@ -307,6 +309,7 @@ void IIClcd::updateBacklight(void) {
     } else {
         backlight();
     }
+    #endif
 }
 
 // Puts the content of one LCD line into the provided buffer.

@@ -134,6 +134,8 @@
 #define IIC_LCD_ADDRESS 0x3F
 #define BREWPI_IIC_LCD 1
 
+#define BACKLIGHT_AUTO_OFF_PERIOD 0 //600
+
 //
 //////////////////////////////////////////////////////////////////////////
 
