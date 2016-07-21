@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>
 #include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 #include <ESPAsyncTCP.h>
@@ -18,6 +19,7 @@ const char* fingerprint = "39 6B 80 5A C1 F6 FD 8A 1E 2A AA 02 B8 99 98 32 2B 1F
 // Write to Google Spreadsheet
 //String data=String("bt=28.3&bs=18.0&ft=28.1&fs=1.0&ss=1Zq2vR8DL5Xr_95H6LiLrpHZqwIm9rbvMX84UeI6hhNU&st=bluemoon&pc=thisistest");
 
+
 void GSLogger::loop(time_t now,void (*getTemp)(float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet))
 {
 	if(!_enabled) return;
@@ -27,7 +29,13 @@ void GSLogger::loop(time_t now,void (*getTemp)(float *pBeerTemp,float *pBeerSet,
 
 	float beerTemp,beerSet,fridgeTemp,fridgeSet;
 	(*getTemp)(&beerTemp,&beerSet,&fridgeTemp,&fridgeSet);
-	
+	sendData(beerTemp,beerSet,fridgeTemp,fridgeSet);
+}
+
+
+#ifdef SEND_USE_HTTP_CLIENT
+void GSLogger::sendData(float beerTemp,float beerSet,float fridgeTemp, float fridgeSet)
+{
 	String url = String("https://script.google.com/macros/s/") + String(_scriptid) + "/exec";
 	
 	String data=String("bt=") + String(beerTemp)
@@ -64,7 +72,57 @@ void GSLogger::loop(time_t now,void (*getTemp)(float *pBeerTemp,float *pBeerSet,
     }
 //    String output=_http.getString();
 //    DBG_PRINTF("output:\n%s\n",output.c_str());
+
 }
+#else
+void GSLogger::sendData(float beerTemp,float beerSet,float fridgeTemp, float fridgeSet)
+{
+	int code;
+	String url = String("http://192.168.31.186/~vito/brewpilite/logdata.php");
+	String data=String("bt=") + String(beerTemp)
+				+String("&bs=") + String(beerSet)
+				+String("&ft=") + String(fridgeTemp)
+				+String("&fs=") + String(fridgeSet);
+
+	HTTPClient _http;
+
+	if(0){
+		// post
+	 
+  		_http.setUserAgent(F("ESP8266"));
+ 		_http.begin(url);
+  		_http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+		DBG_PRINTF("[HTTP] POST...\n");
+    // start connection and send HTTP header
+    	code = _http.POST(data);
+    }else{
+  		_http.setUserAgent(F("ESP8266"));
+ 		_http.begin(url + String("?") + data);
+		DBG_PRINTF("[HTTP] GET...\n");
+    	code = _http.GET();    
+    }
+    
+    if(code <= 0) {
+        DBG_PRINTF("HTTP error: %s\n", _http.errorToString(code).c_str());
+        _http.end();
+        return;
+    }
+      // HTTP header has been send and Server response header has been handled
+    DBG_PRINTF("[HTTP] Post... code: %d\n", code);
+    if(code == HTTP_CODE_OK){
+      
+    }else if((code / 100) == 3 && _http.hasHeader("Location")){
+      String location=_http.header("Location");
+      DBG_PRINTF("redirect:%s\n",location.c_str());
+    }else{
+      DBG_PRINTF("error, unhandled code:%d",code);
+    }
+//    String output=_http.getString();
+//    DBG_PRINTF("output:\n%s\n",output.c_str());
+
+}
+#endif
+
 
 bool GSLogger::processJson(char* jsonstring)
 {

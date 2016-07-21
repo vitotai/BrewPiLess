@@ -24,6 +24,7 @@ public:
 
 protected:
 	bool processJson(char* jsonstring);
+	void sendData(float beerTemp,float beerSet,float fridgeTemp, float fridgeSet);
 	char* _scriptid;
 	char* _spreadsheetid;
 	char* _sheetname;
