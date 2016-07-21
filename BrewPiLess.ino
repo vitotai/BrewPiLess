@@ -38,8 +38,8 @@
 #include "SNTPTime.h"
 #include "SNTPClock.h"
 #include "BrewKeeper.h"
-#ifdef GSLOGGING
-#include "GSLogger.h"
+#ifdef ENABLE_LOGGING
+#include "DataLogger.h"
 #endif
 
 extern "C" {
@@ -89,7 +89,7 @@ R"END(
 #define PUTLINE_PATH	"/putline"
 
 
-#ifdef GSLOGGING
+#ifdef ENABLE_LOGGING
 #define LOGGING_PATH	"/log"
 #endif
 
@@ -114,8 +114,8 @@ char hostnetworkname[32];
 AsyncWebServer server(80);
 BrewPiProxy brewPi;
 BrewKeeper brewKeeper([](const char* str){ brewPi.putLine(str);});
-#ifdef GSLOGGING
-GSLogger gslogger;
+#ifdef ENABLE_LOGGING
+DataLogger dataLogger;
 #endif
 
 AsyncServerSideEventServer sse(SSE_PATH);
@@ -284,12 +284,12 @@ public:
 	 	
 			handleFilePuts(request);
 			
-	 	#ifdef GSLOGGING
+	 	#ifdef ENABLE_LOGGING
 	 	}else if (request->url() == LOGGING_PATH){
 	 		if(request->method() == HTTP_POST){
-		 		gslogger.updateSetting(request);
+		 		dataLogger.updateSetting(request);
 	 		}else{
-	 			gslogger.getSettings(request);
+	 			dataLogger.getSettings(request);
 	 		}	 		
 	 	#endif	
 	 	}else if(request->method() == HTTP_GET){
@@ -322,7 +322,7 @@ public:
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET){
 	 		if(request->url() == POLLING_PATH || request->url() == CONFIG_PATH || request->url() == TIME_PATH 
-	 		#ifdef GSLOGGING
+	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
 	 		#endif
 	 		){
@@ -338,7 +338,7 @@ public:
 	 	}else if(request->method() == HTTP_POST){
 	 		if(request->url() == PUTLINE_PATH || request->url() == CONFIG_PATH 
 	 			|| request->url() ==  FPUTS_PATH || request->url() == FLIST_PATH 
-	 			#ifdef GSLOGGING
+	 			#ifdef ENABLE_LOGGING
 	 			|| request->url() == LOGGING_PATH
 	 			#endif
 	 			)
@@ -572,8 +572,8 @@ void setup(void){
   		strcpy(password,root["pass"]);
   		passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
   	}
-	#ifdef GSLOGGING
-  	gslogger.loadConfig();
+	#ifdef ENABLE_LOGGING
+  	dataLogger.loadConfig();
   	#endif
 	//1. Start WiFi 
 	WiFiSetup::begin(hostnetworkname);
@@ -658,9 +658,9 @@ void loop(void){
   	
   	brewPi.loop();
  	
- 	#ifdef GSLOGGING
+ 	#ifdef ENABLE_LOGGING
 
- 	gslogger.loop(now,[](float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet){
+ 	dataLogger.loop(now,[](float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet){
  			brewPi.getTemperature(pBeerTemp,pBeerSet,pFridgeTemp,pFridgeSet);
  		});
  	#endif

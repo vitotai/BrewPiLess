@@ -16,7 +16,7 @@
 #define DBG_PRINTF(...) 
 #endif
 
-#define GSLOGGING 1
+#define ENABLE_LOGGING 1
 
 /**************************************************************************************/
 /*  Advanced Configuration:  														  */
@@ -40,6 +40,8 @@
 #define MAX_PROFILE_LEN 1024
 #define PROFILE_JSON_BUFFER_SIZE 1024
 #endif
+
+
 
 
 
