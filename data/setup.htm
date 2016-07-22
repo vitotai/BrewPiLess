@@ -118,7 +118,8 @@ add:function(idx,d){
 		div.querySelector("span.device-value").innerHTML=(typeof d.v ==="undefined")? "-":((d.v)? "active":"inactive");
 	}
 	div.querySelector("select.slot-select").value=d.i;
-	div.querySelector("span.device-pin").innerHTML=(d.p <14)? ("D"+d.p):("A"+(d.p-14));
+	var PN={0:"D3",2:"D4",12:"D6",14:"D5"};
+	div.querySelector("span.device-pin").innerHTML=PN[d.p];
 	div.querySelector("select.device-function").value=d.f;
 	div.querySelector("div.device-title").innerHTML= "Device " + idx;
 	div.querySelector("button").onclick=function(){save_device(idx);};

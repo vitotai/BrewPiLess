@@ -4,20 +4,13 @@
 #include <ArduinoJson.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include "mystrlib.h"
 #include "DataLogger.h"
 #include "espconfig.h"
+
 #define GSLOG_JSON_BUFFER_SIZE 256
 #define MAX_GSLOG_CONFIG_LEN 1024
-
-//const char *GScriptId = "AKfycbyakVKf5sIrXz8fuxDBQAJzg1saqEYCI71eY-QaGqQQ-QziXclm";
-//https://script.google.com/macros/s/AKfycbyakVKf5sIrXz8fuxDBQAJzg1saqEYCI71eY-QaGqQQ-QziXclm/exec
-const char* fingerprint = "39 6B 80 5A C1 F6 FD 8A 1E 2A AA 02 B8 99 98 32 2B 1F 10 83";
-
 #define GSLogConfigFile "/gslog.cfg"
-
-//const char* fingerprint = "39:6B:80:5A:C1:F6:FD:8A:1E:2A:AA:02:B8:99:98:32:2B:1F:10:83";
-// Write to Google Spreadsheet
-//String data=String("bt=28.3&bs=18.0&ft=28.1&fs=1.0&ss=1Zq2vR8DL5Xr_95H6LiLrpHZqwIm9rbvMX84UeI6hhNU&st=bluemoon&pc=thisistest");
 
 
 void DataLogger::loop(time_t now,void (*getTemp)(float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet))
@@ -32,72 +25,66 @@ void DataLogger::loop(time_t now,void (*getTemp)(float *pBeerTemp,float *pBeerSe
 	sendData(beerTemp,beerSet,fridgeTemp,fridgeSet);
 }
 
+int _copyName(char *buf,char *name,bool concate)
+{
+	char *ptr=buf;
+	if(name ==NULL) return 0;
+	if(concate){
+		*ptr='&'; 
+		ptr++;
+	}
+	int len=strlen(name);
+	strcpy(ptr,name);
+	ptr+=len;
+	*ptr = '=';
+	ptr++;	
+	return (ptr - buf);
+}
 
-#ifdef SEND_USE_HTTP_CLIENT
+int copyTemp(char* buf,char* name,float value, bool concate)
+{
+	int n;
+	if((n = _copyName(buf,name,concate))!=0){
+		n += sprintFloat(buf + n ,value,2);
+	}
+	return n;
+}
+
 void DataLogger::sendData(float beerTemp,float beerSet,float fridgeTemp, float fridgeSet)
 {
-	String url = String("https://script.google.com/macros/s/") + String(_scriptid) + "/exec";
-	
-	String data=String("bt=") + String(beerTemp)
-				+String("&bs=") + String(beerSet)
-				+String("&ft=") + String(fridgeTemp)
-				+String("&fs=") + String(fridgeSet)
-				+String("&ss=") + String(_spreadsheetid)
-				+String("&st=") + String(_sheetname)
-				+String("&pc=") + String(_passcode);
-	 
+	char data[512];
+	int len=0;
+	int n;
+	len  =copyTemp(data,_btname,beerTemp,false);
+	len +=copyTemp(data+len,_bsname,beerSet,len!=0);
+	len +=copyTemp(data+len,_ftname,fridgeTemp,len!=0);
+	len +=copyTemp(data+len,_fsname,fridgeSet,len!=0);
+	if(len==0) return;
+
+	if(_extra!=NULL){
+		data[len++]='&';
+		strcpy(data+len,_extra);
+		len += strlen(_extra);
+	}
+	data[len]='\0';
+
+	DBG_PRINTF("data= %d, \"%s\"\n",len,data);
+
+	int code;
 	HTTPClient _http;
   	_http.setUserAgent(F("ESP8266"));
- 	_http.begin(url,fingerprint);
 
-	DBG_PRINTF("[HTTPS] POST...\n");
-	DBG_PRINTF("url: %s, data:%s\n", url.c_str(),data.c_str());
-    // start connection and send HTTP header
-    int code = _http.POST(data);
-    
-    if(code <= 0) {
-        DBG_PRINTF("HTTP error: %s\n", _http.errorToString(code).c_str());
-        _http.end();
-        return;
-    }
-      // HTTP header has been send and Server response header has been handled
-    DBG_PRINTF("[HTTP] Post... code: %d\n", code);
-    if(code == HTTP_CODE_OK){
-      
-    }else if((code / 100) == 3 && _http.hasHeader("Location")){
-      String location=_http.header("Location");
-      DBG_PRINTF("redirect:%s\n",location.c_str());
-    }else{
-      DBG_PRINTF("error, unhandled code:%d",code);
-    }
-//    String output=_http.getString();
-//    DBG_PRINTF("output:\n%s\n",output.c_str());
-
-}
-#else
-void DataLogger::sendData(float beerTemp,float beerSet,float fridgeTemp, float fridgeSet)
-{
-	int code;
-	String url = String("http://192.168.31.186/~vito/brewpilite/logdata.php");
-	String data=String("bt=") + String(beerTemp)
-				+String("&bs=") + String(beerSet)
-				+String("&ft=") + String(fridgeTemp)
-				+String("&fs=") + String(fridgeSet);
-
-	HTTPClient _http;
-
-	if(0){
+	if(strcmp(_method,"POST")==0){
 		// post
 	 
-  		_http.setUserAgent(F("ESP8266"));
- 		_http.begin(url);
+ 		_http.begin(_url);
   		_http.addHeader("Content-Type", "application/x-www-form-urlencoded");
 		DBG_PRINTF("[HTTP] POST...\n");
     // start connection and send HTTP header
-    	code = _http.POST(data);
+    	code = _http.POST((uint8_t*)data,len);
     }else{
-  		_http.setUserAgent(F("ESP8266"));
- 		_http.begin(url + String("?") + data);
+ 		_http.begin(String(_url) + String("?") + String(data));
+
 		DBG_PRINTF("[HTTP] GET...\n");
     	code = _http.GET();    
     }
@@ -108,7 +95,7 @@ void DataLogger::sendData(float beerTemp,float beerSet,float fridgeTemp, float f
         return;
     }
       // HTTP header has been send and Server response header has been handled
-    DBG_PRINTF("[HTTP] Post... code: %d\n", code);
+    DBG_PRINTF("[HTTP] result code: %d\n", code);
     if(code == HTTP_CODE_OK){
       
     }else if((code / 100) == 3 && _http.hasHeader("Location")){
@@ -121,7 +108,6 @@ void DataLogger::sendData(float beerTemp,float beerSet,float fridgeTemp, float f
 //    DBG_PRINTF("output:\n%s\n",output.c_str());
 
 }
-#endif
 
 
 bool DataLogger::processJson(char* jsonstring)
@@ -130,29 +116,41 @@ bool DataLogger::processJson(char* jsonstring)
 	JsonObject& root = jsonBuffer.parseObject(jsonstring);
 	if(!root.success()
 		|| !root.containsKey("enabled")
-		|| !root.containsKey("app")
-		|| !root.containsKey("pass")
-		|| !root.containsKey("ssid")
-		|| !root.containsKey("sheet")
+		|| !root.containsKey("url")
+		|| !root.containsKey("bs")
+		|| !root.containsKey("bt")
+		|| !root.containsKey("fs")
+		|| !root.containsKey("ft")
+		|| !root.containsKey("extra")
+		|| !root.containsKey("method")
 		|| !root.containsKey("period")){
-		_enabled=false;
-		return false;		
-	}
-	_enabled= root["enabled"];
-	_period = root["period"];
-	const char *app=root["app"];
-	const char *pass=root["pass"];
-	const char *ssid=root["ssid"];
-	const char *sheet=root["sheet"]; 
-	if(app == NULL || pass==NULL || ssid== NULL || sheet==NULL
-	|| strcmp(app,"") ==0 || strcmp(pass,"") ==0 || strcmp(ssid,"") ==0  || strcmp(sheet,"") ==0 ){
 		_enabled=false;
 		return false;
 	}
-	_scriptid=strdup(app);
-    _spreadsheetid=strdup(ssid);
-    _sheetname=strdup(sheet);
-    _passcode=strdup(pass);
+	_enabled= root["enabled"];
+	_period = root["period"];
+
+	const char *url=root["url"];
+	const char *method=root["method"];
+	const char *extra=root["extra"];
+	const char *bsname=root["bs"]; 
+	const char *btname=root["bt"]; 
+	const char *fsname=root["fs"]; 
+	const char *ftname=root["ft"]; 
+
+	if(url == NULL || method==NULL || strcmp(url,"") ==0 || strcmp(method,"") ==0){
+		_enabled=false;
+		return false;
+	}
+	#define COPYSTRING(a) if(_##a) free(_##a); _##a = (a==NULL || strcmp(a,"") ==0)? NULL:strdup(a)
+
+	COPYSTRING(url);
+	COPYSTRING(method);
+	COPYSTRING(extra);
+	COPYSTRING(bsname);
+	COPYSTRING(btname);
+	COPYSTRING(fsname);
+	COPYSTRING(ftname);
   	
   	return true;
 }
@@ -205,65 +203,21 @@ R"END(
 <html>
 <head>
 <title>Logging Setting</title>
-<script>
-var logurl="/log";
-var script_prefix="https://script.google.com/macros/s/";
-var sheet_prefix="https://docs.google.com/spreadsheets/d/"; 
-function s_ajax(b){var c=new XMLHttpRequest();c.onreadystatechange=function(){if(c.readyState==4){if(c.status==200){b.success(c.responseText)}else{c.onerror(c.status)}}};c.ontimeout=function(){if(typeof b["timeout"]!="undefined")b.timeout();else c.onerror(-1)},c.onerror=function(a){if(typeof b["fail"]!="undefined")b.fail(a)};c.open(b.m,b.url,true);if(typeof b["data"]!="undefined"){c.setRequestHeader("Content-Type",(typeof b["mime"]!="undefined")?b["mime"]:"application/x-www-form-urlencoded");c.send(b.data)}else c.send()}
-
-function checkid(t,p)
-{
-	if(t.value.trim().startsWith(p)){
-		var i=t.value.trim().substr(p.length);
-		t.value=i.substr(0, i.search("/"));
-	}
-}
-function update()
-{
-	var r={};
-	r.enabled= document.getElementById("enabled").checked;
-	r.app=document.getElementById("appid").value;
-	r.pass=document.getElementById("pass").value;
-	r.ssid=document.getElementById("ssid").value;
-	r.sheet=document.getElementById("sheet").value;
-	r.period=document.getElementById("period").value;
-	//console.log(JSON.stringify(r));
-	 s_ajax({
- 	url:logurl, m:"POST", data:"data="+ JSON.stringify(r),
- 	success:function(d){alert("done");},
- 	fail:function(d){alert("failed:"+e);}});
-
-}
-function load()
-{
- s_ajax({
- 	url:logurl + "?data=1", m:"GET",
- 	success:function(d){
- 	var r= JSON.parse(d);
-	document.getElementById("enabled").checked = r.enabled;
-	document.getElementById("appid").value = r.app;
-	document.getElementById("pass").value = r.pass;
-	document.getElementById("ssid").value = r.ssid;
-	document.getElementById("sheet").value = r.sheet;
-	document.getElementById("period").value = r.period;
- 	},
- 	fail:function(d){
- 		alert("error :"+d);
- 	}});
-}
-
-</script>
+<script>var logurl="/log";function s_ajax(a){var d=new XMLHttpRequest();d.onreadystatechange=function(){if(d.readyState==4){if(d.status==200){a.success(d.responseText)}else{d.onerror(d.status)}}};d.ontimeout=function(){if(typeof a.timeout!="undefined"){a.timeout()}else{d.onerror(-1)}},d.onerror=function(b){if(typeof a.fail!="undefined"){a.fail(b)}};d.open(a.m,a.url,true);if(typeof a.data!="undefined"){d.setRequestHeader("Content-Type",(typeof a.mime!="undefined")?a.mime:"application/x-www-form-urlencoded");d.send(a.data)}else{d.send()}}function checkurl(a){if(a.value.trim().startsWith("https")){alert("HTTPS is not supported")}}function mothod(b){var a;if(b.id=="m_get"){a="m_post"}else{a="m_get"}document.getElementById(a).checked=!b.checked}function update(){var a={};a.enabled=document.getElementById("enabled").checked;a.url=encodeURIComponent(document.getElementById("url").value);a.bs=document.getElementById("bs").value;a.bt=document.getElementById("bt").value;a.fs=document.getElementById("fs").value;a.ft=document.getElementById("ft").value;a.extra=encodeURIComponent(document.getElementById("extra").value);a.period=document.getElementById("period").value;a.method=(document.getElementById("m_post").checked)?"POST":"GET";s_ajax({url:logurl,m:"POST",data:"data="+JSON.stringify(a),success:function(b){alert("done")},fail:function(b){alert("failed:"+e)}})}function load(){s_ajax({url:logurl+"?data=1",m:"GET",success:function(b){var a=JSON.parse(b);document.getElementById("enabled").checked=a.enabled;document.getElementById((a.method=="POST")?"m_post":"m_get").checked=true;document.getElementById("url").value=(a.url===undefined)?"":a.url;document.getElementById("bt").value=(a.bt===undefined)?"":a.bt;document.getElementById("bs").value=(a.bs===undefined)?"":a.bs;document.getElementById("ft").value=(a.ft===undefined)?"":a.ft;document.getElementById("fs").value=(a.fs===undefined)?"":a.fs;document.getElementById("extra").value=(a.extra===undefined)?"":a.extra;document.getElementById("period").value=(a.period===undefined)?300:a.period},fail:function(a){alert("error :"+a)}})};</script>
 </head>
-<body onload="load();">
+<body onload="load()">
 <form>
 <table>
 <tr><th>Enabled:</th><td><input type="checkbox" id="enabled" value="yes"></td></tr>
-<tr><th>Google Script APP Link:</th><td><input type="text" id="appid" size="64" placeholder="input link or id" onchange="checkid(this,script_prefix);"></td></tr>
-<tr><th>Pass Code:</th><td><input type="text" id="pass" size="56" placeholder="input passcode"></td></tr>
-<tr><th>Google Sheet Link:</th><td><input type="text" id="ssid" size="64" placeholder="input link or id" onchange="checkid(this,sheet_prefix);"></td></tr>
-<tr><th>Sheet Label/Name:</th><td><input type="text" id="sheet" size="36"></td></tr>
+<tr><th>Method:</th><td><input type="checkbox" id="m_get" name="method" value="GET" onchange="mothod(this)">Get <input type="checkbox" id="m_post" name="method" value="POST" onchange="mothod(this)">Post </td></tr>
+<tr><th>URL:</th><td><input type="text" id="url" size="64" placeholder="input link" onchange="checkurl(this)"></td></tr>
+<tr><th>Beer Temperature Name:</th><td><input type="text" id="bt" size="20"></td></tr>
+<tr><th>Beer Set Temperature Name:</th><td><input type="text" id="bs" size="20"></td></tr>
+<tr><th>Fridge Temperature Name:</th><td><input type="text" id="ft" size="20"></td></tr>
+<tr><th>Fridge Set Temperature Name:</th><td><input type="text" id="fs" size="20"></td></tr>
+<tr><th>Extra parameter:</th><td><input type="text" id="extra" size="56"></td></tr>
 <tr><th>Log time period:</th><td><input type="text" id="period" size="4">Seconds</td></tr>
-<tr><th></th><td><button type="button"  onclick="update();">Update</button></td></tr>
+<tr><th></th><td><button type="button" onclick="update()">Update</button></td></tr>
 </table>
 </form>
 </body>
@@ -276,7 +230,7 @@ void DataLogger::getSettings(AsyncWebServerRequest *request)
 		if(SPIFFS.exists(GSLogConfigFile))
 			request->send(SPIFFS, GSLogConfigFile);
 		else
-			request->send(200,"text/html","");
+			request->send(200,"application/json","{}");
 	}else{
 		AsyncWebServerResponse *response = request->beginResponse(String("text/html"),
   		strlen_P(LogConfigHtml),
