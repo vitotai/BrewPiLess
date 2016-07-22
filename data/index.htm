@@ -48,6 +48,33 @@
 	white-space: pre;
 }
 
+.dropdown {
+    position: absolute;
+    left:2px;
+    top:2px;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    overflow: auto;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    border: 1px solid;
+}
+
+.dropdown a:hover {background-color: #f1f1f1}
+
+.show {display:block;}
 </style>
 <script>
 
@@ -55,13 +82,6 @@ function setLcdText(id,html)
 {
 	var d=document.getElementById(id);
 	d.innerHTML=html;
-	/* //debug{
-	
-	var str="";
-	for(var i=0;i<html.length;i++)
-		str = str + ":" + html.charCodeAt(i);
-	console.log(id +" :"+str);
-	*///}debug
 }
 
 function communicationError()
@@ -82,6 +102,11 @@ setLcdText("lcd-line-3","");
 			
 function init()
 {
+ 	document.getElementById("lcd").onclick=function(){
+	 	document.getElementById("myDropdown").classList.toggle("show");
+	 	event.stopPropagation();
+ 	};
+
 	var gotMsg=true;
 	BWF.init({
 		error:function(e){
@@ -98,6 +123,17 @@ function init()
 		gotMsg=false;
 	},5000);
 }
+
+window.onclick = function(event) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+}
 </script>
 <body onload=init()>
 <div id="lcd" class="lcddisplay"><span class="lcd-text">
@@ -105,5 +141,14 @@ function init()
              <span class="lcd-line" id="lcd-line-1">for update from</span>
              <span class="lcd-line" id="lcd-line-2">script...</span>
              <span class="lcd-line" id="lcd-line-3"></span></p><p>
+</div>
+<div class="dropdown">
+  <div id="myDropdown" class="dropdown-content">
+    <a href="/control.htm">Temperature Management</a>
+    <a href="/log">Data Log</a>
+    <a href="/setup.htm">Device Setup</a>
+    <a href="/config">System Config</a>
+  </div>
+
 </body> 
 </html>

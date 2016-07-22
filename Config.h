@@ -207,9 +207,9 @@
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 
 
-#define PIN_SDA 4
-#define PIN_SCL 5
-#define IIC_LCD_ADDRESS 0x3F
+#define PIN_SDA NODEMCU_PIN_D2
+#define PIN_SCL NODEMCU_PIN_D1
+#define IIC_LCD_ADDRESS 0x27
 #define BREWPI_IIC_LCD 1
 
 #define BACKLIGHT_AUTO_OFF_PERIOD 0 //600

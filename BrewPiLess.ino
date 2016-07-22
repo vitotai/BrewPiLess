@@ -133,7 +133,7 @@ const char *confightml=R"END(
 
 const char *saveconfightml=R"END(
 <html><head><title>Configuration Saved</title>
-function r(){setTimeout(function(){window.location.reload();},15000)}
+<script>function r(){setTimeout(function(){window.location.reload();},15000)}</script>
 </head><body onload=r()>
 Configuration Saved. Wait for restart...
 </body></html>)END";
