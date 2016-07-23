@@ -4,7 +4,7 @@
 class WiFiSetup
 {
 public:
-	static void begin(void){WiFiSetup::begin("BrewManiac");}
+	static void begin(void){WiFiSetup::begin("BrewPiLess");}
 	static void begin(char const *ssid,const char *passwd=NULL);
 	static void beginAP(char const *ssid,const char *passwd=NULL);
 };
