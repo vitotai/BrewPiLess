@@ -1,0 +1,514 @@
+<!doctype html>
+<html>
+<head>
+<script type="text/javascript" src="bwf.js"></script>
+	<meta charset="utf-8"  name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">	
+<title>BrewPi Control</title>
+<style>
+.corner-top {border-top-right-radius: 5px; border-top-left-radius: 5px;}
+.corner-bottom {border-bottom-right-radius: 5px; border-bottom-left-radius: 5px;}
+.navbar { margin:0; padding:.2em .2em 0;
+	border:1px solid #4297d7;
+	background:#5c9ccc;
+	color:#ffffff;
+	height:3.5em;
+	display:block;
+	position:relative;}
+	
+#set-mode-text {
+    margin-left: 2px;
+    float: left;
+    margin: .2em;}
+.navitem {
+ background:#dfeffc;
+font-weight: bold;
+color: #2e6e9e;
+margin: .2em .2em 0 0;
+padding: .5em;}
+
+.nav-selected { 
+ background:#ffffff;
+font-weight: bold;
+color: #e17009;
+margin: .2em .2em 0 0;
+padding: .5em .5em .6em .5em;}
+
+.navitems {
+	display:block;
+	margin-top: 2em;}
+
+#apply{
+ background:#dfeffc;
+font-weight: bold;
+color: #2e6e9e;
+margin: .2em .1em 0 0;
+padding: .5em;}
+
+#containter { margin: 0.5em; width:420px;}
+
+.detail{}
+.profileTable td,th {    padding: 3px;
+	    text-align: center;}
+.profileTable tbody TR.odd {
+    	background: #f7f7f7;}
+    	
+.profileTable tbody TR.even { width:100%; }
+
+.profileTable TH {
+    border: 1px solid #4297d7;
+    background: #5c9ccc;
+    color: #ffffff;
+    font-weight: bold;}
+    
+table.profileTable { width:100%;}
+
+button {
+	color: #1d5987;
+	background:#dfeffc;
+	font-weight:bold;
+	border-top-right-radius: 5px; border-top-left-radius: 5px;
+	border-bottom-right-radius: 5px; border-bottom-left-radius: 5px;}
+
+#addbutton{
+	float: right;
+    width: 36%;
+    margin: 5px 1% 5px 1%;}
+    
+.contextmenu {
+	display:block;
+	position:absolute;
+	background:#D00;
+	color:#fff;
+	font-weight:bold;
+	padding: .5em;}
+#header { width: 480px;}
+#clearbtn { width:48%;}
+#savebtn { width:48%;}
+
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+</style>
+
+<script>
+var BrewPiSetting={
+valid:false,
+maxDegree:30,
+minDegree:0,
+tempUnit:'C'
+}; 
+
+function formatDate(dt)
+{
+	var y = dt.getFullYear();
+	var M = dt.getMonth() +1;
+	var d = dt.getDate();
+    var h = dt.getHours();
+    var m = dt.getMinutes();
+    var s = dt.getSeconds();
+    function dd(n){return (n<10)? '0' + n:n;}
+	return dd(M) + "/" + dd(d) + "/" + y +" "+ dd(h) +":"+dd(m)+":"+dd(s);
+}
+
+var profileEditor={
+dirty:false,
+tempUnit:'C',
+C_startday_Id:"startdate",
+C_savebtn_Id:"savebtn",
+markdirty:function(d){
+	this.dirty=d;
+	document.getElementById(this.C_savebtn_Id).innerHTML=(d)? "Save*":"Save";
+},
+getStartDate:function(){return this.sd;},
+setStartDate:function(d){
+},
+startDayChange:function(){
+	var nd=new Date(document.getElementById(this.C_startday_Id).value);
+	if ( isNaN( nd.getTime())){
+		// console.log("invalid date");
+		document.getElementById(this.C_startday_Id).value=formatDate(this.sd);
+	}else{
+		// console.log(nd);
+		this.sd=nd;
+		this.sortrow();
+		this.markdirty(true);
+	}
+},
+startnow:function(){
+	var d=new Date();
+	document.getElementById(this.C_startday_Id).value=formatDate(d);
+	this.sd=d;
+	this.sortrow();
+	this.markdirty(true);
+},
+deleteRow:function(i){
+	//console.log("delete row:"+i);
+	var tr=document.getElementById("profile_t").getElementsByTagName("tr")[i];
+	tr.parentNode.removeChild(tr);
+	this.sortrow();
+	this.markdirty(true);
+},
+showmenu:function(e,r){
+	var idx=r.rowIndex;
+	e.preventDefault();
+	var div=document.createElement("div");
+	div.className="contextmenu";
+	div.innerHTML="Delete!";
+	div.style.top=(e.clientY -1) + "px";
+	div.style.left=(e.clientX -1)+ "px";
+	div.onmouseout=function(){ div.parentNode.removeChild(div);};
+	
+	var me=this;
+	div.onclick=function(){div.parentNode.removeChild(div); me.deleteRow(idx);};
+	var body=document.getElementsByTagName("body")[0];
+	body.appendChild(div);
+},
+dayChange:function(td){
+	if(td.innerHTML=="" || isNaN(td.innerHTML))
+		 td.innerHTML = td.saved;
+	this.sortrow();
+	this.markdirty(true);
+},
+tempChange:function(td){
+	if(td.innerHTML=="" ||  isNaN(td.innerHTML))
+		 td.innerHTML = td.saved;
+	else
+		this.markdirty(true);
+},
+newrow:function(d,t,dt){
+	var b=this;
+	var tr=document.createElement("tr");
+	var td1=document.createElement("td");
+	td1.className="pday";
+	td1.innerHTML=(typeof d !=="undefined")? d:0;
+	td1.contentEditable=true;
+	td1.onblur=function(){b.dayChange(this);};
+	td1.onfocus=function(){this.saved= this.innerHTML;};
+	var td2=document.createElement("td");
+	td2.className="ptemp";
+	td2.innerHTML=(typeof t !=="undefined")? t:20;
+	td2.contentEditable=true;
+	td2.onblur=function(){b.tempChange(this);};
+	td2.onfocus=function(){this.saved= this.innerHTML;};
+	var td3=document.createElement("td");
+	td3.className="pdaystr";
+	td3.innerHTML=(dt)? dt:"";
+	tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+	tr.oncontextmenu=function(e){b.showmenu(e,this); return false;};
+	return tr;
+},
+datestr:function(diff){
+	var dt =new Date(this.sd.getTime() + Math.round(diff*86400)*1000);
+	return formatDate(dt);
+},
+addRow:function(){
+	var tb=document.getElementById("profile_t").getElementsByTagName("tbody")[0];
+	var rowlist=tb.getElementsByTagName("tr");
+	var r=this.newrow();
+	r.className = (rowlist.length %2)? "odd":"even";
+	tb.appendChild(r);
+	this.markdirty(true);
+},
+
+init:function(s,d){
+	this.sd=d;
+	document.getElementById(this.C_startday_Id).value=formatDate(d);
+	
+	var tb=document.getElementById("profile_t").getElementsByTagName("tbody")[0];
+	for(var i=0;i<s.length;i++){
+		var r=this.newrow(s[i].d,s[i].t, this.datestr(s[i].d));
+		r.className = (i%2)? "odd":"even";
+		tb.appendChild(r);
+	}
+},
+sortrow:function(){
+	var tbody=document.getElementById("profile_t").getElementsByTagName("tbody")[0];
+	var rowsl=tbody.getElementsByTagName("tr");
+	var rows = Array.prototype.slice.call(rowsl);
+	rows.sort(function(a,b) {
+    	var v1 = parseFloat(a.querySelector('td.pday').innerHTML);
+        var v2 = parseFloat(b.querySelector('td.pday').innerHTML);
+        if ( isNaN(v1) || isNaN(v2) || (v1 === v2) ) {
+        	return 0;
+         } else {
+         	return v1 - v2;
+         }
+    	});
+	for(var i=0;i< rows.length;i++){
+		var row=rows[i];
+		var day=row.querySelector('td.pday').innerHTML;
+		row.querySelector('td.pdaystr').innerHTML=this.datestr(parseFloat(day));
+		row.className = (i%2)? "odd":"even";
+		// re-append it to the table
+		row.parentNode.removeChild(row);
+		tbody.appendChild(row);
+	}
+},
+clear:function(){
+	var tbody=document.getElementById("profile_t").getElementsByTagName("tbody")[0];
+	var rl=tbody.getElementsByTagName("tr");
+	var count=rl.length;
+	for(var i=rl.length-1;i>=0;i--){
+		var tr=rl[i];
+		tr.parentNode.removeChild(tr);
+	}
+	this.markdirty(true);
+},
+getProfile:function(){
+	var tbody=document.getElementById("profile_t").getElementsByTagName("tbody")[0];
+	var rl=tbody.getElementsByTagName("tr");
+	var count=rl.length;
+	var lastdate=0;
+	var temps=[];
+	for(var i=0;i<rl.length;i++){
+		var tr=rl[i];
+		var date=  parseFloat(tr.querySelector('td.pday').innerHTML);
+		var temp=  parseFloat(tr.querySelector('td.ptemp').innerHTML);
+		if(isNaN(date) || isNaN(temp)) return false;
+		if(temp > BrewPiSetting.maxDegree || temp < BrewPiSetting.minDegree) return false;
+		
+		if(i ==0){
+			if(date !=0) return false;
+		}else{
+			if(lastdate==date) return false;
+		}
+		lastdate=date;
+		temps.push({d:date,t:temp});
+	}
+	var s=this.sd.toISOString();
+	return {s:s,u:this.tempUnit,t:temps};
+},
+initProfile:function(p)
+{
+	// start date
+	var sd=new Date(p.s);
+	this.tempUnit = p.u;
+	profileEditor.init(p.t,sd);
+},
+setTempUnit:function(u){
+	if(u == this.tempUnit) return;
+	this.tempUnit = u;
+
+	var tbody=document.getElementById("profile_t").getElementsByTagName("tbody")[0];
+	var rl=tbody.getElementsByTagName("tr");
+	for(var i=0;i<rl.length;i++){
+		var tcell=rl[i].querySelector('td.ptemp');
+		var temp= parseFloat(tcell.innerHTML);
+		tcell.innerHTML = (u=='C')? F2C(temp):C2F(temp);
+	}
+}
+};
+
+var modekeeper={
+initiated:false,
+modes:["profile","beer","fridge","off"],
+cmode:0,
+dselect:function(m){
+	var d=document.getElementById(m + "-m");
+	var nc=document.getElementById(m + "-m").className.replace(/\snav-selected/, '');
+	d.className=nc;
+		
+	document.getElementById(m + "-s").style.display="none";
+},
+select:function(m){
+	document.getElementById(m + "-m").className += ' nav-selected';
+	document.getElementById(m + "-s").style.display="block";
+},
+init:function(){
+	var me=this;
+	if(me.initiated) return;
+	me.initiated=true;
+	for (var i=0;i<4;i++){
+		var m=me.modes[i];
+		document.getElementById(m + "-s").style.display="none";
+		document.getElementById(m + "-m").onclick=function(){
+			var tm=this.id.replace(/-m/,'');
+			me.dselect(me.cmode);
+			me.select(tm);
+			me.cmode=tm;
+		};
+	}
+	me.cmode="profile";
+	me.select(me.cmode);
+},
+apply:function(){
+	if(!BrewPiSetting.valid){
+		alert("Not connected to controller.");
+		return;
+	}
+	if((this.cmode == "beer") || (this.cmode == "fridge")){
+		var v= document.getElementById(this.cmode + "-t").value;
+		if(v == '' || isNaN(v) ||( v > BrewPiSetting.maxDegree || v < BrewPiSetting.minDegree)){
+			alert("Invalid Temperature:"+v);
+			return;
+		}
+		if(this.cmode == "beer"){
+			console.log("j{mode:b, beerSet:" + v+ "}");
+			BWF.send("j{mode:b, beerSet:" + v+ "}");
+		}else{
+			console.log("j{mode:f, fridgeSet:" + v+ "}");
+			BWF.send("j{mode:f, fridgeSet:" + v+ "}");
+		}
+	}else if(this.cmode == "off"){
+		console.log("j{mode:o}");
+		BWF.send("j{mode:o}");
+	} else{
+		// should save first.
+		if(profileEditor.dirty){
+			alert("save the profile first before apply");
+			return;
+		}
+		console.log("j{mode:p}");
+		BWF.send("j{mode:p}");
+	}
+}
+};
+
+function saveprofile(){
+	console.log("save");
+	var r=profileEditor.getProfile();
+	if(r === false){
+		alert("invalid value. check again");
+		return;
+	}
+	var json=JSON.stringify(r);
+	console.log("result="+json);
+
+	BWF.save(BWF.BrewProfile,json,function(){
+			profileEditor.markdirty(false);
+			alert("Done.");
+	},function(e){
+		alert("save failed:"+e);
+	});
+}
+
+function C2F(c){return Math.round((c*1.8+32)*10)/10}function F2C(f){return Math.round((f-32)/1.8*10)/10}
+
+function updateTempUnit(u)
+{
+	var Us=document.getElementsByClassName("t_unit");
+	for(var i=0;i< Us.length;i++){
+		Us[i].innerHTML = u;
+	}
+}
+
+function openDlgLoading(){document.getElementById('dlg_loading').style.display = "block";}
+function closeDlgLoading(){document.getElementById('dlg_loading').style.display = "none";}
+function onload(){	
+	modekeeper.init();
+
+	openDlgLoading();
+
+	function complete(){
+		var t;
+		var initial=true;
+		function initComp(){
+			if(!initial) return;
+			initial=false;
+			clearTimeout(t);
+			closeDlgLoading();
+		}
+		
+		BWF.init({
+			error:function(){
+				console.log("error connect to BrwePiLess!");
+				initComp();
+			},
+			handlers:{
+				C:function(s){
+					var setting={valid:true,minDegree:s.tempSetMin,maxDegree:s.tempSetMax,tempUnit:s.tempFormat};
+					if(setting.tempUnit != BrewPiSetting.tempUnit){
+						updateTempUnit(setting.tempUnit);
+						profileEditor.setTempUnit(setting.tempUnit);
+					}
+					BrewPiSetting=setting;
+					initComp();
+				}
+			}
+		});
+	
+		BWF.send("c"); // request configuration
+		t=setTimeout(function(){
+			console.log("Timeout of C command");
+			initComp();
+		},5000);
+	}
+
+	//get current profile
+	BWF.load(BWF.BrewProfile,function(d){	
+			var p=JSON.parse(d);
+			updateTempUnit(p.u); // using profile temp before we get from controller
+			BrewPiSetting.tempUnit=p.u;
+			profileEditor.initProfile(p); 
+			complete();
+			},function(e){ 
+			profileEditor.init([],new Date());  complete();});
+}
+
+</script>
+</head>
+<body onload="onload()">
+<div class="navbar corner-top corner-bottom" id="header">
+<div id="set-mode-text">Set temperature mode:</div>
+<div class="navitems">
+<span class="navitem corner-top" id="profile-m">Beer profile</span>
+<span class="navitem corner-top" id="beer-m">Beer Const.</span>
+<span class="navitem corner-top" id="fridge-m">Fridge Const.</span>
+<span class="navitem corner-top" id="off-m">Off</span>
+<button id="modekeeper.apply()" class="corner-top corner-bottom" onclick="modekeeper.apply()">Apply</button>
+</div>
+</div>
+
+<div id="containter">
+  <div id="profile-s" class="detail">
+  <div>
+  <div><span>Start Date:</span><input type="text" size="40" id="startdate" onchange="profileEditor.startDayChange();">
+  	<button id="setnow" onclick=profileEditor.startnow()>Now</button></div>
+  <button id="addbutton" onclick="profileEditor.addRow();">Add</button>
+  </div>
+  <table class="profileTable" id="profile_t">
+  <thead><tr><th>Day</th><th>Temperature(&deg;<span class="t_unit">C</span>)</th><th>Date and Time</th></tr></thead>
+  <tbody></tbody>
+  </table>
+  <div><button id="clearbtn" onclick="profileEditor.clear()">Clear</button><button id="savebtn" onclick="saveprofile()">Save</button></div>
+  </div>
+  <div id="beer-s" class="detail">
+     Set Beer temp:
+     <input type="text" size="6" id="beer-t"></input>&deg;<span class="t_unit">C</span> 
+  </div>
+
+  <div id="fridge-s" class="detail">
+   Set Fridge temp:
+   <input type="text" size="6" id="fridge-t"></input>&deg;<span class="t_unit">C</span> 
+  </div>
+  <div id="off-s" class="detail">Turning temperature controll Off.</div>
+</div>
+
+
+<div id="dlg_loading" class="modal">
+  <div class="modal-content">
+    <p>Loading setting from BrewPi controller..</p>
+  </div>
+</div>
+
+</body>
+</html>

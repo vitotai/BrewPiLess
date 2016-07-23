@@ -1,0 +1,264 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrewPi Setup</title>
+<meta name="apple-mobile-web-app-title" content="BrewPi Setup">
+<meta name="apple-mobile-web-app-capable" content="yes" >
+<script type="text/javascript" src="bwf.js"></script>
+</head>
+<style>
+button {
+	color: #1d5987;
+	background:#dfeffc;
+	font-weight:bold;
+	border-top-right-radius: 5px; border-top-left-radius: 5px;
+	border-bottom-right-radius: 5px; border-bottom-left-radius: 5px;}
+
+.corner-top {border-top-right-radius: 5px; border-top-left-radius: 5px;}
+.corner-bottom {border-bottom-right-radius: 5px; border-bottom-left-radius: 5px;}
+.navbar { margin:0; padding:.2em .2em 0;
+	border:1px solid #4297d7;
+	background:#5c9ccc;
+	color:#ffffff;
+	height:2em;
+	display:block;
+	position:relative;}
+.bar-title{ margin-right:160px; font-weight:bold;}
+.device-container {
+	border:1px solid;
+	padding: 5px;
+}
+
+.device-setting-container {padding:5px; width:150px; float:left; color:#555;}
+.device-titleNapply {float:left; padding:5px; }
+.setting-name {font-weight:bold; display:block;}
+.device-detail {float:left;}
+.device-title {    display: block; white-space: nowrap;
+    float: left;
+    clear: both;
+    font-size: 1.2em;
+    color: #306fa9;}
+#installed-device,#detected-device { font-weight:bold; font-size:18px; padding:.5em;}
+
+</style>
+<script>
+var BackupFile="/device.cfg";
+var devices=
+{
+add:function(idx,d){
+	var div=document.createElement("div");
+	div.innerHTML="<div class='device-container'>\
+	<table>\
+	<tr><td ROWSPAN=2>\
+	<div class='device-title'></div><br><button>apply</button></td>\
+	<td><div class='device-setting-container'><span class='setting-name'>Device slot</span>\
+		<select class='slot-select'>\
+		<option value='-1'>Unassigned</option>\
+		<option value='0'>0</option>\
+		<option value='1'>1</option>\
+		<option value='2'>2</option>\
+		<option value='3'>4</option>\
+		<option value='4'>4</option>\
+		<option value='5'>5</option>\
+		<option value='6'>6</option>\
+		<option value='7'>7</option>\
+		<option value='8'>8</option>\
+		<option value='9'>9</option>\
+		<option value='10'>10</option>\
+		<option value='11'>11</option>\
+		<option value='12'>12</option>\
+		<option value='13'>13</option>\
+		<option value='14'>14</option>\
+		<option value='15'>15</option>\
+		</select></div></td>\
+		<td><div class='device-setting-container'>\
+		<span class='setting-name'>Hardware Type</span>\
+		<span class='setting-value device-type'></span>\
+		</div></td>\
+		<td><div class='device-setting-container device-address-container'>\
+		<span class='setting-name'>Address</span>\
+		<span class='setting-value device-address'></span>\
+		</div>\
+		<div class='device-setting-container device-pintype-container'>\
+		<span class='setting-name'>Pin type</span>\
+		<select class='setting-value device-pintype'>\
+		<option value=0>Not Inverted</option>\
+		<option value=1>Inverted</option>\
+		</select>\
+		</div></td></tr>\
+		<tr><td><div class='device-setting-container'>\
+		<span class='setting-name'>Controller PIN</span>\
+		<span class='setting-value device-pin'></span>\
+		</div></td>\
+		<td><div class='device-setting-container'>\
+		<span class='setting-name'>Value</span>\
+		<span class='setting-value device-value'></span>\
+		</div></td>\
+		<td><div class='device-setting-container'>\
+		<span class='setting-name'>Function</span>\
+		<select class='setting-value device-function'></select>\
+		</div></td>\
+	</tr></table></div>";
+		
+	if(d.h == 2){
+		div.querySelector("div.device-pintype-container").style.display="none";
+		div.querySelector("select.device-function").innerHTML=
+		"<option value=0>None</option><option value=5>Chamber Temp</option><option value=6>Room Temp</option><option value=9>Beer Temp</option>";
+
+		div.querySelector("span.device-type").innerHTML="Sensor";
+		div.querySelector("span.device-address").innerHTML=d.a;
+		div.querySelector("span.device-value").innerHTML=(typeof d.v ==="undefined")? "-":d.v;
+	}else{
+		div.querySelector("div.device-address-container").style.display="none";
+		div.querySelector("select.device-function").innerHTML=
+		"<option value=0>None</option><option value=1>Chamber Door</option><option value=2>Chamber Heater</option><option value=3>Chamber Cooler</option><option value=4>Chamber Light</option><option value=7>Chamber Fan</option>";
+		div.querySelector("span.device-type").innerHTML="None";
+		div.querySelector("select.device-pintype").value=d.x;
+		div.querySelector("span.device-value").innerHTML=(typeof d.v ==="undefined")? "-":((d.v)? "active":"inactive");
+	}
+	div.querySelector("select.slot-select").value=d.i;
+	var PN={0:"D3",2:"D4",12:"D6",14:"D5"};
+	div.querySelector("span.device-pin").innerHTML=PN[d.p];
+	div.querySelector("select.device-function").value=d.f;
+	div.querySelector("div.device-title").innerHTML= "Device " + idx;
+	div.querySelector("button").onclick=function(){save_device(idx);};
+	div.hardwaretype=d.h;
+	div.pinnumber=d.p;
+
+	var l=(d.i < 0)? "detected-list":"installed-list";
+	var ld=document.getElementById(l);
+	ld.appendChild(div);
+	ld.appendChild(document.createElement("br"));
+}
+};
+
+var installed_list=[];
+var available_list=[];
+
+
+function cmdfrom(idx)
+{
+	var od;
+	if(idx < installed_list.length) od=installed_list[idx];
+	else od = available_list[idx - installed_list.length];
+	
+	var div=document.querySelectorAll("div.device-container")[idx];
+	var u={};
+	u.i = div.querySelector("select.slot-select").value;
+	u.c = 1; // suppor only one chamber
+	u.f = div.querySelector("select.device-function").value;
+	if(u.f >=9 && u.f <=15) u.b=1;
+	else u.b=0;
+	
+	u.h= od.h;
+	u.p= od.p;
+	if(u.h == 2){
+		u.a = od.a;
+	}else{
+		u.x=div.querySelector("select.device-pintype").value;
+	}
+	return u;
+}
+
+function save_device(idx)
+{
+	var u=cmdfrom(idx);
+	var cmd="U"+ JSON.stringify(u);
+	console.log(cmd);
+	BWF.send(cmd);
+}
+
+function backup()
+{
+	if(installed_list.length ==0){
+		alert("No installed devices!");
+		return;
+	}
+	var list=[];
+	for(var i=0;i<installed_list.length;i++){
+		var d=installed_list[i];
+		var sd={i:d.i,c:d.c,b:d.b,f:d.f,h:d.h,p:d.p};
+		if(d.h==2) sd.a=d.a;
+		else sd.x = d.x;
+		list.push(sd);
+		//content = content + JSON.stringify(sd)+"\n";
+	}
+	var content=JSON.stringify(list);
+	console.log(content);
+	BWF.save(BackupFile,content,function(){
+		alert("done");
+	},function(e){
+		alert("error saving:"+e);
+	});
+}
+function restore()
+{
+	BWF.load(BackupFile,function(d){
+		var list=JSON.parse(d);
+		var s=0;
+		
+		BWF.on('U',function(u){
+			if(++s >= list.length){
+				BWF.on('U',null);
+				return;
+			}
+			BWF.send("U"+JSON.stringify(list[s]));			
+		});
+		BWF.send("U"+JSON.stringify(list[s]));
+	},function(e){ alert("error load:"+e);});
+}
+
+function list()
+{
+	installed_list=[];
+	available_list=[];
+	document.getElementById("detected-list").innerHTML="";
+	document.getElementById("installed-list").innerHTML="";
+
+    BWF.send("d{r:1}"); // # request installed devices
+    BWF.send("h{u:-1,v:1}"); //  # request available, but not installed devices
+}
+function erase()
+{
+	BWF.send("E");
+}
+
+function listGot()
+{
+	var idx=0;
+	for(var i=0;i<installed_list.length;i++)
+		devices.add(idx++,installed_list[i]);
+	for(var i=0;i<available_list.length;i++)
+		devices.add(idx++,available_list[i]);
+}
+
+function init()
+{
+	BWF.init({
+		error:function(e){ alert("error communication between server");},
+		handlers:{
+			d:function(l){installed_list=l;},
+			h:function(l){available_list=l; listGot();}
+		}
+	});
+}
+
+</script>
+<body onload=init()>
+<div class="navbar corner-top corner-bottom">
+<span class="bar-title">Device List</span>
+<button onclick=backup()>Backup</button>
+<button onclick=restore()>Restore</button>
+<button onclick=erase()>Erase EEPROM</button>
+<button onclick=list()>Refresh Device List</button>
+</div>
+<div id="device-list">
+<div id="installed-device">Installed Device</div>
+<div id="installed-list"></div>
+<div id="detected-device">Detected Device</div>
+<div id="detected-list"></div>
+</div>
+
+</body> 
+</html>
