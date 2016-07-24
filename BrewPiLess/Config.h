@@ -209,10 +209,10 @@
 
 #define PIN_SDA NODEMCU_PIN_D2
 #define PIN_SCL NODEMCU_PIN_D1
-#define IIC_LCD_ADDRESS 0x3F
+#define IIC_LCD_ADDRESS 0x27
 #define BREWPI_IIC_LCD 1
 
-#define BACKLIGHT_AUTO_OFF_PERIOD 0 //600
+#define BACKLIGHT_AUTO_OFF_PERIOD 600
 
 
 // Pay attention when changing the pins for the rotary encoder.
