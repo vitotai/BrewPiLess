@@ -9,6 +9,14 @@ ESP8266 is cheap and powerful WiFi-enabling IOT solution.
 Althoug it can't be as powerful as a RPI, it's a good solution to maximize the functionality and minimize the cost. Using single one ESP8266 as temperature controller(Arduino part) and web server and schedule maintainer(RPI part) also reduce the work of building.
 ## Software configuration
 BrewPi related configuration is defined in `config.h` while networking related configuration is define in `espconfig.h`. They are both self-explanatory and commented. Please check the files directly.
+## Additional Libraries
+You will need the ESP8266/Arduino environment, as well as the following libraries.
+ * ArduinoJson https://github.com/bblanchon/ArduinoJson
+ * WiFiManager https://github.com/tzapu/WiFiManager
+ * ESPAsyncTCP https://github.com/me-no-dev/ESPAsyncTCP 
+ * ESPAsyncWebServer https://github.com/me-no-dev/ESPAsyncWebServer 
+ * ESP8266HTTPUpdateServer (newer version is needed. you might need to manually download the files.) https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer
+
 
 ## Features
  * I2C LCD support
