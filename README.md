@@ -141,7 +141,7 @@ For example, if the method is set to **GET**, the the url will be
 
 
 The periodical request can be also used as a I-AM-ALIVE message. For example, if the period is set to 10 minutes, and the temperature hasn't been updated for 11 minutes,
-there must be something wrong.
+there must be something wrong. `/extra/brewpimon.php` is an example which is executed by cronjob every few minutes to check the updating of temperature data. The PHP will notice by email if the temperature data isn't updated in specified time.
 
 ## Development tools.
 Two additional tools are available. One is web-based file manager to manuplate the files directly from the web. You can download and upload files the the web.
