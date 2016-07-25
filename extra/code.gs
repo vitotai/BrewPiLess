@@ -1,5 +1,10 @@
 var passcode="thisistest";
 
+function val(v)
+{
+  return ( v === "null")? "":v;
+}
+
 function doPost(e) {
   var res="<b>Post</b>";
   var p= e.parameter;
@@ -21,8 +26,8 @@ if (p.bt !== undefined
      var lastRow = sheet.getLastRow();
      var range = sheet.getRange(lastRow+1,1,1,5);
      var range_last = sheet.getRange(2, 1,1,5);
-     range.setValues([[new Date(),p.bt,p.bs,p.ft,p.fs]]);
-     range_last.setValues([[new Date(),p.bt,p.bs,p.ft,p.fs]]);
+     range.setValues([[new Date(),val(p.bt),val(p.bs),val(p.ft),val(p.fs)]]);
+     range_last.setValues([[new Date(),val(p.bt),val(p.bs),val(p.ft),val(p.fs)]]);
    
    }else{
      res = res + "undefined e.parameter.bs";

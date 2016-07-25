@@ -39,6 +39,8 @@ strchrnul(const char *s, int c_in)
 //new  ESP8266_ONE
 float temperatureFloatValue(temperature t)
 {
+	if(t == INVALID_TEMP) return INVALID_TEMP_FLOAT;
+	
 	long_temperature rawValue = convertFromInternalTemp(t);
 
 	float sign=1.0;

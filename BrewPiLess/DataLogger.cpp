@@ -7,6 +7,7 @@
 #include "mystrlib.h"
 #include "DataLogger.h"
 #include "espconfig.h"
+#include "TemperatureFormats.h"
 
 #define GSLOG_JSON_BUFFER_SIZE 256
 #define MAX_GSLOG_CONFIG_LEN 1024
@@ -18,11 +19,26 @@ void DataLogger::loop(time_t now,void (*getTemp)(float *pBeerTemp,float *pBeerSe
 	if(!_enabled) return;
 	
 	if((now - _lastUpdate) < _period) return;
-	_lastUpdate=now;
-
+	
 	float beerTemp,beerSet,fridgeTemp,fridgeSet;
 	(*getTemp)(&beerTemp,&beerSet,&fridgeTemp,&fridgeSet);
-	sendData(beerTemp,beerSet,fridgeTemp,fridgeSet);
+	
+	if(IS_FLOAT_TEMP_VALID(beerTemp)){
+		sendData(beerTemp,beerSet,fridgeTemp,fridgeSet);
+		_lastUpdate=now;
+		_retry =0;
+	}else{
+		DBG_PRINTF("Invalid Temp, retry:%d\n",_retry);
+		// star retry
+		if(_retry > MAX_RETRY_NUMBER){
+			sendData(beerTemp,beerSet,fridgeTemp,fridgeSet);
+			_lastUpdate=now;
+			_retry =0;
+		}else{
+			_lastUpdate=now - _period + RETRY_TIME; 
+			_retry ++;
+		}
+	}
 }
 
 int _copyName(char *buf,char *name,bool concate)
@@ -45,7 +61,13 @@ int copyTemp(char* buf,char* name,float value, bool concate)
 {
 	int n;
 	if((n = _copyName(buf,name,concate))!=0){
-		n += sprintFloat(buf + n ,value,2);
+		if(IS_FLOAT_TEMP_VALID(value)){
+			n += sprintFloat(buf + n ,value,2);
+		}else{
+			strcpy(buf + n,"null");
+			n += 4;
+		}
+		
 	}
 	return n;
 }

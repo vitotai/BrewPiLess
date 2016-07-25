@@ -1,11 +1,15 @@
 #ifndef DataLogger_H
 #define DataLogger_H
 
+#define RETRY_TIME 5
+#define MAX_RETRY_NUMBER 3
+
+
 class DataLogger
 {
 public:
     DataLogger(void):_extra(NULL),_method(NULL),_url(NULL),
-    _fsname(NULL),_ftname(NULL),_bsname(NULL),_btname(NULL),_enabled(false),_period(0),_lastUpdate(0){}
+    _fsname(NULL),_ftname(NULL),_bsname(NULL),_btname(NULL),_enabled(false),_period(0),_lastUpdate(0),_retry(0){}
 
     ~DataLogger() 
     {
@@ -42,6 +46,7 @@ protected:
 	bool _enabled;
 	time_t _period;
 	time_t _lastUpdate;
+	byte _retry;
 };
 
 #endif
