@@ -106,6 +106,7 @@ A simple script as the proxy to push data to Google Sheet is needed. Here is how
 
  a. Create a google spreadsheet in any name you like, but note the **spreadsheet ID**.
     input the lables at cell 'A1', and 3rd rows. leave 2nd row empty. like this.
+    _You might need to manually change the format of Time column to display Date & Time._ The default format seems to show Date only.
 
  |     |    A        |   B      |     C    |   D     |    E     |
  |:---:|:-----------:|:--------:|:--------:|:--------:|:--------:|
@@ -115,6 +116,8 @@ A simple script as the proxy to push data to Google Sheet is needed. Here is how
  |	4  |             |          |          |          |          |
   
  b. rename or keep the **sheet label**. note it
+ 
+ 
 
 3. Setup proxy script. you must have access to a server that you can run your CGI script and the CGI script can connect to other hosts.
 
