@@ -201,9 +201,10 @@
 
 
 #define coolingPin NODEMCU_PIN_D3
-#define heatingPin NODEMCU_PIN_D4
+#define heatingPin NODEMCU_PIN_D8
 
-#define doorPin    NODEMCU_PIN_D5
+#define doorPin    NODEMCU_PIN_D0
+
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 
 

@@ -5,7 +5,7 @@ define('TO_EMAIL' ,'YOUREMAIL@gmail.com');
 
 define('TMP_FILE_PATH','/tmp/');
 define('FILE_PREFIX','BrewPi_Update_');
-define('MARGIN_TIME',180);
+define('MARGIN_TIME',2000);
 
 $verbosal=0;
 $dryrun=0;

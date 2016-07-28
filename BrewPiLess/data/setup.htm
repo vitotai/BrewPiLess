@@ -118,7 +118,7 @@ add:function(idx,d){
 		div.querySelector("span.device-value").innerHTML=(typeof d.v ==="undefined")? "-":((d.v)? "active":"inactive");
 	}
 	div.querySelector("select.slot-select").value=d.i;
-	var PN={0:"D3",2:"D4",12:"D6",14:"D5"};
+	var PN={0:"D3",1:"D10",2:"D4",3:"D9",4:"D2",5:"D1",12:"D6",13:"D7",14:"D5",15:"D8",16:"D0",17:"A0"};
 	div.querySelector("span.device-pin").innerHTML=PN[d.p];
 	div.querySelector("select.device-function").value=d.f;
 	div.querySelector("div.device-title").innerHTML= "Device " + idx;
