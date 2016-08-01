@@ -87,6 +87,14 @@ Note: The GPIOs of ESP8266 are not all **General Purpose**. Some of them has spe
 
 https://github.com/esp8266/Arduino/blob/master/doc/boards.md#minimal-hardware-setup-for-bootloading-and-usage
 
+## Libraries needed
+	* ArduinoJson  https://github.com/bblanchon/ArduinoJson
+	* WiFiManager  https://github.com/tzapu/WiFiManager
+	* ESPAsyncTCP https://github.com/me-no-dev/ESPAsyncTCP
+	* ESPAsyncWebServer  https://github.com/me-no-dev/ESPAsyncWebServer
+	* ESP8266HTTPUpdateServer https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer (newer version is needed. you might need to manually download it)
+	* OneWire https://github.com/PaulStoffregen/OneWire
+	* esp8266-SNTPClock https://github.com/Juppit/esp8266-SNTPClock 
 
 ## Logging temperature data to Google Sheets
 Due to the resource limit of ESP8266, establishment of **HTTPS** connection while serving other functions will crash the system. 
