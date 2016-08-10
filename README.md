@@ -17,8 +17,7 @@ You will need the ESP8266/Arduino environment, as well as the following librarie
  * ESPAsyncWebServer https://github.com/me-no-dev/ESPAsyncWebServer 
  * ESP8266HTTPUpdateServer (newer version is needed. you might need to manually download the files.) https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer
  * OneWire https://github.com/PaulStoffregen/OneWire
- * esp8266-SNTPClock https://github.com/Juppit/esp8266-SNTPClock 
-
+ 
 
 ## Features
  * I2C LCD support
