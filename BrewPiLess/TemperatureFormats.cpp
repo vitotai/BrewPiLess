@@ -255,3 +255,4 @@ temperature multiplyFactorTemperatureDiff(temperature factor, temperature b)
 	return constrainTemp16(((long_temperature) factor * (long_temperature) b )>>TEMP_FIXED_POINT_BITS);
 }
 
+

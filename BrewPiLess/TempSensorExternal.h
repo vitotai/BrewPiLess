@@ -61,3 +61,4 @@ class ExternalTempSensor : public BasicTempSensor
 	bool _connected;
 };
 
+

@@ -1,9 +1,8 @@
 #include <FS.h>
 #include <ArduinoJson.h>
 
-#include <Ticker.h>
-#include "SNTPTime.h"
-#include "SNTPClock.h"
+#include <time.h>
+
 #include "BrewKeeper.h"
 #include "mystrlib.h"
 
@@ -224,5 +223,6 @@ time_t tm_to_timet(struct tm *tm_time){
 	seconds+= tm_time->tm_sec;				// ...and finally, Seconds.
 	return (time_t)seconds; 
 }
+
 
 

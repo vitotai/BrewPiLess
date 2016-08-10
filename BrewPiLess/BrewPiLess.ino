@@ -34,9 +34,8 @@
 
 #include "espconfig.h"
 
-#include <Ticker.h>
-#include "SNTPTime.h"
-#include "SNTPClock.h"
+#include "TimeKeeper.h"
+
 #include "BrewKeeper.h"
 #ifdef ENABLE_LOGGING
 #include "DataLogger.h"
@@ -140,18 +139,10 @@ Configuration Saved. Wait for restart...
 
 
 void requestRestart(void);
-//Externals in SNTPClock.cpp
-extern SNTPClock Clock;
 
 void initTime(void)
-{
-	sntp_init();
-  	sntp_setservername(0, (char*)"time.nist.gov");
-  	sntp_setservername(1, (char*)"time.windows.com");
-  	sntp_setservername(2, (char*)"de.pool.ntp.org");
-
-  	sntp_set_timezone(0);
-  	Clock.begin("time.nist.gov", 3600, 1);
+{  	
+  	TimeKeeper.begin("time.nist.gov","time.windows.com","de.pool.ntp.org");
 }
 
 class BrewPiWebHandler: public AsyncWebHandler 
@@ -265,7 +256,7 @@ public:
 	 	}else if(request->method() == HTTP_GET &&  request->url() == TIME_PATH){
 
 			AsyncResponseStream *response = request->beginResponseStream("application/json");
-			response->printf("{\"t\":\"%s\"}",Clock.getDateTimeStr());
+			response->printf("{\"t\":\"%s\",\"e\":%ld}",TimeKeeper.getDateTimeStr(),TimeKeeper.getTimeSeconds());
 			request->send(response);
 	 	
 	 	}else if(request->method() == HTTP_POST &&  request->url() == FLIST_PATH){
@@ -649,7 +640,7 @@ void loop(void){
 #if (DEVELOPMENT_OTA == true) || (DEVELOPMENT_FILEMANAGER == true)
 	ESPUpdateServer_loop();
 #endif
-	time_t now=Clock.getTimeSeconds();
+	time_t now=TimeKeeper.getTimeSeconds();
 	
 	char unit, mode;
 	float beerSet,fridgeSet;
@@ -702,6 +693,7 @@ void loop(void){
   		}
   	}
 }
+
 
 
 

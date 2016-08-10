@@ -45,3 +45,4 @@ public:
 
 extern SettingsManager settingsManager;
 
+

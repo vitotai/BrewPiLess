@@ -199,14 +199,20 @@
 #define NODEMCU_PIN_D10 1	// Do not use - USB
 
 
+#if 1
 
 #define coolingPin NODEMCU_PIN_D3
 #define heatingPin NODEMCU_PIN_D8
-
 #define doorPin    NODEMCU_PIN_D0
-
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
+#else
 
+#define coolingPin NODEMCU_PIN_D0
+#define heatingPin NODEMCU_PIN_D8
+#define doorPin    NODEMCU_PIN_D6
+#define oneWirePin NODEMCU_PIN_D3  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
+
+#endif
 
 #define PIN_SDA NODEMCU_PIN_D2
 #define PIN_SCL NODEMCU_PIN_D1
@@ -250,4 +256,5 @@
 #define BREWPI_INVERT_ACTUATORS 0
 
 #define BUFFER_PILINK_PRINTS 1
+
 

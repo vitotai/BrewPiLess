@@ -98,3 +98,4 @@ enum infoMessages{
 	MSG(INFO_NEGATIVE_DRIFT, "No peak detected. Drifting down after cooling, current temp: %s, estimated peak: %s. Previous cool estimator: %s, New cool estimator: %s..", temperature, temperature, estimator, estimator)	
 }; // END enum infoMessages
 
+

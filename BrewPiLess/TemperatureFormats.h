@@ -169,3 +169,4 @@ float temperatureFloatValue(temperature t);
 //new
 #define OPTIMIZE_TEMPERATURE_FORMATS 1 && OPTIMIZE_GLOBAL
 
+

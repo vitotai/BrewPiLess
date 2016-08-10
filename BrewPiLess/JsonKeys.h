@@ -78,3 +78,4 @@ static const char JSONKEY_posPeak[] PROGMEM = "posPeak";
 static const char JSONKEY_logType[] PROGMEM = "logType";
 static const char JSONKEY_logID[] PROGMEM = "logID";
 
+

@@ -670,3 +670,4 @@ const ControlConstants TempControl::ccDefaults PROGMEM =
 	/* pidMax */ intToTempDiff(10),	// +/- 10 deg Celsius
 };
 
+

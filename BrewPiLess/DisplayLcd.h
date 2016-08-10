@@ -110,3 +110,4 @@ class LcdDisplay DISPLAY_SUPERCLASS
 	DISPLAY_FIELD uint8_t flags;		
 };
 
+

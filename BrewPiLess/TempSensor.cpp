@@ -108,3 +108,4 @@ BasicTempSensor& TempSensor::sensor() {
 	return *_sensor;
 }
 
+

@@ -116,3 +116,4 @@ struct DeviceConfig {
 	bool reserved2;
 };
 
+
