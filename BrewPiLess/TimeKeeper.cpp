@@ -6,7 +6,7 @@ extern "C" {
 }
 #include "TimeKeeper.h"
 
-#define RESYNC_TIME 180000UL
+#define RESYNC_TIME 43200000UL
 // time gap in seconds from 01.01.1900 (NTP time) to 01.01.1970 (UNIX time)
 #define DIFF1900TO1970 2208988800UL
 
