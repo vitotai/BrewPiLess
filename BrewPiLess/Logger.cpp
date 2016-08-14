@@ -62,3 +62,4 @@ void Logger::logMessageVaArg(char type, LOG_ID_TYPE errorID, const char * varTyp
 Logger logger;
 
 
+

@@ -70,3 +70,4 @@ void SettingsManager::loadSettings()
 SettingsManager settingsManager;
 
 
+

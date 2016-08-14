@@ -119,6 +119,7 @@ DataLogger dataLogger;
 
 AsyncServerSideEventServer sse(SSE_PATH);
 
+// use in sprintf, put into PROGMEM complicates it.
 const char *confightml=R"END(
 <html><head><title>Configuration</title></head><body>
 <form action="" method="post">
@@ -130,13 +131,14 @@ const char *confightml=R"END(
 <tr><td>Save Change</td><td><input type="submit" name="submit"></input></td></tr>
 </table></form></body></html>)END";
 
-const char *saveconfightml=R"END(
+const char saveconfightml[]  PROGMEM =R"END(
 <html><head><title>Configuration Saved</title>
 <script>function r(){setTimeout(function(){window.location.reload();},15000)}</script>
 </head><body onload=r()>
 Configuration Saved. Wait for restart...
 </body></html>)END";
 
+extern const char* getEmbeddedFile(const char* filename);
 
 void requestRestart(void);
 
@@ -203,6 +205,44 @@ class BrewPiWebHandler: public AsyncWebHandler
         } else
           request->send(404);
     }
+    
+    bool fileExists(String path)
+    {
+	    if(SPIFFS.exists(path)) return true;
+	    if(getEmbeddedFile(path.c_str())) return true;
+	    return false;
+    }
+	
+	void sendProgmem(AsyncWebServerRequest *request,const char* html)
+	{
+		AsyncWebServerResponse *response = request->beginResponse(String("text/html"),
+  			strlen_P(html),
+  			[=](uint8_t *buffer, size_t maxLen, size_t alreadySent) -> size_t {
+    			if (strlen_P(html+alreadySent)>maxLen) {
+	      		memcpy_P((char*)buffer, html+alreadySent, maxLen);
+    	  		return maxLen;
+    		}
+    		// Ok, last chunk
+    		memcpy_P((char*)buffer, html+alreadySent, strlen_P(html+alreadySent));
+    		return strlen_P(html+alreadySent); // Return from here to end of indexhtml
+ 	 	});
+ 	 	
+		request->send(response);  
+	}
+	
+	void sendFile(AsyncWebServerRequest *request,String path)
+	{
+		if(SPIFFS.exists(path)){
+			request->send(SPIFFS, path);
+			return;
+		}
+		//else
+		
+		const char* file=getEmbeddedFile(path.c_str());
+		if(file){
+			sendProgmem(request,file);
+		}
+	}
 
 public:
 	BrewPiWebHandler(void){}
@@ -248,7 +288,7 @@ public:
   				
   				config.printf(configFormat,name->value().c_str(),user->value().c_str(),pass->value().c_str(),protect);
   				config.close();
-				request->send(200,"text/html",saveconfightml);
+				sendProgmem(request,saveconfightml); //request->send(200,"text/html",saveconfightml);
 				requestRestart();
   			}else{
 	  			request->send(400);
@@ -290,7 +330,7 @@ public:
 
 	 		if(request->url().equals("/")){
 		 		if(!passwordLcd){
-		 			request->send(SPIFFS, path);	 		
+		 			sendFile(request,path); //request->send(SPIFFS, path);	 		
 		 			return;
 		 		}
 		 	}
@@ -306,7 +346,7 @@ public:
 	 	    if(auth && !request->authenticate(username, password))
 	        return request->requestAuthentication();
 	        
-	 		request->send(SPIFFS, path);
+	 		sendFile(request,path); //request->send(SPIFFS, path);
 		}
 	 }
 	 
@@ -322,7 +362,10 @@ public:
 				// get file
 				String path=request->url();
 	 			if(path.endsWith("/")) path +=DEFAULT_INDEX_FILE;
-				if(SPIFFS.exists(path)) return true;
+	 			DBG_PRINTF("request:%s\n",path.c_str());
+				if(fileExists(path)) return true; //if(SPIFFS.exists(path)) return true;
+				
+				DBG_PRINTF("request:%s not found\n",path.c_str());
 			}
 	 	}else if(request->method() == HTTP_DELETE && request->url() == DELETE_PATH){
 				return true;
@@ -625,6 +668,7 @@ void setup(void){
 #endif
 
 	brewpi_setup();
+	DBG_PRINTF("End Setup\n");
 }
 
 
@@ -693,6 +737,7 @@ void loop(void){
   		}
   	}
 }
+
 
 
 
