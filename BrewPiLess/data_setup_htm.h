@@ -1,3 +1,5 @@
+const char data_setup_htm[] PROGMEM =
+R"END(
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
@@ -25,3 +27,4 @@
 </div>
 </body>
 </html>
+)END";

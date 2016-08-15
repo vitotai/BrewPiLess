@@ -1,3 +1,5 @@
+const char data_testcmd_htm[] PROGMEM =
+R"END(
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
@@ -17,3 +19,4 @@
 <button onclick=clearLogs()>Clear</button>
 </body>
 </html>
+)END";

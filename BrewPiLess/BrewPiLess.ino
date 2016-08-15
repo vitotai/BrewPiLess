@@ -209,6 +209,7 @@ class BrewPiWebHandler: public AsyncWebHandler
     bool fileExists(String path)
     {
 	    if(SPIFFS.exists(path)) return true;
+
 	    if(getEmbeddedFile(path.c_str())) return true;
 	    return false;
     }
@@ -240,6 +241,7 @@ class BrewPiWebHandler: public AsyncWebHandler
 		
 		const char* file=getEmbeddedFile(path.c_str());
 		if(file){
+			DBG_PRINTF("using embedded file:%s\n",path.c_str());
 			sendProgmem(request,file);
 		}
 	}
@@ -668,7 +670,6 @@ void setup(void){
 #endif
 
 	brewpi_setup();
-	DBG_PRINTF("End Setup\n");
 }
 
 

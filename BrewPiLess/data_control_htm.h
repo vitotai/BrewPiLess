@@ -1,3 +1,5 @@
+const char data_control_htm[] PROGMEM =
+R"END(
 <!doctype html>
 <html>
 <head>
@@ -48,3 +50,4 @@ Set Fridge temp:
 </div>
 </body>
 </html>
+)END";
