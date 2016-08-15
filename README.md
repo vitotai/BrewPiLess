@@ -154,6 +154,12 @@ For example, if the method is set to **GET**, the the url will be
 
 The periodical request can be also used as a I-AM-ALIVE message. For example, if the period is set to 10 minutes, and the temperature hasn't been updated for 11 minutes,
 there must be something wrong. `/extra/brewpimon.php` is an example which is executed by cronjob every few minutes to check the updating of temperature data. The PHP will notice by email if the temperature data isn't updated in specified time.
+## Upload HTML/Javascript to ESP8266
+** In newer version, those files are embedded in the code, and it is not necessary to upload them. **
+To upload files onto ESP8266, check the following link:
+https://github.com/esp8266/Arduino/blob/master/doc/filesystem.md
+
+In newer version, the basic files are embeded. However, the file in SPIFFS takes higher prioity. That will be useful if you want to change them.
 
 ## Development tools.
 Two additional tools are available. One is web-based file manager to manuplate the files directly from the web. You can download and upload files the the web.
