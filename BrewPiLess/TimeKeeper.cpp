@@ -22,8 +22,8 @@ void TimeKeeperClass::begin(char* server1,char* server2,char* server3)
   	if(server3) sntp_setservername(2,server3);
   	sntp_set_timezone(0);
   	unsigned long secs=0;
-
-  	while (/* true */ 1)
+	int trial;
+	for(trial=0;trial< 50;trial++)
   	{
     	secs = sntp_get_current_timestamp();
     	if(secs) break;
