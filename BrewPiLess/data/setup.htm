@@ -41,6 +41,28 @@ button {
     color: #306fa9;}
 #installed-device,#detected-device { font-weight:bold; font-size:18px; padding:.5em;}
 
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+
 </style>
 <script>
 var BackupFile="/device.cfg";
@@ -122,7 +144,7 @@ add:function(idx,d){
 	div.querySelector("span.device-pin").innerHTML=PN[d.p];
 	div.querySelector("select.device-function").value=d.f;
 	div.querySelector("div.device-title").innerHTML= "Device " + idx;
-	div.querySelector("button").onclick=function(){save_device(idx);};
+	div.querySelector("button").onclick=function(){device_apply(idx);};
 	div.hardwaretype=d.h;
 	div.pinnumber=d.p;
 
@@ -161,11 +183,17 @@ function cmdfrom(idx)
 	return u;
 }
 
-function save_device(idx)
+function device_apply(idx)
 {
+	blockscreen("Updating....");
 	var u=cmdfrom(idx);
 	var cmd="U"+ JSON.stringify(u);
 	console.log(cmd);
+	
+	BWF.on('U',function(u){
+		unblockscreen();			
+	});
+
 	BWF.send(cmd);
 }
 
@@ -194,6 +222,7 @@ function backup()
 }
 function restore()
 {
+	blockscreen("restoring...");
 	BWF.load(BackupFile,function(d){
 		var list=JSON.parse(d);
 		var s=0;
@@ -201,23 +230,26 @@ function restore()
 		BWF.on('U',function(u){
 			if(++s >= list.length){
 				BWF.on('U',null);
+				unblockscreen();
 				return;
 			}
 			BWF.send("U"+JSON.stringify(list[s]));			
 		});
 		BWF.send("U"+JSON.stringify(list[s]));
-	},function(e){ alert("error load:"+e);});
+	},function(e){ alert("error load:"+e); unblockscreen();});
 }
 
 function list()
 {
+	blockscreen("Retrieving...");
+	
 	installed_list=[];
 	available_list=[];
 	document.getElementById("detected-list").innerHTML="";
 	document.getElementById("installed-list").innerHTML="";
 
     BWF.send("d{r:1}"); // # request installed devices
-    BWF.send("h{u:-1,v:1}"); //  # request available, but not installed devices
+    BWF.send("h{u:-1}"); //  # request available, but not installed devices
 }
 function erase()
 {
@@ -226,11 +258,15 @@ function erase()
 
 function listGot()
 {
+	document.getElementById("detected-list").innerHTML="";
+	document.getElementById("installed-list").innerHTML="";
+
 	var idx=0;
 	for(var i=0;i<installed_list.length;i++)
 		devices.add(idx++,installed_list[i]);
 	for(var i=0;i<available_list.length;i++)
 		devices.add(idx++,available_list[i]);
+	unblockscreen();
 }
 
 function init()
@@ -242,6 +278,15 @@ function init()
 			h:function(l){available_list=l; listGot();}
 		}
 	});
+}
+function blockscreen(t)
+{
+	document.getElementById('blockscreencontent').innerHTML=t;
+	document.getElementById('blockscreen').style.display = "block";
+}
+function unblockscreen()
+{
+	document.getElementById('blockscreen').style.display = "none";
 }
 
 </script>
@@ -258,6 +303,11 @@ function init()
 <div id="installed-list"></div>
 <div id="detected-device">Detected Device</div>
 <div id="detected-list"></div>
+</div>
+
+<div id="blockscreen" class="modal">
+  <div id="blockscreencontent" class="modal-content">
+  </div>
 </div>
 
 </body> 

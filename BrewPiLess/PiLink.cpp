@@ -251,6 +251,7 @@ void PiLink::receive(void){
 	while (piStream.available() > 0) {
 #endif
 		char inByte = read();
+//		Serial.printf("PiLinkread:%c\n",inByte);
 		switch(inByte){
 		case ' ':
 		case '\n':

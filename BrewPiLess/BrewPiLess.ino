@@ -409,6 +409,7 @@ void sseEventHandler(AsyncServerSideEventServer * server, AsyncServerSideEventCl
 
 void stringAvailable(const char *str)
 {
+	DBG_PRINTF("BroadCast:%s\n",str);
 	sse.broadcastData(str);
 }
 
