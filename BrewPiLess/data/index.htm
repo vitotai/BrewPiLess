@@ -113,6 +113,9 @@ function init()
 			console.log("error");
 			communicationError();
 			},
+		onopen:function(){
+			BWF.send("l");
+		},
 		handlers:{
 			L:function(lines){gotMsg=true; for(var i=0;i<4;i++) setLcdText("lcd-line-" + i,lines[i]);}
 		}

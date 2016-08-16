@@ -433,6 +433,14 @@ function onload(){
 				console.log("error connect to BrwePiLess!");
 				initComp();
 			},
+			onopen:function(){
+				BWF.send("c"); // request configuration
+				t=setTimeout(function(){
+				console.log("Timeout of C command");
+				initComp();
+				},5000);
+			
+			},
 			handlers:{
 				C:function(s){
 					var setting={valid:true,minDegree:s.tempSetMin,maxDegree:s.tempSetMax,tempUnit:s.tempFormat};
@@ -444,13 +452,7 @@ function onload(){
 					initComp();
 				}
 			}
-		});
-	
-		BWF.send("c"); // request configuration
-		t=setTimeout(function(){
-			console.log("Timeout of C command");
-			initComp();
-		},5000);
+		});	
 	}
 
 	//get current profile

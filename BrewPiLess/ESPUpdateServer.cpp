@@ -24,6 +24,9 @@ static ESP8266HTTPUpdateServer httpUpdater;
 #endif
 
 #if DEVELOPMENT_FILEMANAGER == true
+
+#include "data_edit_html_gz.h"
+
 //holds the current upload
 static File fsUploadFile;
 
@@ -147,7 +150,9 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
   server.on("/list", HTTP_GET, handleFileList);
   //load editor
   server.on(FILE_MANAGEMENT_PATH, HTTP_GET, [](){
-    if(!handleFileRead("/edit.htm")) server.send(404, "text/plain", "FileNotFound");
+//    if(!handleFileRead("/edit.htm")) server.send(404, "text/plain", "FileNotFound");
+	  server.sendHeader("Content-Encoding", "gzip");
+	   server.send_P(200,"text/html",edit_htm_gz,edit_htm_gz_len);
   });
   //create file
   server.on("/edit", HTTP_PUT, handleFileCreate);

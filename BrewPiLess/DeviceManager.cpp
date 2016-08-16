@@ -387,11 +387,11 @@ void DeviceManager::parseDeviceDefinition()
 	// todo - should ideally check if the eeprom is correctly initialized.
 	eepromManager.fetchDevice(original, dev.id);
 	memcpy(&target, &original, sizeof(target));
-	
+#ifndef ESP8266_ONE	
 	piLink.print("Dev Chamber: %d, Dev Beer: %d, Dev Function: %d, Dev Hardware: %d, Dev PinNr: %d\r\n", dev.chamber, dev.beer, dev.deviceFunction, dev.deviceHardware, dev.pinNr);
 	piLink.print("target Chamber: %d, target Beer: %d, target Function: %d, target Hardware: %d, target PinNr: %d\r\n", target.chamber, 
 		target.beer, target.deviceFunction, target.deviceHardware, target.hw.pinNr);
-
+#endif
 	assignIfSet(dev.chamber, &target.chamber);
 	assignIfSet(dev.beer, &target.beer);
 	assignIfSet(dev.deviceFunction, (uint8_t*)&target.deviceFunction);
@@ -409,14 +409,18 @@ void DeviceManager::parseDeviceDefinition()
 	assignIfSet(dev.invert, (uint8_t*)&target.hw.invert);
 		
 	if (dev.address[0] != 0xFF) {// first byte is family identifier. I don't have a complete list, but so far 0xFF is not used.
+#ifndef ESP8266_ONE		
 		piLink.print("Dev Address: %s, Target Address: %s\r\n", dev.address, target.hw.address);
+#endif
 		memcpy(target.hw.address, dev.address, 8);
 	}
 	assignIfSet(dev.deactivate, (uint8_t*)&target.hw.deactivate);
 	
 	// setting function to none clears all other fields.
 	if (target.deviceFunction==DEVICE_NONE) {
+#ifndef ESP8266_ONE	
 		piLink.print("Function set to NONE\r\n");
+#endif
 		clear((uint8_t*)&target, sizeof(target));
 	}
 	

@@ -48,7 +48,13 @@ extern "C" {
 
 #include "ESPUpdateServer.h"
 #include "WifiSetup.h"
+
+#define UseWebSocket true
+
+#if UseWebSocket != true
 #include "AsyncServerSideEvent.h"
+#endif
+
 #include "BrewPiProxy.h"
 
 
@@ -83,10 +89,14 @@ R"END(
 #define PROFILE_FILENAME "/brewing.json"
 #define CONFIG_FILENAME "/brewpi.cfg"
 
+#if UseWebSocket == true
+#define WS_PATH 		"/websocket"
+#else
 #define SSE_PATH 		"/getline"
+#endif
+
 #define POLLING_PATH 	"/getline_p"
 #define PUTLINE_PATH	"/putline"
-
 
 #ifdef ENABLE_LOGGING
 #define LOGGING_PATH	"/log"
@@ -117,8 +127,9 @@ BrewKeeper brewKeeper([](const char* str){ brewPi.putLine(str);});
 DataLogger dataLogger;
 #endif
 
+#if UseWebSocket != true
 AsyncServerSideEventServer sse(SSE_PATH);
-
+#endif
 // use in sprintf, put into PROGMEM complicates it.
 const char *confightml=R"END(
 <html><head><title>Configuration</title></head><body>
@@ -386,6 +397,71 @@ public:
 
 BrewPiWebHandler brewPiWebHandler;
 
+
+#if UseWebSocket == true
+
+AsyncWebSocket ws(WS_PATH);
+
+void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
+{
+	if(type == WS_EVT_CONNECT){
+    	DBG_PRINTF("ws[%s][%u] connect\n", server->url(), client->id());
+    	//client->printf("Hello Client %u :)", client->id());
+    	client->ping();
+  	} else if(type == WS_EVT_DISCONNECT){
+    	DBG_PRINTF("ws[%s][%u] disconnect: %u\n", server->url(), client->id());
+  	} else if(type == WS_EVT_ERROR){
+    	DBG_PRINTF("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
+  	} else if(type == WS_EVT_PONG){
+    	DBG_PRINTF("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len)?(char*)data:"");
+  	} else if(type == WS_EVT_DATA){
+    	AwsFrameInfo * info = (AwsFrameInfo*)arg;
+    	String msg = "";
+    	if(info->final && info->index == 0 && info->len == len){
+      		//the whole message is in a single frame and we got all of it's data
+      		DBG_PRINTF("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
+
+	        for(size_t i=0; i < info->len; i++) {
+        	  //msg += (char) data[i];
+        	  brewPi.write(data[i]);
+        	}
+		    //DBG_PRINTF("%s\n",msg.c_str());
+
+		} else {
+      		//message is comprised of multiple frames or the frame is split into multiple packets
+      		if(info->index == 0){
+        		if(info->num == 0)
+          		DBG_PRINTF("ws[%s][%u] %s-message start\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
+        		DBG_PRINTF("ws[%s][%u] frame[%u] start[%llu]\n", server->url(), client->id(), info->num, info->len);
+      		}
+
+      		DBG_PRINTF("ws[%s][%u] frame[%u] %s[%llu - %llu]: ", server->url(), client->id(), info->num, (info->message_opcode == WS_TEXT)?"text":"binary", info->index, info->index + len);
+
+	        for(size_t i=0; i < info->len; i++) {
+    	    	//msg += (char) data[i];
+    	    	brewPi.write(data[i]);
+        	}
+		
+      		//DBG_PRINTF("%s\n",msg.c_str());
+
+			if((info->index + len) == info->len){
+				DBG_PRINTF("ws[%s][%u] frame[%u] end[%llu]\n", server->url(), client->id(), info->num, info->len);
+        		if(info->final){
+        			DBG_PRINTF("ws[%s][%u] %s-message end\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
+        		}
+      		}
+      	}
+    }
+}
+
+void stringAvailable(const char *str)
+{
+	DBG_PRINTF("BroadCast:%s\n",str);
+	ws.textAll(str,strlen(str));
+}
+
+#else //#if UseWebSocket == true
+
 uint8_t clientCount;
 void sseEventHandler(AsyncServerSideEventServer * server, AsyncServerSideEventClient * client, SseEventType type)
 {
@@ -412,6 +488,7 @@ void stringAvailable(const char *str)
 	DBG_PRINTF("BroadCast:%s\n",str);
 	sse.broadcastData(str);
 }
+#endif //#if UseWebSocket == true
 
 //{brewpi
 
@@ -632,8 +709,13 @@ void setup(void){
 
 	//3.1 Normal serving pages 
 	//3.1.1 status report through SSE
+#if UseWebSocket == true
+	ws.onEvent(onWsEvent);
+  	server.addHandler(&ws);
+#else	
 	sse.onEvent(sseEventHandler);
 	server.addHandler(&sse);
+#endif
 
 	server.addHandler(&brewPiWebHandler);
 	//3.1.2 SPIFFS is part of the serving pages

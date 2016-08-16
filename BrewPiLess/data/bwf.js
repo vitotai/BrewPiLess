@@ -56,38 +56,37 @@ send:function(data,opt){
 	opt = (typeof opt == "undefined")? {}:opt;
 	console.log("snd:" + data);
 	var b=this;
-	invoke({m:"POST", url:"/putline",mime:"application/x-www-form-urlencoded",
-		data:"data="+encodeURI(data),
-		success:function(){if(typeof opt.success !=="undefined") opt.success();},
-		fail:function(a){if(typeof opt.fail !=="undefined") opt.fail(a); else b.error(a);}
-	});
+	b.ws.send(data);
 },
 init:function(arg){
 	var b=this;
-	b.error = (typeof arg.error == "undefined")? function(){}:arg.error;
+	b.error = (typeof arg.error == "undefined")? function(e){alert("error:"+e);}:arg.error;
 	b.handlers=(typeof arg.handlers == "undefined")? {}:arg.handlers;
 	b.raw=(typeof arg.raw == "undefined")? null:arg.raw;
+	b.onopen=(typeof arg.onopen == "undefined")? function(){}:arg.onopen;
+	b.onclose=(typeof arg.onopen == "undefined")? function(){console.log("connection close");}:arg.onclose;
 	
-	if(typeof EventSource ==="undefined") {
-		console.log("not support SSE");
-		b.sse=false;
-		var p=(typeof arg.polling == "undefined")? 5000:arg.polling;
-		// setup timer
-		setInterval(function(){
-			invoke({m:"GET",url:"/getline_p",
-				success:function(d){b.process(d);},
-				fail:function(a){b.error(a);}
-			});
-		},p);
+	if(typeof WebSocket ==="undefined") {
+		console.log("not support S");
+		alert("WebSocket not Supporte");
 		return;
 	}
-	
-	var es = new EventSource("/getline");
-	es.onmessage = function(e) {
+	b.ws= new WebSocket('ws://'+document.location.host+'/websocket');
+
+    b.ws.onopen = function(){
+       console.log("Connected");
+       b.onopen();
+    };
+    b.ws.onclose = function(){
+      console.log("Disconnected");
+      b.onclose();
+    };
+    b.ws.onerror = function(e){
+        console.log("ws error", e);
+        b.error(e);
+    };
+    b.ws.onmessage = function(e){
 		b.process(e.data);
-	};
-	es.onerror=function(){
-		b.error(-2);
 	};
 },
 save:function(file,data,success,fail){

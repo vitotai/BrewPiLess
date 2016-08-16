@@ -27,7 +27,7 @@
 #define MINIMUM_TEMPERATURE_SETTING_PERIOD 60
 
 #define DEVELOPMENT_OTA true
-#define DEVELOPMENT_FILEMANAGER true
+#define DEVELOPMENT_FILEMANAGER false
 
 // for web interface update
 #define UPDATE_SERVER_PORT 8008
