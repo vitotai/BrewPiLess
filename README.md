@@ -72,23 +72,22 @@ This is default configuration, you can change it in `config.h`.
 
 | ESP8266 GPIO   | NodeMcu Label | Connect to       |
 | -------------- |:-------------:| :--------------------|
-| GPIO12         | D6            | Temperature Sensors |
-| GPIO4          | D2            | I2C SDA             |
+| GPIO16         | D0            | Heating Actuator*   |
 | GPIO5          | D1            | I2C SCL             |
-| GPIO0          | D3            | rotary pin A        |
-| GPIO13         | D7            | rotary pin B        |
+| GPIO4          | D2            | I2C SDA             |
+| GPIO0          | D3            | Door (not used)*    |
 | GPIO2          | D4            | rotary pin PushDown |
 | GPIO14         | D5            | Cooling Actuator*   |
-| GPIO16         | D0            | Heating Actuator*   |
+| GPIO12         | D6            | Temperature Sensors |
+| GPIO13         | D7            | rotary pin B        |
+| GPIO15         | D8            | rotary pin A        |
 
 *cooling/heating actuator PINs are configurable.
 
 Note: The GPIOs of ESP8266 are not all **General Purpose**. Some of them has special functions, and might not be usable. For example, some PINs on my NodeMcu board don't work normally.
-
 **!!Important !!** It is hightly recommended to pull up GPIO0 and GPIO2 while pull down GPIO15 so that the system will start up normally instead of staying in bootrom mode in case the system crashes. Updating the system configuration and firmware also result in restart of system, and sometimes this issue happens if the circuit isn't implementated. Check this url for detail information:
-
 https://github.com/esp8266/Arduino/blob/master/doc/boards.md#minimal-hardware-setup-for-bootloading-and-usage
-
+**!! If your ESP8266 doesn't boot up normally, try removing the connection to Rotary module. The rotary module might have pull-up or pull-down which prevents normal bootup.!!**
 
 ## Logging temperature data to Google Sheets
 Due to the resource limit of ESP8266, establishment of **HTTPS** connection while serving other functions will crash the system. 
