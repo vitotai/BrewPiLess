@@ -689,6 +689,9 @@ void setup(void){
 	#ifdef ENABLE_LOGGING
   	dataLogger.loadConfig();
   	#endif
+  	
+  	WiFi.hostname(hostnetworkname);
+  	
 	//1. Start WiFi 
 	WiFiSetup::begin(hostnetworkname);
 

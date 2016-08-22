@@ -198,29 +198,19 @@
 #define NODEMCU_PIN_D9 3	// Do not use - USB
 #define NODEMCU_PIN_D10 1	// Do not use - USB
 
-
-#if 1
-
-#define coolingPin NODEMCU_PIN_D3
-#define heatingPin NODEMCU_PIN_D8
-#define doorPin    NODEMCU_PIN_D0
-#define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
-#else
-
-#define coolingPin NODEMCU_PIN_D0
-#define heatingPin NODEMCU_PIN_D8
-#define doorPin    NODEMCU_PIN_D6
-#define oneWirePin NODEMCU_PIN_D3  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
-
-#endif
-
 #define PIN_SDA NODEMCU_PIN_D2
 #define PIN_SCL NODEMCU_PIN_D1
-#define IIC_LCD_ADDRESS 0x27
+#define IIC_LCD_ADDRESS 0x3F //0x27
 #define BREWPI_IIC_LCD 1
+#define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
+
+
+#define coolingPin NODEMCU_PIN_D5
+#define heatingPin NODEMCU_PIN_D0
+#define doorPin    NODEMCU_PIN_D3
+
 
 #define BACKLIGHT_AUTO_OFF_PERIOD 600
-
 
 // Pay attention when changing the pins for the rotary encoder.
 // They should be connected to external interrupt INT0, INT1 and INT3
@@ -228,7 +218,7 @@
 //#define rotaryBPin 1 // INT3
 //#define rotarySwitchPin 0 // INT2
 
-#define rotaryAPin NODEMCU_PIN_D5
+#define rotaryAPin NODEMCU_PIN_D8
 #define rotaryBPin NODEMCU_PIN_D7
 #define rotarySwitchPin NODEMCU_PIN_D4
 

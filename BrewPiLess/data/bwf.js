@@ -58,19 +58,8 @@ send:function(data,opt){
 	var b=this;
 	b.ws.send(data);
 },
-init:function(arg){
+connect:function(){
 	var b=this;
-	b.error = (typeof arg.error == "undefined")? function(e){alert("error:"+e);}:arg.error;
-	b.handlers=(typeof arg.handlers == "undefined")? {}:arg.handlers;
-	b.raw=(typeof arg.raw == "undefined")? null:arg.raw;
-	b.onopen=(typeof arg.onopen == "undefined")? function(){}:arg.onopen;
-	b.onclose=(typeof arg.onopen == "undefined")? function(){console.log("connection close");}:arg.onclose;
-	
-	if(typeof WebSocket ==="undefined") {
-		console.log("not support S");
-		alert("WebSocket not Supporte");
-		return;
-	}
 	b.ws= new WebSocket('ws://'+document.location.host+'/websocket');
 
     b.ws.onopen = function(){
@@ -79,6 +68,9 @@ init:function(arg){
     };
     b.ws.onclose = function(){
       console.log("Disconnected");
+      setTimeout(function(){
+      	b.connect();
+      },1500);
       b.onclose();
     };
     b.ws.onerror = function(e){
@@ -88,6 +80,21 @@ init:function(arg){
     b.ws.onmessage = function(e){
 		b.process(e.data);
 	};
+},
+init:function(arg){
+	var b=this;
+	this.error = (typeof arg.error == "undefined")? function(e){alert("error:"+e);}:arg.error;
+	this.handlers=(typeof arg.handlers == "undefined")? {}:arg.handlers;
+	this.raw=(typeof arg.raw == "undefined")? null:arg.raw;
+	this.onopen=(typeof arg.onopen == "undefined")? function(){}:arg.onopen;
+	this.onclose=(typeof arg.onclose == "undefined")? function(){console.log("connection close");}:arg.onclose;
+	if(typeof WebSocket ==="undefined") {
+		console.log("not support S");
+		alert("WebSocket not Supporte");
+		return;
+	}
+
+	b.connect();
 },
 save:function(file,data,success,fail){
 	invoke({m:"POST",url:"/fputs",

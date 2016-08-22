@@ -75,12 +75,13 @@ This is default configuration, you can change it in `config.h`.
 | GPIO12         | D6            | Temperature Sensors |
 | GPIO4          | D2            | I2C SDA             |
 | GPIO5          | D1            | I2C SCL             |
-| GPIO14         | D5            | rotary pin A        |
+| GPIO0          | D3            | rotary pin A        |
 | GPIO13         | D7            | rotary pin B        |
 | GPIO2          | D4            | rotary pin PushDown |
-| GPIO0          | D3            | Cooling Actuator*   |
+| GPIO14         | D5            | Cooling Actuator*   |
+| GPIO16         | D0            | Heating Actuator*   |
 
-*cooling actuator PIN is configurable.
+*cooling/heating actuator PINs are configurable.
 
 Note: The GPIOs of ESP8266 are not all **General Purpose**. Some of them has special functions, and might not be usable. For example, some PINs on my NodeMcu board don't work normally.
 
