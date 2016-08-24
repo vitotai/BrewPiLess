@@ -49,15 +49,12 @@ extern "C" {
 #include "ESPUpdateServer.h"
 #include "WifiSetup.h"
 
-#define UseWebSocket true
-
-#if UseWebSocket != true
-#include "AsyncServerSideEvent.h"
-#endif
-
 #include "BrewPiProxy.h"
 
-
+//WebSocket seems to be unstable, at least on iPhone.
+//Go back to ServerSide Event.
+#define UseWebSocket false
+#define UseServerSideEvent true
 
 /**************************************************************************************/
 /* Start of Configuration 															  */
@@ -89,11 +86,8 @@ R"END(
 #define PROFILE_FILENAME "/brewing.json"
 #define CONFIG_FILENAME "/brewpi.cfg"
 
-#if UseWebSocket == true
 #define WS_PATH 		"/websocket"
-#else
 #define SSE_PATH 		"/getline"
-#endif
 
 #define POLLING_PATH 	"/getline_p"
 #define PUTLINE_PATH	"/putline"
@@ -127,9 +121,10 @@ BrewKeeper brewKeeper([](const char* str){ brewPi.putLine(str);});
 DataLogger dataLogger;
 #endif
 
-#if UseWebSocket != true
-AsyncServerSideEventServer sse(SSE_PATH);
+#if UseServerSideEvent == true
+AsyncEventSource sse(SSE_PATH);
 #endif
+
 // use in sprintf, put into PROGMEM complicates it.
 const char *confightml=R"END(
 <html><head><title>Configuration</title></head><body>
@@ -399,9 +394,7 @@ BrewPiWebHandler brewPiWebHandler;
 
 
 #if UseWebSocket == true
-
 AsyncWebSocket ws(WS_PATH);
-
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
 {
 	if(type == WS_EVT_CONNECT){
@@ -453,42 +446,20 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
       	}
     }
 }
-
-void stringAvailable(const char *str)
-{
-	DBG_PRINTF("BroadCast:%s\n",str);
-	ws.textAll(str,strlen(str));
-}
-
-#else //#if UseWebSocket == true
-
-uint8_t clientCount;
-void sseEventHandler(AsyncServerSideEventServer * server, AsyncServerSideEventClient * client, SseEventType type)
-{
-//	DBG_PRINTF("eventHandler type:\n");
-//	DBG_PRINTF(type);
-	
-	if(type ==SseEventConnected){
-
-		clientCount ++;
-		DBG_PRINTF("***New connection, current client number:%d\n",clientCount);
-
-		char *line=brewPi.getLastLine();
-		
-		if(line[0]!='\0') client->sendData(line);
-		else client->sendData("");
-	}else if (type ==SseEventDisconnected){
-		clientCount --;
-		DBG_PRINTF("***Disconnected, current client number:%d\n",clientCount);
-	}
-}
-
-void stringAvailable(const char *str)
-{
-	DBG_PRINTF("BroadCast:%s\n",str);
-	sse.broadcastData(str);
-}
 #endif //#if UseWebSocket == true
+
+void stringAvailable(const char *str)
+{
+	DBG_PRINTF("BroadCast:%s\n",str);
+
+#if UseWebSocket == true
+	ws.textAll(str,strlen(str));
+#endif
+
+#if UseServerSideEvent == true
+	sse.send(str);
+#endif
+}
 
 //{brewpi
 
@@ -715,8 +686,12 @@ void setup(void){
 #if UseWebSocket == true
 	ws.onEvent(onWsEvent);
   	server.addHandler(&ws);
-#else	
-	sse.onEvent(sseEventHandler);
+#endif
+
+#if UseServerSideEvent == true
+	sse.onConnect([](AsyncEventSourceClient *client){
+		DBG_PRINTF("SSE Connect\n");
+  	});
 	server.addHandler(&sse);
 #endif
 

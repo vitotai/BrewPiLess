@@ -40,7 +40,7 @@ process:function(msg){
 		this.raw(msg);
 		return;
 	}
-	//console.log("rcv:" + msg);
+	console.log("rcv:" + msg);
 	eval("m={" + msg + "}");
 //	console.log("json:"+m);
 	for(var key in m){ 
@@ -54,46 +54,50 @@ on:function(lb,handler){
 },
 send:function(data,opt){
 	opt = (typeof opt == "undefined")? {}:opt;
-	//console.log("snd:" + data);
+	console.log("snd:" + data);
 	var b=this;
-	b.ws.send(data);
+	invoke({m:"POST", url:"/putline",mime:"application/x-www-form-urlencoded",
+		data:"data="+encodeURI(data),
+		success:function(){if(typeof opt.success !=="undefined") opt.success();},
+		fail:function(a){if(typeof opt.fail !=="undefined") opt.fail(a); else b.error(a);}
+	});
 },
 connect:function(){
 	var b=this;
-	b.ws= new WebSocket('ws://'+document.location.host+'/websocket');
-
-    b.ws.onopen = function(){
-       console.log("Connected");
-       b.onopen();
-    };
-    b.ws.onclose = function(){
-      console.log("Disconnected");
-      setTimeout(function(){
-      	b.connect();
-      },1500);
-      b.onclose();
-    };
-    b.ws.onerror = function(e){
-        console.log("ws error", e);
-        b.error(e);
-    };
-    b.ws.onmessage = function(e){
+	var es = new EventSource("/getline");
+	es.onmessage = function(e) {
 		b.process(e.data);
 	};
+	es.onerror=function(){
+		setTimeout(function(){
+			b.connnect();
+		},3100);
+//		b.error(-2);
+	};
+	setTimeout(function(){
+		b.onopen();
+	},1000);
 },
 init:function(arg){
 	var b=this;
-	this.error = (typeof arg.error == "undefined")? function(e){alert("error:"+e);}:arg.error;
-	this.handlers=(typeof arg.handlers == "undefined")? {}:arg.handlers;
-	this.raw=(typeof arg.raw == "undefined")? null:arg.raw;
-	this.onopen=(typeof arg.onopen == "undefined")? function(){}:arg.onopen;
-	this.onclose=(typeof arg.onclose == "undefined")? function(){console.log("connection close");}:arg.onclose;
-	if(typeof WebSocket ==="undefined") {
-		console.log("not support S");
-		alert("WebSocket not Supporte");
+	b.error = (typeof arg.error == "undefined")? function(){}:arg.error;
+	b.handlers=(typeof arg.handlers == "undefined")? {}:arg.handlers;
+	b.raw=(typeof arg.raw == "undefined")? null:arg.raw;
+	b.onopen=(typeof arg.onopen == "undefined")? function(){}:arg.onopen;
+	
+	if(typeof EventSource ==="undefined") {
+		console.log("not support SSE");
+		b.sse=false;
+		var p=(typeof arg.polling == "undefined")? 5000:arg.polling;
+		// setup timer
+		setInterval(function(){
+			invoke({m:"GET",url:"/getline_p",
+				success:function(d){b.process(d);},
+				fail:function(a){b.error(a);}
+			});
+		},p);
 		return;
 	}
-
 	b.connect();
 },
 save:function(file,data,success,fail){
