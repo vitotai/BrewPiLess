@@ -262,7 +262,7 @@ void LcdDisplay::printState(void){
 	else if(state == WAITING_TO_COOL || state == WAITING_TO_HEAT){
 		time = tempControl.getWaitTime();
 	}
-	if(time != UINT_MAX){
+	if(time != UINT16_MAX){
 		char timeString[10];
 #if DISPLAY_TIME_HMS  // 96 bytes more space required. 
 		unsigned int minutes = time/60;		
