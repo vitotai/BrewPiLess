@@ -249,7 +249,7 @@ function list()
 	document.getElementById("installed-list").innerHTML="";
 
     BWF.send("d{r:1}"); // # request installed devices
-    BWF.send("h{u:-1}"); //  # request available, but not installed devices
+    BWF.send("h{u:-1,v:1}"); //  # request available, but not installed devices
 }
 function erase()
 {
