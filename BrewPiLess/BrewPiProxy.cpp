@@ -8,7 +8,7 @@
 #include "PiLink.h"
 
 #include "Version.h"
-#include "Temperatureformats.h"
+#include "TemperatureFormats.h"
 #include "TempControl.h"
 #include "Display.h"
 #include "JsonKeys.h"

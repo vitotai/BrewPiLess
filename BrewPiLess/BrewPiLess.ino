@@ -47,7 +47,7 @@ extern "C" {
 
 
 #include "ESPUpdateServer.h"
-#include "WifiSetup.h"
+#include "WiFiSetup.h"
 
 #include "BrewPiProxy.h"
 
