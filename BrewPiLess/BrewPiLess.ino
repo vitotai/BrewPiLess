@@ -393,6 +393,28 @@ public:
 BrewPiWebHandler brewPiWebHandler;
 
 
+class AppleCNAHandler: public AsyncWebHandler 
+{
+	String _domainname;
+public:
+	AppleCNAHandler(){}
+	void setDomainName(const char* str){ _domainname=String(str);}
+	void handleRequest(AsyncWebServerRequest *request){
+		request->send(200, "text/html", "<HTML><HEAD><TITLE>Success</TITLE></HEAD><BODY>Success</BODY></HTML>");
+	}
+	bool canHandle(AsyncWebServerRequest *request){
+		String host=request->host();
+		DBG_PRINTF("Request host:");
+		DBG_PRINTF(host.c_str());
+  		if(host.indexOf(_domainname) <0){
+  			return true;
+  		}
+  		return false;
+	}
+};
+
+AppleCNAHandler appleCNAHandler;
+
 #if UseWebSocket == true
 AsyncWebSocket ws(WS_PATH);
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
@@ -582,16 +604,14 @@ void brewpiLoop(void)
 
 //}brewpi
 
-unsigned long _time;
-byte _wifiState;
-#define WiFiStateConnected 0
-#define WiFiStateWaitToConnect 1
-#define WiFiStateConnecting 2
 
 #define SystemStateOperating 0
 #define SystemStateRestartPending 1
 #define SystemStateWaitRestart 2
 
+#define TIME_RESTART_TIMEOUT 3000
+
+static unsigned long _time;
 byte _systemState=SystemStateOperating;
 
 void requestRestart(void)
@@ -601,12 +621,7 @@ void requestRestart(void)
 
 #define IS_RESTARTING (_systemState!=SystemStateOperating)
 
-#define TIME_WAIT_TO_CONNECT 10000
-#define TIME_RECONNECT_TIMEOUT 10000
-#define TIME_RESTART_TIMEOUT 3000
-
 void setup(void){
-	_wifiState=WiFiStateConnected;
 	
 	#if SerialDebug == true
   	DebugPort.begin(115200);
@@ -664,10 +679,11 @@ void setup(void){
   	WiFi.hostname(hostnetworkname);
   	
 	//1. Start WiFi 
-	WiFiSetup::begin(hostnetworkname);
+	WiFiSetup.begin(hostnetworkname);
 
 	// get time
-	initTime();
+	if(!WiFiSetup.isApMode())
+		initTime();
 
   	DBG_PRINTF("Connected!");
 
@@ -683,6 +699,9 @@ void setup(void){
 
 	//3.1 Normal serving pages 
 	//3.1.1 status report through SSE
+	appleCNAHandler.setDomainName(hostnetworkname);
+	server.addHandler(&appleCNAHandler);
+	
 #if UseWebSocket == true
 	ws.onEvent(onWsEvent);
   	server.addHandler(&ws);
@@ -761,35 +780,9 @@ void loop(void){
  			brewPi.getTemperature(pBeerTemp,pBeerSet,pFridgeTemp,pFridgeSet);
  		});
  	#endif
- 	if(WiFi.status() != WL_CONNECTED && !IS_RESTARTING)
- 	{
- 		if(_wifiState==WiFiStateConnected)
- 		{
-			_time=millis();
-			_wifiState = WiFiStateWaitToConnect;
-		}
-		else if(_wifiState==WiFiStateWaitToConnect)
-		{
-			if((millis() - _time) > TIME_WAIT_TO_CONNECT)
-			{
-				WiFi.begin();
-				_time=millis();
-				_wifiState = WiFiStateConnecting;
-			}
-		}
-		else if(_wifiState==WiFiStateConnecting)
-		{
-			if((millis() - _time) > TIME_RECONNECT_TIMEOUT){
-				_time=millis();
-				_wifiState = WiFiStateWaitToConnect;
-			}
-		}
- 	}
- 	else
- 	{
- 		_wifiState=WiFiStateConnected;
-  	}
-  	
+ 	
+	if(!IS_RESTARTING)	WiFiSetup.stayConnected();
+	  	
   	if(_systemState ==SystemStateRestartPending){
 	  	_time=millis();
 	  	_systemState =SystemStateWaitRestart;
