@@ -55,7 +55,7 @@ extern "C" {
 //Go back to ServerSide Event.
 #define UseWebSocket false
 #define UseServerSideEvent true
-
+#define ResponseAppleCNA true
 /**************************************************************************************/
 /* Start of Configuration 															  */
 /**************************************************************************************/
@@ -392,6 +392,7 @@ public:
 
 BrewPiWebHandler brewPiWebHandler;
 
+#if ResponseAppleCNA == true
 
 class AppleCNAHandler: public AsyncWebHandler 
 {
@@ -413,7 +414,10 @@ public:
 	}
 };
 
+
+
 AppleCNAHandler appleCNAHandler;
+#endif //#if ResponseAppleCNA == true
 
 #if UseWebSocket == true
 AsyncWebSocket ws(WS_PATH);
@@ -681,17 +685,17 @@ void setup(void){
 	//1. Start WiFi 
 	WiFiSetup.begin(hostnetworkname);
 
-	// get time
-	if(!WiFiSetup.isApMode())
-		initTime();
-
   	DBG_PRINTF("Connected!");
 
-	if (!MDNS.begin(hostnetworkname)) {
-		DBG_PRINTF("Error setting mDNS responder");
-	}	
-	MDNS.addService("http", "tcp", 80);
+	// get time
+	if(!WiFiSetup.isApMode()){
+		 initTime();
 
+		if (!MDNS.begin(hostnetworkname)) {
+			DBG_PRINTF("Error setting mDNS responder");
+		}	
+		MDNS.addService("http", "tcp", 80);
+	}
 	// TODO: SSDP responder
 
 	
@@ -699,8 +703,11 @@ void setup(void){
 
 	//3.1 Normal serving pages 
 	//3.1.1 status report through SSE
+
+#if ResponseAppleCNA == true	
 	appleCNAHandler.setDomainName(hostnetworkname);
 	server.addHandler(&appleCNAHandler);
+#endif 
 	
 #if UseWebSocket == true
 	ws.onEvent(onWsEvent);
