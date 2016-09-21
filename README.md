@@ -12,7 +12,7 @@ BrewPi related configuration is defined in `config.h` while networking related c
 ## Additional Libraries
 You will need the ESP8266/Arduino environment, as well as the following libraries.
  * ArduinoJson https://github.com/bblanchon/ArduinoJson
- * WiFiManager https://github.com/tzapu/WiFiManager
+ * WiFiManager (my branch) https://github.com/vitotai/WiFiManager
  * ESPAsyncTCP https://github.com/me-no-dev/ESPAsyncTCP 
  * ESPAsyncWebServer https://github.com/me-no-dev/ESPAsyncWebServer 
  * ESP8266HTTPUpdateServer (newer version is needed. you might need to manually download the files.) https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer
@@ -29,6 +29,7 @@ You will need the ESP8266/Arduino environment, as well as the following librarie
  * Temperature logging to specified destination. 
  * Web-based OTA firmware update.
  * Web-based network setting
+ * **(NEW) SoftAP mode**
  
 ## Usage
 ### Setup WiFi network setting.
@@ -38,6 +39,15 @@ setup a AP named `brewpi`. The network setting can be done through the web page 
 Please check URL for more detail.
 
 https://github.com/tzapu/WiFiManager
+
+**(New)** After **three minutes**, ESP8266 will proceed to enter soft AP mode. That means you have olny three minutes to setup the network. 
+### Soft AP mode
+BrewPiLess now can run in AP mode, which enables it to run stand alone. The newly modified WiFiManager has a new option, "Soft AP Mode". Soft AP mode will also be entered if the network setting is not configured in three minutes (and previous connected network doesn't exist, or there is no previously connected network.)
+**This design is to enable recovery from power shortage or system reset.** Without this feature, BrewPiLess will hang at the network setting state and won't perform temperature management funcitons.
+
+However, the scheduled temperature management, aka Beer Profile mode, needs the "time" information to manage the temperature. NTP server will not be accessible without internet connection. Therefore, manual setup of "time" is necessary in this mode. In page of "Temperature Management", aka /control.htm, a SET TIME button will be shown when the time of ESP8266 is far away from the computer/phone. Pressing that button will set the time of ESP8266 to the time of the computer/phone, or the browser to be exact.
+
+**To enable automatic recovery from power shortage or system reset**, the time informatoin is saved periodically and restored at boot-up if NTP is not accessible, which means the duration of power shortage is assumed to be zero. If the power shortage lasts too long, the shedule will not be on track. Without a RTC, this might be the best I can do.
 
 ### Service Page
  
