@@ -56,6 +56,7 @@ extern "C" {
 #define UseWebSocket false
 #define UseServerSideEvent true
 #define ResponseAppleCNA true
+#define CaptivePortalTimeout 180
 /**************************************************************************************/
 /* Start of Configuration 															  */
 /**************************************************************************************/
@@ -98,6 +99,7 @@ R"END(
 
 #define CONFIG_PATH		"/config"
 #define TIME_PATH       "/time"
+#define RESETWIFI_PATH       "/erasewifisetting"
 
 #define FPUTS_PATH       "/fputs"
 #define FLIST_PATH       "/list"
@@ -146,11 +148,14 @@ Configuration Saved. Wait for restart...
 
 extern const char* getEmbeddedFile(const char* filename);
 
-void requestRestart(void);
+void requestRestart();
 
-void initTime(void)
+void initTime(bool connected)
 {  	
-  	TimeKeeper.begin("time.nist.gov","time.windows.com","de.pool.ntp.org");
+	if(connected)
+	  	TimeKeeper.begin("time.nist.gov","time.windows.com","de.pool.ntp.org");
+	else
+		TimeKeeper.begin();
 }
 
 class BrewPiWebHandler: public AsyncWebHandler 
@@ -302,11 +307,24 @@ public:
 	  			request->send(400);
   			}
 	 	}else if(request->method() == HTTP_GET &&  request->url() == TIME_PATH){
-
 			AsyncResponseStream *response = request->beginResponseStream("application/json");
 			response->printf("{\"t\":\"%s\",\"e\":%ld}",TimeKeeper.getDateTimeStr(),TimeKeeper.getTimeSeconds());
 			request->send(response);
-	 	
+		}else if(request->method() == HTTP_POST &&  request->url() == TIME_PATH){
+			if(request->hasParam("time", true)){
+  				AsyncWebParameter* tvalue = request->getParam("time", true);
+  				DBG_PRINTF("Set Time:%ld\n",tvalue->value().toInt());
+	 			TimeKeeper.setCurrentTime(tvalue->value().toInt());
+	 			request->send(200, "text/plain;", "");
+	 		}else{
+	 			request->send(400);
+	 		}
+	 	}else if(request->method() == HTTP_GET &&  request->url() == RESETWIFI_PATH){
+	 	    if(!request->authenticate(username, password))
+	        return request->requestAuthentication();
+		 	request->send(200,"text/html","Done, restarting..");
+			WiFi.disconnect();
+			requestRestart();
 	 	}else if(request->method() == HTTP_POST &&  request->url() == FLIST_PATH){
 	 	    if(!request->authenticate(username, password))
 	        return request->requestAuthentication();
@@ -361,6 +379,7 @@ public:
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET){
 	 		if(request->url() == POLLING_PATH || request->url() == CONFIG_PATH || request->url() == TIME_PATH 
+	 		|| request->url() == RESETWIFI_PATH
 	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
 	 		#endif
@@ -380,6 +399,7 @@ public:
 	 	}else if(request->method() == HTTP_POST){
 	 		if(request->url() == PUTLINE_PATH || request->url() == CONFIG_PATH 
 	 			|| request->url() ==  FPUTS_PATH || request->url() == FLIST_PATH 
+	 			|| request->url() == TIME_PATH
 	 			#ifdef ENABLE_LOGGING
 	 			|| request->url() == LOGGING_PATH
 	 			#endif
@@ -407,6 +427,7 @@ public:
 		String host=request->host();
 		DBG_PRINTF("Request host:");
 		DBG_PRINTF(host.c_str());
+		DBG_PRINTF("\n");
   		if(host.indexOf(_domainname) <0){
   			return true;
   		}
@@ -617,7 +638,6 @@ void brewpiLoop(void)
 
 static unsigned long _time;
 byte _systemState=SystemStateOperating;
-
 void requestRestart(void)
 {
 	_systemState =SystemStateRestartPending;
@@ -683,19 +703,20 @@ void setup(void){
   	WiFi.hostname(hostnetworkname);
   	
 	//1. Start WiFi 
+	WiFiSetup.setTimeout(CaptivePortalTimeout);
 	WiFiSetup.begin(hostnetworkname);
 
   	DBG_PRINTF("Connected!");
 
 	// get time
-	if(!WiFiSetup.isApMode()){
-		 initTime();
-
-		if (!MDNS.begin(hostnetworkname)) {
-			DBG_PRINTF("Error setting mDNS responder");
-		}	
+	initTime(!WiFiSetup.isApMode());
+	
+	if (!MDNS.begin(hostnetworkname)) {
+			DBG_PRINTF("Error setting mDNS responder\n");
+	}else{
 		MDNS.addService("http", "tcp", 80);
 	}
+	
 	// TODO: SSDP responder
 
 	
@@ -788,14 +809,17 @@ void loop(void){
  		});
  	#endif
  	
-	if(!IS_RESTARTING)	WiFiSetup.stayConnected();
-	  	
+	if(!IS_RESTARTING){
+		WiFiSetup.stayConnected();
+		if(WiFiSetup.isApMode()) TimeKeeper.setInternetAccessibility(false);
+	}
+	
   	if(_systemState ==SystemStateRestartPending){
 	  	_time=millis();
 	  	_systemState =SystemStateWaitRestart;
   	}else if(_systemState ==SystemStateWaitRestart){
   		if((millis() - _time) > TIME_RESTART_TIMEOUT){
-  			ESP.restart();
+  				ESP.restart();
   		}
   	}
 }

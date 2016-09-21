@@ -107,6 +107,7 @@ button {
     border: 1px solid #888;
     width: 80%;
 }
+#ST_sync {display:none; color:#D33;}
 </style>
 
 <script>
@@ -413,11 +414,45 @@ function updateTempUnit(u)
 
 function openDlgLoading(){document.getElementById('dlg_loading').style.display = "block";}
 function closeDlgLoading(){document.getElementById('dlg_loading').style.display = "none";}
+
+function settime(){
+	var now= new Date();
+	var ev=Math.round(now.getTime()/1000);
+	console.log("settime:"+ev);
+
+	invoke({m:"POST",url:"/time",data:"time="+ev,
+	success:function(d){
+		document.getElementById('ST_sync').style.display="none";
+	}});
+
+}
+var SL_diff;
+
+function checktime(){
+	invoke({m:"GET",url:"/time",
+	success:function(d){
+		console.log("server time:"+d);
+		
+		var st=JSON.parse(d);
+		var now= new Date();
+		SL_diff= st.e*1000 - now.getTime();
+		if(Math.abs(SL_diff) > 3600000) {
+			document.getElementById('ST_sync').style.display="block";
+			setInterval(function(){
+				var t=new Date();
+				var s=new Date(t.getTime() + SL_diff);
+				document.getElementById('servertime').innerHTML=  s.toLocaleString();
+			},1000);
+		}
+	}});
+}
+
 function onload(){	
 	modekeeper.init();
 
 	openDlgLoading();
-
+	checktime();
+	
 	function complete(){
 		var t;
 		var initial=true;
@@ -481,6 +516,7 @@ function onload(){
 </div>
 
 <div id="containter">
+  <div id="ST_sync">!!!BrewPiLess Time:<span id="servertime"></span><button onclick=settime()>SET Time</button></div>
   <div id="profile-s" class="detail">
   <div>
   <div><span>Start Date:</span><input type="text" size="40" id="startdate" onchange="profileEditor.startDayChange();">
