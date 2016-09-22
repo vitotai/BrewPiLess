@@ -45,9 +45,12 @@ https://github.com/tzapu/WiFiManager
 BrewPiLess now can run in AP mode, which enables it to run stand alone. The newly modified WiFiManager has a new option, "Soft AP Mode". Soft AP mode will also be entered if the network setting is not configured in three minutes (and previous connected network doesn't exist, or there is no previously connected network.)
 **This design is to enable recovery from power shortage or system reset.** Without this feature, BrewPiLess will hang at the network setting state and won't perform temperature management funcitons.
 
-However, the scheduled temperature management, aka Beer Profile mode, needs the "time" information to manage the temperature. NTP server will not be accessible without internet connection. Therefore, manual setup of "time" is necessary in this mode. In page of "Temperature Management", aka /control.htm, a SET TIME button will be shown when the time of ESP8266 is far away from the computer/phone. Pressing that button will set the time of ESP8266 to the time of the computer/phone, or the browser to be exact.
+For scheduled temperature management, aka Beer Profile mode, the "time" information is needed to manage the temperature, but NTP server will not be accessible without internet connection. Therefore, **manual setup of "time" is necessary in this mode**. In page of "Temperature Management", aka /control.htm, a SET TIME button will be shown when the time of ESP8266 is far away from the computer/phone. Pressing that button will set the time of ESP8266 to the time of the computer/phone, or the browser to be exact.
 
-**To enable automatic recovery from power shortage or system reset**, the time informatoin is saved periodically and restored at boot-up if NTP is not accessible, which means the duration of power shortage is assumed to be zero. If the power shortage lasts too long, the shedule will not be on track. Without a RTC, this might be the best I can do.
+**To enable automatic recovery from power shortage or system reset**, the time informatoin is saved periodically and restored at boot-up if NTP is not accessible, which means the duration of power shortage is assumed to be zero. If the power shortage lasts too long, the shedule will not be on track. For example, if the power shortage lasts 8 hours, the schedule will be off for 8 hours since that 8 hours is missing for ESP8266. Without a RTC, this might be the best I can do.
+
+mDNS doesn't work under AP mode. Therefore, "brewpi.local" can not be used under AP mode, but "brewpi.org" will do the job. In fact, all domain names except those in Apple's Captive Portal checklists will do.
+
 
 ### Service Page
  
@@ -97,7 +100,8 @@ This is default configuration, you can change it in `config.h`.
 Note: The GPIOs of ESP8266 are not all **General Purpose**. Some of them has special functions, and might not be usable. For example, some PINs on my NodeMcu board don't work normally.
 **!!Important !!** It is hightly recommended to pull up GPIO0 and GPIO2 while pull down GPIO15 so that the system will start up normally instead of staying in bootrom mode in case the system crashes. Updating the system configuration and firmware also result in restart of system, and sometimes this issue happens if the circuit isn't implementated. Check this url for detail information:
 https://github.com/esp8266/Arduino/blob/master/doc/boards.md#minimal-hardware-setup-for-bootloading-and-usage
-**!! If your ESP8266 doesn't boot up normally, try removing the connection to Rotary module. The rotary module might have pull-up or pull-down which prevents normal bootup.!!**
+
+**!! If your ESP8266 doesn't boot up normally, try removing the connection to Rotary module. The rotary module might have pull-up or pull-down which prevents normal bootup.!!** This configuration works on two of my setups, but it prevents one of them to bootup. IMO, not using rotary encoder but control by the web pages is far more easier.
 
 ## Logging temperature data to Google Sheets
 Due to the resource limit of ESP8266, establishment of **HTTPS** connection while serving other functions will crash the system. 
