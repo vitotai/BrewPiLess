@@ -20,6 +20,8 @@ void WiFiSetupClass::setupNetwork(void)
 
 void WiFiSetupClass::enterApMode(void)
 {
+
+	WiFi.disconnect();
 	DBG_PRINTF("AP Mode\n");
     _apMode=true;
 	
@@ -49,6 +51,8 @@ void WiFiSetupClass::startWiFiManager(bool portal)
     }
     if(!connected)	// not connected. setup AP mode
     	enterApMode();
+    else
+	    WiFi.mode(WIFI_STA);  
 }
 
 void WiFiSetupClass::begin(char const *ssid,const char *passwd)

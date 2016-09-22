@@ -148,14 +148,15 @@ Configuration Saved. Wait for restart...
 
 extern const char* getEmbeddedFile(const char* filename);
 
-void requestRestart();
+void requestRestart(bool disc);
 
-void initTime(bool connected)
+void initTime(bool apmode)
 {  	
-	if(connected)
-	  	TimeKeeper.begin("time.nist.gov","time.windows.com","de.pool.ntp.org");
-	else
+	if(apmode){
 		TimeKeeper.begin();
+	}else{ 
+		TimeKeeper.begin("time.nist.gov","time.windows.com","de.pool.ntp.org");
+	}
 }
 
 class BrewPiWebHandler: public AsyncWebHandler 
@@ -302,7 +303,7 @@ public:
   				config.printf(configFormat,name->value().c_str(),user->value().c_str(),pass->value().c_str(),protect);
   				config.close();
 				sendProgmem(request,saveconfightml); //request->send(200,"text/html",saveconfightml);
-				requestRestart();
+				requestRestart(false);
   			}else{
 	  			request->send(400);
   			}
@@ -323,8 +324,7 @@ public:
 	 	    if(!request->authenticate(username, password))
 	        return request->requestAuthentication();
 		 	request->send(200,"text/html","Done, restarting..");
-			WiFi.disconnect();
-			requestRestart();
+			requestRestart(true);
 	 	}else if(request->method() == HTTP_POST &&  request->url() == FLIST_PATH){
 	 	    if(!request->authenticate(username, password))
 	        return request->requestAuthentication();
@@ -416,10 +416,8 @@ BrewPiWebHandler brewPiWebHandler;
 
 class AppleCNAHandler: public AsyncWebHandler 
 {
-	String _domainname;
 public:
 	AppleCNAHandler(){}
-	void setDomainName(const char* str){ _domainname=String(str);}
 	void handleRequest(AsyncWebServerRequest *request){
 		request->send(200, "text/html", "<HTML><HEAD><TITLE>Success</TITLE></HEAD><BODY>Success</BODY></HTML>");
 	}
@@ -428,7 +426,12 @@ public:
 		DBG_PRINTF("Request host:");
 		DBG_PRINTF(host.c_str());
 		DBG_PRINTF("\n");
-  		if(host.indexOf(_domainname) <0){
+  		if(host.indexOf(String("apple")) >=0
+  		|| host.indexOf(String("itools")) >=0 
+  		|| host.indexOf(String("ibook")) >=0 
+  		|| host.indexOf(String("airport")) >=0 
+  		|| host.indexOf(String("thinkdifferent")) >=0 
+  		|| host.indexOf(String("akamai")) >=0 ){
   			return true;
   		}
   		return false;
@@ -636,10 +639,12 @@ void brewpiLoop(void)
 
 #define TIME_RESTART_TIMEOUT 3000
 
+bool _disconnectBeforeRestart;
 static unsigned long _time;
 byte _systemState=SystemStateOperating;
-void requestRestart(void)
+void requestRestart(bool disc)
 {
+	_disconnectBeforeRestart=disc;
 	_systemState =SystemStateRestartPending;
 }
 
@@ -706,10 +711,10 @@ void setup(void){
 	WiFiSetup.setTimeout(CaptivePortalTimeout);
 	WiFiSetup.begin(hostnetworkname);
 
-  	DBG_PRINTF("Connected!");
+  	DBG_PRINTF("WiFi Done!\n");
 
 	// get time
-	initTime(!WiFiSetup.isApMode());
+	initTime(WiFiSetup.isApMode());
 	
 	if (!MDNS.begin(hostnetworkname)) {
 			DBG_PRINTF("Error setting mDNS responder\n");
@@ -726,7 +731,6 @@ void setup(void){
 	//3.1.1 status report through SSE
 
 #if ResponseAppleCNA == true	
-	appleCNAHandler.setDomainName(hostnetworkname);
 	server.addHandler(&appleCNAHandler);
 #endif 
 	
@@ -819,7 +823,11 @@ void loop(void){
 	  	_systemState =SystemStateWaitRestart;
   	}else if(_systemState ==SystemStateWaitRestart){
   		if((millis() - _time) > TIME_RESTART_TIMEOUT){
-  				ESP.restart();
+  			if(_disconnectBeforeRestart){
+  				WiFi.disconnect();
+  				delay(1000);
+  			}
+  			ESP.restart();
   		}
   	}
 }
