@@ -218,10 +218,21 @@
 //#define rotaryBPin 1 // INT3
 //#define rotarySwitchPin 0 // INT2
 
+#define RotaryViaPCF8574 1
+
+#ifdef RotaryViaPCF8574
+
+#define rotaryAPin 0
+#define rotaryBPin 1
+#define rotarySwitchPin 2
+
+#define PCF8574_INT NODEMCU_PIN_D3
+
+#else
 #define rotaryAPin NODEMCU_PIN_D8
 #define rotaryBPin NODEMCU_PIN_D7
 #define rotarySwitchPin NODEMCU_PIN_D4
-
+#endif
 
 #ifdef ESP8266
 //#define ESP8266_WiFi 1			// This disables Serial and enables WiFi support 

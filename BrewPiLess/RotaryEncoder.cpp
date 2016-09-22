@@ -27,6 +27,9 @@
 #include "Brewpi.h"
 #include "TempControl.h"
 
+#ifdef RotaryViaPCF8574
+#include <pcf8574_esp.h>
+#endif
 
 RotaryEncoder rotaryEncoder;
 
@@ -191,13 +194,22 @@ const uint8_t PROGMEM ttable[7][4] = {
 
 #ifdef ESP8266
 
+#ifdef RotaryViaPCF8574
+#define PCF8574_ADDRESS 0x38
+
+PCF8574 pcf8574(PCF8574_ADDRESS,PIN_SDA, PIN_SCL);
+
+static void isr_iochange(void) { rotaryEncoder.process(); }
+
+#else //#ifdef RotaryViaPCF8574
 static void isr_rotary(void) { rotaryEncoder.process(); }
 static void isr_push(void) { 
 	if(! digitalRead(rotarySwitchPin))
 		rotaryEncoder.setPushed(); 
 }
+#endif //#ifdef RotaryViaPCF8574
 
-#else
+#else //#ifdef ESP8266
 #include "util/atomic.h"
 #include "FastDigitalPin.h"
 
@@ -239,9 +251,23 @@ void RotaryEncoder::process(void){
 	// Grab state of input pins.
 
 	#ifdef ESP8266
+	
+	#ifdef RotaryViaPCF8574	
+	
+	uint8_t p=pcf8574.read8();
+	// push
+	if (p & ( 1<<rotarySwitchPin)  == 0){
+		rotaryEncoder.setPushed();
+		return;
+	}
+	
+	uint8_t currPinA = (p & ( 1<<rotaryAPin)  == 0);
+	uint8_t currPinB = (p & ( 1<<rotaryBPin)  == 0);
+	
+	#else //#ifdef RotaryViaPCF8574
 	uint8_t currPinA = ! digitalRead(rotaryAPin);
 	uint8_t currPinB = ! digitalRead(rotaryBPin);
-	
+	#endif //#ifdef RotaryViaPCF8574
 	#else // #ifdef ESP8266
 	#if BREWPI_STATIC_CONFIG == BREWPI_SHIELD_DIY
 	uint8_t currPinA = !bitRead(PIND,2);
@@ -292,6 +318,12 @@ void RotaryEncoder::init(void){
 #ifdef ESP8266
 	#define BREWPI_INPUT_PULLUP (USE_INTERNAL_PULL_UP_RESISTORS ? INPUT_PULLUP : INPUT)
 
+#ifdef RotaryViaPCF8574	
+
+	pinMode(PCF8574_INT, INPUT_PULLUP);	
+	attachInterrupt(PCF8574_INT, isr_iochange, FALLING);
+
+#else //#ifdef RotaryViaPCF8574	
 	pinMode(rotaryAPin, INPUT_PULLUP);
 	pinMode(rotaryBPin, INPUT_PULLUP);
 	pinMode(rotarySwitchPin, INPUT_PULLUP);
@@ -300,6 +332,7 @@ void RotaryEncoder::init(void){
 	attachInterrupt(rotaryAPin, isr_rotary, CHANGE);
 	attachInterrupt(rotaryBPin, isr_rotary, CHANGE);
 	attachInterrupt(rotarySwitchPin, isr_push, CHANGE);
+#endif
 	
 #else //#ifdef ESP8266
 #if BREWPI_ROTARY_ENCODER
