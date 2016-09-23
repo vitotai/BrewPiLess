@@ -227,6 +227,7 @@
 #define rotarySwitchPin 2
 
 #define PCF8574_INT NODEMCU_PIN_D3
+#define PCF8574_ADDRESS 0x38
 
 #else
 #define rotaryAPin NODEMCU_PIN_D8

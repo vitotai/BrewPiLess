@@ -195,10 +195,8 @@ const uint8_t PROGMEM ttable[7][4] = {
 #ifdef ESP8266
 
 #ifdef RotaryViaPCF8574
-#define PCF8574_ADDRESS 0x38
 
 PCF8574 pcf8574(PCF8574_ADDRESS,PIN_SDA, PIN_SCL);
-
 static void isr_iochange(void) { rotaryEncoder.process(); }
 
 #else //#ifdef RotaryViaPCF8574
@@ -256,13 +254,13 @@ void RotaryEncoder::process(void){
 	
 	uint8_t p=pcf8574.read8();
 	// push
-	if (p & ( 1<<rotarySwitchPin)  == 0){
+	if  ((p & ( 1<<rotarySwitchPin))  == 0){
 		rotaryEncoder.setPushed();
 		return;
 	}
 	
-	uint8_t currPinA = (p & ( 1<<rotaryAPin)  == 0);
-	uint8_t currPinB = (p & ( 1<<rotaryBPin)  == 0);
+	uint8_t currPinA = (p & ( 1<<rotaryAPin)) >> rotaryAPin ;
+	uint8_t currPinB = (p & ( 1<<rotaryBPin)) >> rotaryBPin;
 	
 	#else //#ifdef RotaryViaPCF8574
 	uint8_t currPinA = ! digitalRead(rotaryAPin);
