@@ -657,8 +657,8 @@ void setup(void){
 
 #ifdef EARLY_DISPLAY
 	display.init();
-	display.printAt_P(1,1,PSTR("BrewPi Piless"));
-	display.printAt_P(1,2,PSTR("Setup Network"));
+	display.printAt_P(1,0,PSTR("Initialize WiFi"));
+	display.updateBacklight();
 #endif
 	
 	#if SerialDebug == true
