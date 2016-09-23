@@ -94,7 +94,9 @@ class LcdDisplay DISPLAY_SUPERCLASS
 	
 	DISPLAY_METHOD void resetBacklightTimer() { lcd.resetBacklightTimer(); }
 	DISPLAY_METHOD void updateBacklight() { lcd.updateBacklight(); }
-	
+#ifdef EARLY_DISPLAY
+	DISPLAY_METHOD void clear() { lcd.clear(); }
+#endif	
 	// print a temperature
 	DISPLAY_METHOD void printTemperature(temperature temp);
 	DISPLAY_METHOD void printTemperatureAt(uint8_t x, uint8_t y, temperature temp);

@@ -574,8 +574,11 @@ void brewpi_setup()
 	tempControl.beerSensor->init();
 	tempControl.fridgeSensor->init();
 #endif	
-
+#ifdef EARLY_DISPLAY
+	display.clear();
+#else
 	display.init();
+#endif
 	display.printStationaryText();
 	display.printState();
 
@@ -651,6 +654,12 @@ void requestRestart(bool disc)
 #define IS_RESTARTING (_systemState!=SystemStateOperating)
 
 void setup(void){
+
+#ifdef EARLY_DISPLAY
+	display.init();
+	display.printAt_P(1,1,PSTR("BrewPi Piless"));
+	display.printAt_P(1,2,PSTR("Setup Network"));
+#endif
 	
 	#if SerialDebug == true
   	DebugPort.begin(115200);
@@ -727,6 +736,11 @@ void setup(void){
 	
 	//3. setup Web Server
 
+	// start WEB update pages.	
+#if (DEVELOPMENT_OTA == true) || (DEVELOPMENT_FILEMANAGER == true)
+	ESPUpdateServer_setup(username,password);
+#endif
+
 	//3.1 Normal serving pages 
 	//3.1.1 status report through SSE
 
@@ -772,16 +786,9 @@ void setup(void){
 
 	
 	// 5. try to connnect Arduino
+	brewpi_setup();	
   	brewPi.begin(stringAvailable);
-
 	brewKeeper.setFile(PROFILE_FILENAME);
-	
-	// 6. start WEB update pages.	
-#if (DEVELOPMENT_OTA == true) || (DEVELOPMENT_FILEMANAGER == true)
-	ESPUpdateServer_setup(username,password);
-#endif
-
-	brewpi_setup();
 }
 
 
