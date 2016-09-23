@@ -258,5 +258,5 @@
 
 #define BUFFER_PILINK_PRINTS 1
 
-
+#define EARLY_DISPLAY 1
 

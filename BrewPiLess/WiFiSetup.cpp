@@ -20,6 +20,8 @@ void WiFiSetupClass::setupNetwork(void)
 
 void WiFiSetupClass::enterApMode(void)
 {
+
+	WiFi.disconnect();
 	DBG_PRINTF("AP Mode\n");
     _apMode=true;
 	
@@ -28,6 +30,7 @@ void WiFiSetupClass::enterApMode(void)
 	dnsServer->start(DNS_PORT, "*", WiFi.softAPIP());
 	delay(500);
 }
+static bool _apEntered=false;
 
 void WiFiSetupClass::startWiFiManager(bool portal)
 {
@@ -41,6 +44,8 @@ void WiFiSetupClass::startWiFiManager(bool portal)
 	    wifiManager.setTimeout(_apTimeout);
     //set custom ip for portal
     //and goes into a blocking loop awaiting configuration
+    wifiManager.setAPCallback([](WiFiManager*){ _apEntered=true;});
+
     bool connected;
     if(portal){
     	connected=wifiManager.startConfigPortal(_apName,_apPassword);
@@ -49,6 +54,11 @@ void WiFiSetupClass::startWiFiManager(bool portal)
     }
     if(!connected)	// not connected. setup AP mode
     	enterApMode();
+    else{
+    	// onced it enter AP mode, tcp_bind() lf lwip will return failure.
+    	// thereore, restart the system.
+    	if(_apEntered) ESP.reset();
+    }
 }
 
 void WiFiSetupClass::begin(char const *ssid,const char *passwd)
