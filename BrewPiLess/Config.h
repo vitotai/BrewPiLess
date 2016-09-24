@@ -207,7 +207,7 @@
 
 #define coolingPin NODEMCU_PIN_D5
 #define heatingPin NODEMCU_PIN_D0
-#define doorPin    NODEMCU_PIN_D3
+#define doorPin    NODEMCU_PIN_D4
 
 
 #define BACKLIGHT_AUTO_OFF_PERIOD 0 //600

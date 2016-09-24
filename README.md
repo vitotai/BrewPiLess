@@ -21,7 +21,7 @@ You will need the ESP8266/Arduino environment, as well as the following librarie
 
 ## Features
  * I2C LCD support
- * Rotary Encoder support
+ * Rotary Encoder support (* not default supported)
  * Remote LCD display on browser
  * Remtoe Temperature controll
  * Temperature schedule
@@ -88,12 +88,12 @@ This is default configuration, you can change it in `config.h`.
 | GPIO16         | D0            | Heating Actuator*   |
 | GPIO5          | D1            | I2C SCL             |
 | GPIO4          | D2            | I2C SDA             |
-| GPIO0          | D3            | Door (not used)*    |
-| GPIO2          | D4            | rotary pin PushDown |
+| GPIO0          | D3            | INT from PCF8574 *  |
+| GPIO2          | D4            | Door (not used)*	   |
 | GPIO14         | D5            | Cooling Actuator*   |
 | GPIO12         | D6            | Temperature Sensors |
-| GPIO13         | D7            | rotary pin B        |
-| GPIO15         | D8            | rotary pin A        |
+| GPIO13         | D7            | 			           |
+| GPIO15         | D8            | 				       |
 
 *cooling/heating actuator PINs are configurable.
 
@@ -101,7 +101,12 @@ Note: The GPIOs of ESP8266 are not all **General Purpose**. Some of them has spe
 **!!Important !!** It is hightly recommended to pull up GPIO0 and GPIO2 while pull down GPIO15 so that the system will start up normally instead of staying in bootrom mode in case the system crashes. Updating the system configuration and firmware also result in restart of system, and sometimes this issue happens if the circuit isn't implementated. Check this url for detail information:
 https://github.com/esp8266/Arduino/blob/master/doc/boards.md#minimal-hardware-setup-for-bootloading-and-usage
 
-**!! If your ESP8266 doesn't boot up normally, try removing the connection to Rotary module. The rotary module might have pull-up or pull-down which prevents normal bootup.!!** This configuration works on two of my setups, but it prevents one of them to bootup. IMO, not using rotary encoder but control by the web pages is far more easier.
+**!! The rotary encoder is not supported by directly connecting it to ESP8266. That will prevents ESP8266 to boot up when the rotary encoder is at certain positions.!!** 
+
+## Support of Rotary Encoder
+Due to the special usage at bootup of GPIO0,2,15(D3,D4,D8), they can't be used as inputs of rotary encoder. One of the solution is by an IO Expander. 
+Currently, PCF8574 is supported if you really need the rotary encoder. You have to change the compile options in Config.h to enable this feature.
+
 
 ## Logging temperature data to Google Sheets
 Due to the resource limit of ESP8266, establishment of **HTTPS** connection while serving other functions will crash the system. 
