@@ -218,7 +218,7 @@
 //#define rotaryBPin 1 // INT3
 //#define rotarySwitchPin 0 // INT2
 
-//#define RotaryViaPCF8574 1
+#define RotaryViaPCF8574 1
 
 #ifdef RotaryViaPCF8574
 
@@ -260,4 +260,3 @@
 #define BUFFER_PILINK_PRINTS 1
 
 #define EARLY_DISPLAY 1
-
