@@ -147,6 +147,11 @@ private:
   bool _bufferOnly;
 
   char content[4][21]; // always keep a copy of the display content in this variable
+
+#if LCD_AUTO_ADDRESSING == true
+  void scanForAddress(void);
+#endif
+
 };
 
 #endif

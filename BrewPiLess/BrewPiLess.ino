@@ -655,17 +655,19 @@ void requestRestart(bool disc)
 
 void setup(void){
 
+	#if SerialDebug == true
+  	DebugPort.begin(115200);
+  	DBG_PRINTF("\n");
+  	DebugPort.setDebugOutput(true);
+  	#endif
+
+
 #ifdef EARLY_DISPLAY
 	display.init();
 	display.printAt_P(1,0,PSTR("Initialize WiFi"));
 	display.updateBacklight();
 #endif
 	
-	#if SerialDebug == true
-  	DebugPort.begin(115200);
-  	DBG_PRINTF("\n");
-  	DebugPort.setDebugOutput(true);
-  	#endif
  
 	//0.Initialize file system
 	//start SPI Filesystem
