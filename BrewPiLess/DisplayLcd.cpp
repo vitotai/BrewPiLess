@@ -34,12 +34,15 @@
 uint8_t LcdDisplay::stateOnDisplay;
 uint8_t LcdDisplay::flags;
 
+#ifdef BREWPI_OLED128x64_LCD
+LcdDriver LcdDisplay::lcd(OLED128x64_LCD_ADDRESS,PIN_SDA,PIN_SCL);
+#else // #if BREWPI_OLED128x64_LCD
 #ifdef BREWPI_IIC_LCD
 LcdDriver LcdDisplay::lcd(IIC_LCD_ADDRESS,20,4);
 #else
 LcdDriver LcdDisplay::lcd;
 #endif
-
+#endif // #if BREWPI_OLED128x64_LCD
 // Constant strings used multiple times
 static const char STR_Beer_[] PROGMEM = "Beer ";
 static const char STR_Fridge_[] PROGMEM = "Fridge ";

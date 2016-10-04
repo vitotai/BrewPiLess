@@ -201,8 +201,11 @@
 #define PIN_SDA NODEMCU_PIN_D2
 #define PIN_SCL NODEMCU_PIN_D1
 #define IIC_LCD_ADDRESS 0x27
-#define BREWPI_IIC_LCD 1
+//#define BREWPI_IIC_LCD 1
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
+
+#define OLED128x64_LCD_ADDRESS 0x3c
+#define BREWPI_OLED128x64_LCD 1
 
 
 #define coolingPin NODEMCU_PIN_D5
@@ -210,7 +213,7 @@
 #define doorPin    NODEMCU_PIN_D4
 
 
-#define BACKLIGHT_AUTO_OFF_PERIOD 0 //600
+#define BACKLIGHT_AUTO_OFF_PERIOD 300
 
 // Pay attention when changing the pins for the rotary encoder.
 // They should be connected to external interrupt INT0, INT1 and INT3

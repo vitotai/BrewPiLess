@@ -29,6 +29,13 @@
 #include "IicLcd.h"
 #endif
 
+#ifdef BREWPI_OLED128x64_LCD
+#include "IicOledLcd.h"
+#endif
+
+#ifdef BREWPI_OLED128x64_LCD
+	typedef IICOledLcd	LcdDriver;	
+#else // BREWPI_OLED128x64_LCD
 #if defined(BREWPI_IIC_LCD)
 	typedef IIClcd	LcdDriver;	
 #else
@@ -41,6 +48,7 @@ typedef OLEDFourBit LcdDriver;
 	typedef SpiLcd		LcdDriver;	
 #endif
 #endif
+#endif //BREWPI_OLED128x64_LCD
 
 class LcdDisplay DISPLAY_SUPERCLASS
 {
