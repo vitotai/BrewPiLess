@@ -200,17 +200,21 @@
 
 #define PIN_SDA NODEMCU_PIN_D2
 #define PIN_SCL NODEMCU_PIN_D1
-#define IIC_LCD_ADDRESS 0x27
-//#define BREWPI_IIC_LCD 1
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 
-#define OLED128x64_LCD_ADDRESS 0x3c
-#define BREWPI_OLED128x64_LCD 1
-
-
+// actuators
 #define coolingPin NODEMCU_PIN_D5
 #define heatingPin NODEMCU_PIN_D0
 #define doorPin    NODEMCU_PIN_D4
+
+
+// LCD configurations:
+#define IIC_LCD_ADDRESS 0x27
+//#define BREWPI_IIC_LCD 1
+#define LCD_AUTO_ADDRESSING true
+
+#define OLED128x64_LCD_ADDRESS 0x3c
+#define BREWPI_OLED128x64_LCD 1
 
 
 #define BACKLIGHT_AUTO_OFF_PERIOD 180
@@ -263,4 +267,3 @@
 #define BUFFER_PILINK_PRINTS 1
 
 #define EARLY_DISPLAY 1
-#define LCD_AUTO_ADDRESSING true
