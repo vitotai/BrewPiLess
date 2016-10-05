@@ -313,6 +313,8 @@ void RotaryEncoder::setPushed(void){
 
 
 void RotaryEncoder::init(void){
+#if BREWPI_ROTARY_ENCODER
+
 #ifdef ESP8266
 	#define BREWPI_INPUT_PULLUP (USE_INTERNAL_PULL_UP_RESISTORS ? INPUT_PULLUP : INPUT)
 
@@ -333,7 +335,6 @@ void RotaryEncoder::init(void){
 #endif
 	
 #else //#ifdef ESP8266
-#if BREWPI_ROTARY_ENCODER
 	#define BREWPI_INPUT_PULLUP (USE_INTERNAL_PULL_UP_RESISTORS ? INPUT_PULLUP : INPUT)
 	fastPinMode(rotaryAPin, BREWPI_INPUT_PULLUP);
 	fastPinMode(rotaryBPin, BREWPI_INPUT_PULLUP);
@@ -359,8 +360,9 @@ void RotaryEncoder::init(void){
 		// enable mask bit for PCINT23
 		PCMSK2 |= (1<<PCINT23);
 	#endif
-#endif	
 #endif // #ifdef ESP8266
+#endif	//#if BREWPI_ROTARY_ENCODER
+
 }
 
 
@@ -399,16 +401,16 @@ bool RotaryEncoder::changed(void){
 }
 
 int16_t RotaryEncoder::read(void){
+#if BREWPI_ROTARY_ENCODER
 #ifdef ESP8266
 	return steps;
 #else
-#if BREWPI_ROTARY_ENCODER
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
 		return steps;		
 	}
 #endif
-	return 0;		
 #endif
+	return 0;		
 }
 
 

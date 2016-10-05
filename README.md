@@ -85,15 +85,15 @@ This is default configuration, you can change it in `config.h`.
 
 | ESP8266 GPIO   | NodeMcu Label | Connect to       |
 | -------------- |:-------------:| :--------------------|
-| GPIO16         | D0            | Heating Actuator*   |
+| GPIO16         | D0            | Buzzer			   |
 | GPIO5          | D1            | I2C SCL             |
 | GPIO4          | D2            | I2C SDA             |
 | GPIO0          | D3            | INT from PCF8574 *  |
-| GPIO2          | D4            | Door (not used)*	   |
+| GPIO2          | D4            | Door (not used)     |
 | GPIO14         | D5            | Cooling Actuator*   |
 | GPIO12         | D6            | Temperature Sensors |
-| GPIO13         | D7            | 			           |
-| GPIO15         | D8            | 				       |
+| GPIO13         | D7            | Heating Actuator*   |
+| GPIO15         | D8            |      			   |
 
 *cooling/heating actuator PINs are configurable.
 
