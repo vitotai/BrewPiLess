@@ -8,6 +8,10 @@
 #include "Arduino.h"
 #include "font_cousine_10.h"
 
+#define TOP_MARGIN (12+2)
+#define LEFT_MARGIN 4
+
+
 IICOledLcd::IICOledLcd(uint8_t lcd_Addr,uint8_t sda,uint8_t scl)
 :_display(lcd_Addr,sda,scl)
 {
@@ -53,7 +57,6 @@ void IICOledLcd::home(){
 }
 
 void IICOledLcd::setCursor(uint8_t col, uint8_t row){
-	int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
 	if ( row > _rows ) {
 		row = _rows-1;    // we count rows starting w/0
 	}
@@ -83,20 +86,28 @@ void IICOledLcd::backlight(void) {
 
 /*********** mid level commands, for sending data/cmds */
 
+inline int16_t IICOledLcd::xpos(void)
+{
+	return LEFT_MARGIN + _fontWidth * _currpos;
+}
+
+inline int16_t  IICOledLcd::ypos(void)
+{
+	return TOP_MARGIN + _fontHeight * _currline;
+}
 
 inline void IICOledLcd::internal_write(uint8_t value) {
-
-
     content[_currline][_currpos] = value;
-	uint8_t ch=(value == 0b11011111)? 0xB0 : value;
 
     if (!_bufferOnly) {
+    	int16_t x= xpos();
+    	int16_t y= ypos();
     	_display.setColor(BLACK);
-    	_display.fillRect(_fontWidth * _currpos, _fontHeight * _currline,_fontWidth,_fontHeight);
-
+    	_display.fillRect(x,y,_fontWidth,_fontHeight);
     	_display.setColor(WHITE);    	
-	    String chstr=String((char)ch);
-       _display.drawString(_fontWidth * _currpos, _fontHeight * _currline,chstr);
+
+	    String chstr=(value == 0b11011111)? String("°"):String((char)value);
+       _display.drawString(x,y,chstr);
     }
     _currpos++;
 }
@@ -147,8 +158,8 @@ void IICOledLcd::print(char * str){
 
 
     char *p=str;
-    int16_t x=_fontWidth * _currpos;
-    int16_t y=_fontHeight *_currline;
+    int16_t x=xpos();
+    int16_t y=ypos();
     int16_t width=0;
     
     while(*p !='\0' && _currpos < _cols){

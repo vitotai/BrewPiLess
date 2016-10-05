@@ -99,6 +99,9 @@ private:
   char content[4][21]; // always keep a copy of the display content in this variable
   
   void internal_write(uint8_t);
+
+  inline int16_t xpos(void);
+  inline int16_t ypos(void);
 };
 
 #endif

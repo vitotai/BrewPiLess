@@ -213,7 +213,7 @@
 #define doorPin    NODEMCU_PIN_D4
 
 
-#define BACKLIGHT_AUTO_OFF_PERIOD 300
+#define BACKLIGHT_AUTO_OFF_PERIOD 180
 
 // Pay attention when changing the pins for the rotary encoder.
 // They should be connected to external interrupt INT0, INT1 and INT3

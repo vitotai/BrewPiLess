@@ -45,27 +45,28 @@ extern "C" {
 
 
 #if LCD_AUTO_ADDRESSING == true
-#define EXCLUDE_ADDRESS 0x38
 
 void IIClcd::scanForAddress(void)
 {
 	byte error, address;
-//    Serial.println("Scan LCD Address");
+    Serial.println("Scan LCD Address...\n");
 
  	for(address = 127; address > 0; address-- )
   	{
     	// The i2c_scanner uses the return value of
     	// the Write.endTransmisstion to see if
     	// a device did acknowledge to the address.
-    	if(address == EXCLUDE_ADDRESS) continue;
+    	#ifdef RotaryViaPCF8574
+    	if(address == PCF8574_ADDRESS) continue;
+    	#endif
     	Wire.beginTransmission(address);
     	error = Wire.endTransmission();
  
     	if (error == 0)
     	{
-//      		Serial.print("I2C device found at address 0x");
-//      		Serial.print(address,HEX);
-//      		Serial.println("  !");
+      		Serial.print("I2C device found at address 0x");
+      		Serial.print(address,HEX);
+      		Serial.println("  !");
       		_Addr= address;
       		break;
     	}
