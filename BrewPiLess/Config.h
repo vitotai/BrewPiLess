@@ -136,7 +136,7 @@
 //////////////////////////////////////////////////////////////////////////
 //
 #ifndef BREWPI_BUZZER
-#define BREWPI_BUZZER 0
+#define BREWPI_BUZZER 1
 #endif
 //
 //////////////////////////////////////////////////////////////////////////
@@ -204,9 +204,10 @@
 
 // actuators
 #define coolingPin NODEMCU_PIN_D5
-#define heatingPin NODEMCU_PIN_D0
-#define doorPin    NODEMCU_PIN_D4
+#define heatingPin NODEMCU_PIN_D7
+#define doorPin    NODEMCU_PIN_D8
 
+#define BuzzPin NODEMCU_PIN_D0
 
 // LCD configurations:
 #define IIC_LCD_ADDRESS 0x27
@@ -237,6 +238,7 @@
 #define PCF8574_ADDRESS 0x38
 
 #else
+#error "Invalid setting"
 #define rotaryAPin NODEMCU_PIN_D8
 #define rotaryBPin NODEMCU_PIN_D7
 #define rotarySwitchPin NODEMCU_PIN_D4

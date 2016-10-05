@@ -28,11 +28,14 @@
 // TODO - Implement
 
 #if BREWPI_BUZZER
+
+#ifndef ESP8266_ONE
 #include <util/delay.h>
 #include "FastDigitalPin.h"
 
 #if (alarmPin != 3)
 	#error "Check PWM settings when you want to use a different pin for the alarm"
+#endif
 #endif
 
 #if BREWPI_BOARD == BREWPI_BOARD_LEONARDO
@@ -47,12 +50,22 @@
 	#define BUZZER_TIMER_REG_FLAG COM3C1
 #endif
 
+#ifdef ESP8266_ONE
+#define BEEP_ON() digitalWrite(BuzzPin,1);
+#define BEEP_OFF()  digitalWrite(BuzzPin,0);
+
+#else
 #define BEEP_ON() bitSet(BUZZER_TIMER_REG,BUZZER_TIMER_REG_FLAG);
 #define BEEP_OFF() bitClear(BUZZER_TIMER_REG,BUZZER_TIMER_REG_FLAG);
+#endif
 
 void Buzzer::init(void){
+#ifdef ESP8266_ONE
+	pinMode(BuzzPin,OUTPUT);
+#else
 	// set up square wave PWM for buzzer
 	fastPinMode(alarmPin,OUTPUT);
+#endif
 
 #if BREWPI_BOARD == BREWPI_BOARD_LEONARDO
 	// Arduino Leonardo, no further setup needed - timer already active
