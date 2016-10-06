@@ -221,14 +221,17 @@
 
 
 // LCD configurations:
-//#define BREWPI_OLED128x64_LCD 1
-#define BREWPI_IIC_LCD 1
+#define BREWPI_OLED128x64_LCD 1
+//#define BREWPI_IIC_LCD 1
 
 
 #define IIC_LCD_ADDRESS 0x27
 #define LCD_AUTO_ADDRESSING true
 
+#ifdef BREWPI_OLED128x64_LCD 
 #define OLED128x64_LCD_ADDRESS 0x3c
+#define STATUS_LINE 1
+#endif
 
 #if BREWPI_ROTARY_ENCODER
 #define BACKLIGHT_AUTO_OFF_PERIOD 180

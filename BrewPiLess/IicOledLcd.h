@@ -42,6 +42,11 @@ public:
 //  void createChar(uint8_t, uint8_t[]);
   void setCursor(uint8_t, uint8_t);
   void print(char* str);
+
+#ifdef STATUS_LINE
+	void printStatus(char* str);
+#endif
+
   virtual size_t write(uint8_t);
 
 #define print_P_inline 1

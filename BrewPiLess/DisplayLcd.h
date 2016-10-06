@@ -113,7 +113,9 @@ class LcdDisplay DISPLAY_SUPERCLASS
 	DISPLAY_METHOD void printDegreeUnit(uint8_t x, uint8_t y);
 		
 	DISPLAY_METHOD void printAt(uint8_t x, uint8_t y, char* text);
-
+#ifdef STATUS_LINE
+	DISPLAY_METHOD void printStatus(char* text){ lcd.printStatus(text);}
+#endif
 	private:
 	DISPLAY_FIELD LcdDriver lcd;
 	DISPLAY_FIELD uint8_t stateOnDisplay;

@@ -791,6 +791,15 @@ void setup(void){
 	brewpi_setup();	
   	brewPi.begin(stringAvailable);
 	brewKeeper.setFile(PROFILE_FILENAME);
+
+#ifdef STATUS_LINE
+	// brewpi_setup will "clear" the screen.
+	IPAddress ip = WiFi.localIP();
+	char buf[21];
+	sprintf(buf,"IP:%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
+	display.printStatus(buf);
+#endif
+
 }
 
 

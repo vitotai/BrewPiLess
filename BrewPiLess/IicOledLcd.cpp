@@ -8,8 +8,16 @@
 #include "Arduino.h"
 #include "font_cousine_10.h"
 
-#define TOP_MARGIN (12+2)
+#define TOP_MARGIN (2)
 #define LEFT_MARGIN 4
+
+#define STATUS_TOP  52
+#define STATUS_LEFT 4
+
+#define STATUS_BAR_TOP  52
+#define STATUS_BAR_LEFT 0
+#define STATUS_BAR_HEIGHT 12
+#define STATUS_BAR_WIDTH  128
 
 
 IICOledLcd::IICOledLcd(uint8_t lcd_Addr,uint8_t sda,uint8_t scl)
@@ -187,5 +195,19 @@ void IICOledLcd::print_P(const char * str){ // print a string stored in PROGMEM
     print(buf); // print from RAM
 }
 #endif
+
+#ifdef STATUS_LINE
+void IICOledLcd::printStatus(char* str)
+{
+	Serial.print("printStatus:");
+	Serial.println(str);
+	_display.setColor(WHITE);
+    _display.fillRect(STATUS_BAR_LEFT,STATUS_BAR_TOP,STATUS_BAR_WIDTH,STATUS_BAR_HEIGHT);
+    
+    _display.setColor(BLACK);
+    _display.drawString(STATUS_LEFT,STATUS_TOP,str);
+}
+#endif
+
 
 
