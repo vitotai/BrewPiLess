@@ -40,7 +40,7 @@ process:function(msg){
 		this.raw(msg);
 		return;
 	}
-	console.log("rcv:" + msg);
+	//console.log("rcv:" + msg);
 	eval("m={" + msg + "}");
 //	console.log("json:"+m);
 	for(var key in m){ 
@@ -54,7 +54,7 @@ on:function(lb,handler){
 },
 send:function(data,opt){
 	opt = (typeof opt == "undefined")? {}:opt;
-	console.log("snd:" + data);
+	//console.log("snd:" + data);
 	var b=this;
 	invoke({m:"POST", url:"/putline",mime:"application/x-www-form-urlencoded",
 		data:"data="+encodeURI(data),

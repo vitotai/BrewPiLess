@@ -239,14 +239,17 @@ class BrewPiWebHandler: public AsyncWebHandler
     		memcpy_P((char*)buffer, html+alreadySent, strlen_P(html+alreadySent));
     		return strlen_P(html+alreadySent); // Return from here to end of indexhtml
  	 	});
- 	 	
+ 	 	response->addHeader("Cache-Control","max-age=86400");
 		request->send(response);  
 	}
 	
 	void sendFile(AsyncWebServerRequest *request,String path)
 	{
 		if(SPIFFS.exists(path)){
-			request->send(SPIFFS, path);
+			//request->send(SPIFFS, path);
+			AsyncWebServerResponse *response = request->beginResponse(SPIFFS, path);
+			response->addHeader("Cache-Control","max-age=86400");
+			request->send(response);			
 			return;
 		}
 		//else
