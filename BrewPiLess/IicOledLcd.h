@@ -8,6 +8,8 @@
 #include "Ticks.h"
 #include <Wire.h>
 
+#if BREWPI_OLED128x64_LCD
+
 #include "SSD1306.h"
 
 class IICOledLcd : public Print {
@@ -108,8 +110,9 @@ private:
   inline int16_t xpos(void);
   inline int16_t ypos(void);
 };
-
 #endif
+#endif
+
 
 
 

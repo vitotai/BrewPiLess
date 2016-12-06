@@ -127,7 +127,7 @@
 // Enable the LCD display. Without this, a NullDisplay is used
 //
 #ifndef BREWPI_LCD
-#define BREWPI_LCD 0
+#define BREWPI_LCD 1
 #endif
 
 //
@@ -219,11 +219,11 @@
 
 #endif
 
-
+#if BREWPI_LCD
 // LCD configurations:
 #define BREWPI_OLED128x64_LCD 1
 //#define BREWPI_IIC_LCD 1
-
+#endif
 
 #define IIC_LCD_ADDRESS 0x27
 #define LCD_AUTO_ADDRESSING true
@@ -256,7 +256,7 @@
 #define rotarySwitchPin 2
 
 #define PCF8574_INT NODEMCU_PIN_D3
-#define PCF8574_ADDRESS 0x38
+#define PCF8574_ADDRESS 0x20
 
 #else
 #error "invalid setting"
@@ -292,3 +292,4 @@
 #define BUFFER_PILINK_PRINTS 1
 
 #define EARLY_DISPLAY 1
+

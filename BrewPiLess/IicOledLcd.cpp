@@ -6,6 +6,9 @@
 #include <inttypes.h>
 #include <inttypes.h>
 #include "Arduino.h"
+
+#if BREWPI_OLED128x64_LCD
+
 #include "font_cousine_10.h"
 
 #define TOP_MARGIN (2)
@@ -209,6 +212,4 @@ void IICOledLcd::printStatus(char* str)
 }
 #endif
 
-
-
-
+#endif
