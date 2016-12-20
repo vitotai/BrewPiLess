@@ -22,6 +22,12 @@
 #define STATUS_BAR_HEIGHT 12
 #define STATUS_BAR_WIDTH  128
 
+#if SerialDebug == true
+#define DebugPort Serial
+#define DBG_PRINTF(...) DebugPort.printf(__VA_ARGS__)
+#else
+#define DBG_PRINTF(...) 
+#endif
 
 IICOledLcd::IICOledLcd(uint8_t lcd_Addr,uint8_t sda,uint8_t scl)
 :_display(lcd_Addr,sda,scl)
@@ -172,7 +178,9 @@ void IICOledLcd::print(char * str){
     int16_t x=xpos();
     int16_t y=ypos();
     int16_t width=0;
-    
+
+ //   DBG_PRINTF("%d,%d, %s\n",_currline,_currpos,str);
+
     while(*p !='\0' && _currpos < _cols){
 	    content[_currline][_currpos] = *p;
     	_currpos++;
@@ -202,8 +210,8 @@ void IICOledLcd::print_P(const char * str){ // print a string stored in PROGMEM
 #ifdef STATUS_LINE
 void IICOledLcd::printStatus(char* str)
 {
-	Serial.print("printStatus:");
-	Serial.println(str);
+	//Serial.print("printStatus:");
+	//Serial.println(str);
 	_display.setColor(WHITE);
     _display.fillRect(STATUS_BAR_LEFT,STATUS_BAR_TOP,STATUS_BAR_WIDTH,STATUS_BAR_HEIGHT);
     

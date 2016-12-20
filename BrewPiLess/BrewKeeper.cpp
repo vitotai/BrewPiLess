@@ -223,9 +223,56 @@ time_t tm_to_timet(struct tm *tm_time){
 	seconds+= tm_time->tm_sec;				// ...and finally, Seconds.
 	return (time_t)seconds; 
 }
+// got from https://github.com/PaulStoffregen/Time
+void makeTime(time_t timeInput, struct tm &tm){
+// break the given time_t into time components
+// this is a more compact version of the C library localtime function
+// note that year is offset from 1970 !!!
 
+  uint8_t year;
+  uint8_t month, monthLength;
+  uint32_t time;
+  unsigned long days;
 
-
-
-
-
+  time = (uint32_t)timeInput;
+  tm.tm_sec = time % 60;
+  time /= 60; // now it is minutes
+  tm.tm_min = time % 60;
+  time /= 60; // now it is hours
+  tm.tm_hour = time % 24;
+  time /= 24; // now it is days
+  tm.tm_wday = ((time + 4) % 7) + 1;  // Sunday is day 1 
+  
+  year = 0;  
+  days = 0;
+  while((unsigned)(days += (LEAP_YEAR(year) ? 366 : 365)) <= time) {
+    year++;
+  }
+  tm.tm_year = year +1970; // year is offset from 1970 
+  
+  days -= LEAP_YEAR(year) ? 366 : 365;
+  time  -= days; // now it is days in this year, starting at 0
+  
+  days=0;
+  month=0;
+  monthLength=0;
+  for (month=0; month<12; month++) {
+    if (month==1) { // february
+      if (LEAP_YEAR(year)) {
+        monthLength=29;
+      } else {
+        monthLength=28;
+      }
+    } else {
+      monthLength = monthDays[month];
+    }
+    
+    if (time >= monthLength) {
+      time -= monthLength;
+    } else {
+        break;
+    }
+  }
+  tm.tm_mon = month + 1;  // jan is month 1  
+  tm.tm_mday = time + 1;     // day of month
+}

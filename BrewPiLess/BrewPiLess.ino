@@ -639,6 +639,13 @@ void brewpiLoop(void)
 //}brewpi
 
 
+#ifdef STATUS_LINE
+extern void makeTime(time_t timeInput, struct tm &tm);
+time_t _displayTime;	
+#endif
+
+
+
 #define SystemStateOperating 0
 #define SystemStateRestartPending 1
 #define SystemStateWaitRestart 2
@@ -801,10 +808,10 @@ void setup(void){
 	char buf[21];
 	sprintf(buf,"IP:%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
 	display.printStatus(buf);
+	_displayTime = TimeKeeper.getTimeSeconds() + 20;
 #endif
 
 }
-
 
 
 void loop(void){
@@ -819,7 +826,18 @@ void loop(void){
 	ESPUpdateServer_loop();
 #endif
 	time_t now=TimeKeeper.getTimeSeconds();
-	
+
+#ifdef STATUS_LINE
+	if(_displayTime < now){
+		_displayTime=now;
+		
+		struct tm t;
+		makeTime(now,t);
+		char buf[21];
+		sprintf(buf,"%d/%02d/%02d %02d:%02d:%02d",t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
+		display.printStatus(buf);
+	}
+#endif
 	char unit, mode;
 	float beerSet,fridgeSet;
 	brewPi.getControlParameter(&unit,&mode,&beerSet,&fridgeSet);
