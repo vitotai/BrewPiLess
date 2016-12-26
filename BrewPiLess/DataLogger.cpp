@@ -219,7 +219,48 @@ void DataLogger::updateSetting(AsyncWebServerRequest *request)
     	}
 	
 }
+static const char LogConfigHtml[] PROGMEM =
+R"END(
+<html>
+<head>
+<title>Logging Setting</title>
+<script>/*<![CDATA[*/var logurl="log.php";function s_ajax(a){var d=new XMLHttpRequest();d.onreadystatechange=function(){if(d.readyState==4){if(d.status==200){a.success(d.responseText)}else{d.onerror(d.status)}}};d.ontimeout=function(){if(typeof a.timeout!="undefined"){a.timeout()}else{d.onerror(-1)}},d.onerror=function(b){if(typeof a.fail!="undefined"){a.fail(b)}};d.open(a.m,a.url,true);if(typeof a.data!="undefined"){d.setRequestHeader("Content-Type",(typeof a.mime!="undefined")?a.mime:"application/x-www-form-urlencoded");d.send(a.data)}else{d.send()}}var EI=function(a){return document.getElementById(a)};Number.prototype.format=function(h,a,f,g){var d="\\d(?=(\\d{"+(a||3)+"})+"+(h>0?"\\D":"$")+")",b=this.toFixed(Math.max(0,~~h));return(g?b.replace(".",g):b).replace(new RegExp(d,"g"),"$&"+(f||","))};var logs={url:"loglist.php",rmurl:"loglist.php?rm=",starturl:"loglist.php?start=",stopurl:"loglist.php?stop=1",dlurl:"loglist.php?d=",ll:[],fs:{},logging:false,vname:function(a){if(a==""){return false}if(a.match(/[\W]/g)){return false}return true},dupname:function(b){var a=false;this.ll.forEach(function(c){if(b==c.name){a=true}});return a},fsinfo:function(b,a){EI("fssize").innerHTML=b.format(0,3,",");EI("fsused").innerHTML=a.format(0,3,",");EI("fsfree").innerHTML=(b-a).format(0,3,",")},slog:function(){var b=this;if(b.logging){if(confirm("Stop current logging?")){var c=EI("logname").value.trim();s_ajax({url:b.stopurl+c,m:"GET",success:function(f){location.reload()},fail:function(f){alert("Failed to stop for:"+f)}})}}else{if(b.ll.length>=10){alert("Too many logs. Delete some before creating new.");return}if((b.fs.size-b.fs.used)<=b.fs.block*2){alert("Not enough free space!");return}var a=EI("logname").value.trim();if(b.vname(a)===false){alert("Invalid file name, no special characters allowed.");return}if(b.dupname(a)){alert("Duplicated name.");return}if(confirm("Start new logging?")){s_ajax({url:b.starturl+a,m:"GET",success:function(f){location.reload()},fail:function(f){alert("Failed to start for:"+f)}})}}},recording:function(f,b){this.logging=true;var c=new Date(b*1000);EI("logtitle").innerHTML="Recording since <b>"+c.toLocaleString()+"</b> ";var a=EI("logname");a.value=f;a.disabled=true;EI("logbutton").innerHTML="STOP Logging"},stop:function(){this.logging=false;EI("logtitle").innerHTML="New Log Name:";var a=EI("logname");a.value="";a.disabled=false;EI("logbutton").innerHTML="Start Logging"},view:function(a){alert("View "+this.ll[a].name)},rm:function(b){var a=this;if(confirm("Delete the log "+a.ll[b].name)){console.log("rm "+a.ll[b].name);s_ajax({url:a.rmurl+b,m:"GET",success:function(f){var c=JSON.parse(f);a.fs=c;a.fsinfo(c.size,c.used);a.ll.splice(b,1);a.list(a.ll)},fail:function(c){alert("Failed to delete for:"+c)}})}},dl:function(a){console.log("DL "+this.ll[a].name);window.open(t.dlurl+a)},list:function(b){var a=EI("loglist").querySelector("tbody");var d;while(d=a.querySelector("tr:nth-of-type(2)")){a.removeChild(d)}var c=this;var f=c.row;b.forEach(function(k,g){var j=k.name;var h=new Date(k.time*1000);var l=f.cloneNode(true);l.querySelector(".logid").innerHTML=j;l.querySelector(".logdate").innerHTML=h.toLocaleString();l.querySelector(".dlbutton").onclick=function(){c.dl(g)};l.querySelector(".viewbutton").onclick=function(){c.view(g)};l.querySelector(".rmbutton").onclick=function(){c.rm(g)};a.appendChild(l)})},init:function(){var a=this;EI("logbutton").onclick=function(){a.slog()};a.row=EI("loglist").querySelector("tr:nth-of-type(2)");a.row.parentNode.removeChild(a.row);s_ajax({url:a.url,m:"GET",success:function(c){var b=JSON.parse(c);a.fs=b.fs;if(b.rec){a.recording(b.log,b.start)}a.ll=b.list;a.list(b.list);a.fsinfo(b.fs.size,b.fs.used)},fail:function(b){alert("failed:"+e)}})},};function checkurl(a){if(a.value.trim().startsWith("https")){alert("HTTPS is not supported")}}function mothod(b){var a;if(b.id=="m_get"){a="m_post"}else{a="m_get"}EI(a).checked=!b.checked}function update(){var a={};a.enabled=EI("enabled").checked;a.url=encodeURIComponent(EI("url").value);a.bs=EI("bs").value;a.bt=EI("bt").value;a.fs=EI("fs").value;a.ft=EI("ft").value;a.extra=encodeURIComponent(EI("extra").value);a.period=EI("period").value;a.method=(EI("m_post").checked)?"POST":"GET";s_ajax({url:logurl,m:"POST",data:"data="+JSON.stringify(a),success:function(b){alert("done")},fail:function(b){alert("failed:"+e)}})}function load(){s_ajax({url:logurl+"?data=1",m:"GET",success:function(b){var a=JSON.parse(b);EI("enabled").checked=a.enabled;EI((a.method=="POST")?"m_post":"m_get").checked=true;EI("url").value=(a.url===undefined)?"":a.url;EI("bt").value=(a.bt===undefined)?"":a.bt;EI("bs").value=(a.bs===undefined)?"":a.bs;EI("ft").value=(a.ft===undefined)?"":a.ft;EI("fs").value=(a.fs===undefined)?"":a.fs;EI("extra").value=(a.extra===undefined)?"":a.extra;EI("period").value=(a.period===undefined)?300:a.period}});logs.init()};/*]]>*/</script>
+<style>#loglist td,#loglist tr,#loglist th,#loglist{border:1px solid black}fieldset{margin:10px}#fsinfo{margin:10px}</style>
+</head>
+<body onload="load()">
+<fieldset>
+<legend>Remote Log</legend>
+<form>
+<table>
+<tr><th>Enabled:</th><td><input type="checkbox" id="enabled" value="yes"></td></tr>
+<tr><th>Method:</th><td><input type="checkbox" id="m_get" name="method" value="GET" onchange="mothod(this)">Get <input type="checkbox" id="m_post" name="method" value="POST" onchange="mothod(this)">Post </td></tr>
+<tr><th>URL:</th><td><input type="text" id="url" size="64" placeholder="input link" onchange="checkurl(this)"></td></tr>
+<tr><th>Beer Temperature Name:</th><td><input type="text" id="bt" size="20"></td></tr>
+<tr><th>Beer Set Temperature Name:</th><td><input type="text" id="bs" size="20"></td></tr>
+<tr><th>Fridge Temperature Name:</th><td><input type="text" id="ft" size="20"></td></tr>
+<tr><th>Fridge Set Temperature Name:</th><td><input type="text" id="fs" size="20"></td></tr>
+<tr><th>Extra parameter:</th><td><input type="text" id="extra" size="56"></td></tr>
+<tr><th>Log time period:</th><td><input type="text" id="period" size="4">Seconds</td></tr>
+<tr><th></th><td><button type="button" onclick="update()">Update</button></td></tr>
+</table>
+</form>
+</fieldset>
+<fieldset>
+<legend>Local Log</legend>
+<span id="logtitle">New Log Name:</span><input type="text" id="logname" size="24" maxlength="24"></input> <button id="logbutton">Start Log</button>
+<div id="fsinfo">
+Total Space: <span id="fssize">0</span> Bytes, Used Space: <span id="fsused">0</span> Bytes, Free Space: <span id="fsfree">0</span> Bytes
+</div>
+<table id="loglist">
+<tr><th style="width:30%">Log</th><th style="width:40%">Date</th><th>Action</th></tr>
+<tr><td class="logid"></td><td class="logdate"></td><td><button class="dlbutton">Download</button><button class="viewbutton">View</button><button class="rmbutton">Delete</button></td></tr>
+</table>
+</fieldset>
+</body>
+</html>
+)END";
 
+/*
 static const char LogConfigHtml[] PROGMEM =
 R"END(
 <html>
@@ -245,6 +286,7 @@ R"END(
 </body>
 </html>
 )END";
+*/
 
 void DataLogger::getSettings(AsyncWebServerRequest *request)
 {

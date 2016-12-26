@@ -51,6 +51,8 @@ extern "C" {
 
 #include "BrewPiProxy.h"
 
+#include "BrewLogger.h"
+
 //WebSocket seems to be unstable, at least on iPhone.
 //Go back to ServerSide Event.
 #define UseWebSocket false
@@ -97,6 +99,9 @@ R"END(
 #define LOGGING_PATH	"/log"
 #endif
 
+#define LOGLIST_PATH  "/loglist.php"
+#define CHART_DATA_PATH "/chart.php"
+
 #define CONFIG_PATH		"/config"
 #define TIME_PATH       "/time"
 #define RESETWIFI_PATH       "/erasewifisetting"
@@ -122,6 +127,8 @@ BrewKeeper brewKeeper([](const char* str){ brewPi.putLine(str);});
 #ifdef ENABLE_LOGGING
 DataLogger dataLogger;
 #endif
+
+BrewLogger brewLogger;
 
 #if UseServerSideEvent == true
 AsyncEventSource sse(SSE_PATH);
@@ -392,10 +399,10 @@ public:
 				// get file
 				String path=request->url();
 	 			if(path.endsWith("/")) path +=DEFAULT_INDEX_FILE;
-	 			DBG_PRINTF("request:%s\n",path.c_str());
+	 			//DBG_PRINTF("request:%s\n",path.c_str());
 				if(fileExists(path)) return true; //if(SPIFFS.exists(path)) return true;
 				
-				DBG_PRINTF("request:%s not found\n",path.c_str());
+				//DBG_PRINTF("request:%s not found\n",path.c_str());
 			}
 	 	}else if(request->method() == HTTP_DELETE && request->url() == DELETE_PATH){
 				return true;
@@ -426,9 +433,9 @@ public:
 	}
 	bool canHandle(AsyncWebServerRequest *request){
 		String host=request->host();
-		DBG_PRINTF("Request host:");
-		DBG_PRINTF(host.c_str());
-		DBG_PRINTF("\n");
+		//DBG_PRINTF("Request host:");
+		//DBG_PRINTF(host.c_str());
+		//DBG_PRINTF("\n");
   		if(host.indexOf(String("apple")) >=0
   		|| host.indexOf(String("itools")) >=0 
   		|| host.indexOf(String("ibook")) >=0 
@@ -513,6 +520,79 @@ void stringAvailable(const char *str)
 	sse.send(str);
 #endif
 }
+
+
+
+class LogHandler:public AsyncWebHandler
+{
+	void handleRequest(AsyncWebServerRequest *request){
+		if( request->url() == LOGLIST_PATH){
+			if(request->hasParam("d")){
+				int index=request->getParam("d")->value().toInt();
+				char buf[36];
+				brewLogger.getFilePath(buf,index);
+				if(SPIFFS.exists(buf)){
+					request->send(SPIFFS,buf,"application/octet-stream");
+				}else{
+					request->send(404); 
+				}
+			}else if(request->hasParam("rm")){
+				int index=request->getParam("rm")->value().toInt();
+				DBG_PRINTF("Delete log file %d\n",index);
+				brewLogger.rmLog(index);
+
+				request->send(200,"application/json",brewLogger.fsinfo());				
+			}else if(request->hasParam("start")){
+				String filename=request->getParam("start")->value();
+				DBG_PRINTF("start logging:%s\n",filename.c_str());
+				if(brewLogger.startSession(filename.c_str()))
+					request->send(200);
+				else
+					request->send(404);
+			}else if(request->hasParam("stop")){
+				DBG_PRINTF("Stop logging\n");
+				brewLogger.endSession();
+				request->send(200);
+			}else{
+				// default. list information
+				String status=brewLogger.loggingStatus();
+				request->send(200,"application/json",status);
+			}
+			return;
+		} // end of logist path
+		
+		// charting
+		if(!brewLogger.isLogging()){
+			request->send(404);
+			return;
+		}
+		
+		int offset;
+		if(request->hasParam("offset")){
+			offset=request->getParam("offset")->value().toInt();
+			//DBG_PRINTF("offset= %d\n",offset);
+		}else{
+			offset=0;
+		}
+		size_t size=brewLogger.beginCopyAfter(offset);
+		if(size >0){
+			request->send("application/octet-stream", size, [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t { 
+				return brewLogger.read(buffer, maxLen,index);
+			});
+		}else{
+			request->send(204);
+		}		
+	}
+	
+public:
+	LogHandler(){}
+	bool canHandle(AsyncWebServerRequest *request){
+	 	if(request->url() == CHART_DATA_PATH || request->url() ==LOGLIST_PATH) return true;
+	 	return false;
+	}
+
+};
+LogHandler logHandler;
 
 //{brewpi
 
@@ -773,6 +853,8 @@ void setup(void){
 #endif
 
 	server.addHandler(&brewPiWebHandler);
+	
+	server.addHandler(&logHandler);
 	//3.1.2 SPIFFS is part of the serving pages
 	//server.serveStatic("/", SPIFFS, "/","public, max-age=259200"); // 3 days
 
@@ -801,6 +883,8 @@ void setup(void){
 	brewpi_setup();	
   	brewPi.begin(stringAvailable);
 	brewKeeper.setFile(PROFILE_FILENAME);
+	
+	brewLogger.begin();
 
 #ifdef STATUS_LINE
 	// brewpi_setup will "clear" the screen.
@@ -844,6 +928,8 @@ void loop(void){
   	brewKeeper.keep(now,unit,mode,beerSet);
   	
   	brewPi.loop();
+ 	
+ 	brewLogger.loop();
  	
  	#ifdef ENABLE_LOGGING
 

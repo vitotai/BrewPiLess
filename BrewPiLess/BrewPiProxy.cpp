@@ -81,8 +81,23 @@ void BrewPiProxy::getControlParameter(char *pUnit,char *pMode,float *pBeerSet, f
 
 }
 
+void BrewPiProxy::getLogInfo(char *pUnit,uint8_t *pMode,uint8_t *pState)
+{
+	*pUnit=tempControl.cc.tempFormat;
+	*pState = (uint8_t) tempControl.getState();
+	*pMode = (uint8_t) tempControl.getMode();
+}
 
-
+void BrewPiProxy::getAllStatus(uint8_t *pState,uint8_t *pMode,float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet, float *pRoomTemp)
+{
+	*pBeerTemp=temperatureFloatValue(tempControl.getBeerTemp());
+	*pBeerSet=temperatureFloatValue(tempControl.getBeerSetting());
+	*pFridgeTemp = temperatureFloatValue(tempControl.getFridgeTemp());
+	*pFridgeSet = temperatureFloatValue(tempControl.getFridgeSetting());
+	*pRoomTemp =temperatureFloatValue(tempControl.getRoomTemp());
+	*pState = (uint8_t) tempControl.getState();
+	*pMode = (uint8_t) tempControl.getMode();
+}
 
 
 
