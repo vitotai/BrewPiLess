@@ -10,7 +10,7 @@
 #define LOG_RECORD_FILE "/loginfo"
 #define MAX_FILE_NUMBER 10
 
-#define LogBufferSize 128
+#define LogBufferSize 1024
 
 #define EventTag 0xF2
 
@@ -125,7 +125,6 @@ public:
 		_savedLength=fsize - _logIndex;
 		_logFile.seek(_savedLength,SeekSet);
 		_logFile.readBytes(_logBuffer,_logIndex);
-		_logFile.close();
 		// log a "new start" log
 		DBG_PRINTF("resume, total _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
 		
@@ -377,6 +376,15 @@ private:
 		//race condition: read before data update. _logIndex += size;
 		return ptr;
 	}
+
+	void commitData(char* buf,int len)
+	{
+		 _logIndex += len;
+		if(len !=_logFile.write((const uint8_t*)buf,len)){
+			DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
+		}
+		_logFile.flush();
+	}
 	
 	void addBeerSetPoint(float beerset){
 		char *ptr = allocByte(4);
@@ -441,15 +449,7 @@ private:
 	}
 		
 	FileIndexes _fileInfo;
-	
-	void commitData(char* buf,int len)
-	{
-		 _logIndex += len;
-		_logFile.write((const uint8_t*)buf,len);
-		_logFile.flush();
-	}
-	
-	
+		
 	void loadIdxFile(void)
 	{
 		// load index
@@ -481,6 +481,11 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
+
+
+
 
 
 
