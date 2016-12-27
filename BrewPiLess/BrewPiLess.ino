@@ -278,7 +278,7 @@ public:
 	 		else request->send(200, "text/plain;", "");
 	 	}else if(request->method() == HTTP_POST && request->url() == PUTLINE_PATH){
 	 		String data=request->getParam("data", true, false)->value();
-	 		DBG_PRINTF("putline:%s\n",data.c_str());
+	 		//DBG_PRINTF("putline:%s\n",data.c_str());
 
 	 		brewPi.putLine(data.c_str());
 	 		request->send(200);
@@ -510,7 +510,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 
 void stringAvailable(const char *str)
 {
-	DBG_PRINTF("BroadCast:%s\n",str);
+	//DBG_PRINTF("BroadCast:%s\n",str);
 
 #if UseWebSocket == true
 	ws.textAll(str,strlen(str));
@@ -527,8 +527,8 @@ class LogHandler:public AsyncWebHandler
 {
 	void handleRequest(AsyncWebServerRequest *request){
 		if( request->url() == LOGLIST_PATH){
-			if(request->hasParam("d")){
-				int index=request->getParam("d")->value().toInt();
+			if(request->hasParam("dl")){
+				int index=request->getParam("dl")->value().toInt();
 				char buf[36];
 				brewLogger.getFilePath(buf,index);
 				if(SPIFFS.exists(buf)){
@@ -564,13 +564,14 @@ class LogHandler:public AsyncWebHandler
 		// charting
 		if(!brewLogger.isLogging()){
 			request->send(404);
+			DBG_PRINTF("Not logging\n");
 			return;
 		}
 		
 		int offset;
 		if(request->hasParam("offset")){
 			offset=request->getParam("offset")->value().toInt();
-			//DBG_PRINTF("offset= %d\n",offset);
+			DBG_PRINTF("offset= %d\n",offset);
 		}else{
 			offset=0;
 		}
@@ -956,5 +957,7 @@ void loop(void){
   		}
   	}
 }
+
+
 
 

@@ -10,7 +10,7 @@
 #define LOG_RECORD_FILE "/loginfo"
 #define MAX_FILE_NUMBER 10
 
-#define LogBufferSize 1024
+#define LogBufferSize 128
 
 #define EventTag 0xF2
 
@@ -240,11 +240,11 @@ public:
 	}
 
 
-	size_t beginCopyAfter(int last)
+	size_t beginCopyAfter(size_t last)
 	{
 		if(!_started) return 0;
 		_readStart = last;
-		//DBG_PRINTF("beginCopyAfter:%d, _logIndex=%ld, saved=%ld last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength, (last >= (_logIndex +_savedLength))? 'Y':'N' );
+		DBG_PRINTF("beginCopyAfter:%d, _logIndex=%ld, saved=%ld last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength, (last >= (_logIndex +_savedLength))? 'Y':'N' );
 		if(last >= (_logIndex +_savedLength)) return 0;
 		return ( _logIndex+_savedLength - last);
 	}
@@ -253,7 +253,7 @@ public:
 	{
 		size_t sizeRead;
 		size_t rindex= index + _readStart;
-		//DBG_PRINTF("read index:%d, rindex=%ld\n",index,rindex);
+		DBG_PRINTF("read index:%d, rindex=%ld\n",index,rindex);
 		
 		if(rindex > (_savedLength +_logIndex)) return 0;
 		
@@ -270,7 +270,7 @@ public:
 					return 0;
 				}
 				_isFileOpen=true;
-				//DBG_PRINTF("file opened.\n");
+				DBG_PRINTF("file opened.\n");
 				if(rindex !=0) _file.seek(rindex,SeekSet);
 			}
 			sizeRead = _savedLength - rindex;
@@ -283,7 +283,7 @@ public:
 //				DBG_PRINTF("file closed.\n");
 			}
 		}else{
-			//DBG_PRINTF("read from buffer\n");
+			DBG_PRINTF("read from buffer\n");
 			// read from buffer
 			rindex -=  _savedLength;
 			// rindex should be smaller than _logIndex
@@ -291,7 +291,7 @@ public:
 			if(sizeRead > maxLen) sizeRead=maxLen;
 			memcpy(buffer,_logBuffer+rindex,sizeRead);
 		}
-		//DBG_PRINTF("sizeRead:%ld\n",sizeRead);
+		DBG_PRINTF("sizeRead:%ld\n",sizeRead);
 		return sizeRead;
 	}
 	
@@ -331,7 +331,8 @@ private:
 			_fsspace -= fs_info.blockSize * 2;
 		}else{
 			_fsspace=0;
-		}	
+		}
+		DBG_PRINTF("SPIFFS space:%d\n",_fsspace);
 	}
 	
 	void startLog(bool fahrenheit)
@@ -352,27 +353,28 @@ private:
 		_isFileOpen=false;
 		_savedLength=0;
 		
-		writeToFile(_logBuffer,_logIndex);
+		commitData(_logBuffer,_logIndex);
 		
 		//DBG_PRINTF("*startLog*\n");
 	}
 
 	char *allocByte(byte size)
 	{
-		if((_logIndex+size) >= LogBufferSize){
-			DBG_PRINTF("buffer full, %d + %d >= %d!\n",_logIndex,size,LogBufferSize);
+		if((_logIndex+size) > LogBufferSize){
+			DBG_PRINTF("buffer full, %d + %d >= %d! saved=%d\n",_logIndex,size,LogBufferSize,_savedLength);
 				_savedLength += _logIndex;
 				_logIndex =0;
 		}
 		if(size >= _fsspace){
 			// run out of space.
+			DBG_PRINTF("file system full, space: %d  req %d!\n",_fsspace,size);
 			endSession(); // forced stop
 			return NULL;
 		}
 		_fsspace -= size;
 		
 		char *ptr=_logBuffer + _logIndex;
-		_logIndex += size;
+		//race condition: read before data update. _logIndex += size;
 		return ptr;
 	}
 	
@@ -391,7 +393,7 @@ private:
 		spi = spi | 0x8000;
 		*(ptr+2) =(char) (spi >> 8);
 		*(ptr+3) =(char)(spi & 0xFF);
-		writeToFile(ptr,4);
+		commitData(ptr,4);
 	}
 
 	void addMode(char mode){
@@ -399,7 +401,7 @@ private:
 		if(ptr == NULL) return;
 		*ptr = ModeTag;
 		*(ptr+1) = mode;
-		writeToFile(ptr,2);
+		commitData(ptr,2);
 	}
 
 	void addState(char state){
@@ -407,7 +409,7 @@ private:
 		if(ptr == NULL) return;
 		*ptr = StageTag;
 		*(ptr+1) = state;
-		writeToFile(ptr,2);
+		commitData(ptr,2);
 	}
 		
 	void addTemperature(float temp){
@@ -424,7 +426,7 @@ private:
 			*ptr = (char)((temp_int >> 8) & 0x7F);
 			*(ptr+1) =(char)(temp_int & 0xFF);		
 		}
-		writeToFile(ptr,2);
+		commitData(ptr,2);
 	}
 
 
@@ -435,13 +437,14 @@ private:
 		*ptr = ResumeBrewTag;
 		size_t rtime= TimeKeeper.getTimeSeconds();
 		 *(ptr+1)=(uint8_t)((rtime - _fileInfo.starttime)/60);
-		 writeToFile(ptr,2);
+		 commitData(ptr,2);
 	}
 		
 	FileIndexes _fileInfo;
 	
-	void writeToFile(char* buf,int len)
+	void commitData(char* buf,int len)
 	{
+		 _logIndex += len;
 		_logFile.write((const uint8_t*)buf,len);
 		_logFile.flush();
 	}
@@ -478,6 +481,8 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
 
 
 
