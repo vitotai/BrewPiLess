@@ -1,7 +1,7 @@
 # BrewPiLess
 ## Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
-
+![Main Screen](img/main_v1.2.jpg)
 BrewPi is the greatest, if not ultimate, fermentation temperature controller. The original design uses a RPI to log temperatures and maintain temperature schedule. The RPI also hosts a web server as the front-end of internet web access. 
 Using a RPI or a PC enables the maximum power of BrewPi in the cost of additional RPI or PC. 
 
@@ -18,18 +18,18 @@ You will need the ESP8266/Arduino environment, as well as the following librarie
  * ESP8266HTTPUpdateServer (newer version is needed. you might need to manually download the files.) https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer
  * OneWire https://github.com/PaulStoffregen/OneWire
  
-
 ## Features
  * I2C LCD support
  * Rotary Encoder support (* not default supported)
  * Remote LCD display on browser
- * Remtoe Temperature controll
+ * Remtoe Temperature control
  * Temperature schedule
  * Device(temperature sensor and actuator) setup
- * Temperature logging to specified destination. 
+ * Temperature logging to specified **remote** destination. 
  * Web-based OTA firmware update.
  * Web-based network setting
- * **(NEW) SoftAP mode**
+ * SoftAP mode
+ * **(new)Local Temperature log and temperature chart**
  
 ## Usage
 ### Setup WiFi network setting.
@@ -58,8 +58,10 @@ BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP addr
  Default username and password are both `brewpi`.
  
  * Main page - `http://brewpi.local/`
- 
-    The LCD display of BrewPi. Clicking the LCD brings out the pop menu to other functions.
+    The main page.
+
+ * LCD page - `http://brewpi.local/lcd` 
+    The LCD display of BrewPi. Clicking the LCD brings out the pop menu to other functions. This page is good for mobile device or when temperature chart is not necessary.
  
  * Device setup - `http://brewpi.local/setup.htm`
 
@@ -67,6 +69,8 @@ BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP addr
 
  * Temperature management - `http://brewpi.local/control.htm`
  * Logging setting - `http://brewpi.local/log`
+ ![Log Setting](img/log_setting_v1.2.jpg)
+ 
  * System configuration - `http://brewpi.local/config`
  
     Updating the settings will result in restart of the system.
@@ -74,6 +78,15 @@ BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP addr
     
     The menu from the main page doesn't include this page.
 
+## Local temperature logging.
+
+ * The log won’t start automatically. You have to start it at log setting page.
+ * The temperatures are logged every minute.
+ * A 30 day log will take around 350k bytes. That might imply that 3M space can record around 6 month data. However, there is no guarantee of the robustness of SPIFFS.
+ * Changing temperature when logging will result in wrong data interpretation.
+ * Maximum 10 logs is allowed. The logs will not be deleted automatically. Manual deleting is necessary.
+ * Off-line viewer is available. You can download the log and view it from your computer. Download the file "BPLLogViewer.htm" in "extra" subfolder. Save it anywhere in your computer. Open it by your browser.
+ * **Internet access is required to view the chart**. To save some more space and to alleviate the loading of ESP8266, the library is not put in the ESP8266.
  
 ## Hardware Setup
 Fortunately, 3.3V is regarded as HIGH in 5V logic, so the **output** of ESP8266 can be connected directly to the devices. Luckily, DS18B20 works under 3.3V. I just replace the Arduino Nano with the ESP8266, and it works. You should still be carful not to burn the ESP8266.
@@ -182,8 +195,8 @@ In newer version, the basic files are embeded. However, the file in SPIFFS takes
 
 ## Development tools.
 Two additional tools are available. One is web-based file manager to manuplate the files directly from the web. You can download and upload files the the web.
-To enabled this feature, set `DEVELOPMENT_FILEMANAGER` to true in `espconfig.h`, and add `edit.htm.gz` file (in `extra` folder) to `data` folder and upload it together with other files.
-After that, you can access the files by the url (you should know you can change it):
+To enabled this feature, set `DEVELOPMENT_FILEMANAGER` to true in `espconfig.h`.
+You can access the files by the url (you should know you can change it):
 `http://brewpi.local:8008/filemanager` 
 
 The second tool is used to access the BrewPi directly. The original BrewPi on Arduino uses serial to communicate with RPI in the JSON-like format.
