@@ -696,6 +696,7 @@ void brewpiLoop(void)
 #if BREWPI_MENU
 		if (rotaryEncoder.pushed()) {
 			rotaryEncoder.resetPushed();
+			display.updateBacklight();
 			menu.pickSettingToChange();
 		}
 #endif
@@ -957,6 +958,18 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

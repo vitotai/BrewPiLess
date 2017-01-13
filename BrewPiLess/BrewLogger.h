@@ -94,6 +94,8 @@ public:
 	
 	void rmLog(int index)
 	{
+		//TODO: race condition
+		// multiple access issue
 		char buff[36];
 		sprintf(buff,"%s/%s",LOG_PATH,_fileInfo.files[index].name);
 		SPIFFS.remove(buff);
@@ -270,17 +272,14 @@ public:
 				}
 				_isFileOpen=true;
 				DBG_PRINTF("file opened.\n");
-				if(rindex !=0) _file.seek(rindex,SeekSet);
+//				if(rindex !=0) _file.seek(rindex,SeekSet);
 			}
 			sizeRead = _savedLength - rindex;
 			if(sizeRead > maxLen) sizeRead=maxLen;
+
+			_file.seek(rindex,SeekSet);
 			sizeRead=_file.read(buffer,sizeRead);
 			
-			if((sizeRead+ rindex) >= _savedLength ){
-				_file.close();
-				_isFileOpen=false;
-//				DBG_PRINTF("file closed.\n");
-			}
 		}else{
 			DBG_PRINTF("read from buffer\n");
 			// read from buffer
@@ -290,6 +289,13 @@ public:
 			if(sizeRead > maxLen) sizeRead=maxLen;
 			memcpy(buffer,_logBuffer+rindex,sizeRead);
 		}
+/*
+			if((sizeRead+ rindex) >= _savedLength ){
+				_file.close();
+				_isFileOpen=false;
+//				DBG_PRINTF("file closed.\n");
+			}*/
+
 		DBG_PRINTF("sizeRead:%ld\n",sizeRead);
 		return sizeRead;
 	}
@@ -481,6 +487,18 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

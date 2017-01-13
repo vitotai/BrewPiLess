@@ -57,7 +57,7 @@ void WiFiSetupClass::startWiFiManager(bool portal)
     else{
     	// onced it enter AP mode, tcp_bind() lf lwip will return failure.
     	// thereore, restart the system.
-    	if(_apEntered) ESP.reset();
+    	if(_apEntered) ESP.restart();
     }
 }
 
@@ -123,6 +123,18 @@ void WiFiSetupClass::stayConnected(void)
   		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

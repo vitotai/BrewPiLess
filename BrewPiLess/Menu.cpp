@@ -190,7 +190,9 @@ void pickTempSetting(ReadTemp readTemp, WriteTemp writeTemp, const char* tempNam
 				rotaryEncoder.resetPushed();
 				writeTemp(startVal);
 				char tempString[9];				
-				printAnnoation(PSTR("%S temp set to %s in Menu."), tempName, tempToString(tempString,startVal,1,9));
+				//printAnnoation(PSTR("%S temp set to %s in Menu."), tempName, tempToString(tempString,startVal,1,9));
+
+				printAnnoation(PSTR("%s temp set to %s in Menu."), tempName, tempToString(tempString,startVal,1,9));
 				return;
 			}
 		}	
@@ -210,16 +212,29 @@ void pickTempSetting(ReadTemp readTemp, WriteTemp writeTemp, const char* tempNam
 
 void Menu::pickFridgeSetting(void){
 	// TODO - Fix this
-//	pickTempSetting(tempControl.getFridgeSetting, tempControl.setFridgeTemp, PSTR("Fridge"), piLink.printFridgeAnnotation, 2);
+	//pickTempSetting(tempControl.getFridgeSetting, tempControl.setFridgeTemp, PSTR("Fridge"), piLink.printFridgeAnnotation, 2);
+	pickTempSetting(tempControl.getFridgeSetting, tempControl.setFridgeTemp, "Fridge", piLink.printFridgeAnnotation, 2);
 }
 
 void Menu::pickBeerSetting(void){
 	// TODO - Fix This
-//	pickTempSetting(tempControl.getBeerSetting, tempControl.setBeerTemp, PSTR("Beer"), piLink.printBeerAnnotation, 1);
+	pickTempSetting(tempControl.getBeerSetting, tempControl.setBeerTemp, "Beer", piLink.printBeerAnnotation, 1);
 }
 
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -197,7 +197,10 @@ const uint8_t PROGMEM ttable[7][4] = {
 #ifdef RotaryViaPCF8574
 
 PCF8574 pcf8574(PCF8574_ADDRESS,PIN_SDA, PIN_SCL);
-static void isr_iochange(void) { rotaryEncoder.process(); }
+
+static void isr_iochange(void) { 
+	rotaryEncoder.process();
+}
 
 #else //#ifdef RotaryViaPCF8574
 static void isr_rotary(void) { rotaryEncoder.process(); }
@@ -243,6 +246,7 @@ ISR(PCINT0_vect){
 	#error board/processor not supported by rotary encoder code. Disable or fix the rotary encoder.
 #endif
 #endif //#ifdef ESP8266
+
 
 void RotaryEncoder::process(void){
 	static uint8_t state=R_START;
@@ -412,6 +416,18 @@ int16_t RotaryEncoder::read(void){
 #endif
 	return 0;		
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

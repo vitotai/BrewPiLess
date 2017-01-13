@@ -312,9 +312,15 @@ void IIClcd::write4bits(uint8_t value) {
 
 void IIClcd::expanderWrite(uint8_t _data) {
 #ifdef ESP8266
+#ifdef RotaryViaPCF8574	
+	noInterrupts();
+#endif
 	Wire.beginTransmission(_Addr);
 	Wire.write((int)(_data) | _backlightval);
 	Wire.endTransmission();   
+#ifdef RotaryViaPCF8574		
+	interrupts();
+#endif
 #else
     uint8_t data = ((uint8_t)(_data) | _backlightval);
     twi_writeTo(_Addr, &data, 1, true, true);
@@ -371,6 +377,18 @@ void IIClcd::print_P(const char * str){ // print a string stored in PROGMEM
     print(buf); // print from RAM
 }
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
