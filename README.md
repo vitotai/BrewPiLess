@@ -7,8 +7,13 @@ Using a RPI or a PC enables the maximum power of BrewPi in the cost of additiona
 
 ESP8266 is cheap and powerful WiFi-enabling IOT solution. 
 Althoug it can't be as powerful as a RPI, it's a good solution to maximize the functionality and minimize the cost. Using single one ESP8266 as temperature controller(Arduino part) and web server and schedule maintainer(RPI part) also reduce the work of building.
+
+## !!Special Note
+Uploading files to ESP8266 is no longer needed because the "files" are now embedded in the code. However, you can still upload files to the File System by Data Upload tool or web based file manager. **The file in File System takes higher priority.** That is, if you have an "index.htm" in the file system, you will get this file instead of the server page in the code whey you visit "http://brewpi.local". **If you have ever uploaded the data folder by upload tool, please delete them when you update to new version, or you will not get updated files.** Please also note that you mihgt need to hit "refresh" button on your browser to force it to get new files.
+
 ## Software configuration
 BrewPi related configuration is defined in `config.h` while networking related configuration is define in `espconfig.h`. They are both self-explanatory and commented. Please check the files directly.
+
 ## Additional Libraries
 You will need the ESP8266/Arduino environment, as well as the following libraries.
  * ArduinoJson https://github.com/bblanchon/ArduinoJson
