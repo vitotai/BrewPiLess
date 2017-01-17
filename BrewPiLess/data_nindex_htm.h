@@ -21,7 +21,7 @@ R"END(
 <span class="lcd-line" id="lcd-line-2">script...</span>
 <span class="lcd-line" id="lcd-line-3"></span></p><p>
 </div>
-<div id="banner">BrewPiLess V1.1
+<div id="banner">BrewPiLess V1.2
 </div>
 <div id="menu">
 <button onclick="window.open('/control.htm')">Temperature Management</button>
@@ -79,6 +79,13 @@ R"END(
 </body>
 </html>
 )END";
+
+
+
+
+
+
+
 
 
 

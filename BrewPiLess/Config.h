@@ -204,7 +204,7 @@
 #define PIN_SCL NODEMCU_PIN_D1
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 
-//#define THORRAX_BOARD true
+//#define THORRAX_BOARD false
 
 #if THORRAX_BOARD
 #define coolingPin NODEMCU_PIN_D5
@@ -301,6 +301,13 @@
 #define BUFFER_PILINK_PRINTS 1
 
 #define EARLY_DISPLAY 1
+
+
+
+
+
+
+
 
 
 
