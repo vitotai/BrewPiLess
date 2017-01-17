@@ -106,7 +106,7 @@ This is default configuration, you can change it in `config.h`.
 | GPIO16         | D0            | Buzzer			   |
 | GPIO5          | D1            | I2C SCL             |
 | GPIO4          | D2            | I2C SDA             |
-| GPIO0          | D3            | INT from PCF8574 *  |
+| GPIO0          | D3            | INT from PCF8574 * Or Wakeup Button  |
 | GPIO2          | D4            | Door (not used)     |
 | GPIO14         | D5            | Cooling Actuator*   |
 | GPIO12         | D6            | Temperature Sensors |
@@ -124,7 +124,8 @@ https://github.com/esp8266/Arduino/blob/master/doc/boards.md#minimal-hardware-se
 ## Support of Rotary Encoder
 Due to the special usage at bootup of GPIO0,2,15(D3,D4,D8), they can't be used as inputs of rotary encoder. One of the solution is by an IO Expander. 
 Currently, PCF8574 is supported if you really need the rotary encoder. You have to change the compile options in Config.h to enable this feature.
-
+## Wake-up button
+Without a rotary encoder input, the backlight of LCD wil never turned-off because there is no way to "wake" it up. Since BrewPiLess can be controlled by network easily, the rotary encoder seems unnecessary. Wake-up button is a solution for this. The button connects to D3 by default and grounds D3 when pushed.
 
 ## Logging temperature data to Google Sheets
 Due to the resource limit of ESP8266, establishment of **HTTPS** connection while serving other functions will crash the system. 
