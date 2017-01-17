@@ -34,10 +34,10 @@
 uint8_t LcdDisplay::stateOnDisplay;
 uint8_t LcdDisplay::flags;
 
-#ifdef BREWPI_OLED128x64_LCD
+#if BREWPI_OLED128x64_LCD
 LcdDriver LcdDisplay::lcd(OLED128x64_LCD_ADDRESS,PIN_SDA,PIN_SCL);
 #else // #if BREWPI_OLED128x64_LCD
-#ifdef BREWPI_IIC_LCD
+#if BREWPI_IIC_LCD
 LcdDriver LcdDisplay::lcd(IIC_LCD_ADDRESS,20,4);
 #else
 LcdDriver LcdDisplay::lcd;
@@ -283,6 +283,9 @@ void LcdDisplay::printState(void){
 #endif		
 	}
 }
+
+
+
 
 
 

@@ -24,16 +24,16 @@
 #include "SpiLcd.h"
 #include "NullLcdDriver.h"
 
-#ifdef BREWPI_IIC_LCD
+#if BREWPI_IIC_LCD
 #include <Wire.h> 
 #include "IicLcd.h"
 #endif
 
-#ifdef BREWPI_OLED128x64_LCD
+#if BREWPI_OLED128x64_LCD
 #include "IicOledLcd.h"
 #endif
 
-#ifdef BREWPI_OLED128x64_LCD
+#if BREWPI_OLED128x64_LCD
 	typedef IICOledLcd	LcdDriver;	
 #else // BREWPI_OLED128x64_LCD
 #if defined(BREWPI_IIC_LCD)
@@ -95,7 +95,7 @@ class LcdDisplay DISPLAY_SUPERCLASS
 	DISPLAY_METHOD void printAt_P(uint8_t x, uint8_t y, const char* text);
 	
 	DISPLAY_METHOD void setBufferOnly(bool bufferOnly) {
-	#ifndef BREWPI_IIC_LCD
+	#if !BREWPI_IIC_LCD
 		lcd.setBufferOnly(bufferOnly);
 	#endif
 	}
@@ -121,6 +121,9 @@ class LcdDisplay DISPLAY_SUPERCLASS
 	DISPLAY_FIELD uint8_t stateOnDisplay;
 	DISPLAY_FIELD uint8_t flags;		
 };
+
+
+
 
 
 

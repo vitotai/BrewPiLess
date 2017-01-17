@@ -745,6 +745,16 @@ void requestRestart(bool disc)
 
 #define IS_RESTARTING (_systemState!=SystemStateOperating)
 
+#if WAKEUP_BUTTON
+void isr_wakeupLcd(void) { display.resetBacklightTimer(); }
+void initWakeupButton(void){
+	pinMode(WakeupButtonPin, INPUT_PULLUP);	
+	attachInterrupt(WakeupButtonPin, isr_wakeupLcd, FALLING);
+}
+#endif //#ifdef WAKEUP_BUTTON
+
+
+
 void setup(void){
 
 	#if SerialDebug == true
@@ -888,6 +898,11 @@ void setup(void){
 	
 	brewLogger.begin();
 
+#if WAKEUP_BUTTON
+	initWakeupButton();
+#endif
+
+
 #ifdef STATUS_LINE
 	// brewpi_setup will "clear" the screen.
 	IPAddress ip = WiFi.localIP();
@@ -958,6 +973,9 @@ void loop(void){
   		}
   	}
 }
+
+
+
 
 
 

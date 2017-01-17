@@ -149,6 +149,8 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
+#define WAKEUP_BUTTON 0
+
 //////////////////////////////////////////////////////////////////////////
 //
 // #ifndef BREWPI_EEPROM_HELPER_COMMANDS
@@ -233,7 +235,8 @@
 #define STATUS_LINE 1
 #endif
 
-#if BREWPI_ROTARY_ENCODER
+
+#if BREWPI_ROTARY_ENCODER || WAKEUP_BUTTON
 #define BACKLIGHT_AUTO_OFF_PERIOD 180
 #else
 #define BACKLIGHT_AUTO_OFF_PERIOD 0 // disabled
@@ -244,6 +247,12 @@
 //#define rotaryBPin 1 // INT3
 //#define rotarySwitchPin 0 // INT2
 
+#if WAKEUP_BUTTON
+#define WakeupButtonPin NODEMCU_PIN_D3
+#if BREWPI_ROTARY_ENCODER
+#error "No wakeup button with rotary encoder"
+#endif
+#endif
 
 #if BREWPI_ROTARY_ENCODER
 
@@ -292,6 +301,9 @@
 #define BUFFER_PILINK_PRINTS 1
 
 #define EARLY_DISPLAY 1
+
+
+
 
 
 
