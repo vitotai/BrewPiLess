@@ -91,3 +91,9 @@ class ExternalTempSensor : public BasicTempSensor
 
 
 
+
+
+
+
+
+

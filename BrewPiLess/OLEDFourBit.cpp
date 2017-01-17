@@ -356,3 +356,9 @@ void OLEDFourBit::printSpacesToRestOfLine(void){
 
 
 
+
+
+
+
+
+

@@ -59,6 +59,9 @@ bool blinkLoop(
 	uint8_t blinkTimer = 0;
 	
 	while(ticks.timeSince(lastChangeTime) < MENU_TIMEOUT){ // time out at 10 seconds
+	//#if ESP8266
+		yield();
+	//#endif
 		if(rotaryEncoder.changed()){
 			lastChangeTime = ticks.seconds();
 			blinkTimer = 0;
@@ -180,6 +183,10 @@ void pickTempSetting(ReadTemp readTemp, WriteTemp writeTemp, const char* tempNam
 	uint8_t blinkTimer = 0;
 	uint16_t lastChangeTime = ticks.seconds();
 	while(ticks.timeSince(lastChangeTime) < MENU_TIMEOUT){ // time out at 10 seconds
+//		#if ESP8266
+		yield();
+//		#endif
+
 		if(rotaryEncoder.changed()){
 			lastChangeTime = ticks.seconds();
 			blinkTimer = 0;
@@ -223,6 +230,12 @@ void Menu::pickBeerSetting(void){
 
 
 #endif
+
+
+
+
+
+
 
 
 
