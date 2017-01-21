@@ -220,9 +220,14 @@ By using `http://brewpi.local/testcmd.htm`, you can control BrewPi core directly
 You can set multiple parameters in one command. The command after `j` is in formal JSON format. Please include the double quote(") for key and string value.
 
 
+| Key            | Meaning       | Note       |
+| -------------- |:-------------:| :--------------------|
+| tempFormat         | Temperature format            |  "F" for Fahrenheit, "C" for Celius			   |
+
+
  |    Key            |  Meaning                        |     Value        | 
  |:-----------------:|:-----------:|:------------------ |
- | tempFormat        | Temperature formate.	         | "F" for Fahrenheit, "C" for Celius  |
+ | tempFormat        | Temperature format         | "F" for Fahrenheit, "C" for Celius  |
  | tempSetMin        | Minimum setting temperature    |              |
  | tempSetMax        | Maximum setting Temperature    |        |
  | pidMax            | PID Max                        |   | 
