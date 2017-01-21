@@ -213,8 +213,13 @@ The page is at
 
 ## A list of JSON commands
 By using `http://brewpi.local/testcmd.htm`, you can control BrewPi core directly. For example, to set temperature to Fahrenheit. Open the testcm.htm page, and enter the following string, and send.
+
 `j{"tempFormat":"F"}` 
+
+
 You can set multiple parameters in one command. The command after `j` is in formal JSON format. Please include the double quote(") for key and string value.
+
+
 
  |    Key            |  Meaning                       |     Value              | 
  |:-----------------:|:-------------------------------|:-----------------------|
