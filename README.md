@@ -224,27 +224,27 @@ You can set multiple parameters in one command. The command after `j` is in form
 | -------------- |:-------------:| :--------------------|
 | tempFormat         | Temperature format          |  F for Fahrenheit, C for Celius	|
 | tempSetMin        | Minimum setting temperature    |              |
- | tempSetMax        | Maximum setting Temperature    |        |
- | pidMax            | PID Max                        |   | 
- | Kp                | Kp parameters of PID           |   | 
- | Ki                | Ki parameters of PID           |   | 
- | Kd                | Kd parameters of PID           |   | 
- | iMaxErr           | iMaxError                      |   |
- | idleRangeH        | idleRangeHigh                  |   |
- | idleRangeL        | idleRangeLow                   |   |
- | heatTargetH       | heatingTargetUpper             |   |
- | heatTargetL       | heatingTargetLower             |   |
- | coolTargetH       | coolingTargetUpper             |   |
- | coolTargetL       | coolingTargetLower             |   |
- | maxHeatTimeForEst | maxHeatTimeForEstimate         |   |
- | maxCoolTimeForEst | maxCoolTimeForEstimate         |   |
- | fridgeFastFilt    | fridgeFastFilter               |   |
- | fridgeSlowFilt    | fridgeSlowFilter               |   |
- | fridgeSlopeFilt   | fridgeSlopeFilter              |   |
- | beerFastFilt      | beerFastFilter                 |   |
- | beerSlowFilt      | beerSlowFilter                 |   |
- | beerSlopeFilt     | beerSlopeFilter                |   |
- | lah               | lightAsHeater                  |   |
- | hs                | rotaryHalfSteps                |   |
- | heatEst           | heatEstimator                  |   |
- | coolEst           | coolEstimator                  |   |
+| tempSetMax        | Maximum setting Temperature    |        |
+| pidMax            | PID Max                        |   | 
+| Kp                | Kp parameters of PID           |   | 
+| Ki                | Ki parameters of PID           |   | 
+| Kd                | Kd parameters of PID           |   | 
+| iMaxErr           | iMaxError                      |   |
+| idleRangeH        | idleRangeHigh                  |   |
+| idleRangeL        | idleRangeLow                   |   |
+| heatTargetH       | heatingTargetUpper             |   |
+| heatTargetL       | heatingTargetLower             |   |
+| coolTargetH       | coolingTargetUpper             |   |
+| coolTargetL       | coolingTargetLower             |   |
+| maxHeatTimeForEst | maxHeatTimeForEstimate         |   |
+| maxCoolTimeForEst | maxCoolTimeForEstimate         |   |
+| fridgeFastFilt    | fridgeFastFilter               |   |
+| fridgeSlowFilt    | fridgeSlowFilter               |   |
+| fridgeSlopeFilt   | fridgeSlopeFilter              |   |
+| beerFastFilt      | beerFastFilter                 |   |
+| beerSlowFilt      | beerSlowFilter                 |   |
+| beerSlopeFilt     | beerSlopeFilter                |   |
+| lah               | lightAsHeater                  |   |
+| hs                | rotaryHalfSteps                |   |
+| heatEst           | heatEstimator                  |   |
+| coolEst           | coolEstimator                  |   |
