@@ -210,3 +210,37 @@ By using the JSON-like commands, you have full access to BrewPi.
 For example, you can erase the EEPROM by sending `E` letter, get the LCD display by issuing `l` command, and get device list by `h` command.
 The page is at
 `http://brewpi.local/testcmd.htm` 
+
+## A list of JSON commands
+By using `http://brewpi.local/testcmd.htm`, you can control BrewPi core directly. For example, to set temperature to Fahrenheit. Open the testcm.htm page, and enter the following string, and send.
+`j{"tempFormat":"F"}` 
+You can set multiple parameters in one command. The command after `j` is in formal JSON format. Please include the double quote(") for key and string value.
+
+ |    Key      |  Meaning                |     Value           | 
+ |:-----------:|:-----------------------|-----------------------:|
+ | tempFormat  |Temperature formate.	| "F" for Fahrenheit, "C" for Celius  |
+ | tempSetMin  |Minimum setting temperature     | |
+ | tempSetMax |Maximum setting Temperature ||
+ | pidMax | PID Max || 
+ | Kp | Kp parameters of PID || 
+ | Ki | Ki parameters of PID || 
+ | Kd | Kd parameters of PID || 
+ | iMaxErr | iMaxError ||
+ |idleRangeH |idleRangeHigh | |
+ |idleRangeL |idleRangeLow | |
+ |heatTargetH |heatingTargetUpper | |
+ |heatTargetL |heatingTargetLower| |
+ |coolTargetH |coolingTargetUpper| |
+ |coolTargetL |coolingTargetLower | |
+ |maxHeatTimeForEst |maxHeatTimeForEstimate | |
+ |maxCoolTimeForEst| maxCoolTimeForEstimate | |
+ |fridgeFastFilt | fridgeFastFilter | |
+ |fridgeSlowFilt | fridgeSlowFilter | |
+ |fridgeSlopeFilt | fridgeSlopeFilter | |
+ |beerFastFilt | beerFastFilter | |
+ |beerSlowFilt | beerSlowFilter | |
+ |beerSlopeFilt |beerSlopeFilter | |
+ |lah |lightAsHeater | |
+ |hs |rotaryHalfSteps | |
+ |heatEst | heatEstimator | |
+ |coolEst | coolEstimator | |
