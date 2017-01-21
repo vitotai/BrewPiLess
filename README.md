@@ -216,31 +216,31 @@ By using `http://brewpi.local/testcmd.htm`, you can control BrewPi core directly
 `j{"tempFormat":"F"}` 
 You can set multiple parameters in one command. The command after `j` is in formal JSON format. Please include the double quote(") for key and string value.
 
- |    Key      |  Meaning                |     Value           | 
- |:-----------:|:-----------------------|-----------------------:|
- | tempFormat  |Temperature formate.	| "F" for Fahrenheit, "C" for Celius  |
- | tempSetMin  |Minimum setting temperature     | |
- | tempSetMax |Maximum setting Temperature ||
- | pidMax | PID Max || 
- | Kp | Kp parameters of PID || 
- | Ki | Ki parameters of PID || 
- | Kd | Kd parameters of PID || 
- | iMaxErr | iMaxError ||
- |idleRangeH |idleRangeHigh | |
- |idleRangeL |idleRangeLow | |
- |heatTargetH |heatingTargetUpper | |
- |heatTargetL |heatingTargetLower| |
- |coolTargetH |coolingTargetUpper| |
- |coolTargetL |coolingTargetLower | |
- |maxHeatTimeForEst |maxHeatTimeForEstimate | |
- |maxCoolTimeForEst| maxCoolTimeForEstimate | |
- |fridgeFastFilt | fridgeFastFilter | |
- |fridgeSlowFilt | fridgeSlowFilter | |
- |fridgeSlopeFilt | fridgeSlopeFilter | |
- |beerFastFilt | beerFastFilter | |
- |beerSlowFilt | beerSlowFilter | |
- |beerSlopeFilt |beerSlopeFilter | |
- |lah |lightAsHeater | |
- |hs |rotaryHalfSteps | |
- |heatEst | heatEstimator | |
- |coolEst | coolEstimator | |
+ |    Key            |  Meaning                       |     Value              | 
+ |:-----------------:|:-------------------------------|:-----------------------|
+ | tempFormat        | Temperature formate.	          | "F" for Fahrenheit, "C" for Celius  |
+ | tempSetMin        | Minimum setting temperature    |              |
+ | tempSetMax        | Maximum setting Temperature    |        |
+ | pidMax            | PID Max                        |   | 
+ | Kp                | Kp parameters of PID           |   | 
+ | Ki                | Ki parameters of PID           |   | 
+ | Kd                | Kd parameters of PID           |   | 
+ | iMaxErr           | iMaxError                      |   |
+ | idleRangeH        | idleRangeHigh                  |   |
+ | idleRangeL        | idleRangeLow                   |   |
+ | heatTargetH       | heatingTargetUpper             |   |
+ | heatTargetL       | heatingTargetLower             |   |
+ | coolTargetH       | coolingTargetUpper             |   |
+ | coolTargetL       | coolingTargetLower             |   |
+ | maxHeatTimeForEst | maxHeatTimeForEstimate         |   |
+ | maxCoolTimeForEst | maxCoolTimeForEstimate         |   |
+ | fridgeFastFilt    | fridgeFastFilter               |   |
+ | fridgeSlowFilt    | fridgeSlowFilter               |   |
+ | fridgeSlopeFilt   | fridgeSlopeFilter              |   |
+ | beerFastFilt      | beerFastFilter                 |   |
+ | beerSlowFilt      | beerSlowFilter                 |   |
+ | beerSlopeFilt     | beerSlopeFilter                |   |
+ | lah               | lightAsHeater                  |   |
+ | hs                | rotaryHalfSteps                |   |
+ | heatEst           | heatEstimator                  |   |
+ | coolEst           | coolEstimator                  |   |
