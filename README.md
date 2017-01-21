@@ -223,11 +223,6 @@ You can set multiple parameters in one command. The command after `j` is in form
 | Key            | Meaning       | Note       |
 | -------------- |:-------------:| :--------------------|
 | tempFormat         | Temperature format            |  "F" for Fahrenheit, "C" for Celius			   |
-
-
- |    Key            |  Meaning                        |     Value        | 
- |:-----------------:|:-----------:|:------------------ |
- | tempFormat        | Temperature format         | "F" for Fahrenheit, "C" for Celius  |
  | tempSetMin        | Minimum setting temperature    |              |
  | tempSetMax        | Maximum setting Temperature    |        |
  | pidMax            | PID Max                        |   | 
