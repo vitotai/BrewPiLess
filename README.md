@@ -92,7 +92,8 @@ BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP addr
  * A maximum of 10 logs is allowed. The logs will not be deleted automatically. Manual deleting is necessary.
  * Off-line viewer is available. You can download the log and view it from your computer. Download the file "BPLLogViewer.htm" in the "extra" subfolder. Save it anywhere in your computer. Open it using a web browser.
  * **Internet access is required to view the chart**. To save some more space and to alleviate the loading of ESP8266, the library is not put in the ESP8266.
- ## Remote temperature logging.
+
+## Remote temperature logging.
 Remote logging can be used to post data to a HTTP server that BrewPiLess can connect to.The `format` field in log setup page is like the format in `printf` but uses the following specifiers:
 
 | Specifier   | output  |
