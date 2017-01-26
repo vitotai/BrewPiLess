@@ -74,7 +74,7 @@ BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP addr
 
  * Temperature management - `http://brewpi.local/control.htm`
  * Logging setting - `http://brewpi.local/log`
- ![Log Setting](img/log_setting_v1.2.jpg)
+ ![Log Setting](img/log_setting_v1.2.1.jpg)
  
  * System configuration - `http://brewpi.local/config`
  
@@ -92,7 +92,20 @@ BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP addr
  * A maximum of 10 logs is allowed. The logs will not be deleted automatically. Manual deleting is necessary.
  * Off-line viewer is available. You can download the log and view it from your computer. Download the file "BPLLogViewer.htm" in the "extra" subfolder. Save it anywhere in your computer. Open it using a web browser.
  * **Internet access is required to view the chart**. To save some more space and to alleviate the loading of ESP8266, the library is not put in the ESP8266.
- 
+ ## Remote temperature logging.
+Remote logging can be used to post data to a HTTP server that BrewPiLess can connect to.The `format` field in log setup page is like the format in `printf` but uses the following specifiers:
+
+| Specifier   | output  |
+| -------------- |:-------------|
+| %b         | Beer temperature   |
+| %B         | Beer setting   |
+| %f         | fridge temperature   |
+| %F         | fridge setting   |
+For example, let beer setting be `20.0` and beer temperature be `18.3`, if the `format` is `api_key=THEREALAPIKEYHERE&field1=%b&field2=%f`, the data will be `api_key=THEREALAPIKEYHERE&field1=18.3&field2=20.0`.
+If the method is `GET`, the data will append to the url with additional `?`, so the result will be
+`http://api.thingspeak.com/update?api_key=THEREALAPIKEYHERE&field1=18.3&field2=20.0`.
+(GET is usually not recommended.)
+
 ## Hardware Setup
 Fortunately, 3.3V is regarded as HIGH in 5V logic, so the **output** of ESP8266 can be connected directly to the devices. Luckily, DS18B20 works under 3.3V. I just replace the Arduino Nano with the ESP8266, and it works. You should still be careful not to burn the ESP8266.
 
@@ -168,27 +181,18 @@ A simple script as the proxy to push data to Google Sheet is needed. Here is how
  * URL: http:// `{your server} `/ `{your path} `/logdata.php 
  <= your script in **step 3**
  * Method: POST
- * Beer and fridge temperature names. BeerTemp:`bt`, BeerSet:`bs`, FridgeTemp:`ft`, FridgeSet:`fs`
-<=these are for the proxy script. 
+ * format: `script=[script_ID]&ss=[spreadsheet_ID]&st=[sheet_label]&pc=thisistest&bt=%b&bs=%B&ft=%f&fs=%F`
+    * **[script_ID]** is the id from **step 1c**
+    * **[spreadsheet_ID]**  is from **step 2a**
+     * **[sheet_label]** is the value in **step 2b**
+    * `thisistest` is the passcode for google script app.
+
  * Log time period. <= set the value you like, in seconds.
 
- * Extra parameter: `script=[script_ID]&ss=[spreadsheet_ID]&st=[sheet_label]&pc=thisistest`
-
-  Extra parameter provides a way for ESP8266 to send extra information to the proxy script.
-  * **[script_ID]** is the id from **step 1c**
-  * **[spreadsheet_ID]**  is from **step 2a**
-  * **[sheet_label]** is the value in **step 2b**
-  * `thisistest` is the passcode for google script app.
-
-Then, ESP8266 will post temperature data together with the extra information to the URL, 
-and the script(logdata.php) at that URL will get the data and do HTTPS request to google script which write the data to the specified spreadsheet.
+Then, BrewPiLess will post temperature data  to the URL, and the script(logdata.php) at that URL will get the data and do HTTPS request to google script which write the data to the specified spreadsheet.
 
 ## Logging temperature data to other destination
 If you write your own proxy script or push data to other IOT website. you can change the settings to your needs.
-For example, if the method is set to **GET**, the the url will be
-
- http:// `{your server} `/ `{your path} `/logdata.php?bt=20.50&bs=20.00&ft=21.00&fs=19.00&script=**[script_ID]**&ss=**[spreadsheet_ID]**&st=**[sheet_label]**&pc=thisistest
-
 
 The periodical request can be also used as an I-AM-ALIVE message. For example, if the period is set to 10 minutes, and the temperature hasn't been updated for 11 minutes,
 there must be something wrong. `/extra/brewpimon.php` is an example which is executed by cronjob every few minutes to check the updating of temperature data. The PHP will notice by email if the temperature data isn't updated in specified time.
