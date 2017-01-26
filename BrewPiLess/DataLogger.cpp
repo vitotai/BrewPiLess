@@ -76,38 +76,33 @@ void DataLogger::sendData(float beerTemp,float beerSet,float fridgeTemp, float f
 {
 	char data[512];
 	int len=0;
-	int n;
-	len  =copyTemp(data,_btname,beerTemp,false);
-	len +=copyTemp(data+len,_bsname,beerSet,len!=0);
-	len +=copyTemp(data+len,_ftname,fridgeTemp,len!=0);
-	len +=copyTemp(data+len,_fsname,fridgeSet,len!=0);
-	if(len==0) return;
 
-	if(_extra!=NULL){
-		data[len++]='&';
-		strcpy(data+len,_extra);
-		len += strlen(_extra);
+	len =dataSprintf(data,_format,beerTemp,beerSet,fridgeTemp,fridgeSet);
+	
+	if(len==0){
+		DBG_PRINTF("Invalid format\n");
+		return;
 	}
-	data[len]='\0';
-
+	
+	DBG_PRINTF("url=%s\n",_url);
 	DBG_PRINTF("data= %d, \"%s\"\n",len,data);
 
 	int code;
 	HTTPClient _http;
   	_http.setUserAgent(F("ESP8266"));
-
-	if(strcmp(_method,"POST")==0){
+	
+	DBG_PRINTF("[HTTP] %s...\n",_method);
+	if(strcmp(_method,"POST")==0
+		|| strcmp(_method,"PUT")==0 ){
 		// post
 	 
  		_http.begin(_url);
   		_http.addHeader("Content-Type", "application/x-www-form-urlencoded");
-		DBG_PRINTF("[HTTP] POST...\n");
     // start connection and send HTTP header
-    	code = _http.POST((uint8_t*)data,len);
+    	code = _http.sendRequest(_method,(uint8_t*)data,len);
     }else{
  		_http.begin(String(_url) + String("?") + String(data));
 
-		DBG_PRINTF("[HTTP] GET...\n");
     	code = _http.GET();    
     }
     
@@ -126,11 +121,62 @@ void DataLogger::sendData(float beerTemp,float beerSet,float fridgeTemp, float f
     }else{
       DBG_PRINTF("error, unhandled code:%d",code);
     }
-//    String output=_http.getString();
-//    DBG_PRINTF("output:\n%s\n",output.c_str());
+    String output=_http.getString();
+    DBG_PRINTF("output:\n%s\n",output.c_str());
 
 }
 
+int DataLogger::dataSprintf(char *buffer,const char *format,float beerTemp,float beerSet,float fridgeTemp,float fridgeSet)
+{
+	int i=0;
+	int d=0;
+	for(i=0;i< strlen(format);i++){
+		char ch=format[i];
+		if( ch == '%'){
+			i++;
+			ch=format[i];
+			if(ch == '%'){
+				buffer[d++]=ch;
+			}else if(ch == 'b'){
+				if(IS_FLOAT_TEMP_VALID(beerTemp)){
+					d += sprintFloat(buffer+d,beerTemp,1);
+				}else{
+					strcpy(buffer+d,"null");
+					d += 4;
+				}
+			}else if(ch == 'B'){
+				if(IS_FLOAT_TEMP_VALID(beerSet)){
+					d += sprintFloat(buffer+d,beerSet,1);
+				}else{
+					strcpy(buffer+d,"null");
+					d += 4;
+				}
+			}else if(ch == 'f'){
+				if(IS_FLOAT_TEMP_VALID(fridgeTemp)){
+					d += sprintFloat(buffer+d,fridgeTemp,1);
+				}else{
+					strcpy(buffer+d,"null");
+					d += 4;
+				}
+			}else if(ch == 'F'){
+				if(IS_FLOAT_TEMP_VALID(fridgeSet)){
+					d += sprintFloat(buffer+d,fridgeSet,1);
+				}else{
+					strcpy(buffer+d,"null");
+					d += 4;
+				}
+			}else{
+				// wrong format
+				return 0;
+			}
+		}else{
+			buffer[d++]=ch;
+		}
+	}// for each char
+
+	buffer[d]='\0';
+	return d;
+}
 
 bool DataLogger::processJson(char* jsonstring)
 {
@@ -138,12 +184,7 @@ bool DataLogger::processJson(char* jsonstring)
 	JsonObject& root = jsonBuffer.parseObject(jsonstring);
 	if(!root.success()
 		|| !root.containsKey("enabled")
-		|| !root.containsKey("url")
-		|| !root.containsKey("bs")
-		|| !root.containsKey("bt")
-		|| !root.containsKey("fs")
-		|| !root.containsKey("ft")
-		|| !root.containsKey("extra")
+		|| !root.containsKey("format")
 		|| !root.containsKey("method")
 		|| !root.containsKey("period")){
 		_enabled=false;
@@ -154,13 +195,9 @@ bool DataLogger::processJson(char* jsonstring)
 
 	const char *url=root["url"];
 	const char *method=root["method"];
-	const char *extra=root["extra"];
-	const char *bsname=root["bs"]; 
-	const char *btname=root["bt"]; 
-	const char *fsname=root["fs"]; 
-	const char *ftname=root["ft"]; 
-
-	if(url == NULL || method==NULL || strcmp(url,"") ==0 || strcmp(method,"") ==0){
+	const char *format=root["format"];
+	
+	if(url == NULL || method==NULL || format==NULL || strcmp(url,"") ==0 || strcmp(method,"") ==0 || strcmp(format,"") ==0){
 		_enabled=false;
 		return false;
 	}
@@ -168,11 +205,7 @@ bool DataLogger::processJson(char* jsonstring)
 
 	COPYSTRING(url);
 	COPYSTRING(method);
-	COPYSTRING(extra);
-	COPYSTRING(bsname);
-	COPYSTRING(btname);
-	COPYSTRING(fsname);
-	COPYSTRING(ftname);
+	COPYSTRING(format);
   	
   	return true;
 }
@@ -224,7 +257,7 @@ R"END(
 <html>
 <head>
 <title>Logging Setting</title>
-<script>/*<![CDATA[*/var logurl="log";function s_ajax(a){var d=new XMLHttpRequest();d.onreadystatechange=function(){if(d.readyState==4){if(d.status==200){a.success(d.responseText)}else{d.onerror(d.status)}}};d.ontimeout=function(){if(typeof a.timeout!="undefined"){a.timeout()}else{d.onerror(-1)}},d.onerror=function(b){if(typeof a.fail!="undefined"){a.fail(b)}};d.open(a.m,a.url,true);if(typeof a.data!="undefined"){d.setRequestHeader("Content-Type",(typeof a.mime!="undefined")?a.mime:"application/x-www-form-urlencoded");d.send(a.data)}else{d.send()}}var EI=function(a){return document.getElementById(a)};Number.prototype.format=function(i,b,g,h){var d="\\d(?=(\\d{"+(b||3)+"})+"+(i>0?"\\D":"$")+")",f=this.toFixed(Math.max(0,~~i));return(h?f.replace(".",h):f).replace(new RegExp(d,"g"),"$&"+(g||","))};var logs={url:"loglist.php",rmurl:"loglist.php?rm=",starturl:"loglist.php?start=",stopurl:"loglist.php?stop=1",dlurl:"loglist.php?dl=",vurl:"viewlog.htm?dl=",ll:[],fs:{},logging:false,vname:function(b){if(b==""){return false}if(b.match(/[\W]/g)){return false}return true},dupname:function(a){var d=false;this.ll.forEach(function(b){if(a==b.name){d=true}});return d},fsinfo:function(b,a){EI("fssize").innerHTML=b.format(0,3,",");EI("fsused").innerHTML=a.format(0,3,",");EI("fsfree").innerHTML=(b-a).format(0,3,",")},slog:function(){var c=this;if(c.logging){if(confirm("Stop current logging?")){var d=EI("logname").value.trim();s_ajax({url:c.stopurl+d,m:"GET",success:function(a){location.reload()},fail:function(a){alert("Failed to stop for:"+a)}})}}else{if(c.ll.length>=10){alert("Too many logs. Delete some before creating new.");return}if((c.fs.size-c.fs.used)<=c.fs.block*2){alert("Not enough free space!");return}var b=EI("logname").value.trim();if(c.vname(b)===false){alert("Invalid file name, no special characters allowed.");return}if(c.dupname(b)){alert("Duplicated name.");return}if(confirm("Start new logging?")){s_ajax({url:c.starturl+b,m:"GET",success:function(a){location.reload()},fail:function(a){alert("Failed to start for:"+a)}})}}},recording:function(f,b){this.logging=true;var c=new Date(b*1000);EI("logtitle").innerHTML="Recording since <b>"+c.toLocaleString()+"</b> ";var a=EI("logname");a.value=f;a.disabled=true;EI("logbutton").innerHTML="STOP Logging"},stop:function(){this.logging=false;EI("logtitle").innerHTML="New Log Name:";var a=EI("logname");a.value="";a.disabled=false;EI("logbutton").innerHTML="Start Logging"},view:function(a){window.open(this.vurl+a)},rm:function(b){var a=this;if(confirm("Delete the log "+a.ll[b].name)){console.log("rm "+a.ll[b].name);s_ajax({url:a.rmurl+b,m:"GET",success:function(f){var c=JSON.parse(f);a.fs=c;a.fsinfo(c.size,c.used);a.ll.splice(b,1);a.list(a.ll)},fail:function(c){alert("Failed to delete for:"+c)}})}},dl:function(a){window.open(this.dlurl+a)},list:function(a){var h=EI("loglist").querySelector("tbody");var d;while(d=h.querySelector("tr:nth-of-type(2)")){h.removeChild(d)}var b=this;var c=b.row;a.forEach(function(j,g){var f=j.name;var l=new Date(j.time*1000);var k=c.cloneNode(true);k.querySelector(".logid").innerHTML=f;k.querySelector(".logdate").innerHTML=l.toLocaleString();k.querySelector(".dlbutton").onclick=function(){b.dl(g)};k.querySelector(".viewbutton").onclick=function(){b.view(g)};k.querySelector(".rmbutton").onclick=function(){b.rm(g)};h.appendChild(k)})},init:function(){var a=this;EI("logbutton").onclick=function(){a.slog()};a.row=EI("loglist").querySelector("tr:nth-of-type(2)");a.row.parentNode.removeChild(a.row);s_ajax({url:a.url,m:"GET",success:function(c){var b=JSON.parse(c);a.fs=b.fs;if(b.rec){a.recording(b.log,b.start)}a.ll=b.list;a.list(b.list);a.fsinfo(b.fs.size,b.fs.used)},fail:function(b){alert("failed:"+e)}})},};function checkurl(a){if(a.value.trim().startsWith("https")){alert("HTTPS is not supported")}}function mothod(b){var a;if(b.id=="m_get"){a="m_post"}else{a="m_get"}EI(a).checked=!b.checked}function update(){var a={};a.enabled=EI("enabled").checked;a.url=encodeURIComponent(EI("url").value);a.bs=EI("bs").value;a.bt=EI("bt").value;a.fs=EI("fs").value;a.ft=EI("ft").value;a.extra=encodeURIComponent(EI("extra").value);a.period=EI("period").value;a.method=(EI("m_post").checked)?"POST":"GET";s_ajax({url:logurl,m:"POST",data:"data="+JSON.stringify(a),success:function(b){alert("done")},fail:function(b){alert("failed:"+e)}})}function load(){s_ajax({url:logurl+"?data=1",m:"GET",success:function(b){var a=JSON.parse(b);EI("enabled").checked=a.enabled;EI((a.method=="POST")?"m_post":"m_get").checked=true;EI("url").value=(a.url===undefined)?"":a.url;EI("bt").value=(a.bt===undefined)?"":a.bt;EI("bs").value=(a.bs===undefined)?"":a.bs;EI("ft").value=(a.ft===undefined)?"":a.ft;EI("fs").value=(a.fs===undefined)?"":a.fs;EI("extra").value=(a.extra===undefined)?"":a.extra;EI("period").value=(a.period===undefined)?300:a.period}});logs.init()};/*]]>*/</script>
+<script>/*<![CDATA[*/var logurl="log";function s_ajax(b){var c=new XMLHttpRequest();c.onreadystatechange=function(){if(c.readyState==4){if(c.status==200){b.success(c.responseText)}else{c.onerror(c.status)}}};c.ontimeout=function(){if(typeof b["timeout"]!="undefined")b.timeout();else c.onerror(-1)},c.onerror=function(a){if(typeof b["fail"]!="undefined")b.fail(a)};c.open(b.m,b.url,true);if(typeof b["data"]!="undefined"){c.setRequestHeader("Content-Type",(typeof b["mime"]!="undefined")?b["mime"]:"application/x-www-form-urlencoded");c.send(b.data)}else c.send()}var EI=function(i){return document.getElementById(i)};Number.prototype.format=function(n,x,s,c){var a='\\d(?=(\\d{'+(x||3)+'})+'+(n>0?'\\D':'$')+')',num=this.toFixed(Math.max(0,~~n));return(c?num.replace('.',c):num).replace(new RegExp(a,'g'),'$&'+(s||','))};String.prototype.escapeJSON=function(){return this.replace(/[\\]/g,'\\\\').replace(/[\"]/g,'\\\"').replace(/[\/]/g,'\\/').replace(/[\b]/g,'\\b').replace(/[\f]/g,'\\f').replace(/[\n]/g,'\\n').replace(/[\r]/g,'\\r').replace(/[\t]/g,'\\t')};var logs={url:"loglist.php",rmurl:"loglist.php?rm=",starturl:"loglist.php?start=",stopurl:"loglist.php?stop=1",dlurl:"loglist.php?dl=",vurl:"viewlog.htm?dl=",ll:[],fs:{},logging:false,vname:function(a){if(a=="")return false;if(a.match(/[\W]/g))return false;return true},dupname:function(b){var c=false;this.ll.forEach(function(a){if(b==a.name)c=true});return c},fsinfo:function(s,u){EI("fssize").innerHTML=s.format(0,3,',');EI("fsused").innerHTML=u.format(0,3,',');EI("fsfree").innerHTML=(s-u).format(0,3,',')},slog:function(){var t=this;if(t.logging){if(confirm("Stop current logging?")){var n=EI("logname").value.trim();s_ajax({url:t.stopurl+n,m:"GET",success:function(d){location.reload()},fail:function(d){alert("Failed to stop for:"+d)}})}}else{if(t.ll.length>=10){alert("Too many logs. Delete some before creating new.");return}if((t.fs.size-t.fs.used)<=t.fs.block*2){alert("Not enough free space!");return}var a=EI("logname").value.trim();if(t.vname(a)===false){alert("Invalid file name, no special characters allowed.");return}if(t.dupname(a)){alert("Duplicated name.");return}if(confirm("Start new logging?")){s_ajax({url:t.starturl+a,m:"GET",success:function(d){location.reload()},fail:function(d){alert("Failed to start for:"+d)}})}}},recording:function(n,t){this.logging=true;var d=new Date(t*1000);EI("logtitle").innerHTML="Recording since <b>"+d.toLocaleString()+"</b> ";var l=EI("logname");l.value=n;l.disabled=true;EI("logbutton").innerHTML="STOP Logging"},stop:function(){this.logging=false;EI("logtitle").innerHTML="New Log Name:";var l=EI("logname");l.value="";l.disabled=false;EI("logbutton").innerHTML="Start Logging"},view:function(n){window.open(this.vurl+n)},rm:function(n){var t=this;if(confirm("Delete the log "+t.ll[n].name)){console.log("rm "+t.ll[n].name);s_ajax({url:t.rmurl+n,m:"GET",success:function(d){var r=JSON.parse(d);t.fs=r;t.fsinfo(r.size,r.used);t.ll.splice(n,1);t.list(t.ll)},fail:function(d){alert("Failed to delete for:"+d)}})}},dl:function(n){window.open(this.dlurl+n)},list:function(l){var e=EI("loglist").querySelector("tbody");var f;while(f=e.querySelector("tr:nth-of-type(2)"))e.removeChild(f);var t=this;var g=t.row;l.forEach(function(i,a){var b=i.name;var c=new Date(i.time*1000);var d=g.cloneNode(true);d.querySelector(".logid").innerHTML=b;d.querySelector(".logdate").innerHTML=c.toLocaleString();d.querySelector(".dlbutton").onclick=function(){t.dl(a)};d.querySelector(".viewbutton").onclick=function(){t.view(a)};d.querySelector(".rmbutton").onclick=function(){t.rm(a)};e.appendChild(d)})},init:function(){var t=this;EI("logbutton").onclick=function(){t.slog()};t.row=EI("loglist").querySelector("tr:nth-of-type(2)");t.row.parentNode.removeChild(t.row);s_ajax({url:t.url,m:"GET",success:function(d){var r=JSON.parse(d);t.fs=r.fs;if(r.rec)t.recording(r.log,r.start);t.ll=r.list;t.list(r.list);t.fsinfo(r.fs.size,r.fs.used)},fail:function(d){alert("failed:"+e)}})},};function checkurl(t){if(t.value.trim().startsWith("https")){alert("HTTPS is not supported")}}function checkformat(a){if(a.value.length>256){a.value=t.value.substring(0,256)}EI("fmthint").innerHTML=""+a.value.length+"/256"}function mothod(c){var a=document.querySelectorAll('input[name$="method"]');for(var i=0;i<a.length;i++){if(a[i].id!=c.id)a[i].checked=false}window.selectedMethod=c.value}function update(){if(typeof window.selectedMethod=="undefined"){alert("select Method!");return}var a=EI("format").value.trim();if(window.selectedMethod=="GET"){var b=new RegExp("\s","g");if(b.exec(a)){alert("space is not allowed");return}}var r={};r.enabled=EI("enabled").checked;r.url=EI("url").value.trim();r.format=encodeURIComponent(a.escapeJSON());r.period=EI("period").value;r.method=(EI("m_post").checked)?"POST":"GET";s_ajax({url:logurl,m:"POST",data:"data="+JSON.stringify(r),success:function(d){alert("done")},fail:function(d){alert("failed:"+e)}})}function load(){s_ajax({url:logurl+"?data=1",m:"GET",success:function(d){var r=JSON.parse(d);EI("enabled").checked=r.enabled;window.selectedMethod=r.method;EI("m_"+r.method.toLowerCase()).checked=true;EI("url").value=(r.url===undefined)?"":r.url;EI("format").value=(r.format===undefined)?"":r.format;checkformat(EI("format"));EI("period").value=(r.period===undefined)?300:r.period}});logs.init()}/*]]>*/</script>
 <style>#loglist td,#loglist tr,#loglist th,#loglist{border:1px solid black}fieldset{margin:10px}#fsinfo{margin:10px}</style>
 </head>
 <body onload="load()">
@@ -233,13 +266,13 @@ R"END(
 <form>
 <table>
 <tr><th>Enabled:</th><td><input type="checkbox" id="enabled" value="yes"></td></tr>
-<tr><th>Method:</th><td><input type="checkbox" id="m_get" name="method" value="GET" onchange="mothod(this)">Get <input type="checkbox" id="m_post" name="method" value="POST" onchange="mothod(this)">Post </td></tr>
+<tr><th>Method:</th><td><input type="checkbox" id="m_get" name="method" value="GET" onchange="mothod(this)">Get
+<input type="checkbox" id="m_post" name="method" value="POST" onchange="mothod(this)">Post
+<input type="checkbox" id="m_put" name="method" value="PUT" onchange="mothod(this)">Put </td></tr>
 <tr><th>URL:</th><td><input type="text" id="url" size="64" placeholder="input link" onchange="checkurl(this)"></td></tr>
-<tr><th>Beer Temperature Name:</th><td><input type="text" id="bt" size="20"></td></tr>
-<tr><th>Beer Set Temperature Name:</th><td><input type="text" id="bs" size="20"></td></tr>
-<tr><th>Fridge Temperature Name:</th><td><input type="text" id="ft" size="20"></td></tr>
-<tr><th>Fridge Set Temperature Name:</th><td><input type="text" id="fs" size="20"></td></tr>
-<tr><th>Extra parameter:</th><td><input type="text" id="extra" size="56"></td></tr>
+<tr><th></th><td>%b:beer temp, %B:beer setting,%f:fridge temp, %F:fridge setting</td></tr>
+<tr><th>Format:</th><td><textarea id="format" rows="4" cols="64" oninput="checkformat(this)"></textarea></td></tr>
+<tr><th></th><td>Characters:<span id="fmthint"></span></td></tr>
 <tr><th>Log time period:</th><td><input type="text" id="period" size="4">Seconds</td></tr>
 <tr><th></th><td><button type="button" onclick="update()">Update</button></td></tr>
 </table>
@@ -312,6 +345,11 @@ void DataLogger::getSettings(AsyncWebServerRequest *request)
 		request->send(response);  
 	}
 }
+
+
+
+
+
 
 
 
