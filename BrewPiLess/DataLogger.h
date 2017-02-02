@@ -8,14 +8,14 @@
 class DataLogger
 {
 public:
-    DataLogger(void):_format(NULL),_method(NULL),_url(NULL),_enabled(false),_period(0),_lastUpdate(0),_retry(0){}
+    DataLogger(void):_format(NULL),_method(NULL),_url(NULL),_contentType(NULL),_enabled(false),_period(0),_lastUpdate(0),_retry(0){}
 
     ~DataLogger() 
     {
     	if(_url) free(_url);
     	if(_method) free(_method);
     	if(_format) free(_format);
-
+    	if(_contentType) free(_contentType);
     }
 
     void loadConfig(void);
@@ -33,6 +33,7 @@ protected:
 	char* _url;
 	char* _method;
 	char* _format;
+	char* _contentType;
 
 	bool _enabled;
 	time_t _period;
