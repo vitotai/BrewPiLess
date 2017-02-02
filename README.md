@@ -74,8 +74,6 @@ BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP addr
 
  * Temperature management - `http://brewpi.local/control.htm`
  * Logging setting - `http://brewpi.local/log`
- ![Log Setting](img/log_setting_v1.2.1.jpg)
- 
  * System configuration - `http://brewpi.local/config`
  
     Updating the settings will result in restart of the system.
@@ -102,11 +100,16 @@ Remote logging can be used to post data to a HTTP server that BrewPiLess can con
 | %B         | Beer setting   |
 | %f         | fridge temperature   |
 | %F         | fridge setting   |
+
 For example, let beer setting be `20.0` and beer temperature be `18.3`, if the `format` is `api_key=TheRealApiKeyHere&field1=%b&field2=%f`, the data will be `api_key=TheRealApiKeyHere&field1=18.3&field2=20.0`.
 If the method is `GET`, the data will append to the url with additional `?`, so the result will be
 `http://api.thingspeak.com/update?api_key=TheRealApiKeyHere&field1=18.3&field2=20.0`.
 (GET is usually not recommended.)
-
+The `Data Type` field is used as "Content-Type" in HTTP protocol. When it is left blank, the default value of `application/x-www-form-urlencoded` will be used. The default type is good for content like `A=V1&B=V2`.
+Example setting for Thingspeak.com
+ ![Log Setting](img/log_thingSpeak.jpg)
+Example setting for ubidots.com
+ ![Log Setting](img/log_ubidots.jpg)
 ## Hardware Setup
 Fortunately, 3.3V is regarded as HIGH in 5V logic, so the **output** of ESP8266 can be connected directly to the devices. Luckily, DS18B20 works under 3.3V. I just replace the Arduino Nano with the ESP8266, and it works. You should still be careful not to burn the ESP8266.
 
