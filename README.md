@@ -101,7 +101,8 @@ Remote logging can be used to post data to a HTTP server that BrewPiLess can con
 | %f         | fridge temperature   |
 | %F         | fridge setting   |
 
-For example, let beer setting be `20.0` and beer temperature be `18.3`, if the `format` is `api_key=TheRealApiKeyHere&field1=%B&field2=%b`, the data will be `api_key=TheRealApiKeyHere&field1=18.3&field2=20.0`.
+For example, let beer setting be `20.0` and beer temperature be `18.3`, if the `format` is `api_key=TheRealApiKeyHere&field1=%B&field2=%b`,
+the data will be `api_key=TheRealApiKeyHere&field1=20.0&field2=18.3`.
 If the method is `GET`, the data will append to the url with additional `?`, so the result will be
 `http://api.thingspeak.com/update?api_key=TheRealApiKeyHere&field1=20.0&field2=18.3`.
 (GET is usually not recommended.)
