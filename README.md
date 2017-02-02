@@ -101,13 +101,15 @@ Remote logging can be used to post data to a HTTP server that BrewPiLess can con
 | %f         | fridge temperature   |
 | %F         | fridge setting   |
 
-For example, let beer setting be `20.0` and beer temperature be `18.3`, if the `format` is `api_key=TheRealApiKeyHere&field1=%b&field2=%f`, the data will be `api_key=TheRealApiKeyHere&field1=18.3&field2=20.0`.
+For example, let beer setting be `20.0` and beer temperature be `18.3`, if the `format` is `api_key=TheRealApiKeyHere&field1=%B&field2=%b`, the data will be `api_key=TheRealApiKeyHere&field1=18.3&field2=20.0`.
 If the method is `GET`, the data will append to the url with additional `?`, so the result will be
-`http://api.thingspeak.com/update?api_key=TheRealApiKeyHere&field1=18.3&field2=20.0`.
+`http://api.thingspeak.com/update?api_key=TheRealApiKeyHere&field1=20.0&field2=18.3`.
 (GET is usually not recommended.)
 The `Data Type` field is used as "Content-Type" in HTTP protocol. When it is left blank, the default value of `application/x-www-form-urlencoded` will be used. The default type is good for content like `A=V1&B=V2`.
+
 Example setting for Thingspeak.com
  ![Log Setting](img/log_thingSpeak.jpg)
+
 Example setting for ubidots.com
  ![Log Setting](img/log_ubidots.jpg)
 ## Hardware Setup
