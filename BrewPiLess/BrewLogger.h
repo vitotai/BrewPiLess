@@ -265,6 +265,8 @@ public:
 				char buff[36];
 				sprintf(buff,"%s/%s",LOG_PATH,_fileInfo.logname);
 				_file=SPIFFS.open(buff,"r");
+				
+				DBG_PRINTF("Open file:%s\n",buff);
 
 				if(!_file){
 					DBG_PRINTF("error open file\n");
@@ -279,6 +281,12 @@ public:
 
 			_file.seek(rindex,SeekSet);
 			sizeRead=_file.read(buffer,sizeRead);
+			if(sizeRead ==0){
+				DBG_PRINTF("!!!!file read error!!!!!!\n");
+				_file.close();
+				_isFileOpen=false;
+				// read will be called again if return length is zero.
+			}
 			
 		}else{
 			DBG_PRINTF("read from buffer\n");
@@ -487,6 +495,7 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
 
 
 
