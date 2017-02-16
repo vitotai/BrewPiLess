@@ -394,8 +394,15 @@ private:
 	void commitData(char* buf,int len)
 	{
 		 _logIndex += len;
-		if(len !=_logFile.write((const uint8_t*)buf,len)){
+		 int wlen;
+		if(len !=(wlen=_logFile.write((const uint8_t*)buf,len))){
 			DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
+			_logFile.close();
+			char buff[36];
+			sprintf(buff,"%s/%s",LOG_PATH,_fileInfo.logname);
+
+			_logFile=SPIFFS.open(buff,"a+");
+			_logFile.write((const uint8_t*)buf+wlen,len-wlen);
 		}
 		_logFile.flush();
 	}
@@ -495,6 +502,8 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
 
 
 
