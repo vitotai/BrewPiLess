@@ -562,11 +562,6 @@ class LogHandler:public AsyncWebHandler
 		} // end of logist path
 		
 		// charting
-		if(!brewLogger.isLogging()){
-			request->send(404);
-			DBG_PRINTF("Not logging\n");
-			return;
-		}
 		
 		int offset;
 		if(request->hasParam("offset")){
@@ -575,14 +570,52 @@ class LogHandler:public AsyncWebHandler
 		}else{
 			offset=0;
 		}
-		size_t size=brewLogger.beginCopyAfter(offset);
-		if(size >0){
-			request->send("application/octet-stream", size, [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t { 
-				return brewLogger.read(buffer, maxLen,index);
-			});
+		
+		size_t index;
+		bool indexValid;
+		if(request->hasParam("index")){
+			index=request->getParam("index")->value().toInt();
+			DBG_PRINTF("index= %d\n",index);
+			indexValid=true;
 		}else{
-			request->send(204);
-		}		
+			indexValid=false;
+		}
+		
+		if(!brewLogger.isLogging()){
+			// volatile logging
+			if(!indexValid){
+				// client in Logging mode. force to reload
+				offset=0;
+				index =0;
+			}
+			size_t size=brewLogger.volatileDataAvailable(index,offset);
+			size_t logoffset=brewLogger.volatileDataOffset();
+			
+			if(size >0){
+				AsyncWebServerResponse *response = request->beginResponse("application/octet-stream", size, 
+						[](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+					return brewLogger.readVolatileData(buffer, maxLen,index);
+				});
+				response->addHeader("LogOffset",String(logoffset));
+				request->send(response);
+			}else{
+				request->send(204);
+			}			
+		}else{	
+			if(indexValid){
+				// client in volatile Logging mode. force to reload
+				offset=0;
+			}
+
+			size_t size=brewLogger.beginCopyAfter(offset);
+			if(size >0){
+				request->send("application/octet-stream", size, [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t { 
+					return brewLogger.read(buffer, maxLen,index);
+				});
+			}else{
+				request->send(204);
+			}
+		}	
 	}
 	
 public:
@@ -973,6 +1006,22 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -232,3 +232,19 @@ class SpiLcd : public Print {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -478,3 +478,19 @@ int16_t RotaryEncoder::read(void){
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

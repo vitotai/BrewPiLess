@@ -24,6 +24,8 @@
 #define StartLogTag 0xFF
 #define ResumeBrewTag 0xFE
 
+#define VolatileHeaderSize 16
+
 typedef struct _FileIndexEntry{
 	char name[24];
 	unsigned long time;
@@ -41,7 +43,7 @@ class BrewLogger
 	
 public:
 	BrewLogger(void){
-		_started=false;
+		_recording=false;
 		_isFileOpen=false;
 		_fsspace=0;
 		_tempLogPeriod=60000;
@@ -53,6 +55,8 @@ public:
 		checkspace();
 		if(_fileInfo.logname[0]!='\0'){
 			resumeSession();
+		}else{
+			startVolatileLog();
 		}
 	}
 
@@ -131,7 +135,7 @@ public:
 		DBG_PRINTF("resume, total _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
 		
 		_lastTempLog=0;
-		_started = true;
+		_recording = true;
 		_isFileOpen=false;
 
 		char unit;
@@ -142,10 +146,10 @@ public:
 		//DBG_PRINTF("resume done _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
 	}
 	
-	bool isLogging(void){ return _started; }
+	bool isLogging(void){ return _recording; }
 	
 	bool startSession(const char *filename){
-		if(_started) return false; // alread start
+		if(_recording) return false; // alread start
 		
 		if(_fsspace < 100){
 			DBG_PRINTF("Not enough space:%d\n",_fsspace);
@@ -166,11 +170,10 @@ public:
 		_logIndex = 0;
 
 		_lastTempLog=0;
-		_started = true;
+		_recording = true;
 		_savedLength=0;
 		
 		char unit;
-		uint8_t mode,state;
 		brewPi.getLogInfo(&unit,&_mode,&_state);
 		startLog(unit == 'F');
 		addMode(_mode);
@@ -184,8 +187,8 @@ public:
 	}
 
 	void endSession(void){
-		if(!_started) return;
-		_started=false;
+		if(!_recording) return;
+		_recording=false;
 		_logFile.close();
 		// copy the file name into last entry
 		int index=0;
@@ -203,10 +206,13 @@ public:
 		_fileInfo.logname[0]='\0';
 		_fileInfo.starttime=0;
 		saveIdxFile();
+		
+		startVolatileLog();
 	}
 	
 	void loop(void){
-		if(!_started) return;
+		//if(!_recording) return;
+
 		unsigned long miliseconds = millis();
 
 		if((miliseconds -_lastTempLog) < _tempLogPeriod) return;
@@ -243,7 +249,7 @@ public:
 
 	size_t beginCopyAfter(size_t last)
 	{
-		if(!_started) return 0;
+		if(!_recording) return 0;
 		_readStart = last;
 		DBG_PRINTF("beginCopyAfter:%d, _logIndex=%ld, saved=%ld last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength, (last >= (_logIndex +_savedLength))? 'Y':'N' );
 		if(last >= (_logIndex +_savedLength)) return 0;
@@ -312,13 +318,74 @@ public:
 	{
 		sprintf(buf,"%s/%s",LOG_PATH,_fileInfo.files[index].name);
 	}
+	
+	size_t volatileDataOffset(void)
+	{
+		return _startOffset;
+	}
+	
+	size_t volatileDataAvailable(size_t start,size_t offset)
+	{
+		// get size;
+		size_t dataAvail=(_logHead <= _logIndex)? (_logIndex-_logHead):(LogBufferSize + _logIndex - _logHead);
+		dataAvail += VolatileHeaderSize; // for make-up header
+		DBG_PRINTF("volatileDataAvailable, start:%d, offset:%d, _startOffset:%d, data:%d\n",start, offset,_startOffset, dataAvail);
+		if( ((start + offset) == 0) 
+			|| ((start + offset) < _startOffset)   // error case
+		    || ((start + offset) > (_startOffset + dataAvail))) {  //error case
+			// force reload, start=offset=0, the same case
+			// send header?
+			_sendHeader=true;
+			_sendOffset=0;
+		}else{
+			
+			size_t d= _startOffset + dataAvail - (start + offset);
+			dataAvail= d;
+			// assume the header should already be sent.
+			_sendHeader=false;
+			_sendOffset=start + offset - _startOffset - VolatileHeaderSize + _logHead;
+			
+			DBG_PRINTF("prepare send from %d of %d\n",_sendOffset,d);
+		}
+		
+		return dataAvail;
+	}
+	
+	size_t readVolatileData(uint8_t *buffer, size_t maxLen, size_t index)
+	{
+		size_t bufIdx=0;
+		size_t readIdx;
+		if(_sendHeader){
+			if(index < VolatileHeaderSize){
+				// maxLen < VolatileHeaderSize?
+				char header[VolatileHeaderSize];
+				volatileHeader(header);
+				for(int i=index;bufIdx<maxLen && i<VolatileHeaderSize;i++)
+					buffer[bufIdx++]=header[i];
+				readIdx = 0;
+			}else{
+				readIdx = index -VolatileHeaderSize;
+			}
+		}else{
+			readIdx = _sendOffset + index;
+		}
+		
+		DBG_PRINTF("readVolatileData maxLen=%d, index=%d, readIdx=%d\n",maxLen,index,readIdx);
+		
+		while(bufIdx < maxLen){
+			if(readIdx >= LogBufferSize) readIdx -= LogBufferSize;
+			buffer[bufIdx++] = _logBuffer[readIdx++];
+		}
+		
+		return bufIdx;
+	}
 
 private:
 	size_t _fsspace;
-	size_t  _tempLogPeriod;
-	size_t _lastTempLog;
+	uint32_t  _tempLogPeriod;
+	uint32_t _lastTempLog;
 
-	bool _started;
+	bool _recording;
 
 	int _logIndex;
 	int _savedLength;
@@ -334,6 +401,13 @@ private:
 	uint8_t _state;
 	float _beerSet;
 	
+	// for circular buffer
+	int _logHead;
+	uint32_t _headTime;
+	uint32_t _startOffset;
+	bool _sendHeader;
+	uint32_t _sendOffset;
+	
 	void checkspace(void)
 	{
 		FSInfo fs_info;
@@ -346,6 +420,48 @@ private:
 			_fsspace=0;
 		}
 		DBG_PRINTF("SPIFFS space:%d\n",_fsspace);
+	}
+
+	void volatileHeader(char *buf)
+	{
+		char unit;
+		uint8_t mode,state;
+
+		brewPi.getLogInfo(&unit,&mode,&state);
+		bool fahrenheit=(unit == 'F');
+		
+		char* ptr=buf;
+
+		//8
+		*ptr++ = StartLogTag;
+		*ptr++ = 4 | (fahrenheit? 0xF0:0xE0) ;
+		int period = _tempLogPeriod/1000;
+		*ptr++ = (char) (period >> 8);
+		*ptr++ = (char) (period & 0xFF);
+		*ptr++ = (char) (_headTime >> 24);
+		*ptr++ = (char) (_headTime >> 16);
+		*ptr++ = (char) (_headTime >> 8);
+		*ptr++ = (char) (_headTime & 0xFF);
+		// mode : 2
+		*ptr++ = ModeTag;
+		*ptr++ = mode;
+		// state: 2
+		*ptr++ = StageTag;
+		*ptr++ = state;
+		// beer set: 4
+		*ptr++ =BeerSetPointTag;
+		*ptr++ =0;
+		
+		int spi;
+		if(_beerSet > 250 || _beerSet < -100.0 )
+			spi = 0x7FFF;
+		else
+			spi=(int) (_beerSet * 100.0);
+			
+		spi = spi | 0x8000;
+		*ptr++ =(char) (spi >> 8);
+		*ptr ++ =(char)(spi & 0xFF);
+
 	}
 	
 	void startLog(bool fahrenheit)
@@ -361,18 +477,92 @@ private:
 		*ptr++ = (char) (_fileInfo.starttime >> 24);
 		*ptr++ = (char) (_fileInfo.starttime >> 16);
 		*ptr++ = (char) (_fileInfo.starttime >> 8);
-		*ptr++ = (char) (_fileInfo.starttime & 0xFF);		
+		*ptr++ = (char) (_fileInfo.starttime & 0xFF);
 		_logIndex=8;
 		_isFileOpen=false;
 		_savedLength=0;
 		
-		commitData(_logBuffer,_logIndex);
+		commitData(0,_logIndex);
 		
 		//DBG_PRINTF("*startLog*\n");
 	}
-
-	char *allocByte(byte size)
+	
+	void startVolatileLog(void)
 	{
+		_headTime=TimeKeeper.getTimeSeconds();
+		_logHead = 0;
+		_logIndex = 0;
+		_startOffset=0;
+		_lastTempLog=0;
+		loop();
+	}
+	
+	
+	
+	int freeBufferSpace(void)
+	{
+		DBG_PRINTF("_logHead:%d, _logIndex: %d\n",_logHead,_logIndex);
+		if(_logIndex >= _logHead){
+			return LogBufferSize - _logIndex -1 + _logHead;
+		}else {
+			// _logIndex < _logHead
+			return _logHead - _logIndex - 1;
+		}
+	}
+	
+	void dropData(void)
+	{
+		noInterrupts();
+		// move headto nex time stamp.
+		// four temperatures in one period
+		int idx = _logHead;
+		int dataDrop=0;
+		int tempRecord=0;
+		while(tempRecord < 4){
+			if(idx >= LogBufferSize) idx -= LogBufferSize;
+
+			byte data=_logBuffer[idx];
+
+			if(data < 128){
+				tempRecord ++;
+				idx +=2; // 2 bytes for temp 
+				dataDrop +=2;
+			}else{
+				if(data == BeerSetPointTag){
+					idx +=4;
+					dataDrop +=4;
+				}else{
+					idx +=2;
+					dataDrop +=2;
+				}
+			}
+		}
+		if(idx >= LogBufferSize) idx -= LogBufferSize;
+		_startOffset += dataDrop;
+		_logHead = idx;
+		_headTime += _tempLogPeriod/1000;
+		interrupts();
+		DBG_PRINTF("drop %d\n",dataDrop);
+	}
+	
+	int volatileLoggingAlloc(int size)
+	{
+		int space=freeBufferSpace();
+;
+		while(space < size){
+			DBG_PRINTF("Free %d req: %d\n",space,size);
+			dropData();
+			space=freeBufferSpace();
+		}
+		
+		return _logIndex;
+	}
+	
+	int allocByte(byte size)
+	{
+		if(!_recording){
+			return volatileLoggingAlloc(size);
+		}
 		if((_logIndex+size) > LogBufferSize){
 			DBG_PRINTF("buffer full, %d + %d >= %d! saved=%d\n",_logIndex,size,LogBufferSize,_savedLength);
 				_savedLength += _logIndex;
@@ -382,19 +572,34 @@ private:
 			// run out of space.
 			DBG_PRINTF("file system full, space: %d  req %d!\n",_fsspace,size);
 			endSession(); // forced stop
-			return NULL;
+			return -1;
 		}
 		_fsspace -= size;
 		
-		char *ptr=_logBuffer + _logIndex;
 		//race condition: read before data update. _logIndex += size;
-		return ptr;
+		return _logIndex;
 	}
-
-	void commitData(char* buf,int len)
+	
+	void writeBuffer(int idx,uint8_t data)
+	{
+		if(idx < LogBufferSize){
+			_logBuffer[idx] = data;
+		}else{
+			_logBuffer[idx - LogBufferSize]=data;
+		}
+	}
+	
+	void commitData(int idx,int len)
 	{
 		 _logIndex += len;
-		 int wlen;
+
+		if(!_recording){
+			if(_logIndex >= LogBufferSize) 
+				_logIndex -= LogBufferSize;
+			return;
+		}
+		char *buf = _logBuffer + idx;
+		int wlen;
 		if(len !=(wlen=_logFile.write((const uint8_t*)buf,len))){
 			DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
 			_logFile.close();
@@ -408,10 +613,10 @@ private:
 	}
 	
 	void addBeerSetPoint(float beerset){
-		char *ptr = allocByte(4);
-		if(ptr == NULL) return;
-		*ptr = BeerSetPointTag;
-		*(ptr+1)=0;
+		int idx = allocByte(4);
+		if(idx < 0) return;
+		writeBuffer(idx,BeerSetPointTag);
+		writeBuffer(idx+1,0);
 		
 		int spi;
 		if(beerset > 250 || beerset < -100.0 )
@@ -420,53 +625,53 @@ private:
 			spi=(int) (beerset * 100.0);
 			
 		spi = spi | 0x8000;
-		*(ptr+2) =(char) (spi >> 8);
-		*(ptr+3) =(char)(spi & 0xFF);
-		commitData(ptr,4);
+		writeBuffer(idx+2,spi >> 8);//*(ptr+2) =(char) (spi >> 8);
+		writeBuffer(idx+3,spi & 0xFF);//*(ptr+3) =(char)(spi & 0xFF);
+		commitData(idx,4);
 	}
 
 	void addMode(char mode){
-		char *ptr = allocByte(2);
-		if(ptr == NULL) return;
-		*ptr = ModeTag;
-		*(ptr+1) = mode;
-		commitData(ptr,2);
+		int idx = allocByte(2);
+		if(idx < 0) return;
+		writeBuffer(idx,ModeTag); //*ptr = ModeTag;
+		writeBuffer(idx+1,mode); //*(ptr+1) = mode;
+		commitData(idx,2);
 	}
 
 	void addState(char state){
-		char *ptr = allocByte(2);
-		if(ptr == NULL) return;
-		*ptr = StageTag;
-		*(ptr+1) = state;
-		commitData(ptr,2);
+		int idx = allocByte(2);
+		if(idx <0) return;
+		writeBuffer(idx,StageTag); //*ptr = StageTag;
+		writeBuffer(idx+1,state); //*(ptr+1) = state;
+		commitData(idx,2);
 	}
 		
 	void addTemperature(float temp){
-		char *ptr = allocByte(2);
-		if(ptr == NULL) return;
+		int idx = allocByte(2);
+		if(idx < 0) return;
 		int temp_int=(int)(temp * 100.0);
 		// assume temp is smaller than 300, -> maximum temp *100= 30000 < 32767
 		//DBG_PRINTF("add temperature:%d\n",temp_int);
 
 		if(temp_int > 25000 || temp < -100.0 ){
-			*ptr = 0x7F;
-			*(ptr+1) = 0xFF;
+			writeBuffer(idx,0x7F);    //*ptr = 0x7F;
+			writeBuffer(idx+1,0xFF); //*(ptr+1) = 0xFF;
 		}else{
-			*ptr = (char)((temp_int >> 8) & 0x7F);
-			*(ptr+1) =(char)(temp_int & 0xFF);		
+			writeBuffer(idx,(temp_int >> 8) & 0x7F);//*ptr = (char)((temp_int >> 8) & 0x7F);
+			writeBuffer(idx+1,temp_int & 0xFF);//*(ptr+1) =(char)(temp_int & 0xFF);		
 		}
-		commitData(ptr,2);
+		commitData(idx,2);
 	}
 
 
 	void addResumeTag(void)
 	{
-		char *ptr = allocByte(2);
-		if(ptr == NULL) return;
-		*ptr = ResumeBrewTag;
+		int idx = allocByte(2);
+		if(idx < 0) return;
+		writeBuffer(idx,ResumeBrewTag); //*ptr = ResumeBrewTag;
 		size_t rtime= TimeKeeper.getTimeSeconds();
-		 *(ptr+1)=(uint8_t)((rtime - _fileInfo.starttime)/60);
-		 commitData(ptr,2);
+		writeBuffer(idx+1,(rtime - _fileInfo.starttime)/60);  //*(ptr+1)=(uint8_t)((rtime - _fileInfo.starttime)/60);
+		commitData(idx,2);
 	}
 		
 	FileIndexes _fileInfo;
@@ -502,6 +707,21 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

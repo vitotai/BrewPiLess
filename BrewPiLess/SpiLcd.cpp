@@ -374,3 +374,19 @@ void SpiLcd::print_P(const char * str){ // print a string stored in PROGMEM
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
