@@ -329,7 +329,7 @@ public:
 		// get size;
 		size_t dataAvail=(_logHead <= _logIndex)? (_logIndex-_logHead):(LogBufferSize + _logIndex - _logHead);
 		dataAvail += VolatileHeaderSize; // for make-up header
-		DBG_PRINTF("volatileDataAvailable, start:%d, offset:%d, _startOffset:%d, data:%d\n",start, offset,_startOffset, dataAvail);
+		DBG_PRINTF("volatileDataAvailable,start:%d, offset:%d, _logHead %d _logIndex %d, _startOffset:%d, dataAvail:%d\n",start, offset,_logHead,_logIndex,_startOffset, dataAvail);
 		if( ((start + offset) == 0) 
 			|| ((start + offset) < _startOffset)   // error case
 		    || ((start + offset) > (_startOffset + dataAvail))) {  //error case
@@ -344,6 +344,7 @@ public:
 			// assume the header should already be sent.
 			_sendHeader=false;
 			_sendOffset=start + offset - _startOffset - VolatileHeaderSize + _logHead;
+			if(_sendOffset > LogBufferSize) _sendOffset -= LogBufferSize;
 			
 			DBG_PRINTF("prepare send from %d of %d\n",_sendOffset,d);
 		}
@@ -362,7 +363,7 @@ public:
 				volatileHeader(header);
 				for(int i=index;bufIdx<maxLen && i<VolatileHeaderSize;i++)
 					buffer[bufIdx++]=header[i];
-				readIdx = 0;
+				readIdx = _logHead;
 			}else{
 				readIdx = index -VolatileHeaderSize;
 			}
@@ -501,7 +502,7 @@ private:
 	
 	int freeBufferSpace(void)
 	{
-		DBG_PRINTF("_logHead:%d, _logIndex: %d\n",_logHead,_logIndex);
+		//DBG_PRINTF("_logHead:%d, _logIndex: %d\n",_logHead,_logIndex);
 		if(_logIndex >= _logHead){
 			return LogBufferSize - _logIndex -1 + _logHead;
 		}else {
@@ -524,14 +525,17 @@ private:
 			byte data=_logBuffer[idx];
 
 			if(data < 128){
+				//DBG_PRINTF("T:%X,%X ",_logBuffer[idx],_logBuffer[idx+1]);
 				tempRecord ++;
 				idx +=2; // 2 bytes for temp 
 				dataDrop +=2;
 			}else{
 				if(data == BeerSetPointTag){
+					//DBG_PRINTF("B:%X,%X,%X,%X",_logBuffer[idx],_logBuffer[idx+1],_logBuffer[idx+2],_logBuffer[idx+3]);
 					idx +=4;
 					dataDrop +=4;
 				}else{
+					//DBG_PRINTF("S:%X,%X ",_logBuffer[idx],_logBuffer[idx+1]);
 					idx +=2;
 					dataDrop +=2;
 				}
@@ -542,7 +546,7 @@ private:
 		_logHead = idx;
 		_headTime += _tempLogPeriod/1000;
 		interrupts();
-		DBG_PRINTF("drop %d\n",dataDrop);
+		DBG_PRINTF(",drop %d\n",dataDrop);
 	}
 	
 	int volatileLoggingAlloc(int size)
@@ -550,7 +554,7 @@ private:
 		int space=freeBufferSpace();
 ;
 		while(space < size){
-			DBG_PRINTF("Free %d req: %d\n",space,size);
+			//DBG_PRINTF("Free %d req: %d\n",space,size);
 			dropData();
 			space=freeBufferSpace();
 		}
@@ -707,6 +711,14 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
+
+
+
+
+
+
 
 
 
