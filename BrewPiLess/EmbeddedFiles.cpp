@@ -18,9 +18,6 @@ const char file_bwf_js [] PROGMEM="/bwf.js";
 #include "data_index_htm.h"
 const char file_index_htm [] PROGMEM="/index.htm";
 
-#include "data_control_htm.h"
-const char file_control_htm [] PROGMEM="/control.htm";
-
 #include "data_setup_htm.h"
 const char file_setup_htm [] PROGMEM="/setup.htm";
 
@@ -37,7 +34,6 @@ EmbeddedFileMapEntry fileMaps[]={
 {file_bwf_js,data_bwf_js},
 {file_index_htm,data_nindex_htm},
 {file_lcd,data_index_htm},
-{file_control_htm,data_control_htm},
 {file_setup_htm,data_setup_htm},
 {file_testcmd_htm,data_testcmd_htm},
 {file_viewlog_htm,data_viewlog_htm}
@@ -53,6 +49,8 @@ const char* getEmbeddedFile(const char* filename)
 	}
 	return NULL;
 } 
+
+
 
 
 
