@@ -94,6 +94,7 @@ R"END(
 
 #define POLLING_PATH 	"/getline_p"
 #define PUTLINE_PATH	"/putline"
+#define CONTROL_CC_PATH	"/tcc"
 
 #ifdef ENABLE_LOGGING
 #define LOGGING_PATH	"/log"
@@ -282,6 +283,15 @@ public:
 
 	 		brewPi.putLine(data.c_str());
 	 		request->send(200);
+	 	}else if(request->method() == HTTP_GET && request->url() == CONTROL_CC_PATH){
+	 		char unit;
+	 		float minTemp,maxTemp;
+	 		brewPi.getTemperatureSetting(&unit,&minTemp,&maxTemp);
+	 		String json=String("{\"tempSetMin\":") + String(minTemp)
+	 			+ String(",\"tempSetMax\":") + String(maxTemp) 
+	 			+ String(",\"tempFormat\":\"") + String(unit)  +String("\"}");
+	 		request->send(200,"application/json",json);
+	 		
 	 	}else if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
 	 	    if(!request->authenticate(username, password))
 	        return request->requestAuthentication();
@@ -389,7 +399,7 @@ public:
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET){
 	 		if(request->url() == POLLING_PATH || request->url() == CONFIG_PATH || request->url() == TIME_PATH 
-	 		|| request->url() == RESETWIFI_PATH
+	 		|| request->url() == RESETWIFI_PATH || request->url() == CONTROL_CC_PATH
 	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
 	 		#endif
@@ -521,7 +531,10 @@ void stringAvailable(const char *str)
 #endif
 }
 
-
+void notifyLogStatus(void)
+{
+	stringAvailable("V:{\"reload\":\"chart\"}");
+}
 
 class LogHandler:public AsyncWebHandler
 {
@@ -545,14 +558,16 @@ class LogHandler:public AsyncWebHandler
 			}else if(request->hasParam("start")){
 				String filename=request->getParam("start")->value();
 				DBG_PRINTF("start logging:%s\n",filename.c_str());
-				if(brewLogger.startSession(filename.c_str()))
+				if(brewLogger.startSession(filename.c_str())){
 					request->send(200);
-				else
+					notifyLogStatus();
+				}else
 					request->send(404);
 			}else if(request->hasParam("stop")){
 				DBG_PRINTF("Stop logging\n");
 				brewLogger.endSession();
 				request->send(200);
+				notifyLogStatus();
 			}else{
 				// default. list information
 				String status=brewLogger.loggingStatus();
@@ -562,27 +577,60 @@ class LogHandler:public AsyncWebHandler
 		} // end of logist path
 		
 		// charting
-		if(!brewLogger.isLogging()){
-			request->send(404);
-			DBG_PRINTF("Not logging\n");
-			return;
-		}
 		
 		int offset;
 		if(request->hasParam("offset")){
 			offset=request->getParam("offset")->value().toInt();
-			DBG_PRINTF("offset= %d\n",offset);
+			//DBG_PRINTF("offset= %d\n",offset);
 		}else{
 			offset=0;
 		}
-		size_t size=brewLogger.beginCopyAfter(offset);
-		if(size >0){
-			request->send("application/octet-stream", size, [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t { 
-				return brewLogger.read(buffer, maxLen,index);
-			});
+		
+		size_t index;
+		bool indexValid;
+		if(request->hasParam("index")){
+			index=request->getParam("index")->value().toInt();
+			//DBG_PRINTF("index= %d\n",index);
+			indexValid=true;
 		}else{
-			request->send(204);
-		}		
+			indexValid=false;
+		}
+		
+		if(!brewLogger.isLogging()){
+			// volatile logging
+			if(!indexValid){
+				// client in Logging mode. force to reload
+				offset=0;
+				index =0;
+			}
+			size_t size=brewLogger.volatileDataAvailable(index,offset);
+			size_t logoffset=brewLogger.volatileDataOffset();
+			
+			if(size >0){
+				AsyncWebServerResponse *response = request->beginResponse("application/octet-stream", size, 
+						[](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+					return brewLogger.readVolatileData(buffer, maxLen,index);
+				});
+				response->addHeader("LogOffset",String(logoffset));
+				request->send(response);
+			}else{
+				request->send(204);
+			}			
+		}else{	
+			if(indexValid){
+				// client in volatile Logging mode. force to reload
+				offset=0;
+			}
+
+			size_t size=brewLogger.beginCopyAfter(offset);
+			if(size >0){
+				request->send("application/octet-stream", size, [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t { 
+					return brewLogger.read(buffer, maxLen,index);
+				});
+			}else{
+				request->send(204);
+			}
+		}	
 	}
 	
 public:
@@ -973,6 +1021,32 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
