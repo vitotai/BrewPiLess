@@ -1,7 +1,8 @@
 # BrewPiLess
+ *Remember to clear browser cache to get new interface!*
 ## Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
-![Main Screen](img/main_v1.2.jpg)
+![Main Screen](img/brewpiless125.jpg)
 BrewPi is the greatest, if not the ultimate, fermentation temperature controller. The original design uses a RPI to log temperatures and maintain a temperature schedule. The RPI also hosts a web server as the front-end of internet web access. 
 Using a RPI or a PC allows the maximum power of BrewPi to be used but with the additional of a RPI or PC. 
 
@@ -22,7 +23,9 @@ You will need the ESP8266/Arduino environment, as well as the following librarie
  * ESPAsyncWebServer https://github.com/me-no-dev/ESPAsyncWebServer 
  * ESP8266HTTPUpdateServer (newer version is needed. you might need to manually download the files.) https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer
  * OneWire https://github.com/PaulStoffregen/OneWire
- 
+
+**Some of the libraries are modified and provided. Please use the libraries provided to ensure compatiblity.** 
+
 ## Features
  * I2C LCD support
  * Rotary Encoder support (* not supported by default)
@@ -34,7 +37,7 @@ You will need the ESP8266/Arduino environment, as well as the following librarie
  * Web-based OTA firmware update.
  * Web-based network setting
  * SoftAP mode
- * **(new)Local Temperature log and temperature chart**
+ * Local Temperature log and temperature chart
  
 ## Usage
 ### Setup WiFi network setting.
@@ -72,7 +75,6 @@ BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP addr
 
     The device setup procedure as original BrewPi is necessary.
 
- * Temperature management - `http://brewpi.local/control.htm`
  * Logging setting - `http://brewpi.local/log`
  * System configuration - `http://brewpi.local/config`
  
@@ -84,6 +86,7 @@ BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP addr
 ## Local temperature logging.
 
  * The log won’t start automatically, you have to start it at log setting page.
+ * **(new in v1.2.5) When logging is not started, BrewPiLess still logs the data and keep that latest 2`3 hours of data. The data will not be saved to file system, though.**
  * The temperatures are logged every minute.
  * A 30 day log will take around 350k bytes. That might imply that 3M space can record around 6 month data. However, there is no guarantee of the robustness of SPIFFS.
  * Changing temperature when logging will result in wrong data interpretation.
