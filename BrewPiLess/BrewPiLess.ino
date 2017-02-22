@@ -111,10 +111,16 @@ R"END(
 #define FLIST_PATH       "/list"
 #define DELETE_PATH       "/rm"
 
+#define CHART_LIB_PATH       "/dygraph-combined.js"
+
 #define DEFAULT_INDEX_FILE     "index.htm"
 
 const char *public_list[]={
 "/bwf.js"
+};
+
+const char *nocache_list[]={
+"/brewing.json"
 };
 //*******************************************
 
@@ -231,6 +237,7 @@ class BrewPiWebHandler: public AsyncWebHandler
 	    if(SPIFFS.exists(path)) return true;
 
 	    if(getEmbeddedFile(path.c_str())) return true;
+	    if(path.endsWith(CHART_LIB_PATH) && SPIFFS.exists(CHART_LIB_PATH)) return true;
 	    return false;
     }
 	
@@ -255,8 +262,20 @@ class BrewPiWebHandler: public AsyncWebHandler
 	{
 		if(SPIFFS.exists(path)){
 			//request->send(SPIFFS, path);
+			bool nocache=false;
+			for(byte i=0;i< sizeof(nocache_list)/sizeof(const char*);i++){
+				if(path.equals(nocache_list[i])){
+						nocache=true;
+						break;
+					}
+			}
+
+			
 			AsyncWebServerResponse *response = request->beginResponse(SPIFFS, path);
-			response->addHeader("Cache-Control","max-age=2592000");
+			if(nocache)
+				response->addHeader("Cache-Control","no-cache");
+			else
+				response->addHeader("Cache-Control","max-age=2592000");
 			request->send(response);			
 			return;
 		}
@@ -373,6 +392,7 @@ public:
 	 	
 			String path=request->url();
 	 		if(path.endsWith("/")) path +=DEFAULT_INDEX_FILE;
+	 		else if(path.endsWith(CHART_LIB_PATH)) path = CHART_LIB_PATH;
 
 	 		if(request->url().equals("/")){
 		 		if(!passwordLcd){
@@ -1021,6 +1041,7 @@ void loop(void){
   		}
   	}
 }
+
 
 
 
