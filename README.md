@@ -48,7 +48,7 @@ Please check URL for more detail.
 
 https://github.com/tzapu/WiFiManager
 
-**(New)** After **three minutes**, ESP8266 will proceed to enter soft AP mode. That means you only have three minutes to setup the network. 
+After **three minutes**, ESP8266 will proceed to enter soft AP mode. That means you only have three minutes to setup the network. 
 ### Soft AP mode
 BrewPiLess now can run in AP mode, which enables it to run as stand alone device. The newly modified WiFiManager has a new option, "Soft AP Mode". Soft AP mode will also be entered if the network setting is not configured in three minutes (and previous connected network doesn't exist, or there is no previously connected network.)
 **This design is to enable recovery from a power shortage or system reset.** Without this feature, BrewPiLess will hang at the network setting state and won't perform temperature management funcitons.
@@ -92,7 +92,14 @@ BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP addr
  * Changing temperature when logging will result in wrong data interpretation.
  * A maximum of 10 logs is allowed. The logs will not be deleted automatically. Manual deleting is necessary.
  * Off-line viewer is available. You can download the log and view it from your computer. Download the file "BPLLogViewer.htm" in the "extra" subfolder. Save it anywhere in your computer. Open it using a web browser.
- * **Internet access is required to view the chart**. To save some more space and to alleviate the loading of ESP8266, the library is not put in the ESP8266.
+ * **Internet access is required to view the chart**. To save some more space and to alleviate the loading of ESP8266, the library is not put in the ESP8266. (It is possible after v1.2.5.)
+
+## Viewing temperature char under AP mode
+There are two wasy that make it possible to have the temperature chart under AP mode. 
+ * Let the browser cache the file. The simple way is having BrewPiLess connect to a router that has internet access, then connnection to BrewPiLess. Usually, the browser will cache the library laod from disk after that. However, the browser might clear the cache for some reasons, so this might not always work.
+ * Put the library in ESP8266. 
+  Go to http://dygraphs.com/download.html  and download the v1.1.1 `dygraph-combined.js`.
+  open http://brewpi.local:8008/filemanager, and upload the downlowed libarry to ESP8266. The file shoule be named exact `dygraph-combined.js`. 
 
 ## Remote temperature logging.
 Remote logging can be used to post data to a HTTP server that BrewPiLess can connect to.The `format` field in log setup page is like the format in `printf` but uses the following specifiers:
