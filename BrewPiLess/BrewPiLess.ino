@@ -116,7 +116,8 @@ R"END(
 #define DEFAULT_INDEX_FILE     "index.htm"
 
 const char *public_list[]={
-"/bwf.js"
+"/bwf.js",
+"/brewing.json"
 };
 
 const char *nocache_list[]={
@@ -300,6 +301,9 @@ public:
 	 		String data=request->getParam("data", true, false)->value();
 	 		//DBG_PRINTF("putline:%s\n",data.c_str());
 
+			if(data.startsWith("j") && !request->authenticate(username, password))
+		        return request->requestAuthentication();
+	 		
 	 		brewPi.putLine(data.c_str());
 	 		request->send(200);
 	 	}else if(request->method() == HTTP_GET && request->url() == CONTROL_CC_PATH){
@@ -1041,6 +1045,9 @@ void loop(void){
   		}
   	}
 }
+
+
+
 
 
 

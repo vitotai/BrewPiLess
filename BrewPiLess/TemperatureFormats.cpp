@@ -348,3 +348,6 @@ temperature multiplyFactorTemperatureDiff(temperature factor, temperature b)
 
 
 
+
+
+
