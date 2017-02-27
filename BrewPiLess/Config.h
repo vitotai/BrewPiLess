@@ -127,7 +127,7 @@
 // Enable the LCD display. Without this, a NullDisplay is used
 //
 #ifndef BREWPI_LCD
-#define BREWPI_LCD 1
+#define BREWPI_LCD 0
 #endif
 
 //
@@ -202,12 +202,12 @@
 
 #define PIN_SDA NODEMCU_PIN_D2
 #define PIN_SCL NODEMCU_PIN_D1
-#define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
+#define oneWirePin NODEMCU_PIN_D5  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 
 //#define THORRAX_BOARD false
 
 #if THORRAX_BOARD
-#define coolingPin NODEMCU_PIN_D5
+#define coolingPin NODEMCU_PIN_D6
 #define heatingPin NODEMCU_PIN_D0
 #define doorPin    NODEMCU_PIN_D7
 #define BuzzPin NODEMCU_PIN_D3
@@ -301,6 +301,8 @@
 #define BUFFER_PILINK_PRINTS 1
 
 #define EARLY_DISPLAY 1
+
+
 
 
 

@@ -106,9 +106,10 @@ void BrewPiProxy::getAllStatus(uint8_t *pState,uint8_t *pMode,float *pBeerTemp,f
 	*pMode = (uint8_t) tempControl.getMode();
 }
 
-
-
-
+bool BrewPiProxy::ambientSensorConnected(void)
+{
+	return tempControl.ambientSensor->isConnected();
+}
 
 
 

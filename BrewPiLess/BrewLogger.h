@@ -243,6 +243,7 @@ public:
 		addTemperature(roomTemp);
 
 		_lastTempLog= miliseconds;
+//		DBG_PRINTF("room sensor connected: %d\n", brewPi.ambientSensorConnected());
 		
 	}
 
@@ -711,6 +712,8 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
 
 
 
