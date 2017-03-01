@@ -113,6 +113,8 @@ R"END(
 
 #define CHART_LIB_PATH       "/dygraph-combined.js"
 
+#define GRAVITY_PATH       "/gravity"
+
 #define DEFAULT_INDEX_FILE     "index.htm"
 
 const char *public_list[]={
@@ -559,9 +561,17 @@ void notifyLogStatus(void)
 {
 	stringAvailable("V:{\"reload\":\"chart\"}");
 }
+#define MAX_DATA_SIZE 256
 
 class LogHandler:public AsyncWebHandler
 {
+private:
+	uint8_t _data[MAX_DATA_SIZE];
+	size_t _dataLength;
+	bool   _error;
+
+public:
+	
 	void handleRequest(AsyncWebServerRequest *request){
 		if( request->url() == LOGLIST_PATH){
 			if(request->hasParam("dl")){
@@ -599,7 +609,17 @@ class LogHandler:public AsyncWebHandler
 			}
 			return;
 		} // end of logist path
-		
+		else if(request->url() == GRAVITY_PATH){
+			if(request->method() != HTTP_POST){
+				request->send(400);
+				return;
+			}
+			if(brewLogger.processGravity(_data,_dataLength)){
+				request->send(200,"application/json","{}");
+			}else{
+				request->send(500);
+			}
+		}
 		// charting
 		
 		int offset;
@@ -657,13 +677,30 @@ class LogHandler:public AsyncWebHandler
 		}	
 	}
 	
-public:
 	LogHandler(){}
 	bool canHandle(AsyncWebServerRequest *request){
-	 	if(request->url() == CHART_DATA_PATH || request->url() ==LOGLIST_PATH) return true;
+	 	if(request->url() == CHART_DATA_PATH || request->url() ==LOGLIST_PATH
+	 	|| request->url() == GRAVITY_PATH	) return true;
 	 	return false;
 	}
-
+	
+	void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+		if(!index){
+			DBG_PRINTF("BodyStart: %u B\n", total);
+			_dataLength =0;
+			_error=(total >= MAX_DATA_SIZE); 
+		}
+		
+		if(_error) return;
+		for(size_t i=0; i< len; i++){
+			//Serial.write(data[i]);
+			_data[_dataLength ++] = data[i];
+		}
+		if(index + len == total){
+			_data[_dataLength]='\0';
+			DBG_PRINTF("Body total%u data:%sB\n", total,_data);			
+		}
+	}
 };
 LogHandler logHandler;
 
@@ -1045,6 +1082,18 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

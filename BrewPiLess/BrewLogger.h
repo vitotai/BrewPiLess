@@ -18,6 +18,8 @@
 #define SetPointTag 0xF3
 
 #define BeerSetPointTag 0xF7
+#define GravityTag 0xF8
+
 #define ModeTag 0xF4
 
 
@@ -382,6 +384,36 @@ public:
 		return bufIdx;
 	}
 
+	bool processGravity(uint8_t data[],size_t length){
+		if(length ==0) return false;
+
+		const int BUFFER_SIZE = JSON_OBJECT_SIZE(8);
+		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+		JsonObject& root = jsonBuffer.parseObject((char*)data,length);
+
+		if (!root.success() || !root.containsKey("name")){
+  			DBG_PRINTF("Invalid JSON\n");
+  			return false;
+		}
+		
+		const char* name = root["name"].asString();
+		
+		if(strcmp(name,"webjs")==0){
+			if(!root.containsKey("gravity")){
+  				DBG_PRINTF("No gravity\n");
+  				return false;
+  			}
+			float  gravity = root["gravity"];
+			if(root.containsKey("og"))
+				addGravity(gravity,true);
+			else
+				addGravity(gravity);
+		}else if(strcmp(name,"iSpindel01")==0){
+			DBG_PRINTF("iSpindel01\n");
+		} 
+		return true;
+	}
+	
 private:
 	size_t _fsspace;
 	uint32_t  _tempLogPeriod;
@@ -531,7 +563,7 @@ private:
 				idx +=2; // 2 bytes for temp 
 				dataDrop +=2;
 			}else{
-				if(data == BeerSetPointTag){
+				if(data == BeerSetPointTag || data ==GravityTag ){
 					//DBG_PRINTF("B:%X,%X,%X,%X",_logBuffer[idx],_logBuffer[idx+1],_logBuffer[idx+2],_logBuffer[idx+3]);
 					idx +=4;
 					dataDrop +=4;
@@ -615,6 +647,19 @@ private:
 			_logFile.write((const uint8_t*)buf+wlen,len-wlen);
 		}
 		_logFile.flush();
+	}
+
+	void addGravity(float gravity,bool isOg=false){
+		int idx = allocByte(4);
+		if(idx < 0) return;
+		writeBuffer(idx,GravityTag);
+		writeBuffer(idx+1,(isOg)? 1:0);
+		
+		uint16_t val= 1000 +(int16_t)(( gravity - 1.0) * 1000.0); 
+		val = val | 0x8000;
+		writeBuffer(idx+2,val >> 8);
+		writeBuffer(idx+3,val & 0xFF);
+		commitData(idx,4);
 	}
 	
 	void addBeerSetPoint(float beerset){
@@ -712,6 +757,18 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -206,3 +206,15 @@ BasicTempSensor& TempSensor::sensor() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
