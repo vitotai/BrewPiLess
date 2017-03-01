@@ -9,9 +9,9 @@ class ExternalDataStore
 {
 public:
 	ExternalDataStore(void):gravity(INVALID_GRAVITY),auxTemp(INVALID_TEMP),deviceVoltage(INVALID_VOLTAGE),lastUpdate(0){}
-	void invalidGravity(void){  gravity = INVALID_GRAVITY;}
-	void invalidAuxTemp(void){ auxTemp=INVALID_TEMP;}
-	void invalidDeviceVoltage(void) { deviceVoltage= INVALID_VOLTAGE; }
+	void invalidateGravity(void){  gravity = INVALID_GRAVITY;}
+	void invalidateAuxTemp(void){ auxTemp=INVALID_TEMP;}
+	void invalidateDeviceVoltage(void) { deviceVoltage= INVALID_VOLTAGE; }
 	float gravity;
 	float auxTemp;
 	float deviceVoltage;
@@ -19,3 +19,6 @@ public:
 };
 
 extern ExternalDataStore externalDataStore;
+
+
+

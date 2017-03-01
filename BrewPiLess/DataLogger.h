@@ -29,7 +29,7 @@ protected:
 	bool processJson(char* jsonstring);
 	void sendData(void);
  	int dataSprintf(char *buffer,const char *format);
- 	int printTemperature(char* buffer,float temp);
+ 	int printFloat(char* buffer,float value,int precision,bool valid);
 
 	char* _url;
 	char* _method;
@@ -42,6 +42,9 @@ protected:
 };
 
 #endif
+
+
+
 
 
 

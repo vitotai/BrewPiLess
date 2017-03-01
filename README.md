@@ -2,7 +2,7 @@
  *Remember to clear browser cache to get new interface!*
 ## Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
-![Main Screen](img/brewpiless125.jpg)
+![Main Screen](img/brewpiless126p1.jpg)
 BrewPi is the greatest, if not the ultimate, fermentation temperature controller. The original design uses a RPI to log temperatures and maintain a temperature schedule. The RPI also hosts a web server as the front-end of internet web access. 
 Using a RPI or a PC allows the maximum power of BrewPi to be used but with the additional of a RPI or PC. 
 
@@ -38,6 +38,7 @@ You will need the ESP8266/Arduino environment, as well as the following librarie
  * Web-based network setting
  * SoftAP mode
  * Local Temperature log and temperature chart
+ * **[New1.2.6]** Gravity logging
  
 ## Usage
 ### Setup WiFi network setting.
@@ -82,6 +83,10 @@ BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP addr
  * OTA update - `http://brewpi.local:8008/systemupdate`
     
     The menu from the main page doesn't include this page.
+
+## Gravity logging
+To add gravity reading record, click the **SG reading**. The number entered with the time when it is entered will be saved as a SG reading record.
+To enter OG, click the **OG value**. Once OG is availble, the Attenuation and ABV will be calcuated when SG reading is updated. The OG is for calculation of attenuation and ABV only.
 
 ## Local temperature logging.
 
