@@ -41,6 +41,8 @@
 #include "DataLogger.h"
 #endif
 
+#include "ExternalDataStore.h"
+
 extern "C" {
 #include <sntp.h>
 }
@@ -126,6 +128,8 @@ const char *nocache_list[]={
 "/brewing.json"
 };
 //*******************************************
+
+ExternalDataStore externalDataStore;
 
 bool passwordLcd;
 char username[32];
@@ -565,11 +569,6 @@ void notifyLogStatus(void)
 
 class LogHandler:public AsyncWebHandler
 {
-private:
-	uint8_t _data[MAX_DATA_SIZE];
-	size_t _dataLength;
-	bool   _error;
-
 public:
 	
 	void handleRequest(AsyncWebServerRequest *request){
@@ -609,17 +608,6 @@ public:
 			}
 			return;
 		} // end of logist path
-		else if(request->url() == GRAVITY_PATH){
-			if(request->method() != HTTP_POST){
-				request->send(400);
-				return;
-			}
-			if(brewLogger.processGravity(_data,_dataLength)){
-				request->send(200,"application/json","{}");
-			}else{
-				request->send(500);
-			}
-		}
 		// charting
 		
 		int offset;
@@ -679,9 +667,72 @@ public:
 	
 	LogHandler(){}
 	bool canHandle(AsyncWebServerRequest *request){
-	 	if(request->url() == CHART_DATA_PATH || request->url() ==LOGLIST_PATH
-	 	|| request->url() == GRAVITY_PATH	) return true;
+	 	if(request->url() == CHART_DATA_PATH || request->url() ==LOGLIST_PATH) return true;
 	 	return false;
+	}	
+};
+LogHandler logHandler;
+
+
+class ExternalDataHandler:public AsyncWebHandler
+{
+private:
+	uint8_t _data[MAX_DATA_SIZE];
+	size_t _dataLength;
+	bool   _error;
+
+	bool processGravity(uint8_t data[],size_t length){
+		if(length ==0) return false;
+
+		const int BUFFER_SIZE = JSON_OBJECT_SIZE(8);
+		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+		JsonObject& root = jsonBuffer.parseObject((char*)data,length);
+
+		if (!root.success() || !root.containsKey("name")){
+  			DBG_PRINTF("Invalid JSON\n");
+  			return false;
+		}
+		
+		const char* name = root["name"].asString();
+		
+		if(strcmp(name,"webjs")==0){
+			if(!root.containsKey("gravity")){
+  				DBG_PRINTF("No gravity\n");
+  				return false;
+  			}
+			float  gravity = root["gravity"];
+			if(root.containsKey("og"))
+				brewLogger.addGravity(gravity,true);
+			else{
+				brewLogger.addGravity(gravity);
+				externalDataStore.gravity = gravity;
+				externalDataStore.lastUpdate = TimeKeeper.getTimeSeconds();
+			}
+		}else if(strcmp(name,"iSpindel01")==0){
+			DBG_PRINTF("iSpindel01\n");
+		} 
+		return true;
+	}
+
+public:
+
+	ExternalDataHandler(){}
+	
+	bool canHandle(AsyncWebServerRequest *request){
+	 	if(request->url() == GRAVITY_PATH	) return true;
+	 	return false;
+	}
+
+	void handleRequest(AsyncWebServerRequest *request){
+		if(request->method() != HTTP_POST){
+			request->send(400);
+			return;
+		}
+		if(processGravity(_data,_dataLength)){
+				request->send(200,"application/json","{}");
+		}else{
+				request->send(500);
+		}
 	}
 	
 	void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
@@ -702,7 +753,7 @@ public:
 		}
 	}
 };
-LogHandler logHandler;
+ExternalDataHandler externalDataHandler;
 
 //{brewpi
 
@@ -976,6 +1027,9 @@ void setup(void){
 	server.addHandler(&brewPiWebHandler);
 	
 	server.addHandler(&logHandler);
+	
+	server.addHandler(&externalDataHandler);
+	
 	//3.1.2 SPIFFS is part of the serving pages
 	//server.serveStatic("/", SPIFFS, "/","public, max-age=259200"); // 3 days
 
@@ -1059,9 +1113,7 @@ void loop(void){
  	
  	#ifdef ENABLE_LOGGING
 
- 	dataLogger.loop(now,[](float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet){
- 			brewPi.getTemperature(pBeerTemp,pBeerSet,pFridgeTemp,pFridgeSet);
- 		});
+ 	dataLogger.loop(now);
  	#endif
  	
 	if(!IS_RESTARTING){
@@ -1082,6 +1134,10 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
 
 
 

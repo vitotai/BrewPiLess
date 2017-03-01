@@ -8,37 +8,73 @@
 #include "DataLogger.h"
 #include "espconfig.h"
 #include "TemperatureFormats.h"
+#include "BrewPiProxy.h"
+
+extern BrewPiProxy brewPi;
 
 #define GSLOG_JSON_BUFFER_SIZE 256
 #define MAX_GSLOG_CONFIG_LEN 1024
 #define GSLogConfigFile "/gslog.cfg"
 
 
-void DataLogger::loop(time_t now,void (*getTemp)(float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet))
+int DataLogger::printTemperature(char* buffer,float temp)
+{
+	if(IS_FLOAT_TEMP_VALID(temp)){
+		return sprintFloat(buffer,temp,1);
+	}else{
+		strcpy(buffer,"null");
+		return 4;
+	}
+}
+
+int DataLogger::dataSprintf(char *buffer,const char *format)
+{
+	uint8_t state, mode;
+	float beerSet,fridgeSet;
+	float beerTemp,fridgeTemp,roomTemp;
+
+	brewPi.getAllStatus(&state,&mode,& beerTemp,& beerSet,& fridgeTemp,& fridgeSet,& roomTemp);
+
+	int i=0;
+	int d=0;
+	for(i=0;i< strlen(format);i++){
+		char ch=format[i];
+		if( ch == '%'){
+			i++;
+			ch=format[i];
+			if(ch == '%'){
+				buffer[d++]=ch;
+			}else if(ch == 'b'){
+				d += printTemperature(buffer+d,beerTemp);
+			}else if(ch == 'B'){
+				d += printTemperature(buffer+d,beerSet);
+			}else if(ch == 'f'){
+				d += printTemperature(buffer+d,fridgeTemp);
+			}else if(ch == 'F'){
+				d += printTemperature(buffer+d,fridgeSet);
+			}else if(ch == 'r'){
+				d += printTemperature(buffer+d,roomTemp);
+			}else{
+				// wrong format
+				return 0;
+			}
+		}else{
+			buffer[d++]=ch;
+		}
+	}// for each char
+
+	buffer[d]='\0';
+	return d;
+}
+ 		
+void DataLogger::loop(time_t now)
 {
 	if(!_enabled) return;
 	
 	if((now - _lastUpdate) < _period) return;
-	
-	float beerTemp,beerSet,fridgeTemp,fridgeSet;
-	(*getTemp)(&beerTemp,&beerSet,&fridgeTemp,&fridgeSet);
-	
-	if(IS_FLOAT_TEMP_VALID(beerTemp)){
-		sendData(beerTemp,beerSet,fridgeTemp,fridgeSet);
-		_lastUpdate=now;
-		_retry =0;
-	}else{
-		DBG_PRINTF("Invalid Temp, retry:%d\n",_retry);
-		// star retry
-		if(_retry > MAX_RETRY_NUMBER){
-			sendData(beerTemp,beerSet,fridgeTemp,fridgeSet);
-			_lastUpdate=now;
-			_retry =0;
-		}else{
-			_lastUpdate=now - _period + RETRY_TIME; 
-			_retry ++;
-		}
-	}
+		
+	sendData();
+	_lastUpdate=now;
 }
 
 int _copyName(char *buf,char *name,bool concate)
@@ -72,12 +108,12 @@ int copyTemp(char* buf,char* name,float value, bool concate)
 	return n;
 }
 
-void DataLogger::sendData(float beerTemp,float beerSet,float fridgeTemp, float fridgeSet)
+void DataLogger::sendData(void)
 {
 	char data[512];
 	int len=0;
 
-	len =dataSprintf(data,_format,beerTemp,beerSet,fridgeTemp,fridgeSet);
+	len =dataSprintf(data,_format);
 	
 	if(len==0){
 		DBG_PRINTF("Invalid format\n");
@@ -130,57 +166,7 @@ void DataLogger::sendData(float beerTemp,float beerSet,float fridgeTemp, float f
 
 }
 
-int DataLogger::dataSprintf(char *buffer,const char *format,float beerTemp,float beerSet,float fridgeTemp,float fridgeSet)
-{
-	int i=0;
-	int d=0;
-	for(i=0;i< strlen(format);i++){
-		char ch=format[i];
-		if( ch == '%'){
-			i++;
-			ch=format[i];
-			if(ch == '%'){
-				buffer[d++]=ch;
-			}else if(ch == 'b'){
-				if(IS_FLOAT_TEMP_VALID(beerTemp)){
-					d += sprintFloat(buffer+d,beerTemp,1);
-				}else{
-					strcpy(buffer+d,"null");
-					d += 4;
-				}
-			}else if(ch == 'B'){
-				if(IS_FLOAT_TEMP_VALID(beerSet)){
-					d += sprintFloat(buffer+d,beerSet,1);
-				}else{
-					strcpy(buffer+d,"null");
-					d += 4;
-				}
-			}else if(ch == 'f'){
-				if(IS_FLOAT_TEMP_VALID(fridgeTemp)){
-					d += sprintFloat(buffer+d,fridgeTemp,1);
-				}else{
-					strcpy(buffer+d,"null");
-					d += 4;
-				}
-			}else if(ch == 'F'){
-				if(IS_FLOAT_TEMP_VALID(fridgeSet)){
-					d += sprintFloat(buffer+d,fridgeSet,1);
-				}else{
-					strcpy(buffer+d,"null");
-					d += 4;
-				}
-			}else{
-				// wrong format
-				return 0;
-			}
-		}else{
-			buffer[d++]=ch;
-		}
-	}// for each char
 
-	buffer[d]='\0';
-	return d;
-}
 
 bool DataLogger::processJson(char* jsonstring)
 {
@@ -354,6 +340,10 @@ void DataLogger::getSettings(AsyncWebServerRequest *request)
 		request->send(response);  
 	}
 }
+
+
+
+
 
 
 
