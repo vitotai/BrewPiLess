@@ -115,6 +115,11 @@ Remote logging can be used to post data to a HTTP server that BrewPiLess can con
 | %B         | Beer setting   |
 | %f         | fridge temperature   |
 | %F         | fridge setting   |
+| %r         | room temperature   |
+| %g         | gravity   |
+| %a         | auxiliary temperature   |
+| %v         | external device voltage   |
+| %u         | UNIX timestamp of last gravity update   |
 
 For example, let beer setting be `20.0` and beer temperature be `18.3`, if the `format` is `api_key=TheRealApiKeyHere&field1=%B&field2=%b`,
 the data will be `api_key=TheRealApiKeyHere&field1=20.0&field2=18.3`.

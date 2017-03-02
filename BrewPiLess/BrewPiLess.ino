@@ -681,8 +681,8 @@ private:
 	size_t _dataLength;
 	bool   _error;
 
-	bool processGravity(uint8_t data[],size_t length){
-		if(length ==0) return false;
+	void processGravity(AsyncWebServerRequest *request,uint8_t data[],size_t length){
+		if(length ==0) return request->send(500);;
 
 		const int BUFFER_SIZE = JSON_OBJECT_SIZE(8);
 		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
@@ -690,15 +690,20 @@ private:
 
 		if (!root.success() || !root.containsKey("name")){
   			DBG_PRINTF("Invalid JSON\n");
-  			return false;
+  			request->send(500);
+  			return;
 		}
 		
 		const char* name = root["name"].asString();
 		
 		if(strcmp(name,"webjs")==0){
+			if(!request->authenticate(username, password))
+	        return request->requestAuthentication();
+	        
 			if(!root.containsKey("gravity")){
   				DBG_PRINTF("No gravity\n");
-  				return false;
+  				request->send(500);
+  				return;
   			}
 			float  gravity = root["gravity"];
 			if(root.containsKey("og"))
@@ -711,7 +716,7 @@ private:
 		}else if(strcmp(name,"iSpindel01")==0){
 			DBG_PRINTF("iSpindel01\n");
 		} 
-		return true;
+		request->send(200,"application/json","{}");
 	}
 
 public:
@@ -728,11 +733,7 @@ public:
 			request->send(400);
 			return;
 		}
-		if(processGravity(_data,_dataLength)){
-				request->send(200,"application/json","{}");
-		}else{
-				request->send(500);
-		}
+		processGravity(request,_data,_dataLength);
 	}
 	
 	void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
@@ -1134,6 +1135,10 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
 
 
 
