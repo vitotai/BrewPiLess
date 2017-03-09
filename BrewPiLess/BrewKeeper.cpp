@@ -6,9 +6,11 @@
 #include "BrewKeeper.h"
 #include "mystrlib.h"
 
-#define DBG_PRINTF(...) // DebugPort.printf(__VA_ARGS__)
-#define DBG_PRINT(...) //DebugPort.print(__VA_ARGS__)
+#define DBG_PRINTF(...)  DebugPort.printf(__VA_ARGS__)
+#define DBG_PRINT(...) DebugPort.print(__VA_ARGS__)
 
+#define BrewStatusFile "/brewing.s"
+#define CurrentProfileVersion 2
 
 #define OUT_OF_RANGE(a,b,c) ((((a) - (b)) > (c)) || (((a) - (b)) < -(c)))
 #define IS_INVALID_CONTROL_TEMP(t) ((t)< -99.0)
@@ -30,7 +32,7 @@ void BrewKeeper::keep(time_t now,char unit,char mode,float beerSet)
 	// check unit
 	_profile.setUnit(unit);
 	
-	float temp=_profile.tempByTime(now);
+	float temp=_profile.tempByTimeGravity(now,_lastGravity);
 	
 	if(IS_INVALID_CONTROL_TEMP(temp)) return;
 	if(OUT_OF_RANGE(temp,beerSet,MINIMUM_TEMPERATURE_STEP)){
@@ -57,7 +59,7 @@ void BrewKeeper::keep(time_t now,char unit,char mode,float beerSet)
 void BrewProfile::_tempConvert(void)
 {
 	for(int i=0;i< _numberOfSteps;i++){
-		_setTemps[i] = (_unit == 'C')? F2C(_setTemps[i]):C2F(_setTemps[i]);
+		_steps[i].temp = (_unit == 'C')? F2C(_steps[i].temp):C2F(_steps[i].temp);
 	}	
 }
 
@@ -74,7 +76,6 @@ time_t tm_to_timet(struct tm *tm_time);
 bool BrewProfile::load(String filename)
 {
 	DBG_PRINTF("BrewProfile::load\n");
-
 
 	if(!SPIFFS.exists(filename)){
 		DBG_PRINTF("file:%s not exist\n",filename.c_str());
@@ -98,8 +99,14 @@ bool BrewProfile::load(String filename)
 	}
 	if(!root.containsKey("s")
 		|| !root.containsKey("u")
-		|| !root.containsKey("t")){
+		|| !root.containsKey("t")
+		|| !root.containsKey("v")){
 		DBG_PRINTF("JSON file not include necessary fields\n");
+		return false;
+	}
+	int version=root["v"];
+	if( version !=CurrentProfileVersion){
+		DBG_PRINTF("profile version:%d\n",version);
 		return false;
 	}
 	if (!root["t"].is<JsonArray&>()){
@@ -134,18 +141,30 @@ bool BrewProfile::load(String filename)
 	JsonArray& schedule = root["t"];
 	_numberOfSteps=schedule.size();
 	
-	if(!_setTemps) free(_setTemps);
-	_setTemps =(float*) malloc(sizeof(float) * _numberOfSteps);
-	if(!_times) free(_times);
-	_times = (time_t*)malloc(sizeof(time_t) * _numberOfSteps);
+	if(!_steps) free(_steps);
+	_steps =(ProfileStep*) malloc(sizeof(ProfileStep) * _numberOfSteps);
+
 	int i=0;
-	for(JsonArray::iterator it=schedule.begin(); it!=schedule.end(); ++it,i++){
-		JsonObject&	 entry= *it;
-		*(_setTemps + i) = entry["t"];
-		float day= entry["d"];
-		*(_times+i) =(time_t)(day * 86400.0) + _startDay;
-		DBG_PRINTF("%d ,time:%ld temp:",i,*(_times+i) );
-		DBG_PRINT(*(_setTemps + i));
+	
+	for(int i=0;i< _numberOfSteps ;i++){
+		JsonObject&	 entry= schedule[i];
+		//{"c":"g","d":6,"t":12,"g":1.026},{"c":"r","d":1}
+		const char* constr= entry["c"];
+		_steps[i].condition = *constr;
+		_steps[i].days = entry["d"];
+
+		DBG_PRINTF("%d ,type:%c time:",i,_steps[i].condition );
+		DBG_PRINT(_steps[i].days);
+		
+		if(_steps[i].condition != 'r'){
+			_steps[i].sg = entry["g"];
+			_steps[i].temp= entry["t"];
+
+			DBG_PRINT(" temp:");	
+			DBG_PRINT(_steps[i].temp);
+			DBG_PRINT(" sg:");
+			DBG_PRINT(_steps[i].sg);
+		}
 		DBG_PRINTF("\n");
 	}
 	_profileLoaded=true;
@@ -160,28 +179,134 @@ bool BrewProfile::load(String filename)
 		_unit = unit;
 
 	DBG_PRINTF("finished, st:%ld, unit:%c, _numberOfSteps:%d\n",_startDay,unit,_numberOfSteps);
+	
+	_loadBrewingStatus();
+
 	return true;
 }
 
-float BrewProfile::tempByTime(unsigned long time)
-{
-//	DBG_PRINTF("now= st:%ld\n",time);
+void BrewProfile::_saveBrewingStatus(void){
+	File pf=SPIFFS.open(BrewStatusFile,"w");
+	if(pf){
+		pf.printf("%d\n%d\n",_currentStep,_timeEnterCurrentStep);
+	}
+	pf.close();
+}
+
+void BrewProfile::_loadBrewingStatus(void){
+	File pf=SPIFFS.open(BrewStatusFile,"r");
 	
+	_currentStep=0;
+	_timeEnterCurrentStep=0;
+
+	if(pf){
+		char buf[32];
+		size_t len=pf.readBytesUntil('\n',buf,32);
+		buf[len]='\0';
+		_currentStep=atoi(buf);
+		len=pf.readBytesUntil('\n',buf,32);
+		buf[len]='\0';
+		_timeEnterCurrentStep=atoi(buf);
+		DBG_PRINTF("load step:%d, time:%d\n",_currentStep,_timeEnterCurrentStep);
+		
+		if(_currentStep >= _numberOfSteps){
+			DBG_PRINTF("error step: %d >= %d\n",_currentStep,_numberOfSteps);
+		}else{
+			_currentStepDuration =(time_t)(_steps[_currentStep].days * 86400);
+		}
+	}else{
+		DBG_PRINTF("file open failed\n");
+		// try to figure out where we were
+	}
+	pf.close();
+}
+
+void BrewProfile::_estimateStep(time_t now)
+{
+	time_t stime=_startDay;
+	for(int i=0;i<_numberOfSteps;i++)
+	{
+		time_t duration=(time_t)(_steps[i].days * 86400);
+		time_t next= stime + duration;
+
+		if(stime <= now && now < next ){
+			_currentStep = i;
+			_timeEnterCurrentStep = stime;
+			_currentStepDuration= duration;
+			DBG_PRINTF("estimate step:%d, time:%d, duration:%d\n",_currentStep,_timeEnterCurrentStep,_currentStepDuration);
+			return;
+		}
+		stime =next;
+	}
+	_currentStep=_numberOfSteps;
+}
+
+void BrewProfile::_toNextStep(unsigned long time)
+{
+	_currentStep++;
+	_timeEnterCurrentStep=time;
+	_saveBrewingStatus();
+	if(_currentStep < _numberOfSteps)
+		_currentStepDuration =(time_t)(_steps[_currentStep].days * 86400);
+
+	DBG_PRINTF("_toNextStep: current:%d, duration:%ld\n",_currentStep, _currentStepDuration );
+}
+
+float BrewProfile::tempByTimeGravity(unsigned long time,float gravity)
+{
 //	DBG_PRINTF("tempByTime:now:%ld, _startDay:%ld, last time:%ld\n",time,_startDay,*(_times+_numberOfSteps-1));
 	
 	if(time < _startDay) return INVALID_CONTROL_TEMP;
-	if(time >= *(_times+_numberOfSteps-1)) return INVALID_CONTROL_TEMP;
 
-	int i=1;
-	while( time > *(_times+i)) i++;
-	float prevTemp= *(_setTemps + i -1);
-	float nextTemp= *(_setTemps + i);
-	time_t prevDate = *(_times+i-1);
-	time_t nextDate =*(_times+i);
+	if(	_currentStep==0 && _timeEnterCurrentStep==0){
+		_estimateStep(time);
+	}
+	if(_currentStep >= _numberOfSteps) return INVALID_CONTROL_TEMP;
 	
-	float interpolatedTemp = ((float)(time - prevDate) /(float)(nextDate - prevDate) * (nextTemp - prevTemp) + prevTemp);
-    interpolatedTemp = roundf(interpolatedTemp*10.0)/10.0;
-    return interpolatedTemp;
+    if(_steps[_currentStep].condition == 'r' ||
+    	_steps[_currentStep].condition == 't'){
+    	if(_currentStepDuration <= (time - _timeEnterCurrentStep)){
+    		// advance to next stage
+    		_toNextStep(time);
+    	}
+    }else{
+    	
+    	bool sgCondition=(IsGravityValid(gravity))? (gravity <= _steps[_timeEnterCurrentStep].sg):false;
+    	
+    	if(_steps[_currentStep].condition == 'g'){
+    		if(sgCondition){
+    			_toNextStep(time);
+    		}
+    	}else if(_steps[_currentStep].condition == 'a'){
+    		if(_currentStepDuration <= (time - _timeEnterCurrentStep)
+    	   		&& sgCondition){
+    	   		_toNextStep(time);
+    		}
+    	}else if(_steps[_currentStep].condition == 'o'){
+    		if(_currentStepDuration <= (time - _timeEnterCurrentStep)
+    	   		|| sgCondition){
+    	   		_toNextStep(time);
+    		}
+		}
+	}
+	
+	if(_currentStep >= _numberOfSteps) return INVALID_CONTROL_TEMP;
+
+	if(_steps[_currentStep].condition == 'r'){
+		// ramping
+		if(_currentStep ==0 || _currentStep >= (_numberOfSteps-1))
+			return INVALID_CONTROL_TEMP;
+			
+		float prevTemp= _steps[_currentStep-1].temp;
+		float nextTemp= _steps[_currentStep+1].temp;
+	
+		float interpolatedTemp = ((float)(time - _timeEnterCurrentStep) /(float)(_currentStepDuration) * (nextTemp - prevTemp) + prevTemp);
+    	interpolatedTemp = roundf(interpolatedTemp*10.0)/10.0;
+    	
+    	return interpolatedTemp;
+    }else{
+	    return _steps[_currentStep].temp;
+	}
 }
 
 
@@ -276,6 +401,24 @@ void makeTime(time_t timeInput, struct tm &tm){
   tm.tm_mon = month + 1;  // jan is month 1  
   tm.tm_mday = time + 1;     // day of month
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

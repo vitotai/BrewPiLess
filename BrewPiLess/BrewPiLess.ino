@@ -709,6 +709,7 @@ private:
 			if(root.containsKey("og"))
 				brewLogger.addGravity(gravity,true);
 			else{
+				brewKeeper.updateGravity(gravity);
 				brewLogger.addGravity(gravity);
 				externalDataStore.gravity = gravity;
 				externalDataStore.lastUpdate = TimeKeeper.getTimeSeconds();
@@ -738,7 +739,7 @@ public:
 	
 	void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
 		if(!index){
-			DBG_PRINTF("BodyStart: %u B\n", total);
+			// DBG_PRINTF("BodyStart: %u B\n", total);
 			_dataLength =0;
 			_error=(total >= MAX_DATA_SIZE); 
 		}
@@ -750,7 +751,7 @@ public:
 		}
 		if(index + len == total){
 			_data[_dataLength]='\0';
-			DBG_PRINTF("Body total%u data:%sB\n", total,_data);			
+			// DBG_PRINTF("Body total%u data:%sB\n", total,_data);			
 		}
 	}
 };
@@ -1135,6 +1136,25 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -333,7 +333,7 @@ public:
 		// get size;
 		size_t dataAvail=(_logHead <= _logIndex)? (_logIndex-_logHead):(LogBufferSize + _logIndex - _logHead);
 		dataAvail += VolatileHeaderSize; // for make-up header
-		DBG_PRINTF("volatileDataAvailable,start:%d, offset:%d, _logHead %d _logIndex %d, _startOffset:%d, dataAvail:%d\n",start, offset,_logHead,_logIndex,_startOffset, dataAvail);
+		//DBG_PRINTF("volatileDataAvailable,start:%d, offset:%d, _logHead %d _logIndex %d, _startOffset:%d, dataAvail:%d\n",start, offset,_logHead,_logIndex,_startOffset, dataAvail);
 		if( ((start + offset) == 0) 
 			|| ((start + offset) < _startOffset)   // error case
 		    || ((start + offset) > (_startOffset + dataAvail))) {  //error case
@@ -350,7 +350,7 @@ public:
 			_sendOffset=start + offset - _startOffset - VolatileHeaderSize + _logHead;
 			if(_sendOffset > LogBufferSize) _sendOffset -= LogBufferSize;
 			
-			DBG_PRINTF("prepare send from %d of %d\n",_sendOffset,d);
+			//DBG_PRINTF("prepare send from %d of %d\n",_sendOffset,d);
 		}
 		
 		return dataAvail;
@@ -375,7 +375,7 @@ public:
 			readIdx = _sendOffset + index;
 		}
 		
-		DBG_PRINTF("readVolatileData maxLen=%d, index=%d, readIdx=%d\n",maxLen,index,readIdx);
+		//DBG_PRINTF("readVolatileData maxLen=%d, index=%d, readIdx=%d\n",maxLen,index,readIdx);
 		
 		while(bufIdx < maxLen){
 			if(readIdx >= LogBufferSize) readIdx -= LogBufferSize;
@@ -578,7 +578,7 @@ private:
 		_logHead = idx;
 		_headTime += _tempLogPeriod/1000;
 		interrupts();
-		DBG_PRINTF(",drop %d\n",dataDrop);
+		//DBG_PRINTF(",drop %d\n",dataDrop);
 	}
 	
 	int volatileLoggingAlloc(int size)
@@ -743,6 +743,25 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
