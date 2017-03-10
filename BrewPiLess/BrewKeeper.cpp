@@ -22,6 +22,7 @@ void BrewKeeper::keep(time_t now,char unit,char mode,float beerSet)
 	if (mode != 'p') return;
 	
 	if((now - _lastSetTemp) < MINIMUM_TEMPERATURE_SETTING_PERIOD) return;
+	_lastSetTemp= now;
 		
 	if((_profile.loaded()!=true) && (_filename!=NULL)){
 		DBG_PRINTF("load profile.");
@@ -46,7 +47,7 @@ void BrewKeeper::keep(time_t now,char unit,char mode,float beerSet)
 
 		//BPSerial.print(buff);
 		_write(buff);
-		_lastSetTemp= now;
+		
 	}
 }
 
@@ -188,7 +189,7 @@ bool BrewProfile::load(String filename)
 void BrewProfile::_saveBrewingStatus(void){
 	File pf=SPIFFS.open(BrewStatusFile,"w");
 	if(pf){
-		pf.printf("%d\n%d\n",_currentStep,_timeEnterCurrentStep);
+		pf.printf("%d\n%ld\n%ld\n",_currentStep,_timeEnterCurrentStep,_startDay);
 	}
 	pf.close();
 }
@@ -207,12 +208,25 @@ void BrewProfile::_loadBrewingStatus(void){
 		len=pf.readBytesUntil('\n',buf,32);
 		buf[len]='\0';
 		_timeEnterCurrentStep=atoi(buf);
+
+		len=pf.readBytesUntil('\n',buf,32);
+		buf[len]='\0';
+		time_t savedStart=atoi(buf);
+
 		DBG_PRINTF("load step:%d, time:%d\n",_currentStep,_timeEnterCurrentStep);
 		
-		if(_currentStep >= _numberOfSteps){
-			DBG_PRINTF("error step: %d >= %d\n",_currentStep,_numberOfSteps);
+		if((savedStart != _startDay) ||
+			(_timeEnterCurrentStep < _startDay)){
+			// start day is later. that meas a new start
+			_currentStep=0;
+			_timeEnterCurrentStep=0;
+			DBG_PRINTF("New profile!\n");
 		}else{
-			_currentStepDuration =(time_t)(_steps[_currentStep].days * 86400);
+			if(_currentStep >= _numberOfSteps){
+				DBG_PRINTF("error step: %d >= %d\n",_currentStep,_numberOfSteps);
+			}else{
+				_currentStepDuration =(time_t)(_steps[_currentStep].days * 86400);
+			}
 		}
 	}else{
 		DBG_PRINTF("file open failed\n");
@@ -249,19 +263,19 @@ void BrewProfile::_toNextStep(unsigned long time)
 	if(_currentStep < _numberOfSteps)
 		_currentStepDuration =(time_t)(_steps[_currentStep].days * 86400);
 
-	DBG_PRINTF("_toNextStep: current:%d, duration:%ld\n",_currentStep, _currentStepDuration );
+	DBG_PRINTF("_toNextStep:%d current:%ld, duration:%ld\n",_currentStep,time, _currentStepDuration );
 }
 
 float BrewProfile::tempByTimeGravity(unsigned long time,float gravity)
-{
-//	DBG_PRINTF("tempByTime:now:%ld, _startDay:%ld, last time:%ld\n",time,_startDay,*(_times+_numberOfSteps-1));
-	
+{	
 	if(time < _startDay) return INVALID_CONTROL_TEMP;
 
 	if(	_currentStep==0 && _timeEnterCurrentStep==0){
 		_estimateStep(time);
 	}
 	if(_currentStep >= _numberOfSteps) return INVALID_CONTROL_TEMP;
+
+	DBG_PRINTF("tempByTimeGravity:now:%ld, type=%d, step:%d last elapsed:%ld\n",time,_steps[_currentStep].condition ,_currentStep,time - _timeEnterCurrentStep);
 	
     if(_steps[_currentStep].condition == 'r' ||
     	_steps[_currentStep].condition == 't'){
@@ -271,8 +285,12 @@ float BrewProfile::tempByTimeGravity(unsigned long time,float gravity)
     	}
     }else{
     	
-    	bool sgCondition=(IsGravityValid(gravity))? (gravity <= _steps[_timeEnterCurrentStep].sg):false;
+    	bool sgCondition=(IsGravityValid(gravity))? (gravity <= _steps[_currentStep].sg):false;
     	
+    	DBG_PRINTF("tempByTimeGravity: sgC:%c,gravity=",sgCondition? 'Y':'N');
+    	DBG_PRINT(gravity);
+    	DBG_PRINT("\n");
+    	    	
     	if(_steps[_currentStep].condition == 'g'){
     		if(sgCondition){
     			_toNextStep(time);
@@ -401,6 +419,10 @@ void makeTime(time_t timeInput, struct tm &tm){
   tm.tm_mon = month + 1;  // jan is month 1  
   tm.tm_mday = time + 1;     // day of month
 }
+
+
+
+
 
 
 
