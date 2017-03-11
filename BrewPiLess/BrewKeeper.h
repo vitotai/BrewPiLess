@@ -3,13 +3,18 @@
 #include <Arduino.h>
 #include "espconfig.h"
 
+
+typedef int16_t Gravity;
+
 #define INVALID_GRAVITY -1
 #define IsGravityValid(g) ((g)>0)
+#define FloatToGravity(f) ((Gravity)((f) * 1000.0))
+#define GravityToFloat(g) (((float)(g) / 1000.0))
 
 typedef struct _ProfileStep{
  float    temp;
- float    sg;
  float    days;
+ Gravity    sg;
  char     condition;
 } ProfileStep;
 
@@ -40,7 +45,7 @@ public:
 
 	void setUnit(char unit);
 	bool load(String filename);
-	float tempByTimeGravity(unsigned long time,float gravity);
+	float tempByTimeGravity(unsigned long time,Gravity gravity);
 
 	void reload(void){_profileLoaded=false;}
 };
@@ -53,19 +58,21 @@ protected:
 	
 	BrewProfile _profile;
 	String _filename;
-	float _lastGravity;
+	Gravity _lastGravity;
 	
 	void (*_write)(const char*);
 	void _loadProfile(void);
 public:
 	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts),_lastGravity(INVALID_GRAVITY){}
-	void updateGravity(float sg){ _lastGravity=sg;}
+	void updateGravity(float sg){ _lastGravity=FloatToGravity(sg);}
 	void setFile(String filename){_filename=filename;}
 	void keep(time_t now,char unit,char mode,float beerSet);
 	void reloadProfile(){ _profile.reload(); _lastSetTemp=0;}
 };
 
 #endif
+
+
 
 
 

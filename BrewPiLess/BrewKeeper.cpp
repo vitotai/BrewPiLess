@@ -158,13 +158,13 @@ bool BrewProfile::load(String filename)
 		DBG_PRINT(_steps[i].days);
 		
 		if(_steps[i].condition != 'r'){
-			_steps[i].sg = entry["g"];
+			float fsg= entry["g"];
+			_steps[i].sg = FloatToGravity(fsg);
 			_steps[i].temp= entry["t"];
 
 			DBG_PRINT(" temp:");	
 			DBG_PRINT(_steps[i].temp);
-			DBG_PRINT(" sg:");
-			DBG_PRINT(_steps[i].sg);
+			DBG_PRINTF(" sg:%d",_steps[i].sg);
 		}
 		DBG_PRINTF("\n");
 	}
@@ -266,7 +266,7 @@ void BrewProfile::_toNextStep(unsigned long time)
 	DBG_PRINTF("_toNextStep:%d current:%ld, duration:%ld\n",_currentStep,time, _currentStepDuration );
 }
 
-float BrewProfile::tempByTimeGravity(unsigned long time,float gravity)
+float BrewProfile::tempByTimeGravity(unsigned long time,Gravity gravity)
 {	
 	if(time < _startDay) return INVALID_CONTROL_TEMP;
 
@@ -275,7 +275,7 @@ float BrewProfile::tempByTimeGravity(unsigned long time,float gravity)
 	}
 	if(_currentStep >= _numberOfSteps) return INVALID_CONTROL_TEMP;
 
-	DBG_PRINTF("tempByTimeGravity:now:%ld, type=%d, step:%d last elapsed:%ld\n",time,_steps[_currentStep].condition ,_currentStep,time - _timeEnterCurrentStep);
+	DBG_PRINTF("tempByTimeGravity:now:%ld, step:%d, type=%c, last elapsed:%ld\n",time,_currentStep,_steps[_currentStep].condition,time - _timeEnterCurrentStep);
 	
     if(_steps[_currentStep].condition == 'r' ||
     	_steps[_currentStep].condition == 't'){
@@ -287,9 +287,7 @@ float BrewProfile::tempByTimeGravity(unsigned long time,float gravity)
     	
     	bool sgCondition=(IsGravityValid(gravity))? (gravity <= _steps[_currentStep].sg):false;
     	
-    	DBG_PRINTF("tempByTimeGravity: sgC:%c,gravity=",sgCondition? 'Y':'N');
-    	DBG_PRINT(gravity);
-    	DBG_PRINT("\n");
+    	DBG_PRINTF("tempByTimeGravity: sgC:%c,gravity=%d, target=%d",sgCondition? 'Y':'N',gravity,_steps[_currentStep].sg);
     	    	
     	if(_steps[_currentStep].condition == 'g'){
     		if(sgCondition){
@@ -419,6 +417,8 @@ void makeTime(time_t timeInput, struct tm &tm){
   tm.tm_mon = month + 1;  // jan is month 1  
   tm.tm_mday = time + 1;     // day of month
 }
+
+
 
 
 
