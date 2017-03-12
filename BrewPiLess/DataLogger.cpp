@@ -55,13 +55,16 @@ int DataLogger::dataSprintf(char *buffer,const char *format)
 			}else if(ch == 'r'){
 				d += printFloat(buffer+d,roomTemp,1,IS_FLOAT_TEMP_VALID(roomTemp));
 			}else if(ch == 'g'){
-				d += printFloat(buffer+d,externalDataStore.gravity,3,IsGravityValid(externalDataStore.gravity));
+				float sg=externalDataStore.gravity();
+				d += printFloat(buffer+d,sg,3,IsGravityValid(sg));
 			}else if(ch == 'v'){
-				d += printFloat(buffer+d,externalDataStore.deviceVoltage,1,IsVoltageValid(externalDataStore.deviceVoltage));
+				float vol=externalDataStore.deviceVoltage();
+				d += printFloat(buffer+d,vol,1,IsVoltageValid(vol));
 			}else if(ch == 'a'){
-				d += printFloat(buffer+d,externalDataStore.auxTemp,1,IS_FLOAT_TEMP_VALID(externalDataStore.auxTemp));
+				float at=externalDataStore.auxTemp();
+				d += printFloat(buffer+d,at,1,IS_FLOAT_TEMP_VALID(at));
 			}else if(ch == 'u'){
-				d += sprintInt(buffer+d, externalDataStore.lastUpdate);
+				d += sprintInt(buffer+d, externalDataStore.lastUpdate());
 			}else{
 				// wrong format
 				return 0;
@@ -333,6 +336,24 @@ void DataLogger::getSettings(AsyncWebServerRequest *request)
 		request->send(response);  
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

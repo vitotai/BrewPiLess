@@ -711,11 +711,20 @@ private:
 			else{
 				brewKeeper.updateGravity(gravity);
 				brewLogger.addGravity(gravity);
-				externalDataStore.gravity = gravity;
-				externalDataStore.lastUpdate = TimeKeeper.getTimeSeconds();
+				externalDataStore.setGravity(gravity);
+				externalDataStore.setUpdateTime(TimeKeeper.getTimeSeconds());
 			}
 		}else if(strcmp(name,"iSpindel01")==0){
+			//{"name": "iSpindel01", "id": "XXXXX-XXXXXX", "temperature": 20.5, "angle": 89.5, "gravityP": 13.6, "battery": 3.87}
 			DBG_PRINTF("iSpindel01\n");
+			
+			externalDataStore.setPlato(root["gravityP"]);
+			externalDataStore.setDeviceVoltage(root["battery"]);
+			externalDataStore.setAuxTemperature(root["temperature"]);
+
+			brewKeeper.updateGravity(externalDataStore.gravity());
+			brewLogger.addGravity(externalDataStore.gravity());
+
 		} 
 		request->send(200,"application/json","{}");
 	}
@@ -921,15 +930,17 @@ void setup(void){
 
 	#if SerialDebug == true
   	DebugPort.begin(115200);
-  	DBG_PRINTF("\n");
+  	DBG_PRINTF("\nSetup()\n");
   	DebugPort.setDebugOutput(true);
   	#endif
 
 
 #ifdef EARLY_DISPLAY
+	DBG_PRINTF("Init LCD...\n");
 	display.init();
 	display.printAt_P(1,0,PSTR("Initialize WiFi"));
 	display.updateBacklight();
+	DBG_PRINTF("LCD Initialized..\n");
 #endif
 	
  
@@ -937,9 +948,9 @@ void setup(void){
 	//start SPI Filesystem
   	if(!SPIFFS.begin()){
   		// TO DO: what to do?
-  		DBG_PRINTF("SPIFFS.being() failed");
+  		DBG_PRINTF("SPIFFS.being() failed!\n");
   	}else{
-  		DBG_PRINTF("SPIFFS.being() Success");
+  		DBG_PRINTF("SPIFFS.being() Success.\n");
   	}
 	// try open configuration
 	char configBuf[MAX_CONFIG_LEN];
@@ -983,8 +994,9 @@ void setup(void){
   	WiFi.hostname(hostnetworkname);
   	
 	//1. Start WiFi 
+	DBG_PRINTF("Starting WiFi...\n");
 	WiFiSetup.setTimeout(CaptivePortalTimeout);
-	WiFiSetup.begin(hostnetworkname);
+	WiFiSetup.begin(hostnetworkname,password);
 
   	DBG_PRINTF("WiFi Done!\n");
 
@@ -1136,6 +1148,23 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

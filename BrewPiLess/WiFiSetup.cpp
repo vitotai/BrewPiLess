@@ -34,6 +34,8 @@ static bool _apEntered=false;
 
 void WiFiSetupClass::startWiFiManager(bool portal)
 {
+	DBG_PRINTF("AP SSID:%s  pass:%s\n",_apName,_apPassword);
+	
 	WiFiManager wifiManager;
 	#if SerialDebug != true
 	wifiManager.setDebugOutput(false);
@@ -47,10 +49,32 @@ void WiFiSetupClass::startWiFiManager(bool portal)
     wifiManager.setAPCallback([](WiFiManager*){ _apEntered=true;});
 
     bool connected;
+
+
     if(portal){
     	connected=wifiManager.startConfigPortal(_apName,_apPassword);
     }else{
-    	connected=wifiManager.autoConnect(_apName,_apPassword);
+ 		if( WiFi.status() == WL_CONNECTED){
+ 			DBG_PRINTF("Already connected!!! who did it?\n");
+ 		}else{
+	      	WiFi.mode(WIFI_AP_STA);
+			WiFi.begin();
+			bool timeout = false;
+			int i=0;
+			while(WiFi.status() == WL_DISCONNECTED && !timeout) {
+        		delay(200);
+    			timeout = i++ > 100;
+   				DBG_PRINTF(".");
+    		}
+ 		} 
+		if(WiFi.status()==WL_CONNECTED){
+			connected=true;
+			DBG_PRINTF("Start SoftAP\n");
+			// start a AP.
+			 WiFi.softAP(_apName,_apPassword);
+		}else{
+	    	connected=wifiManager.startConfigPortal(_apName,_apPassword);
+	    }
     }
     if(!connected)	// not connected. setup AP mode
     	enterApMode();
@@ -123,6 +147,24 @@ void WiFiSetupClass::stayConnected(void)
   		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
