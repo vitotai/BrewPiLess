@@ -721,10 +721,11 @@ private:
 			externalDataStore.setPlato(root["gravityP"]);
 			externalDataStore.setDeviceVoltage(root["battery"]);
 			externalDataStore.setAuxTemperature(root["temperature"]);
+			externalDataStore.setUpdateTime(TimeKeeper.getTimeSeconds());
 
 			brewKeeper.updateGravity(externalDataStore.gravity());
 			brewLogger.addGravity(externalDataStore.gravity());
-
+			brewLogger.addAuxTemp(externalDataStore.auxTemp());
 		} 
 		request->send(200,"application/json","{}");
 	}
@@ -1003,7 +1004,7 @@ void setup(void){
 	// get time
 	initTime(WiFiSetup.isApMode());
 	
-	if (!MDNS.begin(hostnetworkname)) {
+	if (!MDNS.begin(hostnetworkname,WiFi.localIP())) {
 			DBG_PRINTF("Error setting mDNS responder\n");
 	}else{
 		MDNS.addService("http", "tcp", 80);
@@ -1148,6 +1149,7 @@ void loop(void){
   		}
   	}
 }
+
 
 
 
