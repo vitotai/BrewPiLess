@@ -50,35 +50,45 @@ void WiFiSetupClass::startWiFiManager(bool portal)
 
     bool connected;
 
+  	WiFi.hostname(_apName);
 
     if(portal){
     	connected=wifiManager.startConfigPortal(_apName,_apPassword);
     }else{
+ 		
+ 		if( _apStaMode){
+	    	WiFi.mode(WIFI_AP_STA);
+	    }else{
+	    	WiFi.mode(WIFI_STA);
+		}
+
  		if( WiFi.status() == WL_CONNECTED){
  			DBG_PRINTF("Already connected!!! who did it?\n");
- 		}else{
-	      	WiFi.mode(WIFI_AP_STA);
+ 		}else{			
 			WiFi.begin();
 			bool timeout = false;
 			int i=0;
-			while(WiFi.status() == WL_DISCONNECTED && !timeout) {
+			while(WiFi.status() != WL_CONNECTED && !timeout) {
         		delay(200);
     			timeout = i++ > 100;
    				DBG_PRINTF(".");
     		}
- 		} 
+ 		}
+ 		// timeout or not
 		if(WiFi.status()==WL_CONNECTED){
 			connected=true;
-			DBG_PRINTF("Start SoftAP\n");
-			// start a AP.
-			 WiFi.softAP(_apName,_apPassword);
+			if( _apStaMode){
+				// start a AP.
+				DBG_PRINTF("Start SoftAP\n");
+				WiFi.softAP(_apName,_apPassword);
+			}
 		}else{
 	    	connected=wifiManager.startConfigPortal(_apName,_apPassword);
 	    }
     }
-    if(!connected)	// not connected. setup AP mode
+    if(!connected){	// not connected. setup AP mode
     	enterApMode();
-    else{
+    }else{
     	// onced it enter AP mode, tcp_bind() lf lwip will return failure.
     	// thereore, restart the system.
     	if(_apEntered) ESP.restart();
@@ -147,6 +157,37 @@ void WiFiSetupClass::stayConnected(void)
   		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -9,7 +9,7 @@
 #include "espconfig.h"
 #include "TemperatureFormats.h"
 #include "BrewPiProxy.h"
-#include "ExternalDataStore.h"
+#include "ExternalData.h"
 extern BrewPiProxy brewPi;
 
 #define GSLOG_JSON_BUFFER_SIZE 256
@@ -55,16 +55,16 @@ int DataLogger::dataSprintf(char *buffer,const char *format)
 			}else if(ch == 'r'){
 				d += printFloat(buffer+d,roomTemp,1,IS_FLOAT_TEMP_VALID(roomTemp));
 			}else if(ch == 'g'){
-				float sg=externalDataStore.gravity();
+				float sg=externalData.gravity();
 				d += printFloat(buffer+d,sg,3,IsGravityValid(sg));
 			}else if(ch == 'v'){
-				float vol=externalDataStore.deviceVoltage();
+				float vol=externalData.deviceVoltage();
 				d += printFloat(buffer+d,vol,1,IsVoltageValid(vol));
 			}else if(ch == 'a'){
-				float at=externalDataStore.auxTemp();
+				float at=externalData.auxTemp();
 				d += printFloat(buffer+d,at,1,IS_FLOAT_TEMP_VALID(at));
 			}else if(ch == 'u'){
-				d += sprintInt(buffer+d, externalDataStore.lastUpdate());
+				d += sprintInt(buffer+d, externalData.lastUpdate());
 			}else{
 				// wrong format
 				return 0;
@@ -174,7 +174,7 @@ void DataLogger::sendData(void)
     }
     String output=_http.getString();
     DBG_PRINTF("output:\n%s\n",output.c_str());
-
+	_http.end();
 }
 
 
@@ -336,6 +336,39 @@ void DataLogger::getSettings(AsyncWebServerRequest *request)
 		request->send(response);  
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

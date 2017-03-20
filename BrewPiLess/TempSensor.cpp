@@ -273,3 +273,36 @@ BasicTempSensor& TempSensor::sensor() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

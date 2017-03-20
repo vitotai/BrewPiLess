@@ -66,11 +66,45 @@ public:
 	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts),_lastGravity(INVALID_GRAVITY){}
 	void updateGravity(float sg){ _lastGravity=FloatToGravity(sg);}
 	void setFile(String filename){_filename=filename;}
-	void keep(time_t now,char unit,char mode,float beerSet);
+//	void keep(time_t now,char unit,char mode,float beerSet);
+	void keep(time_t now);
 	void reloadProfile(){ _profile.reload(); _lastSetTemp=0;}
 };
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -277,3 +277,36 @@ class AsyncServerSideEventResponse: public AsyncWebServerResponse {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -223,7 +223,7 @@
 
 #if BREWPI_LCD
 // LCD configurations:
-//#define BREWPI_OLED128x64_LCD 0
+//#define BREWPI_OLED128x64_LCD 1
 #define BREWPI_IIC_LCD 1
 #endif
 
@@ -301,6 +301,35 @@
 #define BUFFER_PILINK_PRINTS 1
 
 #define EARLY_DISPLAY 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

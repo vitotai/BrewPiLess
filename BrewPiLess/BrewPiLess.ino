@@ -41,8 +41,6 @@
 #include "DataLogger.h"
 #endif
 
-#include "ExternalDataStore.h"
-
 extern "C" {
 #include <sntp.h>
 }
@@ -55,6 +53,8 @@ extern "C" {
 
 #include "BrewLogger.h"
 
+#include "ExternalData.h"
+
 //WebSocket seems to be unstable, at least on iPhone.
 //Go back to ServerSide Event.
 #define UseWebSocket false
@@ -66,10 +66,11 @@ extern "C" {
 /**************************************************************************************/
 static const char DefaultConfiguration[] PROGMEM =
 R"END(
-{"name":"brewpi",
-"user":"brewpi",
-"pass":"brewpi",
-"protect":0
+{"name":"brewpiless",
+"user":"brewpiless",
+"pass":"brewpiless",
+"protect":0,
+"ap":0
 }
 )END";
 
@@ -78,7 +79,8 @@ R"END(
 {"name":"%s",
 "user":"%s",
 "pass":"%s",
-"protect":%d
+"protect":%d,
+"ap":%d
 }
 )END";
 
@@ -129,9 +131,10 @@ const char *nocache_list[]={
 };
 //*******************************************
 
-ExternalDataStore externalDataStore;
+ExternalData externalData;
 
 bool passwordLcd;
+bool stationApMode;
 char username[32];
 char password[32];
 char hostnetworkname[32];
@@ -157,6 +160,7 @@ const char *confightml=R"END(
 <tr><td>User Name</td><td><input name="user" type="text" size="12" maxlength="16" value="%s"></td></tr>
 <tr><td>Password</td><td><input name="pass" type="password" size="12" maxlength="16" value="%s"></td></tr>
 <tr><td>Always need password</td><td><input type="checkbox" name="protect" value="yes" %s></td></tr>
+<tr><td>Always softAP</td><td><input type="checkbox" name="ap" value="yes" %s></td></tr>
 <tr><td>Save Change</td><td><input type="submit" name="submit"></input></td></tr>
 </table></form></body></html>)END";
 
@@ -326,7 +330,7 @@ public:
 	        return request->requestAuthentication();
 
 			AsyncResponseStream *response = request->beginResponseStream("text/html");
-			response->printf(confightml,hostnetworkname,username,password,(passwordLcd? "checked=\"checked\"":" "));
+			response->printf(confightml,hostnetworkname,username,password,(passwordLcd? "checked=\"checked\"":""),(stationApMode? "checked=\"checked\"":""));
 			request->send(response);
 	 	}else if(request->method() == HTTP_POST && request->url() == CONFIG_PATH){
 	 	    if(!request->authenticate(username, password))
@@ -346,10 +350,15 @@ public:
   					return;
   				}
   				
-  				int protect = 0;
-  				if(request->hasParam("protect", true)) protect=1;
-  				
-  				config.printf(configFormat,name->value().c_str(),user->value().c_str(),pass->value().c_str(),protect);
+  				int protect =(request->hasParam("protect", true))? 1:0;
+  				int ap = (request->hasParam("ap", true))? 1:0;
+  				DBG_PRINTF("STA_AP mode? %d\n",ap);
+  				 
+  				config.printf(configFormat,name->value().c_str(),
+  											user->value().c_str(),
+  											pass->value().c_str(),
+  											protect,ap);
+  				config.flush();
   				config.close();
 				sendProgmem(request,saveconfightml); //request->send(200,"text/html",saveconfightml);
 				requestRestart(false);
@@ -677,11 +686,11 @@ LogHandler logHandler;
 class ExternalDataHandler:public AsyncWebHandler
 {
 private:
-	uint8_t _data[MAX_DATA_SIZE];
+	char _data[MAX_DATA_SIZE];
 	size_t _dataLength;
 	bool   _error;
 
-	void processGravity(AsyncWebServerRequest *request,uint8_t data[],size_t length){
+	void processGravity(AsyncWebServerRequest *request,char data[],size_t length){
 		if(length ==0) return request->send(500);;
 
 		const int BUFFER_SIZE = JSON_OBJECT_SIZE(8);
@@ -706,33 +715,30 @@ private:
   				return;
   			}
 			float  gravity = root["gravity"];
-			if(root.containsKey("og"))
-				brewLogger.addGravity(gravity,true);
+			if(root.containsKey("og")){
+				externalData.setOriginalGravity(gravity);
+			}
 			else{
-				brewKeeper.updateGravity(gravity);
-				brewLogger.addGravity(gravity);
-				externalDataStore.setGravity(gravity);
-				externalDataStore.setUpdateTime(TimeKeeper.getTimeSeconds());
+				externalData.setGravity(gravity,TimeKeeper.getTimeSeconds());
 			}
 		}else if(strcmp(name,"iSpindel01")==0){
 			//{"name": "iSpindel01", "id": "XXXXX-XXXXXX", "temperature": 20.5, "angle": 89.5, "gravityP": 13.6, "battery": 3.87}
 			DBG_PRINTF("iSpindel01\n");
 			
-			externalDataStore.setPlato(root["gravityP"]);
-			externalDataStore.setDeviceVoltage(root["battery"]);
-			externalDataStore.setAuxTemperature(root["temperature"]);
-			externalDataStore.setUpdateTime(TimeKeeper.getTimeSeconds());
-
-			brewKeeper.updateGravity(externalDataStore.gravity());
-			brewLogger.addGravity(externalDataStore.gravity());
-			brewLogger.addAuxTemp(externalDataStore.auxTemp());
+			externalData.setPlato(root["gravityP"],TimeKeeper.getTimeSeconds());
+			externalData.setDeviceVoltage(root["battery"]);
+			externalData.setAuxTemperatureCelsius(root["temperature"]);
+			
 		} 
 		request->send(200,"application/json","{}");
 	}
 
 public:
 
-	ExternalDataHandler(){}
+	ExternalDataHandler(){
+		_data[0]='G';
+		_data[1]=':';
+	}
 	
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->url() == GRAVITY_PATH	) return true;
@@ -744,13 +750,14 @@ public:
 			request->send(400);
 			return;
 		}
-		processGravity(request,_data,_dataLength);
+		stringAvailable(_data);
+		processGravity(request,_data +2,_dataLength-2);
 	}
 	
 	void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
 		if(!index){
 			// DBG_PRINTF("BodyStart: %u B\n", total);
-			_dataLength =0;
+			_dataLength =2;
 			_error=(total >= MAX_DATA_SIZE); 
 		}
 		
@@ -761,7 +768,7 @@ public:
 		}
 		if(index + len == total){
 			_data[_dataLength]='\0';
-			// DBG_PRINTF("Body total%u data:%sB\n", total,_data);			
+			DBG_PRINTF("Body total%u data:%sB\n", total,_data);			
 		}
 	}
 };
@@ -965,37 +972,39 @@ void setup(void){
 	}
 
 	JsonObject& root = jsonBuffer.parseObject(configBuf);
-	const char* host;
-	
+	//const char* host;
 	if(!config
 			|| !root.success()
 			|| !root.containsKey("name")
 			|| !root.containsKey("user")
-			|| !root.containsKey("pass")){
-		
+			|| !root.containsKey("pass"))
+	{		
 		strcpy_P(configBuf,DefaultConfiguration);
-		JsonObject& root = jsonBuffer.parseObject(configBuf);
-  		strcpy(hostnetworkname,root["name"]);
-  		strcpy(username,root["user"]);
-  		strcpy(password,root["pass"]);
-		passwordLcd=(bool)root["protect"];
-		
+		JsonObject& root = jsonBuffer.parseObject(configBuf);		
+  	strcpy(hostnetworkname,root["name"]);
+  	strcpy(username,root["user"]);
+  	strcpy(password,root["pass"]);
+  	passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
+	stationApMode=(root.containsKey("ap"))? (bool)(root["protect"]):false;
+
 	}else{
-		config.close();
-		  	
-  		strcpy(hostnetworkname,root["name"]);
-  		strcpy(username,root["user"]);
-  		strcpy(password,root["pass"]);
-  		passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
+		config.close();	  	
+  	strcpy(hostnetworkname,root["name"]);
+  	strcpy(username,root["user"]);
+  	strcpy(password,root["pass"]);
+  	passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
+	stationApMode=(root.containsKey("ap"))? (bool)(root["ap"]):false;
+
   	}
+	DBG_PRINTF("STA_AP mode? %d\n",stationApMode);
 	#ifdef ENABLE_LOGGING
   	dataLogger.loadConfig();
   	#endif
   	
-  	WiFi.hostname(hostnetworkname);
   	
 	//1. Start WiFi 
 	DBG_PRINTF("Starting WiFi...\n");
+	WiFiSetup.setApStation(stationApMode);
 	WiFiSetup.setTimeout(CaptivePortalTimeout);
 	WiFiSetup.begin(hostnetworkname,password);
 
@@ -1117,10 +1126,7 @@ void loop(void){
 		display.printStatus(buf);
 	}
 #endif
-	char unit, mode;
-	float beerSet,fridgeSet;
-	brewPi.getControlParameter(&unit,&mode,&beerSet,&fridgeSet);
-  	brewKeeper.keep(now,unit,mode,beerSet);
+  	brewKeeper.keep(now);
   	
   	brewPi.loop();
  	
@@ -1149,6 +1155,39 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

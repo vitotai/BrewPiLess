@@ -38,8 +38,41 @@ protected:
 	
 	void (*_readString)(const char*);
 };
-
+extern BrewPiProxy brewPi;
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

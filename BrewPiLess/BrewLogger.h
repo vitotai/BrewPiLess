@@ -264,9 +264,9 @@ public:
 	{
 		size_t sizeRead;
 		size_t rindex= index + _readStart;
-		DBG_PRINTF("read index:%d, rindex=%ld\n",index,rindex);
+		DBG_PRINTF("read _readStart =%ld, index:%ld, rindex=%ld\n",_readStart,index,rindex);
 		
-		if(rindex > (_savedLength +_logIndex)) return 0;
+		if(rindex > (_savedLength +_logIndex)) return maxLen; // return whatever it wants.
 		
 		if( rindex < _savedLength){
 			//DBG_PRINTF("read from file\n");
@@ -296,10 +296,17 @@ public:
 				_file.close();
 				_isFileOpen=false;
 				// read will be called again if return length is zero.
+			}else{
+				if(sizeRead < maxLen && (rindex + sizeRead == _savedLength)){
+					// end of file
+					size_t request = maxLen - sizeRead;
+					memcpy(buffer + sizeRead,_logBuffer,request);
+					DBG_PRINTF("from file:%ld from buffer:%ld\n",sizeRead,request);
+					sizeRead += request;
+				}
 			}
-			
 		}else{
-			DBG_PRINTF("read from buffer\n");
+			//DBG_PRINTF("read from buffer\n");
 			// read from buffer
 			rindex -=  _savedLength;
 			// rindex should be smaller than _logIndex
@@ -390,11 +397,12 @@ public:
 		if(idx < 0) return;
 		writeBuffer(idx,GravityTag);
 		writeBuffer(idx+1,(isOg)? 1:0);
+		uint16_t val= (uint16_t) (1000.0 * gravity);
 		
-		uint16_t val= 1000 +(int16_t)(( gravity - 1.0) * 1000.0); 
 		val = val | 0x8000;
 		writeBuffer(idx+2,val >> 8);
 		writeBuffer(idx+3,val & 0xFF);
+
 		commitData(idx,4);
 	}
 	void addAuxTemp(float temp){
@@ -420,9 +428,9 @@ private:
 
 	bool _recording;
 
-	int _logIndex;
-	int _savedLength;
-	int _readStart;	
+	size_t _logIndex;
+	size_t _savedLength;
+	size_t _readStart;	
 	char _logBuffer[LogBufferSize];
 	File _file;
 	bool _isFileOpen;
@@ -743,6 +751,39 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

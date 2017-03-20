@@ -2,7 +2,7 @@
 #include <ArduinoJson.h>
 
 #include <time.h>
-
+#include "BrewPiProxy.h"
 #include "BrewKeeper.h"
 #include "mystrlib.h"
 
@@ -16,13 +16,18 @@
 #define IS_INVALID_CONTROL_TEMP(t) ((t)< -99.0)
 #define INVALID_CONTROL_TEMP -100.0
 
-void BrewKeeper::keep(time_t now,char unit,char mode,float beerSet)
+void BrewKeeper::keep(time_t now)
 {
-	// run in loop()
-	if (mode != 'p') return;
 	
 	if((now - _lastSetTemp) < MINIMUM_TEMPERATURE_SETTING_PERIOD) return;
 	_lastSetTemp= now;
+
+	char unit, mode;
+	float beerSet,fridgeSet;
+	brewPi.getControlParameter(&unit,&mode,&beerSet,&fridgeSet);
+
+	// run in loop()
+	if (mode != 'p') return;
 		
 	if((_profile.loaded()!=true) && (_filename!=NULL)){
 		DBG_PRINTF("load profile.");
@@ -257,12 +262,13 @@ void BrewProfile::_estimateStep(time_t now)
 
 void BrewProfile::_toNextStep(unsigned long time)
 {
-	_currentStep++;
-	_timeEnterCurrentStep=time;
+	do{
+		_currentStep++;
+		_timeEnterCurrentStep=time;
+		if(_currentStep < _numberOfSteps)
+			_currentStepDuration =(time_t)(_steps[_currentStep].days * 86400);
+	}while(_currentStepDuration == 0 && _currentStep < _numberOfSteps );
 	_saveBrewingStatus();
-	if(_currentStep < _numberOfSteps)
-		_currentStepDuration =(time_t)(_steps[_currentStep].days * 86400);
-
 	DBG_PRINTF("_toNextStep:%d current:%ld, duration:%ld\n",_currentStep,time, _currentStepDuration );
 }
 
@@ -417,6 +423,39 @@ void makeTime(time_t timeInput, struct tm &tm){
   tm.tm_mon = month + 1;  // jan is month 1  
   tm.tm_mday = time + 1;     // day of month
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

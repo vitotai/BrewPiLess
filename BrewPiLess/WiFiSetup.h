@@ -14,7 +14,7 @@
 class WiFiSetupClass
 {
 public:
-	WiFiSetupClass(){_wifiState=WiFiStateConnected;_apMode=false; _maxReconnect=0;}
+	WiFiSetupClass(){_wifiState=WiFiStateConnected;_apMode=false; _maxReconnect=0; _apStaMode=false;}
 
 	void begin(void){begin("BrewPiLess");}
 	void begin(char const *ssid,const char *passwd=NULL);
@@ -25,7 +25,7 @@ public:
 
 	void setTimeout(unsigned long timeout){ _apTimeout=timeout;}	
 	void setMaxReconnect(unsigned int reconnect){_maxReconnect=reconnect;}
-
+	void setApStation(bool apsta){ _apStaMode = apsta; }
 private:
 	unsigned int _maxReconnect;
 	unsigned int _reconnect;
@@ -33,6 +33,8 @@ private:
 	unsigned long _time;
 	byte _wifiState;
 	bool _apMode;
+	bool _apStaMode;
+	
 	std::unique_ptr<DNSServer>        dnsServer;
 
 	const char *_apName;
@@ -46,6 +48,39 @@ private:
 
 extern WiFiSetupClass WiFiSetup;
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
