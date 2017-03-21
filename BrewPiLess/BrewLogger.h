@@ -5,6 +5,8 @@
 #include "TimeKeeper.h"
 
 #define INVALID_RECOVERY_TIME 0xFF
+#define INVALID_TEMPERATURE -250
+#define INVALID_GRAVITY -1
 
 #define LOG_PATH "/log"
 #define LOG_RECORD_FILE "/loginfo"
@@ -50,8 +52,12 @@ public:
 		_isFileOpen=false;
 		_fsspace=0;
 		_tempLogPeriod=60000;
+		_sparseGravityAuxTemp=true;
+		_sessionSparseGravityAuxTemp=true;
+		_auxTemperature = INVALID_TEMPERATURE;
+		_currentGravity= INVALID_GRAVITY;
 	}
-
+	void setSparseGravityAuxTemp(bool sparse){ _sparseGravityAuxTemp=sparse; }
 	void begin(void)
 	{
 		loadIdxFile();
@@ -132,10 +138,21 @@ public:
 
 		_logIndex = fsize % LogBufferSize;
 		_savedLength=fsize - _logIndex;
-		_logFile.seek(_savedLength,SeekSet);
+		
+		if(_savedLength != 0){
+			// need to read to check header
+			_logFile.readBytes(buff,4);
+			_sessionSparseGravityAuxTemp =  (buff[1] & 0xF) == 4;
+			_logFile.seek(_savedLength,SeekSet);
+		}
+		
 		_logFile.readBytes(_logBuffer,_logIndex);
+		
+		if(_savedLength == 0){
+			_sessionSparseGravityAuxTemp =  (buff[1] & 0xF) == 4;		
+		}
 		// log a "new start" log
-		DBG_PRINTF("resume, total _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
+		DBG_PRINTF("resume, total _savedLength:%d, _logIndex:%d tag:%d\n",_savedLength,_logIndex,_sessionSparseGravityAuxTemp);
 		
 		_lastTempLog=0;
 		_recording = true;
@@ -178,6 +195,9 @@ public:
 		
 		char unit;
 		brewPi.getLogInfo(&unit,&_mode,&_state);
+		
+		_sessionSparseGravityAuxTemp = _sparseGravityAuxTemp;
+		
 		startLog(unit == 'F');
 		addMode(_mode);
 		addState(_state);
@@ -210,6 +230,7 @@ public:
 		_fileInfo.starttime=0;
 		saveIdxFile();
 		
+		_sessionSparseGravityAuxTemp = _sparseGravityAuxTemp;
 		startVolatileLog();
 	}
 	
@@ -244,7 +265,15 @@ public:
 		addTemperature(fridgeTemp);
 		addTemperature(fridgeSet);
 		addTemperature(roomTemp);
+		
+		if(!_sessionSparseGravityAuxTemp){
+			addTemperature(_auxTemperature);
+			_auxTemperature = INVALID_TEMPERATURE;
 
+			addRegularGravity(_currentGravity);
+			_currentGravity= INVALID_GRAVITY;
+		}
+		
 		_lastTempLog= miliseconds;
 //		DBG_PRINTF("room sensor connected: %d\n", brewPi.ambientSensorConnected());
 		
@@ -392,36 +421,48 @@ public:
 		return bufIdx;
 	}
 
-	void addGravity(float gravity,bool isOg=false){
-		int idx = allocByte(4);
-		if(idx < 0) return;
-		writeBuffer(idx,GravityTag);
-		writeBuffer(idx+1,(isOg)? 1:0);
-		uint16_t val= (uint16_t) (1000.0 * gravity);
+	void addGravity(float gravity,bool isOg=false)
+	{
+		if(_sessionSparseGravityAuxTemp || isOg){
+			int idx = allocByte(4);
+			if(idx < 0) return;
+			writeBuffer(idx,GravityTag);
+			writeBuffer(idx+1,(isOg)? 1:0);
+			uint16_t val= (uint16_t) (1000.0 * gravity);
 		
-		val = val | 0x8000;
-		writeBuffer(idx+2,val >> 8);
-		writeBuffer(idx+3,val & 0xFF);
-
-		commitData(idx,4);
+			val = val | 0x8000;
+			writeBuffer(idx+2,val >> 8);
+			writeBuffer(idx+3,val & 0xFF);
+			commitData(idx,4);
+		}else{
+			_currentGravity=gravity;
+		}
 	}
-	void addAuxTemp(float temp){
-		int idx = allocByte(4);
-		if(idx < 0) return;
-		writeBuffer(idx,AuxTempTag);
-		writeBuffer(idx+1,0);
-		int spi;
-		if(temp > 250 || temp < -100.0 )
-			spi = 0x7FFF;
-		else
-			spi=(int) (temp * 100.0);
-		spi = spi | 0x8000;
-		writeBuffer(idx+2,spi >> 8);//*(ptr+2) =(char) (spi >> 8);
-		writeBuffer(idx+3,spi & 0xFF);//*(ptr+3) =(char)(spi & 0xFF);
-		commitData(idx,4);
+	
+	void addAuxTemp(float temp)
+	{
+		if(_sessionSparseGravityAuxTemp){
+			int idx = allocByte(4);
+			if(idx < 0) return;
+			writeBuffer(idx,AuxTempTag);
+			writeBuffer(idx+1,0);
+			int spi;
+			if(temp > 250 || temp < -100.0 )
+				spi = 0x7FFF;
+			else
+				spi=(int) (temp * 100.0);
+			spi = spi | 0x8000;
+			writeBuffer(idx+2,spi >> 8);//*(ptr+2) =(char) (spi >> 8);
+			writeBuffer(idx+3,spi & 0xFF);//*(ptr+3) =(char)(spi & 0xFF);
+			commitData(idx,4);
+		}else{
+			_auxTemperature=temp;
+		}
 	}
 
 private:
+	bool _sessionSparseGravityAuxTemp;
+	bool _sparseGravityAuxTemp;	
 	size_t _fsspace;
 	uint32_t  _tempLogPeriod;
 	uint32_t _lastTempLog;
@@ -442,6 +483,8 @@ private:
 	uint8_t _state;
 	float _beerSet;
 	
+	float _auxTemperature;
+	float _currentGravity;
 	// for circular buffer
 	int _logHead;
 	uint32_t _headTime;
@@ -472,10 +515,10 @@ private:
 		bool fahrenheit=(unit == 'F');
 		
 		char* ptr=buf;
-
+		uint8_t headerTag=(_sessionSparseGravityAuxTemp)? 4:6;
 		//8
 		*ptr++ = StartLogTag;
-		*ptr++ = 4 | (fahrenheit? 0xF0:0xE0) ;
+		*ptr++ = headerTag | (fahrenheit? 0xF0:0xE0) ;
 		int period = _tempLogPeriod/1000;
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
@@ -510,8 +553,9 @@ private:
 		char *ptr=_logBuffer;
 		// F0FF  peroid   4 bytes
 		// Start system time 4bytes
+		uint8_t headerTag=(_sessionSparseGravityAuxTemp)? 4:6;
 		*ptr++ = StartLogTag;
-		*ptr++ = 4 | (fahrenheit? 0xF0:0xE0) ;
+		*ptr++ = headerTag | (fahrenheit? 0xF0:0xE0) ;
 		int period = _tempLogPeriod/1000;
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
@@ -707,6 +751,20 @@ private:
 		commitData(idx,2);
 	}
 
+	void addRegularGravity(float gravity){
+		int idx = allocByte(2);
+		if(idx < 0) return;
+
+		if(gravity < 0 ){
+			writeBuffer(idx,0x7F);    
+			writeBuffer(idx+1,0xFF); 
+		}else{
+			int sgint=(int)(gravity * 1000.0);
+			writeBuffer(idx,(sgint >> 8) & 0x7F);
+			writeBuffer(idx+1,sgint & 0xFF);		
+		}
+		commitData(idx,2);
+	}
 
 	void addResumeTag(void)
 	{
@@ -751,6 +809,29 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

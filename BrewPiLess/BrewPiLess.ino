@@ -33,9 +33,8 @@
 //}brewpi
 
 #include "espconfig.h"
-
 #include "TimeKeeper.h"
-
+#include "mystrlib.h"
 #include "BrewKeeper.h"
 #ifdef ENABLE_LOGGING
 #include "DataLogger.h"
@@ -74,7 +73,7 @@ R"END(
 }
 )END";
 
-static const char* configFormat =
+static const char configFormat[] PROGMEM =
 R"END(
 {"name":"%s",
 "user":"%s",
@@ -152,7 +151,7 @@ AsyncEventSource sse(SSE_PATH);
 #endif
 
 // use in sprintf, put into PROGMEM complicates it.
-const char *confightml=R"END(
+const char confightml[] PROGMEM =R"END(
 <html><head><title>Configuration</title></head><body>
 <form action="" method="post">
 <table>
@@ -330,7 +329,19 @@ public:
 	        return request->requestAuthentication();
 
 			AsyncResponseStream *response = request->beginResponseStream("text/html");
-			response->printf(confightml,hostnetworkname,username,password,(passwordLcd? "checked=\"checked\"":""),(stationApMode? "checked=\"checked\"":""));
+		
+		  	int size=strlen_P(confightml);
+  			char *fmt=(char*) malloc(size +1);
+  				if(!fmt){
+  					request->send(500);
+					DBG_PRINTF("!!Alloc error\n");
+  					return;
+  				}
+
+  			strcpy_P(fmt,confightml);
+
+			response->printf(fmt,hostnetworkname,username,password,(passwordLcd? "checked=\"checked\"":""),(stationApMode? "checked=\"checked\"":""));
+			free(fmt);
 			request->send(response);
 	 	}else if(request->method() == HTTP_POST && request->url() == CONFIG_PATH){
 	 	    if(!request->authenticate(username, password))
@@ -353,11 +364,21 @@ public:
   				int protect =(request->hasParam("protect", true))? 1:0;
   				int ap = (request->hasParam("ap", true))? 1:0;
   				DBG_PRINTF("STA_AP mode? %d\n",ap);
-  				 
-  				config.printf(configFormat,name->value().c_str(),
+
+  				int size=strlen_P(configFormat);
+  				char *fmt=(char*) malloc(size +1);
+  				if(!fmt){
+  					request->send(500);
+					DBG_PRINTF("!!Alloc error\n");
+  					return;
+  				}
+  				strcpy_P(fmt,configFormat);
+
+  				config.printf(fmt,name->value().c_str(),
   											user->value().c_str(),
   											pass->value().c_str(),
   											protect,ap);
+  				free(fmt);
   				config.flush();
   				config.close();
 				sendProgmem(request,saveconfightml); //request->send(200,"text/html",saveconfightml);
@@ -682,6 +703,27 @@ public:
 };
 LogHandler logHandler;
 
+const char _GravityConfigHtml[] PROGMEM =
+R"END(
+<html><head><title>Gravity Device</title><meta http-equiv="content-type" content="text/html; charset=utf-8" ></head><body>
+<form action="" method="post">
+<table>
+<tr><td>iSpindel</td><td><input type="checkbox" name="iSpindel" value="1" %s></td></tr>
+<tr><td>Report period less than 5 minutes</td><td><input type="checkbox" name="regular" value="1" %s></td></tr>
+<tr><td>Save Change</td><td><input type="submit" name="submit"></input></td></tr>
+</table>
+</form>
+</body></html>
+)END";
+#define GavityDeviceConfigFilename "/gdconfig"
+#define MAX_GRAVITYCONFIG_LEN 128
+
+const char _GravityConfigFormat[] PROGMEM =
+R"END(
+{"iSpindel":%d, "reg":%d}
+)END";
+
+#define GravityDeviceConfigPath "/gdc"
 
 class ExternalDataHandler:public AsyncWebHandler
 {
@@ -689,6 +731,9 @@ private:
 	char _data[MAX_DATA_SIZE];
 	size_t _dataLength;
 	bool   _error;
+	
+	bool _enableISpindel;
+	bool _regularReport;
 
 	void processGravity(AsyncWebServerRequest *request,char data[],size_t length){
 		if(length ==0) return request->send(500);;
@@ -703,9 +748,9 @@ private:
   			return;
 		}
 		
-		const char* name = root["name"].asString();
+		String name= root["name"];
 		
-		if(strcmp(name,"webjs")==0){
+		if(name.equals("webjs")){
 			if(!request->authenticate(username, password))
 	        return request->requestAuthentication();
 	        
@@ -721,7 +766,7 @@ private:
 			else{
 				externalData.setGravity(gravity,TimeKeeper.getTimeSeconds());
 			}
-		}else if(strcmp(name,"iSpindel01")==0){
+		}else if(name.startsWith("iSpindel")){
 			//{"name": "iSpindel01", "id": "XXXXX-XXXXXX", "temperature": 20.5, "angle": 89.5, "gravityP": 13.6, "battery": 3.87}
 			DBG_PRINTF("iSpindel01\n");
 			
@@ -740,18 +785,98 @@ public:
 		_data[1]=':';
 	}
 	
+	bool iSpindelEnabled(){ return _enableISpindel; }
+	
+	void loadConfig(void){
+		char configBuf[MAX_GRAVITYCONFIG_LEN];
+		File config=SPIFFS.open(GavityDeviceConfigFilename,"r+");
+		
+		if(config){
+			size_t len=config.readBytes(configBuf,MAX_GRAVITYCONFIG_LEN);
+			configBuf[len]='\0';
+		}
+		const int BUFFER_SIZE = JSON_OBJECT_SIZE(8);
+		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+		JsonObject& root = jsonBuffer.parseObject(configBuf);
+		
+		if(!config
+			|| !root.success()
+			|| !root.containsKey("iSpindel")
+			|| !root.containsKey("reg")){
+			_enableISpindel =false;
+			_regularReport = false;
+		}else{
+			_enableISpindel = root["iSpindel"];
+			_regularReport=root["reg"];
+		}
+		DBG_PRINTF("load GD iSpindel:%d reg:%d\n",_enableISpindel,_regularReport);
+		config.close();
+		
+		brewLogger.setSparseGravityAuxTemp(!(_enableISpindel && _regularReport));
+	}
+	
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->url() == GRAVITY_PATH	) return true;
+	 	if(request->url() == GravityDeviceConfigPath) return true;
+	 	
 	 	return false;
 	}
 
 	void handleRequest(AsyncWebServerRequest *request){
-		if(request->method() != HTTP_POST){
-			request->send(400);
+		if(request->url() == GRAVITY_PATH){
+			if(request->method() != HTTP_POST){
+				request->send(400);
+				return;
+			}
+			stringAvailable(_data);
+			processGravity(request,_data +2,_dataLength-2);
 			return;
 		}
-		stringAvailable(_data);
-		processGravity(request,_data +2,_dataLength-2);
+		// config
+		if(request->method() == HTTP_POST){
+			// post
+			_enableISpindel =(request->hasParam("iSpindel", true))? true:false;
+			_regularReport =(request->hasParam("regular", true))? true:false;
+			DBG_PRINTF("Save GD iSpindel:%d reg:%d\n",_enableISpindel,_regularReport);
+
+  				
+  			File config=SPIFFS.open(GavityDeviceConfigFilename,"w+");
+  				
+  			if(!config){
+  					request->send(500);
+  					return;
+  			}
+  				
+  			int size=strlen_P(_GravityConfigFormat);
+  			char *fmt=(char*) malloc(size +1);
+  			if(!fmt){
+				request->send(500);
+				DBG_PRINTF("!!Alloc error\n");
+				return;
+  			}
+  			strcpy_P(fmt,_GravityConfigFormat);
+  			config.printf(fmt,_enableISpindel,_regularReport);
+  			free(fmt);
+  			config.flush();
+  			config.close();
+  			// response with Get request->send(200);
+  			brewLogger.setSparseGravityAuxTemp(!(_enableISpindel && _regularReport));
+		}//else{
+			// get
+			int size=strlen_P(_GravityConfigHtml);
+			char* fmt=(char*)malloc(size+1);
+			if(!fmt){
+				request->send(500);
+				DBG_PRINTF("!!Alloc error\n");
+				return;
+			}
+			AsyncResponseStream *response = request->beginResponseStream("text/html");
+
+			strcpy_P(fmt,_GravityConfigHtml);
+			response->printf(fmt,_enableISpindel? "checked":"",_regularReport? "checked":"");
+			free(fmt);
+			request->send(response);
+		//}
 	}
 	
 	void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
@@ -1044,6 +1169,14 @@ void setup(void){
 #if UseServerSideEvent == true
 	sse.onConnect([](AsyncEventSourceClient *client){
 		DBG_PRINTF("SSE Connect\n");
+		if(externalDataHandler.iSpindelEnabled()){
+			char sbuf[8];
+			char buf[128];
+			int len=sprintFloat(sbuf,externalData.deviceVoltage(),2);
+			sbuf[len]='\0';
+			sprintf_P(buf,PSTR("G:{\"name\":\"iSpindel01\",\"battery\":%s,\"lu\":%ld}"),sbuf,externalData.lastUpdate());
+			sse.send(buf);
+		}
   	});
 	server.addHandler(&sse);
 #endif
@@ -1051,7 +1184,8 @@ void setup(void){
 	server.addHandler(&brewPiWebHandler);
 	
 	server.addHandler(&logHandler);
-	
+
+	externalDataHandler.loadConfig();
 	server.addHandler(&externalDataHandler);
 	
 	//3.1.2 SPIFFS is part of the serving pages
@@ -1155,187 +1289,6 @@ void loop(void){
   		}
   	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
