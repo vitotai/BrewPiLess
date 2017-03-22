@@ -7,13 +7,15 @@
 /*   else, UART0(Serial) is used.                                                     */
 /**************************************************************************************/
 
-#define SerialDebug true
+#define SerialDebug false
 
 #if SerialDebug == true
 #define DebugPort Serial
 #define DBG_PRINTF(...) DebugPort.printf(__VA_ARGS__)
+#define DBG_PRINT(...) DebugPort.print(__VA_ARGS__)
 #else
 #define DBG_PRINTF(...) 
+#define DBG_PRINT(...) 
 #endif
 
 #define ENABLE_LOGGING 1
@@ -38,6 +40,8 @@
 #define MAX_PROFILE_LEN 1024
 #define PROFILE_JSON_BUFFER_SIZE 1024
 #endif
+
+
 
 
 

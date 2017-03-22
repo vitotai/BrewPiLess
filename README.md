@@ -38,8 +38,10 @@ You will need the ESP8266/Arduino environment, as well as the following librarie
  * Web-based network setting
  * SoftAP mode
  * Local Temperature log and temperature chart
- * **[New1.2.6]** Gravity logging
- 
+ * **[New 1.2.6]** Gravity logging. The gravity data can be manually input or from iSpindel.
+* **[New 1.2.6]** iSpindel support. 
+* **[New 2.0]** Gravity-based temperature schedule.
+  
 ## Usage
 ### Setup WiFi network setting.
 
@@ -66,27 +68,30 @@ mDNS doesn't work under AP mode. Therefore, "brewpi.local" can not be used under
 BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP address if you are using platforms from Apple. You can change the name in system configuration page. 
  Default username and password are both `brewpi`.
  
- * Main page - `http://brewpi.local/`
-    The main page.
-
- * LCD page - `http://brewpi.local/lcd` 
+* Main page - `http://brewpi.local/`
+    The main page. The menu includes:
+  * Device setup - `http://brewpi.local/setup.htm`
+    The device setup procedure as original BrewPi is necessary.
+  * Logging setting - `http://brewpi.local/log`
+  * System configuration - `http://brewpi.local/config`
+    Updating the settings will result in restart of the system.
+  * Gravity Sensor
+    Gravity sensor(iSpindel) settting.
+* LCD page - `http://brewpi.local/lcd` 
     The LCD display of BrewPi. Clicking the LCD brings out the pop menu to other functions. This page is good for mobile device or when temperature chart is not necessary.
  
- * Device setup - `http://brewpi.local/setup.htm`
-
-    The device setup procedure as original BrewPi is necessary.
-
- * Logging setting - `http://brewpi.local/log`
- * System configuration - `http://brewpi.local/config`
- 
-    Updating the settings will result in restart of the system.
- * OTA update - `http://brewpi.local:8008/systemupdate`
+* OTA update - `http://brewpi.local:8008/systemupdate`
     
     The menu from the main page doesn't include this page.
 
 ## Gravity logging
 To add gravity reading record, click the **SG reading**. The number entered with the time when it is entered will be saved as a SG reading record.
 To enter OG, click the **OG value**. Once OG is availble, the Attenuation and ABV will be calcuated when SG reading is updated. The OG is for calculation of attenuation and ABV only.
+
+## iSpindel Support
+BrewPiLess supports iSpindel by accepting data from iSpindel and acting an AP for iSpindel to connect to.
+To support softAP, set the correct settings in `System configuration`.
+To record data by using as less as possible space, BrewPiLess needs to know the period of iSpindel data report. Incorrect setting will result in inefficient memory space usage.
 
 ## Local temperature logging.
 
