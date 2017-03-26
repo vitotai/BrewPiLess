@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include "espconfig.h"
 
+#ifdef EnableGravitySchedule
 
 typedef int16_t Gravity;
 
@@ -50,6 +51,30 @@ public:
 	void reload(void){_profileLoaded=false;}
 };
 
+#else //#ifdef EnableGravitySchedule
+
+class BrewProfile
+{
+	time_t _startDay;
+	int  _numberOfSteps;
+	time_t *_times;
+	float  *_setTemps;
+	bool _profileLoaded;
+	char _unit;
+	
+	void _tempConvert(void);
+public:
+	BrewProfile(void):_profileLoaded(false),_numberOfSteps(0),_unit('U'),_setTemps(NULL),_times(NULL){}
+	int numberOfSteps(void){ return _numberOfSteps;}
+	bool loaded(void){return _profileLoaded;}
+
+	void setUnit(char unit);
+	bool load(String filename);
+	float tempByTime(unsigned long time);
+	void reload(void){_profileLoaded=false;}
+};
+
+#endif //#ifdef EnableGravitySchedule
 
 class BrewKeeper
 {
@@ -58,20 +83,30 @@ protected:
 	
 	BrewProfile _profile;
 	String _filename;
+
+#ifdef EnableGravitySchedule
 	Gravity _lastGravity;
+#endif
 	
 	void (*_write)(const char*);
 	void _loadProfile(void);
 public:
-	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts),_lastGravity(INVALID_GRAVITY){}
+#ifdef EnableGravitySchedule	
+	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts),_lastGravity(INVALID_GRAVITY){}	
 	void updateGravity(float sg){ _lastGravity=FloatToGravity(sg);}
+#else
+	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts){}	
+#endif
 	void setFile(String filename){_filename=filename;}
-//	void keep(time_t now,char unit,char mode,float beerSet);
 	void keep(time_t now);
 	void reloadProfile(){ _profile.reload(); _lastSetTemp=0;}
 };
 
 #endif
+
+
+
+
 
 
 

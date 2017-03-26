@@ -7,7 +7,7 @@
 /*   else, UART0(Serial) is used.                                                     */
 /**************************************************************************************/
 
-#define SerialDebug false
+#define SerialDebug true
 
 #if SerialDebug == true
 #define DebugPort Serial
@@ -25,6 +25,8 @@
 /*   URLs .										  									  */
 /**************************************************************************************/
 
+//#define EnableGravitySchedule 0
+
 #define MINIMUM_TEMPERATURE_STEP 0.005
 #define MINIMUM_TEMPERATURE_SETTING_PERIOD 60
 
@@ -40,6 +42,10 @@
 #define MAX_PROFILE_LEN 1024
 #define PROFILE_JSON_BUFFER_SIZE 1024
 #endif
+
+
+
+
 
 
 
