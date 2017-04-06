@@ -58,7 +58,7 @@ public:
 		
 		_gravity = sg; 
 		_lastUpdate=now;
-#ifdef EnableGravitySchedule		
+#if EnableGravitySchedule		
 		brewKeeper.updateGravity(filter.addData(sg));
 #endif
 		brewLogger.addGravity(_gravity,false);
@@ -94,6 +94,9 @@ public:
 extern ExternalData externalData;
 
 #endif
+
+
+
 
 
 

@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include "espconfig.h"
 
-#ifdef EnableGravitySchedule
+#if EnableGravitySchedule
 
 typedef int16_t Gravity;
 
@@ -51,7 +51,7 @@ public:
 	void reload(void){_profileLoaded=false;}
 };
 
-#else //#ifdef EnableGravitySchedule
+#else //#if EnableGravitySchedule
 
 class BrewProfile
 {
@@ -74,7 +74,7 @@ public:
 	void reload(void){_profileLoaded=false;}
 };
 
-#endif //#ifdef EnableGravitySchedule
+#endif //#if EnableGravitySchedule
 
 class BrewKeeper
 {
@@ -84,14 +84,14 @@ protected:
 	BrewProfile _profile;
 	String _filename;
 
-#ifdef EnableGravitySchedule
+#if EnableGravitySchedule
 	Gravity _lastGravity;
 #endif
 	
 	void (*_write)(const char*);
 	void _loadProfile(void);
 public:
-#ifdef EnableGravitySchedule	
+#if EnableGravitySchedule	
 	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts),_lastGravity(INVALID_GRAVITY){}	
 	void updateGravity(float sg){ _lastGravity=FloatToGravity(sg);}
 #else
@@ -103,6 +103,9 @@ public:
 };
 
 #endif
+
+
+
 
 
 

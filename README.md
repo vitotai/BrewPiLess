@@ -1,5 +1,6 @@
 # BrewPiLess
  *Remember to clear browser cache to get new interface!*
+ *Note: New log format after V1.2.7&v2.0!*
 ## Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
 ![Main Screen](img/brewpiless126p1.jpg)
@@ -38,8 +39,8 @@ You will need the ESP8266/Arduino environment, as well as the following librarie
  * Web-based network setting
  * SoftAP mode
  * Local Temperature log and temperature chart
- * **[New 1.2.6]** Gravity logging. The gravity data can be manually input or from iSpindel.
-* **[New 1.2.6]** iSpindel support. 
+ * **[New 1.2.7** Gravity logging. The gravity data can be manually input or from iSpindel.
+* **[New 1.2.7]** iSpindel support. 
 * **[New 2.0]** Gravity-based temperature schedule.
   
 ## Usage
@@ -96,13 +97,14 @@ To record data by using as less as possible space, BrewPiLess needs to know the 
 ## Local temperature logging.
 
  * The log won’t start automatically, you have to start it at log setting page.
- * **(new in v1.2.5) When logging is not started, BrewPiLess still logs the data and keep that latest 2`3 hours of data. The data will not be saved to file system, though.**
+ * **(new in v1.2.5) When logging is not started, BrewPiLess still logs the data and keep that latest 2 to 3 hours of data. The data will not be saved to file system, though.**
  * The temperatures are logged every minute.
  * A 30 day log will take around 350k bytes. That might imply that 3M space can record around 6 month data. However, there is no guarantee of the robustness of SPIFFS.
  * Changing temperature when logging will result in wrong data interpretation.
  * A maximum of 10 logs is allowed. The logs will not be deleted automatically. Manual deleting is necessary.
  * Off-line viewer is available. You can download the log and view it from your computer. Download the file "BPLLogViewer.htm" in the "extra" subfolder. Save it anywhere in your computer. Open it using a web browser.
  * **Internet access is required to view the chart**. To save some more space and to alleviate the loading of ESP8266, the library is not put in the ESP8266. (It is possible after v1.2.5.)
+ * The loggging format changed after v1.2.7/v2.0. Use BPLLogViewer**V2**.htm to view the new logs and BPLLogViewer.htm for old logs. The old logs cannot be viewed 'on-line' by the "view" button. Please download them and view by the off line viewer.
 
 ## Viewing temperature char under AP mode
 There are two wasy that make it possible to have the temperature chart under AP mode. 

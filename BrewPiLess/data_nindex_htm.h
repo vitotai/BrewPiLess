@@ -195,7 +195,7 @@ R"END(
 <span class="lcd-line" id="lcd-line-2">script...</span>
 <span class="lcd-line" id="lcd-line-3"></span></p><p>
 </div>
-<div id="banner">BrewPiLess v1.6
+<div id="banner">BrewPiLess v1.2.7
 <div id="recording"></div>
 </div>
 <div id="menu">
@@ -335,3 +335,6 @@ Set Fridge temp:
 )END";
 
 #endif
+
+
+

@@ -6,7 +6,7 @@
 #include "BrewKeeper.h"
 #include "mystrlib.h"
 
-#ifdef EnableGravitySchedule
+#if EnableGravitySchedule
 
 #define BrewStatusFile "/brewing.s"
 #define CurrentProfileVersion 2
@@ -39,7 +39,7 @@ void BrewKeeper::keep(time_t now)
 	// check unit
 	_profile.setUnit(unit);
 	
-	#ifdef EnableGravitySchedule
+	#if EnableGravitySchedule
 	float temp=_profile.tempByTimeGravity(now,_lastGravity);
 	#else
 	float temp=_profile.tempByTime(now);
@@ -68,7 +68,7 @@ void BrewKeeper::keep(time_t now)
 #define C2F(d) (((d)*1.8)+32)
 
 
-#ifdef EnableGravitySchedule
+#if EnableGravitySchedule
 
 void BrewProfile::_tempConvert(void)
 {
@@ -339,7 +339,7 @@ float BrewProfile::tempByTimeGravity(unsigned long time,Gravity gravity)
 	}
 }
 
-#else // #ifdef EnableGravitySchedule
+#else // #if EnableGravitySchedule
 void BrewProfile::_tempConvert(void)
 {
 	for(int i=0;i< _numberOfSteps;i++){
@@ -470,7 +470,7 @@ float BrewProfile::tempByTime(unsigned long time)
     return interpolatedTemp;
 }
 
-#endif // #ifdef EnableGravitySchedule
+#endif // #if EnableGravitySchedule
 
 /*
  * Reconstitute "struct tm" elements into a time_t count value.
@@ -563,6 +563,9 @@ void makeTime(time_t timeInput, struct tm &tm){
   tm.tm_mon = month + 1;  // jan is month 1  
   tm.tm_mday = time + 1;     // day of month
 }
+
+
+
 
 
 
