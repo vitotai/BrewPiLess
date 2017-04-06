@@ -612,3 +612,19 @@ class DallasTemperature
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

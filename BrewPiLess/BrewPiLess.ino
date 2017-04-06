@@ -812,7 +812,7 @@ public:
 		DBG_PRINTF("load GD iSpindel:%d reg:%d\n",_enableISpindel,_regularReport);
 		config.close();
 		
-		brewLogger.setSparseGravityAuxTemp(!(_enableISpindel && _regularReport));
+//		brewLogger.setSparseGravityAuxTemp(!(_enableISpindel && _regularReport));
 	}
 	
 	bool canHandle(AsyncWebServerRequest *request){
@@ -860,7 +860,7 @@ public:
   			config.flush();
   			config.close();
   			// response with Get request->send(200);
-  			brewLogger.setSparseGravityAuxTemp(!(_enableISpindel && _regularReport));
+  			//brewLogger.setSparseGravityAuxTemp(!(_enableISpindel && _regularReport));
 		}//else{
 			// get
 			int size=strlen_P(_GravityConfigHtml);
@@ -1289,6 +1289,22 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

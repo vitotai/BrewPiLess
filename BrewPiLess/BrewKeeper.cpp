@@ -31,7 +31,7 @@ void BrewKeeper::keep(time_t now)
 	if (mode != 'p') return;
 		
 	if((_profile.loaded()!=true) && (_filename!=NULL)){
-		DBG_PRINTF("load profile.");
+		//DBG_PRINTF("load profile.\n");
 		_profile.load(_filename);
 	}
 	if(! _profile.loaded()) return;
@@ -89,10 +89,10 @@ time_t tm_to_timet(struct tm *tm_time);
 
 bool BrewProfile::load(String filename)
 {
-	DBG_PRINTF("BrewProfile::load\n");
+	//DBG_PRINTF("BrewProfile::load\n");
 
 	if(!SPIFFS.exists(filename)){
-		DBG_PRINTF("file:%s not exist\n",filename.c_str());
+		//DBG_PRINTF("file:%s not exist\n",filename.c_str());
 		return false;
 	}
 	File pf=SPIFFS.open(filename,"r");
@@ -563,6 +563,22 @@ void makeTime(time_t timeInput, struct tm &tm){
   tm.tm_mon = month + 1;  // jan is month 1  
   tm.tm_mday = time + 1;     // day of month
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
