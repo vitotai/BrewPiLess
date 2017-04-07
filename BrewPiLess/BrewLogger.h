@@ -469,10 +469,6 @@ public:
 			_extOriginGravity = convertGravity(gravity);
 		}else{
 			_extGravity=convertGravity(gravity);
-		Serial.print("gravity:");
-		Serial.print(gravity,4);
-		Serial.printf(" convert to %d\n",_extGravity);
-
 		}
 	}
 	
@@ -630,14 +626,23 @@ private:
 		byte tag;
 		byte mask;
 
-		do{
+		while(1){
 			if(idx >= LogBufferSize) idx -= LogBufferSize;
-			tag=_logBuffer[idx];
-			mask=_logBuffer[idx+1];
-			idx +=2;
+			tag =_logBuffer[idx++];
+		    mask=_logBuffer[idx++];
 			dataDrop +=2;
-		}while(tag != PeriodTag);
-		
+			
+			if(tag == PeriodTag) break;
+			
+			if(tag == OriginGravityTag){
+    			idx += 2;
+	    		dataDrop +=2;
+			}
+		}
+
+
+		DBG_PRINTF("before tag %d, mask=%x\n",dataDrop,mask);
+
 		
 		for(int i=0;i<7;i++){
 			if(mask & (1<<i)){
@@ -645,7 +650,8 @@ private:
 				byte d0=_logBuffer[idx++];
 				byte d1=_logBuffer[idx++];
 				dataDrop +=2;
-				_headData[i] = (d0<<8) && d1;
+				_headData[i] = (d0<<8) | d1;
+				DBG_PRINTF("update idx:%d to %d\n",i,_headData[i]);
 			}
 		}
 		// drop any F tag
@@ -665,7 +671,7 @@ private:
 		_logHead = idx;
 		_headTime += _tempLogPeriod/1000;
 		interrupts();
-		//DBG_PRINTF(",drop %d\n",dataDrop);
+		DBG_PRINTF("Drop %d\n",dataDrop);
 	}
 	
 	int volatileLoggingAlloc(int size)
@@ -834,6 +840,11 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
+
+
+
+
+
 
 
 
