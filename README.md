@@ -1,32 +1,6 @@
 # BrewPiLess
  *Remember to clear browser cache to get new interface!*
  *Note: New log format after V1.2.7&v2.0!*
-## Introduction
-This project uses a single ESP8266 to replace RPI and Arduino.
-![Main Screen](img/brewpiless126p1.jpg)
-BrewPi is the greatest, if not the ultimate, fermentation temperature controller. The original design uses a RPI to log temperatures and maintain a temperature schedule. The RPI also hosts a web server as the front-end of internet web access. 
-Using a RPI or a PC allows the maximum power of BrewPi to be used but with the additional of a RPI or PC. 
-
-ESP8266 is cheap and powerful WiFi-enabling IOT solution. 
-Although it can't be as powerful as a RPI, it's a good solution to maximize the functionality and minimize the cost. Using a single ESP8266 as the temperature controller(replacing Arduino), web server and schedule maintainer(replacing RPI) also reduces the work in building a brewpi system.
-
-## !!Special Note
-Uploading files to ESP8266 is no longer needed because the "files" are now embedded in the code. However, you can still upload files to the File System by using the Data Upload tool or web based file manager. **The file in File System takes higher priority.** That is, if you have an "index.htm" in the file system, you will get this file instead of the server page embedded within the code when you visit "http://brewpi.local". **If you have ever uploaded the data folder using the upload tool, please delete this when you update to new version, or you will not get updated files.** Please also note that you might need to hit "refresh" button on your browser to force it to get new files.
-
-## Software configuration
-BrewPi related configuration is defined in `config.h` while networking related configuration is defined in `espconfig.h`. They are both self-explanatory and commented. Please check the files directly.
-
-## Additional Libraries
-You will need the ESP8266/Arduino environment, as well as the following libraries.
- * ArduinoJson https://github.com/bblanchon/ArduinoJson
- * WiFiManager (my branch) https://github.com/vitotai/WiFiManager
- * ESPAsyncTCP https://github.com/me-no-dev/ESPAsyncTCP 
- * ESPAsyncWebServer https://github.com/me-no-dev/ESPAsyncWebServer 
- * ESP8266HTTPUpdateServer (newer version is needed. you might need to manually download the files.) https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer
- * OneWire https://github.com/PaulStoffregen/OneWire
-
-**Some of the libraries are modified and provided. Please use the libraries provided to ensure compatiblity.** 
-
 ## Features
  * I2C LCD support
  * Rotary Encoder support (* not supported by default)
@@ -39,21 +13,73 @@ You will need the ESP8266/Arduino environment, as well as the following librarie
  * Web-based network setting
  * SoftAP mode
  * Local Temperature log and temperature chart
- * **[New 1.2.7** Gravity logging. The gravity data can be manually input or from iSpindel.
+ * **[New 1.2.7]** Gravity logging. The gravity data can be manually input or from iSpindel.
 * **[New 1.2.7]** iSpindel support. 
 * **[New 2.0]** Gravity-based temperature schedule.
-  
-## Usage
-### Setup WiFi network setting.
+* **[New 2.0]** Save and resuse of beer profiles.
+# Contents
+---
+* [Introduction](#Introduction)
+* [Software configuration](#Software-configuration)
+  * [Libraries](#Libraries)
+* [Usage](#Usage)
+  * [WiFi setting](#WiFi-setting)
+  * [Soft AP mode](#Soft-AP-mode)
+  * [Service Pages](#Service-Pages)
+  * [Gravity logging](#Gravity-logging)
+  * [iSpindel Support](#iSpindel-Support)
+  * [Local logging](#Local-logging)
+    * [Viewing Chart under AP mode](#Viewing-Chart-under-AP-mode)
+  * [Remote logging](#Remote-loggin)
+* [Hardware Setup](#Hardware-Setup)
+  * [Support of Rotary Encoder](#Support-of-Rotary-Encoder)
+  * [Wake-up button](#Wake-up-button)
+* [Extra](#Extra)
+  * [Offline Log Viewer](#Offline-Log-Viewer) 
+  * [Logging Data to Google Sheets](#Logging-data-to-Google-Sheets) 
+  * [Upload HTML/Javascript to ESP8266](#Upload-HTML-Javascript-to-ESP8266)
+  * [Development tools](#Development-tools)
+  * [JSON commands](#JSON-commands)
+    * [Sensor Calibrartion](#Sensor-Calibration)
+---
+# Introduction
+This project uses a single ESP8266 to replace RPI and Arduino.
+![Main Screen](img/brewpiless126p1.jpg)
+BrewPi is the greatest, if not the ultimate, fermentation temperature controller. The original design uses a RPI to log temperatures and maintain a temperature schedule. The RPI also hosts a web server as the front-end of internet web access. 
+Using a RPI or a PC allows the maximum power of BrewPi to be used but with the additional of a RPI or PC. 
+
+ESP8266 is cheap and powerful WiFi-enabling IOT solution. 
+Although it can't be as powerful as a RPI, it's a good solution to maximize the functionality and minimize the cost. Using a single ESP8266 as the temperature controller(replacing Arduino), web server and schedule maintainer(replacing RPI) also reduces the work in building a brewpi system.
+
+## !!Special Note
+Uploading files to ESP8266 is no longer needed because the "files" are now embedded in the code. However, you can still upload files to the File System by using the Data Upload tool or web based file manager. **The file in File System takes higher priority.** That is, if you have an "index.htm" in the file system, you will get this file instead of the server page embedded within the code when you visit "http://brewpi.local". **If you have ever uploaded the data folder using the upload tool, please delete this when you update to new version, or you will not get updated files.** Please also note that you might need to hit "refresh" button on your browser to force it to get new files.
+
+# Software configuration
+BrewPi related configuration is defined in `config.h` while networking related configuration is defined in `espconfig.h`. They are both self-explanatory and commented. Please check the files directly.
+
+## Libraries
+You will need the ESP8266/Arduino environment, as well as the following libraries.
+ * ArduinoJson https://github.com/bblanchon/ArduinoJson
+ * WiFiManager (my branch) https://github.com/vitotai/WiFiManager
+ * ESPAsyncTCP https://github.com/me-no-dev/ESPAsyncTCP 
+ * ESPAsyncWebServer https://github.com/me-no-dev/ESPAsyncWebServer 
+ * ESP8266HTTPUpdateServer (newer version is needed. you might need to manually download the files.) https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer
+ * OneWire https://github.com/PaulStoffregen/OneWire
+
+**Some of the libraries are modified and provided. Please use the libraries provided to ensure compatiblity.** 
+
+---
+# Usage
+## WiFi setting
 
 WiFi Manager is used to setup the the network. On first use or if the connected network changes or disappears, WiFi Manager will
-setup a AP named `brewpi`. The network setting can be done through the web page after connecting the ESP8266 as AP.
+setup a AP named `brewpiless`. The network setting can be done through the web page after connecting the ESP8266 as AP.
 Please check URL for more detail.
 
 https://github.com/tzapu/WiFiManager
 
 After **three minutes**, ESP8266 will proceed to enter soft AP mode. That means you only have three minutes to setup the network. 
-### Soft AP mode
+## Soft AP mode
 BrewPiLess now can run in AP mode, which enables it to run as stand alone device. The newly modified WiFiManager has a new option, "Soft AP Mode". Soft AP mode will also be entered if the network setting is not configured in three minutes (and previous connected network doesn't exist, or there is no previously connected network.)
 **This design is to enable recovery from a power shortage or system reset.** Without this feature, BrewPiLess will hang at the network setting state and won't perform temperature management funcitons.
 
@@ -64,7 +90,7 @@ For scheduled temperature management, aka Beer Profile mode, the "time" informat
 mDNS doesn't work under AP mode. Therefore, "brewpi.local" can not be used under AP mode, but "brewpi.org" will do the job. In fact, all domain names except those in Apple's Captive Portal checklists will do.
 
 
-### Service Page
+## Service Pages
  
 BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP address if you are using platforms from Apple. You can change the name in system configuration page. 
  Default username and password are both `brewpi`.
@@ -92,9 +118,8 @@ To enter OG, click the **OG value**. Once OG is availble, the Attenuation and AB
 ## iSpindel Support
 BrewPiLess supports iSpindel by accepting data from iSpindel and acting an AP for iSpindel to connect to.
 To support softAP, set the correct settings in `System configuration`.
-To record data by using as less as possible space, BrewPiLess needs to know the period of iSpindel data report. Incorrect setting will result in inefficient memory space usage.
 
-## Local temperature logging.
+## Local logging
 
  * The log won’t start automatically, you have to start it at log setting page.
  * **(new in v1.2.5) When logging is not started, BrewPiLess still logs the data and keep that latest 2 to 3 hours of data. The data will not be saved to file system, though.**
@@ -106,14 +131,14 @@ To record data by using as less as possible space, BrewPiLess needs to know the 
  * **Internet access is required to view the chart**. To save some more space and to alleviate the loading of ESP8266, the library is not put in the ESP8266. (It is possible after v1.2.5.)
  * The loggging format changed after v1.2.7/v2.0. Use BPLLogViewer**V2**.htm to view the new logs and BPLLogViewer.htm for old logs. The old logs cannot be viewed 'on-line' by the "view" button. Please download them and view by the off line viewer.
 
-## Viewing temperature char under AP mode
+### Viewing Char under AP mode
 There are two wasy that make it possible to have the temperature chart under AP mode. 
  * Let the browser cache the file. The simple way is having BrewPiLess connect to a router that has internet access, then connnection to BrewPiLess. Usually, the browser will cache the library laod from disk after that. However, the browser might clear the cache for some reasons, so this might not always work.
  * Put the library in ESP8266. 
   Go to http://dygraphs.com/download.html  and download the v1.1.1 `dygraph-combined.js`.
   open http://brewpi.local:8008/filemanager, and upload the downlowed libarry to ESP8266. The file shoule be named exact `dygraph-combined.js`. 
 
-## Remote temperature logging.
+## Remote logging
 Remote logging can be used to post data to a HTTP server that BrewPiLess can connect to.The `format` field in log setup page is like the format in `printf` but uses the following specifiers:
 
 | Specifier   | output  |
@@ -140,7 +165,8 @@ Example setting for Thingspeak.com
 
 Example setting for ubidots.com
  ![Log Setting](img/log_ubidots.jpg)
-## Hardware Setup
+---
+# Hardware Setup
 Fortunately, 3.3V is regarded as HIGH in 5V logic, so the **output** of ESP8266 can be connected directly to the devices. Luckily, DS18B20 works under 3.3V. I just replace the Arduino Nano with the ESP8266, and it works. You should still be careful not to burn the ESP8266.
 
 A lot of PINs are required, so ESP-12 or ESP-07 should be a better choice. NodeMcu development board is a simple solution for those who arn't good at soldering.
@@ -174,7 +200,14 @@ Currently, PCF8574 is supported if you really need the rotary encoder. You will 
 ## Wake-up button
 Without a rotary encoder input, the backlight of the LCD will never be turned-off because there is no way to "wake" it up. Since BrewPiLess can be controlled by network easily, the rotary encoder seems unnecessary. A wake-up button is a solution for this. The button connects to D3 by default and grounds D3 when pushed.
 
-## Logging temperature data to Google Sheets
+---
+
+# Extra
+## Offline Log Viewer
+Although the flash size of ESP8266 module might be as big as 16 Mega bytes, it is still limited. The logs can be downloaed and viewed offline. Goto `Extra` folder and download the BPLLogVewer.htm/BPLLogVewerV2.htm. Place them anywhere on your computer, and open it by your browser.
+BPLLogVewerV2.htm is for logs created by v2.0/v1.2.7 or after, while BPLLogVewer.htm is for logs created by older version.
+
+## Logging data to Google Sheets
 Due to the resource limit of ESP8266, establishment of **HTTPS** connection while serving other functions will crash the system. 
 Therefore, a generic interface is provided to enable pushing/sending data to a specified URL(HTTP, NO HTTPs). The file to support Google Sheet logging is in `extra` folder.
 
@@ -225,7 +258,7 @@ A simple script as the proxy to push data to Google Sheet is needed. Here is how
 
 Then, BrewPiLess will post temperature data  to the URL, and the script(logdata.php) at that URL will get the data and do HTTPS request to google script which write the data to the specified spreadsheet.
 
-## Logging temperature data to other destination
+## Logging data to other destination
 If you write your own proxy script or push data to other IOT website. you can change the settings to your needs.
 
 The periodical request can be also used as an I-AM-ALIVE message. For example, if the period is set to 10 minutes, and the temperature hasn't been updated for 11 minutes,
@@ -237,7 +270,7 @@ https://github.com/esp8266/Arduino/blob/master/doc/filesystem.md
 
 In newer version, the basic files are embedded. However, the file in SPIFFS takes higher prioity. That will be useful if you want to change them.
 
-## Development tools.
+## Development tools
 Two additional tools are available. One is web-based file manager to manipulate the files directly from the web. You can download and upload files the the web.
 To enable this feature, set `DEVELOPMENT_FILEMANAGER` to true in `espconfig.h`.
 You can access the files by the url (you should know you can change it):
@@ -249,7 +282,7 @@ For example, you can erase the EEPROM by sending `E` letter, get the LCD display
 The page is at
 `http://brewpi.local/testcmd.htm` 
 
-## A list of JSON commands
+## JSON commands
 By using `http://brewpi.local/testcmd.htm`, you can control BrewPi core directly. For example, to set temperature to Fahrenheit. Open the testcm.htm page, and enter the following string, and send.
 
 `j{"tempFormat":"F"}` 
@@ -286,3 +319,10 @@ You can set multiple parameters in one command. The command after `j` is in form
 | hs                | rotaryHalfSteps                |   |
 | heatEst           | heatEstimator                  |   |
 | coolEst           | coolEstimator                  |   |
+
+## Sensor Calibration
+ The command to set sensor calibration is
+ 
+ `U{i:0,j:0.36}`
+ 
+ where **0** is the device ID that is assigned to the sensor during device setup, and **0.36** is the adjustment to the sensor. 
