@@ -17,6 +17,7 @@
 * **[New 1.2.7]** iSpindel support. 
 * **[New 2.0]** Gravity-based temperature schedule.
 * **[New 2.0]** Save and resuse of beer profiles.
+* **[New 2.0]** Static IP.
 # Contents
 ---
 * [Introduction](#introduction)
@@ -41,6 +42,7 @@
   * [Development tools](#development-tools)
   * [JSON commands](#json-commands)
     * [Sensor Calibrartion](#sensor-calibration)
+    * [Reset WiFi](#reset-wifi)
 ---
 # Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
@@ -53,6 +55,16 @@ Although it can't be as powerful as a RPI, it's a good solution to maximize the 
 
 ## !!Special Note
 Uploading files to ESP8266 is no longer needed because the "files" are now embedded in the code. However, you can still upload files to the File System by using the Data Upload tool or web based file manager. **The file in File System takes higher priority.** That is, if you have an "index.htm" in the file system, you will get this file instead of the server page embedded within the code when you visit "http://brewpiless.local". **If you have ever uploaded the data folder using the upload tool, please delete this when you update to new version, or you will not get updated files.** Please also note that you might need to hit "refresh" button on your browser to force it to get new files.
+
+## Known issues
+* ESP8266 won't restart after saving system configuratoin.
+ Sometimes ESP8266 can't restart by Software watchdog timer reset, which is the only way to reset the system by software. It did happened on my NodeMcu and D1 mini boards that didn't connect to anything but USB. I have no solution for it.
+* ESP8266 won't start after selecting WiFi network.
+ The web server used is ESPAsyncWebServer which uses ESPAsyncTCP. I found that if ESP8266 ever enters SoftAP mode before connecting to the network, the Web server will fail on tcp_bind() and the web service will be unavailable. Not tracing the source code of the LWIP, I just worked around by reseting the system. However, ESP8266 sometimes doesn't reset.
+* The page can't be loaded correctly.
+ It rarely happens after HTTP caching is used, but it does happen especially when Javascript Console is opened. During developing and testing, I found corrupted html/javascript pages. Without the abliity and time to debug or develop the web server and or TCP/IP stack, I decide to live with it.
+* Incorrect tempeerature chart.
+ The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 # Software configuration
 BrewPi related configuration is defined in `config.h` while networking related configuration is defined in `espconfig.h`. They are both self-explanatory and commented. Please check the files directly.
@@ -89,6 +101,7 @@ For scheduled temperature management, aka Beer Profile mode, the "time" informat
 
 mDNS doesn't work under AP mode. Therefore, "brewpiless.local" can not be used under AP mode, but "brewpi.org" will do the job. In fact, all domain names except those in Apple's Captive Portal checklists will do.
 
+After v2.0, static IP is supported at the page of network selection. To use DHCP, leave the IP blank.
 
 ## Service Pages
  
@@ -325,4 +338,9 @@ You can set multiple parameters in one command. The command after `j` is in form
  
  `U{i:0,j:0.36}`
  
- where **0** is the device ID that is assigned to the sensor during device setup, and **0.36** is the adjustment to the sensor. 
+ where **0** is the device ID that is assigned to the sensor during device setup, and **0.36** is the adjustment to the sensor.
+ 
+## Reset WiFi
+To reset WiFi setting, use the following URL (assuming you can access it by brewpiless.local.)
+    `http://brewpiless.local/erasewifisetting`
+BrewPiLess will erase the wifi setting and then reset.
