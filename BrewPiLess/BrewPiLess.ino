@@ -1066,17 +1066,7 @@ void setup(void){
   	DBG_PRINTF("\nSetup()\n");
   	DebugPort.setDebugOutput(true);
   	#endif
-
-
-#ifdef EARLY_DISPLAY
-	DBG_PRINTF("Init LCD...\n");
-	display.init();
-	display.printAt_P(1,0,PSTR("Initialize WiFi"));
-	display.updateBacklight();
-	DBG_PRINTF("LCD Initialized..\n");
-#endif
-	
- 
+	 
 	//0.Initialize file system
 	//start SPI Filesystem
   	if(!SPIFFS.begin()){
@@ -1085,6 +1075,18 @@ void setup(void){
   	}else{
   		DBG_PRINTF("SPIFFS.being() Success.\n");
   	}
+	
+    WiFiSetup.preInit();
+    
+#ifdef EARLY_DISPLAY
+	DBG_PRINTF("Init LCD...\n");
+	display.init();
+	display.printAt_P(1,0,PSTR("Initialize WiFi"));
+	display.updateBacklight();
+	DBG_PRINTF("LCD Initialized..\n");
+#endif
+	
+	
 	// try open configuration
 	char configBuf[MAX_CONFIG_LEN];
 	File config=SPIFFS.open(CONFIG_FILENAME,"r+");
@@ -1289,47 +1291,4 @@ void loop(void){
   		}
   	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

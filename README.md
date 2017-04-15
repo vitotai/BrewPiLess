@@ -52,7 +52,7 @@ ESP8266 is cheap and powerful WiFi-enabling IOT solution.
 Although it can't be as powerful as a RPI, it's a good solution to maximize the functionality and minimize the cost. Using a single ESP8266 as the temperature controller(replacing Arduino), web server and schedule maintainer(replacing RPI) also reduces the work in building a brewpi system.
 
 ## !!Special Note
-Uploading files to ESP8266 is no longer needed because the "files" are now embedded in the code. However, you can still upload files to the File System by using the Data Upload tool or web based file manager. **The file in File System takes higher priority.** That is, if you have an "index.htm" in the file system, you will get this file instead of the server page embedded within the code when you visit "http://brewpi.local". **If you have ever uploaded the data folder using the upload tool, please delete this when you update to new version, or you will not get updated files.** Please also note that you might need to hit "refresh" button on your browser to force it to get new files.
+Uploading files to ESP8266 is no longer needed because the "files" are now embedded in the code. However, you can still upload files to the File System by using the Data Upload tool or web based file manager. **The file in File System takes higher priority.** That is, if you have an "index.htm" in the file system, you will get this file instead of the server page embedded within the code when you visit "http://brewpiless.local". **If you have ever uploaded the data folder using the upload tool, please delete this when you update to new version, or you will not get updated files.** Please also note that you might need to hit "refresh" button on your browser to force it to get new files.
 
 # Software configuration
 BrewPi related configuration is defined in `config.h` while networking related configuration is defined in `espconfig.h`. They are both self-explanatory and commented. Please check the files directly.
@@ -87,27 +87,27 @@ For scheduled temperature management, aka Beer Profile mode, the "time" informat
 
 **To enable automatic recovery from power shortage or system reset**, the time informatoin is saved periodically and restored at boot-up if NTP is not accessible, which means the duration of power shortage is assumed to be zero. If the power shortage lasts too long, the shedule will not be on track. For example, if the power shortage lasts 8 hours, the schedule will be off for 8 hours since that 8 hours is missing for ESP8266. Without a RTC, this might be the best I can do.
 
-mDNS doesn't work under AP mode. Therefore, "brewpi.local" can not be used under AP mode, but "brewpi.org" will do the job. In fact, all domain names except those in Apple's Captive Portal checklists will do.
+mDNS doesn't work under AP mode. Therefore, "brewpiless.local" can not be used under AP mode, but "brewpi.org" will do the job. In fact, all domain names except those in Apple's Captive Portal checklists will do.
 
 
 ## Service Pages
  
-BrewPiLess implements mDNS, so you can use "brewpi.local" instead of the IP address if you are using platforms from Apple. You can change the name in system configuration page. 
+BrewPiLess implements mDNS, so you can use "brewpiless.local" instead of the IP address if you are using platforms from Apple. You can change the name in system configuration page. 
  Default username and password are both `brewpi`.
  
-* Main page - `http://brewpi.local/`
+* Main page - `http://brewpiless.local/`
     The main page. The menu includes:
-  * Device setup - `http://brewpi.local/setup.htm`
+  * Device setup - `http://brewpiless.local/setup.htm`
     The device setup procedure as original BrewPi is necessary.
-  * Logging setting - `http://brewpi.local/log`
-  * System configuration - `http://brewpi.local/config`
+  * Logging setting - `http://brewpiless.local/log`
+  * System configuration - `http://brewpiless.local/config`
     Updating the settings will result in restart of the system.
   * Gravity Sensor
     Gravity sensor(iSpindel) settting.
-* LCD page - `http://brewpi.local/lcd` 
+* LCD page - `http://brewpiless.local/lcd` 
     The LCD display of BrewPi. Clicking the LCD brings out the pop menu to other functions. This page is good for mobile device or when temperature chart is not necessary.
  
-* OTA update - `http://brewpi.local:8008/systemupdate`
+* OTA update - `http://brewpiless.local:8008/systemupdate`
     
     The menu from the main page doesn't include this page.
 
@@ -117,7 +117,7 @@ To enter OG, click the **OG value**. Once OG is availble, the Attenuation and AB
 
 ## iSpindel Support
 BrewPiLess supports iSpindel by accepting data from iSpindel and acting an AP for iSpindel to connect to.
-To support softAP, set the correct settings in `System configuration`.
+To support softAP, set the correct settings in `System configuration`. Please note that the password(passphrase) should be at least 8 characters.
 
 ## Local logging
 
@@ -136,7 +136,7 @@ There are two wasy that make it possible to have the temperature chart under AP 
  * Let the browser cache the file. The simple way is having BrewPiLess connect to a router that has internet access, then connnection to BrewPiLess. Usually, the browser will cache the library laod from disk after that. However, the browser might clear the cache for some reasons, so this might not always work.
  * Put the library in ESP8266. 
   Go to http://dygraphs.com/download.html  and download the v1.1.1 `dygraph-combined.js`.
-  open http://brewpi.local:8008/filemanager, and upload the downlowed libarry to ESP8266. The file shoule be named exact `dygraph-combined.js`. 
+  open http://brewpiless.local:8008/filemanager, and upload the downlowed libarry to ESP8266. The file shoule be named exact `dygraph-combined.js`. 
 
 ## Remote logging
 Remote logging can be used to post data to a HTTP server that BrewPiLess can connect to.The `format` field in log setup page is like the format in `printf` but uses the following specifiers:
@@ -243,7 +243,7 @@ A simple script as the proxy to push data to Google Sheet is needed. Here is how
  Do it yourself or ask someone for help. The URL that we will use is this script. 
 
 4. Settings
- In the log setting pages, default to `http://brewpi.local/log` 
+ In the log setting pages, default to `http://brewpiless.local/log` 
 
  * URL: http:// `{your server} `/ `{your path} `/logdata.php 
  <= your script in **step 3**
@@ -274,16 +274,16 @@ In newer version, the basic files are embedded. However, the file in SPIFFS take
 Two additional tools are available. One is web-based file manager to manipulate the files directly from the web. You can download and upload files the the web.
 To enable this feature, set `DEVELOPMENT_FILEMANAGER` to true in `espconfig.h`.
 You can access the files by the url (you should know you can change it):
-`http://brewpi.local:8008/filemanager` 
+`http://brewpiless.local:8008/filemanager` 
 
 The second tool is used to access the BrewPi directly. The original BrewPi on Arduino uses serial to communicate with RPI in the JSON-like format.
 By using the JSON-like commands, you have full access to BrewPi.   
 For example, you can erase the EEPROM by sending `E` letter, get the LCD display by issuing `l` command, and get device list by `h` command.
 The page is at
-`http://brewpi.local/testcmd.htm` 
+`http://brewpiless.local/testcmd.htm` 
 
 ## JSON commands
-By using `http://brewpi.local/testcmd.htm`, you can control BrewPi core directly. For example, to set temperature to Fahrenheit. Open the testcm.htm page, and enter the following string, and send.
+By using `http://brewpiless.local/testcmd.htm`, you can control BrewPi core directly. For example, to set temperature to Fahrenheit. Open the testcm.htm page, and enter the following string, and send.
 
 `j{"tempFormat":"F"}` 
 

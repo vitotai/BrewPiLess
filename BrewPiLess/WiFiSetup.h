@@ -16,6 +16,7 @@ class WiFiSetupClass
 public:
 	WiFiSetupClass(){_wifiState=WiFiStateConnected;_apMode=false; _maxReconnect=0; _apStaMode=false;}
 
+    void preInit(void);
 	void begin(void){begin("BrewPiLess");}
 	void begin(char const *ssid,const char *passwd=NULL);
 	void beginAP(char const *ssid,const char *passwd=NULL);
@@ -48,33 +49,4 @@ private:
 
 extern WiFiSetupClass WiFiSetup;
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
