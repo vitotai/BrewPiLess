@@ -99,14 +99,14 @@ For scheduled temperature management, aka Beer Profile mode, the "time" informat
 
 **To enable automatic recovery from power shortage or system reset**, the time informatoin is saved periodically and restored at boot-up if NTP is not accessible, which means the duration of power shortage is assumed to be zero. If the power shortage lasts too long, the shedule will not be on track. For example, if the power shortage lasts 8 hours, the schedule will be off for 8 hours since that 8 hours is missing for ESP8266. Without a RTC, this might be the best I can do.
 
-mDNS doesn't work under AP mode. Therefore, "brewpiless.local" can not be used under AP mode, but "brewpi.org" will do the job. In fact, all domain names except those in Apple's Captive Portal checklists will do.
+mDNS doesn't work under AP mode. Therefore, "brewpiless.local" can not be used under AP mode, but "brewpiless.org" will do the job. In fact, all domain names except those in Apple's Captive Portal checklists will do.
 
 After v2.0, static IP is supported at the page of network selection. To use DHCP, leave the IP blank.
 
 ## Service Pages
  
 BrewPiLess implements mDNS, so you can use "brewpiless.local" instead of the IP address if you are using platforms from Apple. You can change the name in system configuration page. 
- Default username and password are both `brewpi`.
+ Default username and password are both `brewpiless`. (It was `brewpi` before 1.2.6.)
  
 * Main page - `http://brewpiless.local/`
     The main page. The menu includes:
