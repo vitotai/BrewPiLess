@@ -709,7 +709,7 @@ R"END(
 <form action="" method="post">
 <table>
 <tr><td>iSpindel</td><td><input type="checkbox" name="iSpindel" value="1" %s></td></tr>
-<tr><td>Report period less than 5 minutes</td><td><input type="checkbox" name="regular" value="1" %s></td></tr>
+<tr><td>SG Correction</td><td><input type="text" name="sgc" value="%d"></td></tr>
 <tr><td>Save Change</td><td><input type="submit" name="submit"></input></td></tr>
 </table>
 </form>
@@ -720,7 +720,7 @@ R"END(
 
 const char _GravityConfigFormat[] PROGMEM =
 R"END(
-{"iSpindel":%d, "reg":%d}
+{"iSpindel":%d, "sgc":%d}
 )END";
 
 #define GravityDeviceConfigPath "/gdc"
@@ -733,49 +733,18 @@ private:
 	bool   _error;
 	
 	bool _enableISpindel;
-	bool _regularReport;
+	float _sgCorrection;
 
 	void processGravity(AsyncWebServerRequest *request,char data[],size_t length){
 		if(length ==0) return request->send(500);;
 
-		const int BUFFER_SIZE = JSON_OBJECT_SIZE(8);
-		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
-		JsonObject& root = jsonBuffer.parseObject((char*)data,length);
-
-		if (!root.success() || !root.containsKey("name")){
-  			DBG_PRINTF("Invalid JSON\n");
-  			request->send(500);
-  			return;
+        uint8_t error;
+		if(externalData.processJSON(data,length,request->authenticate(username, password),error)){
+    		request->send(200,"application/json","{}");
+		}else{
+		    if(error == ErrorAuthenticateNeeded) return request->requestAuthentication();
+		    else request->send(500);
 		}
-		
-		String name= root["name"];
-		
-		if(name.equals("webjs")){
-			if(!request->authenticate(username, password))
-	        return request->requestAuthentication();
-	        
-			if(!root.containsKey("gravity")){
-  				DBG_PRINTF("No gravity\n");
-  				request->send(500);
-  				return;
-  			}
-			float  gravity = root["gravity"];
-			if(root.containsKey("og")){
-				externalData.setOriginalGravity(gravity);
-			}
-			else{
-				externalData.setGravity(gravity,TimeKeeper.getTimeSeconds());
-			}
-		}else if(name.startsWith("iSpindel")){
-			//{"name": "iSpindel01", "id": "XXXXX-XXXXXX", "temperature": 20.5, "angle": 89.5, "gravityP": 13.6, "battery": 3.87}
-			DBG_PRINTF("iSpindel01\n");
-			
-			externalData.setPlato(root["gravityP"],TimeKeeper.getTimeSeconds());
-			externalData.setDeviceVoltage(root["battery"]);
-			externalData.setAuxTemperatureCelsius(root["temperature"]);
-			
-		} 
-		request->send(200,"application/json","{}");
 	}
 
 public:
@@ -802,17 +771,16 @@ public:
 		if(!config
 			|| !root.success()
 			|| !root.containsKey("iSpindel")
-			|| !root.containsKey("reg")){
+			|| !root.containsKey("sgc")){
 			_enableISpindel =false;
-			_regularReport = false;
+			_sgCorrection = 0;
 		}else{
 			_enableISpindel = root["iSpindel"];
-			_regularReport=root["reg"];
+			_sgCorrection = (float)root["sgc"]/1000.0;
 		}
-		DBG_PRINTF("load GD iSpindel:%d reg:%d\n",_enableISpindel,_regularReport);
+		DBG_PRINTF("load GD iSpindel:%d \n",_enableISpindel);
 		config.close();
 		
-//		brewLogger.setSparseGravityAuxTemp(!(_enableISpindel && _regularReport));
 	}
 	
 	bool canHandle(AsyncWebServerRequest *request){
@@ -836,8 +804,7 @@ public:
 		if(request->method() == HTTP_POST){
 			// post
 			_enableISpindel =(request->hasParam("iSpindel", true))? true:false;
-			_regularReport =(request->hasParam("regular", true))? true:false;
-			DBG_PRINTF("Save GD iSpindel:%d reg:%d\n",_enableISpindel,_regularReport);
+			_sgCorrection = (request->hasParam("sgc", true))? 0: ((float)request->getParam("sgc")->value().toInt()/1000.0);
 
   				
   			File config=SPIFFS.open(GavityDeviceConfigFilename,"w+");
@@ -855,12 +822,11 @@ public:
 				return;
   			}
   			strcpy_P(fmt,_GravityConfigFormat);
-  			config.printf(fmt,_enableISpindel,_regularReport);
+  			config.printf(fmt,_enableISpindel,(int)(_sgCorrection*1000.0));
   			free(fmt);
   			config.flush();
   			config.close();
   			// response with Get request->send(200);
-  			//brewLogger.setSparseGravityAuxTemp(!(_enableISpindel && _regularReport));
 		}//else{
 			// get
 			int size=strlen_P(_GravityConfigHtml);
@@ -873,7 +839,8 @@ public:
 			AsyncResponseStream *response = request->beginResponseStream("text/html");
 
 			strcpy_P(fmt,_GravityConfigHtml);
-			response->printf(fmt,_enableISpindel? "checked":"",_regularReport? "checked":"");
+			response->printf(fmt,_enableISpindel? "checked":"",(int)(_sgCorrection*1000.0));
+			
 			free(fmt);
 			request->send(response);
 		//}
@@ -1291,6 +1258,27 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

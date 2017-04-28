@@ -4,8 +4,11 @@
 #include <ESP8266HTTPUpdateServer.h>
 #include <ESP8266mDNS.h>
 #include <FS.h>
+#include <ArduinoJson.h>
 #include "espconfig.h"
+#include "ExternalData.h"
 
+#define EXTERNALDATA_ON_SYNC_SERVER true
 
 #if SerialDebug == true
 #define DBG_PRINT(...) DebugPort.print(__VA_ARGS__)
@@ -182,11 +185,34 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
 
 #endif
 
+#if EXTERNALDATA_ON_SYNC_SERVER
+     server.on("/gravity",HTTP_POST, [](){
+        if (server.hasArg("plain")== false){ //Check if body received
+            server.send(200, "text/plain", "");
+            return;
+        }
+        uint8_t error;
+        String json=server.arg("plain");
+        char *data=(char*)malloc(json.length() +1);
+        if(!data){
+            server.send(500);
+            return;
+        }
+        strcpy(data,json.c_str());
+		if(externalData.processJSON(data,json.length(),false,error)){
+    		server.send(200,"application/json","{}");
+		}else{
+		     server.send(500);
+		}
+     });
+#endif
+
 
 #if DEVELOPMENT_OTA == true
  // Flash update server
 	httpUpdater.setup(&server,SYSTEM_UPDATE_PATH,user,pass);
 #endif
+
 
   server.begin();
   DBG_PRINTLN("HTTP Update server started\n");
@@ -199,6 +225,27 @@ void ESPUpdateServer_loop(void){
 }
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
