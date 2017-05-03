@@ -148,13 +148,15 @@ There is an issue of ESP8266. (To be more specific, it is an issue of LWIP or TC
 
 The work-around for it is add a `delay(50);` aftet finishing data report and before ESP8266 goes into deep sleep, so that ESP8266 has a chance to close the connection.
 Around `Line 870@iSpindel.ino` of release 01.05.2017 5.x: 
+
+```C
   if (WiFi.status() == WL_CONNECTED)
   {
     SerialOut(WiFi.localIP());
     uploadData(my_api);
-    **delay(50);** // add this line
+    delay(50); // <<< add this line
   }
-  
+```  
 
 ### Connection setup for iSpindel
 BrewPiLess supports iSpindel by accepting data from iSpindel and acting an **AP** for iSpindel to connect to, BrewPiLess and iSpindel can connect to the same router. 
@@ -169,6 +171,7 @@ To support **softAP**, set the correct settings in `System configuration`. Pleas
 | SG Calibration   |  Offset of gravity reading. This value will be applied(add) to the calcuated SG if SG is calculated by BrewPiLess. |
 | Temp. Correction | Apply temperature correction to the calculated gravity reading. Celsius only. Usually it is 20&deg;C(68&deg;F) or 15&deg;C(59&deg;F). | 
 | Coefficients | The coefficients of the formula to calculate gravity. Note: this set of coefficients is for calcuation of **specific gravity**, **not** plato. Use 0 for x^3 term if quadratic polynomial is used.|
+
 Note: enable iSpindel setting only enable the initial display of iSpindel status. The gravity report will be process even when the option is OFF.
 
 ### iSpindel Settting
