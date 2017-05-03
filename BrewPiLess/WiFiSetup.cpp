@@ -266,3 +266,38 @@ void WiFiSetupClass::stayConnected(void)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

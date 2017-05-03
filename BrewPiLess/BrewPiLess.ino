@@ -703,26 +703,8 @@ public:
 };
 LogHandler logHandler;
 
-const char _GravityConfigHtml[] PROGMEM =
-R"END(
-<html><head><title>Gravity Device</title><meta http-equiv="content-type" content="text/html; charset=utf-8" ></head><body>
-<form action="" method="post">
-<table>
-<tr><td>iSpindel</td><td><input type="checkbox" name="iSpindel" value="1" %s></td></tr>
-<tr><td>SG Correction</td><td><input type="text" name="sgc" value="%d"></td></tr>
-<tr><td>Save Change</td><td><input type="submit" name="submit"></input></td></tr>
-</table>
-</form>
-</body></html>
-)END";
+
 #define GavityDeviceConfigFilename "/gdconfig"
-#define MAX_GRAVITYCONFIG_LEN 128
-
-const char _GravityConfigFormat[] PROGMEM =
-R"END(
-{"iSpindel":%d, "sgc":%d}
-)END";
-
 #define GravityDeviceConfigPath "/gdc"
 
 class ExternalDataHandler:public AsyncWebHandler
@@ -732,9 +714,6 @@ private:
 	size_t _dataLength;
 	bool   _error;
 	
-	bool _enableISpindel;
-	float _sgCorrection;
-
 	void processGravity(AsyncWebServerRequest *request,char data[],size_t length){
 		if(length ==0) return request->send(500);;
 
@@ -750,37 +729,17 @@ private:
 public:
 
 	ExternalDataHandler(){
-		_data[0]='G';
-		_data[1]=':';
 	}
-	
-	bool iSpindelEnabled(){ return _enableISpindel; }
-	
+		
 	void loadConfig(void){
-		char configBuf[MAX_GRAVITYCONFIG_LEN];
+	    char *buf=_data;
 		File config=SPIFFS.open(GavityDeviceConfigFilename,"r+");
-		
 		if(config){
-			size_t len=config.readBytes(configBuf,MAX_GRAVITYCONFIG_LEN);
-			configBuf[len]='\0';
+			size_t len=config.readBytes(buf,MAX_DATA_SIZE);
+			buf[len]='\0';
+			externalData.config(buf);
 		}
-		const int BUFFER_SIZE = JSON_OBJECT_SIZE(8);
-		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
-		JsonObject& root = jsonBuffer.parseObject(configBuf);
-		
-		if(!config
-			|| !root.success()
-			|| !root.containsKey("iSpindel")
-			|| !root.containsKey("sgc")){
-			_enableISpindel =false;
-			_sgCorrection = 0;
-		}else{
-			_enableISpindel = root["iSpindel"];
-			_sgCorrection = (float)root["sgc"]/1000.0;
-		}
-		DBG_PRINTF("load GD iSpindel:%d \n",_enableISpindel);
-		config.close();
-		
+		config.close();		
 	}
 	
 	bool canHandle(AsyncWebServerRequest *request){
@@ -796,60 +755,42 @@ public:
 				request->send(400);
 				return;
 			}
+			
+			processGravity(request,_data,_dataLength);
+			// Process the name
+			externalData.sseNotify(_data);
 			stringAvailable(_data);
-			processGravity(request,_data +2,_dataLength-2);
 			return;
 		}
 		// config
 		if(request->method() == HTTP_POST){
 			// post
-			_enableISpindel =(request->hasParam("iSpindel", true))? true:false;
-			_sgCorrection = (request->hasParam("sgc", true))? 0: ((float)request->getParam("sgc")->value().toInt()/1000.0);
-
   				
-  			File config=SPIFFS.open(GavityDeviceConfigFilename,"w+");
-  				
+  			File config=SPIFFS.open(GavityDeviceConfigFilename,"w+");	
   			if(!config){
-  					request->send(500);
-  					return;
-  			}
-  				
-  			int size=strlen_P(_GravityConfigFormat);
-  			char *fmt=(char*) malloc(size +1);
-  			if(!fmt){
-				request->send(500);
-				DBG_PRINTF("!!Alloc error\n");
-				return;
-  			}
-  			strcpy_P(fmt,_GravityConfigFormat);
-  			config.printf(fmt,_enableISpindel,(int)(_sgCorrection*1000.0));
-  			free(fmt);
+  				request->send(500);
+  				return;
+  			} 			
+  			config.printf(_data);
   			config.flush();
   			config.close();
-  			// response with Get request->send(200);
+  			externalData.config(_data);
+  			request->send(200);
+  			
 		}//else{
 			// get
-			int size=strlen_P(_GravityConfigHtml);
-			char* fmt=(char*)malloc(size+1);
-			if(!fmt){
-				request->send(500);
-				DBG_PRINTF("!!Alloc error\n");
-				return;
-			}
-			AsyncResponseStream *response = request->beginResponseStream("text/html");
-
-			strcpy_P(fmt,_GravityConfigHtml);
-			response->printf(fmt,_enableISpindel? "checked":"",(int)(_sgCorrection*1000.0));
-			
-			free(fmt);
-			request->send(response);
-		//}
+		if(request->hasParam("data")){
+		    request->send(SPIFFS,GavityDeviceConfigFilename, "application/json");
+		}else{
+		    // get the HTML
+		    request->send_P(200, "text/html", externalData.html());
+		}
 	}
 	
 	void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
 		if(!index){
-			// DBG_PRINTF("BodyStart: %u B\n", total);
-			_dataLength =2;
+		    //DBG_PRINTF("BodyStart: %u B\n", total);
+			_dataLength =0;
 			_error=(total >= MAX_DATA_SIZE); 
 		}
 		
@@ -860,7 +801,7 @@ public:
 		}
 		if(index + len == total){
 			_data[_dataLength]='\0';
-			DBG_PRINTF("Body total%u data:%sB\n", total,_data);			
+			//DBG_PRINTF("Body total%u data:%s\n", total,_data);			
 		}
 	}
 };
@@ -1138,12 +1079,9 @@ void setup(void){
 #if UseServerSideEvent == true
 	sse.onConnect([](AsyncEventSourceClient *client){
 		DBG_PRINTF("SSE Connect\n");
-		if(externalDataHandler.iSpindelEnabled()){
-			char sbuf[8];
+		if(externalData.iSpindelEnabled()){
 			char buf[128];
-			int len=sprintFloat(sbuf,externalData.deviceVoltage(),2);
-			sbuf[len]='\0';
-			sprintf_P(buf,PSTR("G:{\"name\":\"iSpindel01\",\"battery\":%s,\"lu\":%ld}"),sbuf,externalData.lastUpdate());
+			externalData.sseNotify(buf);
 			sse.send(buf);
 		}
   	});
@@ -1258,29 +1196,3 @@ void loop(void){
   		}
   	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

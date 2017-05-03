@@ -141,8 +141,43 @@ To add gravity reading record, click the **SG reading**. The number entered with
 To enter OG, click the **OG value**. Once OG is availble, the Attenuation and ABV will be calcuated when SG reading is updated. The OG is for calculation of attenuation and ABV only.
 
 ## iSpindel Support
-BrewPiLess supports iSpindel by accepting data from iSpindel and acting an AP for iSpindel to connect to.
-To support softAP, set the correct settings in `System configuration`. Please note that the password(passphrase) should be at least 8 characters.
+### Modification to iSpindel firmware
+**Important!! Without this modification, BrewPiLess will crash after 5 times of report.**
+There is an issue of ESP8266. (To be more specific, it is an issue of LWIP or TCP/IP.)
+**TL;DR** The issue is described here: https://github.com/esp8266/Arduino/issues/2750 
+
+The work-around for it is add a `delay(50);` aftet finishing data report and before ESP8266 goes into deep sleep, so that ESP8266 has a chance to close the connection.
+Around `Line 870@iSpindel.ino` of release 01.05.2017 5.x: 
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    SerialOut(WiFi.localIP());
+    uploadData(my_api);
+    **delay(50);** // add this line
+  }
+  
+
+### Connection setup for iSpindel
+BrewPiLess supports iSpindel by accepting data from iSpindel and acting an **AP** for iSpindel to connect to, BrewPiLess and iSpindel can connect to the same router. 
+To support **softAP**, set the correct settings in `System configuration`. Please note that the password(passphrase) should be at least **8** characters. The same password(pass phrase) is used for setting and for connection certification. Default value is `brewpiless`.
+
+![Main Screen](img/gdsetting.jpg)
+
+| Setting   | Description       |
+| -------------- |:---------------------------------|
+| iSpindel         | To enable iSpindel support.   	   |
+| Calculated by BPL | Do the conversion from tilt angle to gravity by BrewPiLess. If this option is OFF, all the following options are not used. |
+| SG Calibration   |  Offset of gravity reading. This value will be applied(add) to the calcuated SG if SG is calculated by BrewPiLess. |
+| Temp. Correction | Apply temperature correction to the calculated gravity reading. Celsius only. Usually it is 20&deg;C(68&deg;F) or 15&deg;C(59&deg;F). | 
+| Coefficients | The coefficients of the formula to calculate gravity. Note: this set of coefficients is for calcuation of **specific gravity**, **not** plato. Use 0 for x^3 term if quadratic polynomial is used.|
+Note: enable iSpindel setting only enable the initial display of iSpindel status. The gravity report will be process even when the option is OFF.
+
+### iSpindel Settting
+ * the **iSpindel Name** must start with `iSpindel`, like `iSpindel000` 
+ * Select `Generic HTTP`
+ * Server address set to `192.168.4.1` if iSpindel connect to the AP created by BrewPiless. or use the ip of BrewPiless if iSpindel connects the AP that BrewPiLess connects to.
+ * set url to `/gravity`
+
+For other iSpindel setting, like network settting, please refer to iSpindel project.
 
 ## Local logging
 

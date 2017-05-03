@@ -374,3 +374,38 @@ temperature FixedFilter::detectNegPeak(void){
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

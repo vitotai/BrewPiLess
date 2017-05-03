@@ -260,7 +260,7 @@ public:
 				changeMask |= (1 << i);
 				_iTempData[i] = iTemp;
 				changeNum ++;
-				DBG_PRINTF("tempData %i changed:%d\n",i,iTemp);
+				//DBG_PRINTF("tempData %i changed:%d\n",i,iTemp);
 			}
 		}
 		if( _extTemp != INVALID_TEMP_INT){
@@ -840,71 +840,3 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

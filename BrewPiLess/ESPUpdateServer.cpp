@@ -8,7 +8,7 @@
 #include "espconfig.h"
 #include "ExternalData.h"
 
-#define EXTERNALDATA_ON_SYNC_SERVER true
+#define EXTERNALDATA_ON_SYNC_SERVER false
 
 #if SerialDebug == true
 #define DBG_PRINT(...) DebugPort.print(__VA_ARGS__)
@@ -225,6 +225,41 @@ void ESPUpdateServer_loop(void){
 }
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

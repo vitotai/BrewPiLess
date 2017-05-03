@@ -406,3 +406,38 @@ bool BrewPiProxy::ambientSensorConnected(void)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
