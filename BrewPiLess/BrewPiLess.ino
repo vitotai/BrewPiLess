@@ -170,7 +170,7 @@ const char saveconfightml[]  PROGMEM =R"END(
 Configuration Saved. Wait for restart...
 </body></html>)END";
 
-extern const char* getEmbeddedFile(const char* filename);
+extern const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned int &size);
 
 void requestRestart(bool disc);
 
@@ -245,8 +245,10 @@ class BrewPiWebHandler: public AsyncWebHandler
     bool fileExists(String path)
     {
 	    if(SPIFFS.exists(path)) return true;
+	    bool dum;
+	    unsigned int dum2;
 
-	    if(getEmbeddedFile(path.c_str())) return true;
+	    if(getEmbeddedFile(path.c_str(),dum,dum2)) return true;
 	    if(path.endsWith(CHART_LIB_PATH) && SPIFFS.exists(CHART_LIB_PATH)) return true;
 	    return false;
     }
@@ -290,11 +292,16 @@ class BrewPiWebHandler: public AsyncWebHandler
 			return;
 		}
 		//else
-		
-		const char* file=getEmbeddedFile(path.c_str());
+		bool gzip;
+		uint32_t size;
+		const uint8_t* file=getEmbeddedFile(path.c_str(),gzip,size);
 		if(file){
 			DBG_PRINTF("using embedded file:%s\n",path.c_str());
-			sendProgmem(request,file);
+			if(gzip){
+                AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", file, size);
+                response->addHeader("Content-Encoding", "gzip");
+                request->send(response);			    
+			}else sendProgmem(request,(const char*)file);
 		}
 	}
 
@@ -710,7 +717,9 @@ LogHandler logHandler;
 class ExternalDataHandler:public AsyncWebHandler
 {
 private:
-	char _data[MAX_DATA_SIZE];
+	char _buffer[MAX_DATA_SIZE+2];
+	char *_data;
+
 	size_t _dataLength;
 	bool   _error;
 	
@@ -729,6 +738,9 @@ private:
 public:
 
 	ExternalDataHandler(){
+    	_data = &(_buffer[2]);
+    	_buffer[0]='G';
+    	_buffer[1]=':';
 	}
 		
 	void loadConfig(void){
@@ -755,7 +767,7 @@ public:
 				request->send(400);
 				return;
 			}
-			
+			stringAvailable(_buffer);
 			processGravity(request,_data,_dataLength);
 			// Process the name
 			externalData.sseNotify(_data);
@@ -1196,3 +1208,16 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

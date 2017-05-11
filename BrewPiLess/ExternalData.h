@@ -128,7 +128,7 @@ public:
 		if(_ispindelTempCal){
 		    _ispindelCalibrationBaseTemp=(root.containsKey("ctemp"))? root["ctemp"]:20;
 		}
-		_calculateGravity =(root.containsKey("cbpl"))? false:root["cbpl"];
+		_calculateGravity =(root.containsKey("cbpl"))? root["cbpl"]:false;
 		
 		_ispindelCoefficients[0]=root["a0"];
 		_ispindelCoefficients[1]=root["a1"];
@@ -277,6 +277,9 @@ public:
 			}
 			float itemp=root["temperature"];
 			setAuxTemperatureCelsius(itemp);
+
+            if(root.containsKey("battery"))
+    		    setDeviceVoltage(root["battery"]);			
 			
 			//setPlato(root["gravityP"],TimeKeeper.getTimeSeconds());
 			if(!_calculateGravity && root.containsKey("gravity"))
@@ -288,8 +291,6 @@ public:
 			    }
     			setTilt(root["angle"],itemp,TimeKeeper.getTimeSeconds());
             }
-            if(root.containsKey("battery"))
-    		    setDeviceVoltage(root["battery"]);			
 		}else{
 		    error = ErrorUnknownSource;
 		    return false;
@@ -301,3 +302,16 @@ public:
 extern ExternalData externalData;
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
