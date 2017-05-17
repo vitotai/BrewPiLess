@@ -174,7 +174,7 @@ To support **softAP**, set the correct settings in `System configuration`. Pleas
 
 Note: enable iSpindel setting only enable the initial display of iSpindel status. The gravity report will be process even when the option is OFF.
 
-![calibrationSG.htm in /extra folder](extra/calibrationSG.htm) is an utility HTML file which can be used to derive the coefficients instead of using the excel from iSpindel.
+[calibrationSG.htm in /extra folder](extra/calibrationSG.htm) is an utility HTML file which can be used to derive the coefficients instead of using the excel from iSpindel.
 
 ### iSpindel Settting
  * the **iSpindel Name** must start with `iSpindel`, like `iSpindel000` 
