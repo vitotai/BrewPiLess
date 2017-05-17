@@ -2,6 +2,7 @@
 #define BrewKeeper_H
 #include <Arduino.h>
 #include "espconfig.h"
+#include "GravityTracker.h"
 
 #if EnableGravitySchedule
 
@@ -15,13 +16,15 @@ typedef int16_t Gravity;
 typedef struct _ProfileStep{
  float    temp;
  float    days;
- Gravity    sg;
+ Gravity  sg;
+ uint8_t  stableTime;
  char     condition;
 } ProfileStep;
 
 class BrewProfile
 {
 	time_t _startDay;
+	float _OGPoints;
 	
 	int  _numberOfSteps;
 	
@@ -40,12 +43,16 @@ class BrewProfile
 	void _estimateStep(time_t now);
 	void _toNextStep(unsigned long time);
 public:
-	BrewProfile(void):_profileLoaded(false),_numberOfSteps(0),_unit('U'),_steps(NULL){}
+	BrewProfile(void):_profileLoaded(false),_numberOfSteps(0),_unit('U'),_steps(NULL){ 
+    	_currentStep =0;
+    	_timeEnterCurrentStep = 0;
+	}
 	int numberOfSteps(void){ return _numberOfSteps;}
 	bool loaded(void){return _profileLoaded;}
 
 	void setUnit(char unit);
 	bool load(String filename);
+	void setOriginalGravity(float gravity);
 	float tempByTimeGravity(unsigned long time,Gravity gravity);
 
 	void reload(void){_profileLoaded=false;}
@@ -94,6 +101,7 @@ public:
 #if EnableGravitySchedule	
 	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts),_lastGravity(INVALID_GRAVITY){}	
 	void updateGravity(float sg){ _lastGravity=FloatToGravity(sg);}
+	void updateOriginalGravity(float sg){ _profile.setOriginalGravity(sg); }
 #else
 	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts){}	
 #endif
@@ -103,6 +111,31 @@ public:
 };
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

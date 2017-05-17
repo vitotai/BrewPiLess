@@ -27,7 +27,7 @@ extern BrewPiProxy brewPi;
 const char gravityconfig_html[]  PROGMEM =R"END(
 <html><head><title>Gravity Device</title><meta http-equiv="content-type" content="text/html; charset=utf-8" >
 <script>
-function s_ajax(b){var c=new XMLHttpRequest();c.onreadystatechange=function(){if(c.readyState==4){if(c.status==200){b.success(c.responseText)}else{c.onerror(c.status)}}};c.ontimeout=function(){if(typeof b["timeout"]!="undefined")b.timeout();else c.onerror(-1)},c.onerror=function(a){if(typeof b["fail"]!="undefined")b.fail(a)};c.open(b.m,b.url,true);if(typeof b["data"]!="undefined"){c.setRequestHeader("Content-Type",(typeof b["mime"]!="undefined")?b["mime"]:"application/x-www-form-urlencoded");c.send(b.data)}else c.send()}var Q=function(d){return document.querySelector(d)};function fill(a){for(var b in a){var c=Q("input[name="+b+"]");if(c.type=="checkbox")c.checked=a[b];else c.value=a[b]}}function save(){var b=document.getElementsByTagName("input");var c={};for(var i=0;i<b.length;i++){var d=b[i];if(d.type=="checkbox")c[d.name]=d.checked;else if(d.type=="text")c[d.name]=d.value}console.log("result="+JSON.stringify(c));s_ajax({url:window.location.href,m:"POST",mime:"text/plain",data:JSON.stringify(c),success:function(a){alert("done.")},fail:function(a){alert("failed updating data:"+a)}})}function init(){s_ajax({url:window.location.href+"?data=1",m:"GET",success:function(a){fill(JSON.parse(a))},fail:function(a){alert("failed getting data:"+a)}})}
+function s_ajax(b){var c=new XMLHttpRequest();c.onreadystatechange=function(){if(c.readyState==4){if(c.status==200){b.success(c.responseText)}else{c.onerror(c.status)}}};c.ontimeout=function(){if(typeof b["timeout"]!="undefined")b.timeout();else c.onerror(-1)},c.onerror=function(a){if(typeof b["fail"]!="undefined")b.fail(a)};c.open(b.m,b.url,true);if(typeof b["data"]!="undefined"){c.setRequestHeader("Content-Type",(typeof b["mime"]!="undefined")?b["mime"]:"application/x-www-form-urlencoded");c.send(b.data)}else c.send()}var Q=function(d){return document.querySelector(d)};function fill(a){for(var b in a){var c=Q("input[name="+b+"]");if(c.type=="checkbox")c.checked=a[b];else c.value=a[b]}}function save(){var b=document.getElementsByTagName("input");var c={};for(var i=0;i<b.length;i++){var d=b[i];if(d.type=="checkbox")c[d.name]=d.checked;else if(d.type=="text")c[d.name]=d.value}console.log("result="+JSON.stringify(c));s_ajax({url:window.location.href,m:"POST",mime:"text/plain",data:JSON.stringify(c),success:function(a){alert("done.")},fail:function(a){alert("failed updating data:"+a)}})}function init(){s_ajax({url:window.location.href+"?data=1",m:"GET",success:function(a){fill(JSON.parse(a))},fail:function(a){}})}
 </script>
 </head><body onload=init()>
 <form action="" method="post">
@@ -148,6 +148,10 @@ public:
 	void setOriginalGravity(float og){
 		_og = og;
 		brewLogger.addGravity(og,true);
+#if EnableGravitySchedule		
+		brewKeeper.updateOriginalGravity(og);
+#endif
+		
 	}
 	
 	void setPlato(float plato, time_t now){
@@ -195,6 +199,7 @@ public:
 		brewKeeper.updateGravity(filter.addData(sg));
 #endif
 		brewLogger.addGravity(_gravity,false);
+		gravityTracker.add(_gravity,now);
 	}
 
 	float gravity(void){ return _gravity;}
@@ -302,6 +307,33 @@ public:
 extern ExternalData externalData;
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

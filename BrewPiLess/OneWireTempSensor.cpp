@@ -469,3 +469,30 @@ temperature OneWireTempSensor::readAndConstrainTemp()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

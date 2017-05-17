@@ -35,6 +35,8 @@
 #include "espconfig.h"
 #include "TimeKeeper.h"
 #include "mystrlib.h"
+
+#include "GravityTracker.h"
 #include "BrewKeeper.h"
 #ifdef ENABLE_LOGGING
 #include "DataLogger.h"
@@ -131,6 +133,8 @@ const char *nocache_list[]={
 //*******************************************
 
 ExternalData externalData;
+
+GravityTracker gravityTracker;
 
 bool passwordLcd;
 bool stationApMode;
@@ -1208,6 +1212,33 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

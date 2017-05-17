@@ -90,6 +90,7 @@ time_t tm_to_timet(struct tm *tm_time);
 bool BrewProfile::load(String filename)
 {
 	//DBG_PRINTF("BrewProfile::load\n");
+	_loadBrewingStatus(); // load status to get OG
 
 	if(!SPIFFS.exists(filename)){
 		//DBG_PRINTF("file:%s not exist\n",filename.c_str());
@@ -97,18 +98,21 @@ bool BrewProfile::load(String filename)
 	}
 	File pf=SPIFFS.open(filename,"r");
 	if(!pf){
-		DBG_PRINTF("file open failed\n");
+		DBG_PRINTF("profile open failed\n");
 		return false;
 	}
 	char profileBuffer[MAX_PROFILE_LEN];
 	size_t len=pf.readBytes(profileBuffer,MAX_PROFILE_LEN);
+	pf.close();
+	DBG_PRINTF("Profile length:%d\n",len);
 	profileBuffer[len]='\0';
 	
+	const int PROFILE_JSON_BUFFER_SIZE = 20* JSON_OBJECT_SIZE(4) + JSON_ARRAY_SIZE(12);
 	DynamicJsonBuffer jsonBuffer(PROFILE_JSON_BUFFER_SIZE);
 	JsonObject& root = jsonBuffer.parseObject(profileBuffer);
 	
 	if(!root.success()){
-		DBG_PRINTF("JSON parsing failed\n");
+		DBG_PRINTF("JSON parsing failed json size:%d\n",PROFILE_JSON_BUFFER_SIZE);
 		return false;
 	}
 	if(!root.containsKey("s")
@@ -169,15 +173,33 @@ bool BrewProfile::load(String filename)
 
 		DBG_PRINTF("%d ,type:%c time:",i,_steps[i].condition );
 		DBG_PRINT(_steps[i].days);
-		
+				
 		if(_steps[i].condition != 'r'){
-			float fsg= entry["g"];
-			_steps[i].sg = FloatToGravity(fsg);
 			_steps[i].temp= entry["t"];
+			
+			if(entry.containsKey("g")){
+    			if(entry["g"].is<const char*>()){
+    			    const char* attStr=entry["g"];
+    			    float att=atof(attStr);
+                    float csg=1.0 + (_OGPoints * (100.0 - att)/100.0);
+                    _steps[i].sg = FloatToGravity(csg);
+
+    			    DBG_PRINTF(" att:%s sg:%d",attStr,_steps[i].sg);    			    
+    			}else{
+    			    float fsg= entry["g"];
+	    		    _steps[i].sg = FloatToGravity(fsg);
+    			    DBG_PRINTF(" sg:%d",_steps[i].sg);
+    		    }
+			}
+
+			if(entry.containsKey("s")){
+    			int st= entry["s"];
+	    		_steps[i].stableTime =st;
+    			DBG_PRINTF(" Stable :%d",_steps[i].stableTime);
+			}
 
 			DBG_PRINT(" temp:");	
 			DBG_PRINT(_steps[i].temp);
-			DBG_PRINTF(" sg:%d",_steps[i].sg);
 		}
 		DBG_PRINTF("\n");
 	}
@@ -194,15 +216,19 @@ bool BrewProfile::load(String filename)
 
 	DBG_PRINTF("finished, st:%ld, unit:%c, _numberOfSteps:%d\n",_startDay,unit,_numberOfSteps);
 	
-	_loadBrewingStatus();
-
 	return true;
+}
+
+void BrewProfile::setOriginalGravity(float gravity){
+    _OGPoints = gravity - 1.0; 
+    _saveBrewingStatus();
 }
 
 void BrewProfile::_saveBrewingStatus(void){
 	File pf=SPIFFS.open(BrewStatusFile,"w");
 	if(pf){
-		pf.printf("%d\n%ld\n%ld\n",_currentStep,_timeEnterCurrentStep,_startDay);
+	    int ogpoints=(int) round(_OGPoints * 1000.0);
+		pf.printf("%d\n%ld\n%ld\n%d\n",_currentStep,_timeEnterCurrentStep,_startDay,ogpoints);
 	}
 	pf.close();
 }
@@ -226,7 +252,11 @@ void BrewProfile::_loadBrewingStatus(void){
 		buf[len]='\0';
 		time_t savedStart=atoi(buf);
 
-		DBG_PRINTF("load step:%d, time:%d\n",_currentStep,_timeEnterCurrentStep);
+		len=pf.readBytesUntil('\n',buf,32);
+		buf[len]='\0';
+		int ogpoints=atoi(buf);
+        _OGPoints = (float)ogpoints /1000.0;
+		DBG_PRINTF("load step:%d, time:%d ogpt:%d\n",_currentStep,_timeEnterCurrentStep,ogpoints);
 		
 		if((savedStart != _startDay) ||
 			(_timeEnterCurrentStep < _startDay)){
@@ -242,7 +272,7 @@ void BrewProfile::_loadBrewingStatus(void){
 			}
 		}
 	}else{
-		DBG_PRINTF("file open failed\n");
+		DBG_PRINTF("%s open failed\n",BrewStatusFile);
 		// try to figure out where we were
 	}
 	pf.close();
@@ -301,22 +331,63 @@ float BrewProfile::tempByTimeGravity(unsigned long time,Gravity gravity)
     	
     	bool sgCondition=(IsGravityValid(gravity))? (gravity <= _steps[_currentStep].sg):false;
     	
-    	DBG_PRINTF("tempByTimeGravity: sgC:%c,gravity=%d, target=%d",sgCondition? 'Y':'N',gravity,_steps[_currentStep].sg);
-    	    	
+    	DBG_PRINTF("tempByTimeGravity: sgC:%c,gravity=%d, target=%d\n",sgCondition? 'Y':'N',gravity,_steps[_currentStep].sg);
+/*
+   <option value="t">Time</option>
+   <option value="g">SG</option>
+   <option value="s">Stable</option>
+   <option value="a">Time & SG</option>
+   <option value="o">Time OR SG</option>
+   <option value="u">Time OR Stable</option>
+   <option value="v">Time & Stable</option>
+    <option value="b">SG OR Stable</option>
+    <option value="x">SG & Stable</option>
+    <option value="w">ALL</option>
+    <option value="e">Either</option>
+*/    	    	
+    #define TIME (_currentStepDuration <= (time - _timeEnterCurrentStep))
+    #define STABLE gravityTracker.stable(_steps[_currentStep].stableTime)
+    
     	if(_steps[_currentStep].condition == 'g'){
     		if(sgCondition){
     			_toNextStep(time);
     		}
     	}else if(_steps[_currentStep].condition == 'a'){
-    		if(_currentStepDuration <= (time - _timeEnterCurrentStep)
-    	   		&& sgCondition){
+    		if(TIME && sgCondition){
     	   		_toNextStep(time);
     		}
     	}else if(_steps[_currentStep].condition == 'o'){
-    		if(_currentStepDuration <= (time - _timeEnterCurrentStep)
-    	   		|| sgCondition){
+    		if(TIME || sgCondition){
     	   		_toNextStep(time);
     		}
+		}else if(_steps[_currentStep].condition == 's'){ // stable
+		    if(STABLE ){
+    		    _toNextStep(time);
+		    }
+		}else if(_steps[_currentStep].condition == 'u'){ // time || stable
+		    if(TIME  || STABLE ){
+    		    _toNextStep(time);
+		    }
+		}else if(_steps[_currentStep].condition == 'v'){ // time && stable
+		    if(TIME  && STABLE ){
+    		    _toNextStep(time);
+		    }
+		}else if(_steps[_currentStep].condition == 'b'){ // sg || stable
+		    if(sgCondition  || STABLE ){
+    		    _toNextStep(time);
+		    }
+		}else if(_steps[_currentStep].condition == 'x'){ // sg && stable
+		    if(sgCondition  && STABLE ){
+    		    _toNextStep(time);
+		    }
+		}else if(_steps[_currentStep].condition == 'w'){ // time && sg && stable
+		    if(sgCondition  && TIME && STABLE ){
+    		    _toNextStep(time);
+		    }
+		}else if(_steps[_currentStep].condition == 'e'){ // time || sg || stable
+		    if(sgCondition  || TIME || STABLE ){
+    		    _toNextStep(time);
+		    }
 		}
 	}
 	
@@ -368,7 +439,7 @@ bool BrewProfile::load(String filename)
 	}
 	File pf=SPIFFS.open(filename,"r");
 	if(!pf){
-		DBG_PRINTF("file open failed\n");
+		DBG_PRINTF("%s open failed\n",filename);
 		return false;
 	}
 	char profileBuffer[MAX_PROFILE_LEN];
@@ -563,6 +634,33 @@ void makeTime(time_t timeInput, struct tm &tm){
   tm.tm_mon = month + 1;  // jan is month 1  
   tm.tm_mday = time + 1;     // day of month
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
