@@ -49,7 +49,7 @@
 ---
 # Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
-![Main Screen](img/brewpiless126p1.jpg)
+![Main Screen](img/brewpiless20.jpg)
 BrewPi is the greatest, if not the ultimate, fermentation temperature controller. The original design uses a RPI to log temperatures and maintain a temperature schedule. The RPI also hosts a web server as the front-end of internet web access. 
 Using a RPI or a PC allows the maximum power of BrewPi to be used but with the additional of a RPI or PC. 
 
@@ -173,6 +173,8 @@ To support **softAP**, set the correct settings in `System configuration`. Pleas
 | Coefficients | The coefficients of the formula to calculate gravity. Note: this set of coefficients is for calcuation of **specific gravity**, **not** plato. Use 0 for x^3 term if quadratic polynomial is used.|
 
 Note: enable iSpindel setting only enable the initial display of iSpindel status. The gravity report will be process even when the option is OFF.
+
+![calibrationSG.htm in /extra folder](extra/calibrationSG.htm) is an utility HTML file which can be used to derive the coefficients instead of using the excel from iSpindel.
 
 ### iSpindel Settting
  * the **iSpindel Name** must start with `iSpindel`, like `iSpindel000` 
