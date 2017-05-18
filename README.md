@@ -31,10 +31,11 @@
   * [Soft AP mode](#soft-ap-mode)
   * [Service Pages](#service-pages)
   * [Gravity logging](#gravity-logging)
-  * [iSpindel Support](#ispindel-support)
+  * [iSpindel Support](#ispindel-support) [***New!***]
   * [Local logging](#local-logging)
     * [Viewing Chart under AP mode](#viewing-chart-under-ap-mode)
-  * [Remote logging](#remote-logging)
+  * [Remote logging](#remote-logging) [***Updated!***]
+  * [Saved Beer Profiles](#saved-beer-profiles) [***New!***]
 * [Hardware Setup](#hardware-setup)
   * [Support of Rotary Encoder](#support-of-rotary-encoder)
   * [Wake-up button](#wake-up-button)
@@ -44,8 +45,9 @@
   * [Upload HTML/Javascript to ESP8266](#upload-htmljavascript-to-esp8266)
   * [Development tools](#development-tools)
   * [JSON commands](#json-commands)
-    * [Sensor Calibrartion](#sensor-calibration)
-    * [Reset WiFi](#reset-wifi)
+  * [Sensor Calibrartion](#sensor-calibration)
+  * [Reset WiFi](#reset-wifi)
+  * [iSpindel Calibration](#ispindel-calibration) [***New!***]
 ---
 # Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
@@ -174,6 +176,8 @@ To support **softAP**, set the correct settings in `System configuration`. Pleas
 
 Note: enable iSpindel setting only enable the initial display of iSpindel status. The gravity report will be process even when the option is OFF.
 
+[calibrationSG.htm in /extra folder](extra/calibrationSG.htm) is an utility HTML file which can be used to derive the coefficients instead of using the excel from iSpindel.
+
 ### iSpindel Settting
  * the **iSpindel Name** must start with `iSpindel`, like `iSpindel000` 
  * Select `Generic HTTP`
@@ -228,6 +232,13 @@ Example setting for Thingspeak.com
 
 Example setting for ubidots.com
  ![Log Setting](img/log_ubidots.jpg)
+
+## Saved Beer Profiles
+![beer profiles](img/reuse_profiles.jpg)
+Use `Save As` button to save the edited profile. The saved name should not contain special characters.
+
+Use `...` button next to `Save As` button to open and close the profile list. After loading the profile by clicking it on the list, you have to **Save** it before **Apply**ing it.
+
 ---
 # Hardware Setup
 Fortunately, 3.3V is regarded as HIGH in 5V logic, so the **output** of ESP8266 can be connected directly to the devices. Luckily, DS18B20 works under 3.3V. I just replace the Arduino Nano with the ESP8266, and it works. You should still be careful not to burn the ESP8266.
@@ -394,3 +405,10 @@ You can set multiple parameters in one command. The command after `j` is in form
 To reset WiFi setting, use the following URL (assuming you can access it by brewpiless.local.)
     `http://brewpiless.local/erasewifisetting`
 BrewPiLess will erase the wifi setting and then reset.
+
+## iSpindel Calibration
+For those who don't have access to Microsoft Excel like me, the [calibrationSG.htm](extra/calibrationSG.htm) in `/extra` folder can be used to get the formula. The generated formula calculates specific gravity like 1.012 instead of plato.
+
+![iSpindel Calibration](img/calibration.jpg)
+
+*Note: I don't have access to MS Excel, so I am not sure if it is exactly the same as the way iSpindel does it. It works pretty good for me, though.*
