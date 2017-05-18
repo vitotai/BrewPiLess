@@ -31,11 +31,11 @@
   * [Soft AP mode](#soft-ap-mode)
   * [Service Pages](#service-pages)
   * [Gravity logging](#gravity-logging)
-  * [iSpindel Support](#ispindel-support)
+  * [iSpindel Support](#ispindel-support) [***New!***]
   * [Local logging](#local-logging)
-  * [Viewing Chart under AP mode](#viewing-chart-under-ap-mode)
-  * [Remote logging](#remote-logging)
-  * [Saved Beer Profiles](#saved-beer-profiles)
+    * [Viewing Chart under AP mode](#viewing-chart-under-ap-mode)
+  * [Remote logging](#remote-logging) [***Updated!***]
+  * [Saved Beer Profiles](#saved-beer-profiles) [***New!***]
 * [Hardware Setup](#hardware-setup)
   * [Support of Rotary Encoder](#support-of-rotary-encoder)
   * [Wake-up button](#wake-up-button)
@@ -47,7 +47,7 @@
   * [JSON commands](#json-commands)
   * [Sensor Calibrartion](#sensor-calibration)
   * [Reset WiFi](#reset-wifi)
-  * [iSpindel Calibration](#ispindel-calibration)
+  * [iSpindel Calibration](#ispindel-calibration) [***New!***]
 ---
 # Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
