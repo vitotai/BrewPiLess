@@ -31,12 +31,12 @@
   * [Soft AP mode](#soft-ap-mode)
   * [Service Pages](#service-pages)
   * [Gravity logging](#gravity-logging)
-  * [iSpindel Support](#ispindel-support) [***Updated!***]
+  * [iSpindel Support](#ispindel-support) **Updated!**
   * [Local logging](#local-logging)
     * [Viewing Chart under AP mode](#viewing-chart-under-ap-mode)
   * [Remote logging](#remote-logging) 
   * [Saved Beer Profiles](#saved-beer-profiles)
-  * [Beer Profile](#beer-profiles) [***New!***]
+  * [Beer Profile](#beer-profiles) **New!**
 * [Hardware Setup](#hardware-setup)
   * [Support of Rotary Encoder](#support-of-rotary-encoder)
   * [Wake-up button](#wake-up-button)
@@ -176,6 +176,8 @@ To support **softAP**, set the correct settings in `System configuration`. Pleas
 | Coefficients | The coefficients of the formula to calculate gravity. Note: this set of coefficients is for calcuation of **specific gravity**, **not** plato. Use 0 for x^3 term if quadratic polynomial is used.|
 | LowPass Filter Coefficient | 0~1. See following description|
 | Gravity Stability Threshold | Integer value. 1 point = 0.001.  |
+
+
 About low Pass Filter:
 ![Low Pass Filter](img/lowpassfilter.jpg)
 The coefficient defines the 'a' in this LPF:
@@ -250,22 +252,37 @@ Use `...` button next to `Save As` button to open and close the profile list. Af
 
 ## Beer Profile
 ![beer profile](img/beerprofilev21.jpg)
-A beer profile is specified by a series of temperature stages. There are two types of temperature stages, ***hold*** and ***ramp***. In ***hold*** stage, the temperature is controlled at the specified temperature until the specified contion meets. In ***ramp*** stage, the temperature changes gradually toward the next stage. A ***ramp*** stage will be automatically inserted between two ***hold*** stages. Only time, in unit of day, can be specified for ***ramp*** stage.
+
+A beer profile is specified by a series of temperature stages. There are two types of temperature stages,
+ ***hold*** and ***ramp***. In ***hold*** stage, the temperature is controlled at the specified temperature until the specified condition meets. 
+ 
+ In ***ramp*** stage, the temperature changes *gradually* toward the next stage. A ***ramp*** stage will be automatically inserted between two ***hold*** stages. 
+ Only the time, in unit of day, can be specified for a ***ramp*** stage.
 
 Three conditons and their combinations can be used to specify the condition for a ***hold*** stage to finish.
 * Time(Days)
-    Time is specified in unit of day. Time must be specified no mater what kind of condition is specified. It servers two purposes: for drawing the temperature chart and guestimate of current stage under certain conditions.
-* Gravity(SG) 
-    The condition meets when the gravity reading is ***less than or equal to*** the specified value. The value can be specified as absolute values like 1.012 or percentage of attenuation like 70%. If percentage of attenuation is used, the original gravity must be specified before applying the beer profile.
-    ![Apply beer profile](img/beerprofileapply.jpg)
-* Stable reading of gravity(Stable)
-    It is specified in unit of hour. Maximum value is 72. The definition of "stability" is when the difference between the lastest gravity reading and previous gravity reading is less to or equal to a threshold, default to 1. 
 
-The fermentaton usually kicks off after a period of lag. The lag usually takes from 10 hours to 24 hours. Therefore, using only stable reading might result in mis-judement.
+    Time is specified in unit of day. Time must be specified no mater what kind of condition is specified. It servers two purposes: for drawing the temperature 
+    chart and guestimate of current stage under certain conditions.
+* Gravity(SG) 
+
+    The condition meets when the gravity reading is ***less than or equal to*** the specified value. The value can be specified as absolute values like 
+    1.012 or percentage of attenuation like 70%. If percentage of attenuation is used, the original gravity must be specified before applying the beer profile.
+* Stable reading of gravity(Stable)
+
+    It is specified in unit of hour. Maximum value is 72. The definition of "stability" is when the difference between the lastest gravity reading and 
+    previous gravity reading is less to or equal to a threshold, default to 1. 
+
+It is recommended to use other condition with stable reading. The fermentaton usually kicks off after a period of lag. The lag usually takes from 10 hours 
+to 24 hours. During lag time, the reading is stable.
 
 **Note:**
-1. The values used by beer profile is *filtered* values. Checked [iSpindel Support](#ispindel-support) for detail information.
-2. Attunation percentage is supported for convience of re-using profile. The real condtion is based on gravity reading by simply multiplying the percentage to the original gravity. The computation is done when the profile is "loaded". Changing the OG after "applying or saving" beer profile has no effect on beer profile. 
+1. The values used by beer profile are *filtered* values. Checked [iSpindel Support](#ispindel-support) for detail information.
+2. Attunation percentage is supported for convenience of profile reuse. 
+The real condition is based on gravity reading by simply multiplying the percentage to the original gravity. 
+The computation is done when the profile is "loaded". Changing the OG after "applying or saving" beer profile has no effect on beer profile. 
+
+![Apply beer profile](img/beerprofileapply.jpg)
 
 ---
 # Hardware Setup
