@@ -15,11 +15,11 @@
  * Web-based network setting
  * SoftAP mode
  * Local Temperature log and temperature chart
- * **[New 1.2.7]** Gravity logging. The gravity data can be manually input or from iSpindel.
-* **[New 1.2.7]** iSpindel support. 
-* **[New 2.0]** Gravity-based temperature schedule.
-* **[New 2.0]** Save and resuse of beer profiles.
-* **[New 2.0]** Static IP.
+ * Gravity logging. The gravity data can be manually input or from iSpindel.
+ * iSpindel support. 
+ * Gravity-based temperature schedule.
+ * Save and resuse of beer profiles.
+ * Static IP setting.
 
 # Contents
 ---
@@ -31,11 +31,12 @@
   * [Soft AP mode](#soft-ap-mode)
   * [Service Pages](#service-pages)
   * [Gravity logging](#gravity-logging)
-  * [iSpindel Support](#ispindel-support) [***New!***]
+  * [iSpindel Support](#ispindel-support) [***Updated!***]
   * [Local logging](#local-logging)
     * [Viewing Chart under AP mode](#viewing-chart-under-ap-mode)
-  * [Remote logging](#remote-logging) [***Updated!***]
-  * [Saved Beer Profiles](#saved-beer-profiles) [***New!***]
+  * [Remote logging](#remote-logging) 
+  * [Saved Beer Profiles](#saved-beer-profiles)
+  * [Beer Profile](#beer-profiles) [***New!***]
 * [Hardware Setup](#hardware-setup)
   * [Support of Rotary Encoder](#support-of-rotary-encoder)
   * [Wake-up button](#wake-up-button)
@@ -47,7 +48,7 @@
   * [JSON commands](#json-commands)
   * [Sensor Calibrartion](#sensor-calibration)
   * [Reset WiFi](#reset-wifi)
-  * [iSpindel Calibration](#ispindel-calibration) [***New!***]
+  * [iSpindel Calibration](#ispindel-calibration) 
 ---
 # Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
@@ -164,7 +165,7 @@ Around `Line 870@iSpindel.ino` of release 01.05.2017 5.x:
 BrewPiLess supports iSpindel by accepting data from iSpindel and acting an **AP** for iSpindel to connect to, BrewPiLess and iSpindel can connect to the same router. 
 To support **softAP**, set the correct settings in `System configuration`. Please note that the password(passphrase) should be at least **8** characters. The same password(pass phrase) is used for setting and for connection certification. Default value is `brewpiless`.
 
-![Main Screen](img/gdsetting.jpg)
+![Gravity Sensor](img/gdsettingv21.jpg)
 
 | Setting   | Description       |
 | -------------- |:---------------------------------|
@@ -173,8 +174,16 @@ To support **softAP**, set the correct settings in `System configuration`. Pleas
 | SG Calibration   |  Offset of gravity reading. This value will be applied(add) to the calcuated SG if SG is calculated by BrewPiLess. |
 | Temp. Correction | Apply temperature correction to the calculated gravity reading. Celsius only. Usually it is 20&deg;C(68&deg;F) or 15&deg;C(59&deg;F). | 
 | Coefficients | The coefficients of the formula to calculate gravity. Note: this set of coefficients is for calcuation of **specific gravity**, **not** plato. Use 0 for x^3 term if quadratic polynomial is used.|
+| LowPass Filter Coefficient | 0~1. See following description|
+| Gravity Stability Threshold | Integer value. 1 point = 0.001.  |
+About low Pass Filter:
+![Low Pass Filter](img/lowpassfilter.jpg)
+The coefficient defines the 'a' in this LPF:
+y = y[i-1] + a ( x - y[i-1] )
+It is usually set to 1/f. So, 1/60 for one minute reporting period, and 1/6 for 10 minute reporteing period.
 
-Note: enable iSpindel setting only enable the initial display of iSpindel status. The gravity report will be process even when the option is OFF.
+
+Note: enabling iSpindel setting only enables the initial display of iSpindel status. The gravity report will be processed even when the option is OFF.
 
 [calibrationSG.htm in /extra folder](extra/calibrationSG.htm) is an utility HTML file which can be used to derive the coefficients instead of using the excel from iSpindel.
 
@@ -238,6 +247,25 @@ Example setting for ubidots.com
 Use `Save As` button to save the edited profile. The saved name should not contain special characters.
 
 Use `...` button next to `Save As` button to open and close the profile list. After loading the profile by clicking it on the list, you have to **Save** it before **Apply**ing it.
+
+## Beer Profile
+![beer profile](img/beerprofilev21.jpg)
+A beer profile is specified by a series of temperature stages. There are two types of temperature stages, ***hold*** and ***ramp***. In ***hold*** stage, the temperature is controlled at the specified temperature until the specified contion meets. In ***ramp*** stage, the temperature changes gradually toward the next stage. A ***ramp*** stage will be automatically inserted between two ***hold*** stages. Only time, in unit of day, can be specified for ***ramp*** stage.
+
+Three conditons and their combinations can be used to specify the condition for a ***hold*** stage to finish.
+* Time(Days)
+    Time is specified in unit of day. Time must be specified no mater what kind of condition is specified. It servers two purposes: for drawing the temperature chart and guestimate of current stage under certain conditions.
+* Gravity(SG) 
+    The condition meets when the gravity reading is ***less than or equal to*** the specified value. The value can be specified as absolute values like 1.012 or percentage of attenuation like 70%. If percentage of attenuation is used, the original gravity must be specified before applying the beer profile.
+    ![Apply beer profile](img/beerprofileapply.jpg)
+* Stable reading of gravity(Stable)
+    It is specified in unit of hour. Maximum value is 72. The definition of "stability" is when the difference between the lastest gravity reading and previous gravity reading is less to or equal to a threshold, default to 1. 
+
+The fermentaton usually kicks off after a period of lag. The lag usually takes from 10 hours to 24 hours. Therefore, using only stable reading might result in mis-judement.
+
+**Note:**
+1. The values used by beer profile is *filtered* values. Checked [iSpindel Support](#ispindel-support) for detail information.
+2. Attunation percentage is supported for convience of re-using profile. The real condtion is based on gravity reading by simply multiplying the percentage to the original gravity. The computation is done when the profile is "loaded". Changing the OG after "applying or saving" beer profile has no effect on beer profile. 
 
 ---
 # Hardware Setup

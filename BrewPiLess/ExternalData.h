@@ -37,6 +37,8 @@ function s_ajax(b){var c=new XMLHttpRequest();c.onreadystatechange=function(){if
 <tr><td>SG Calibration</td><td><input type="text" name="gc"size=4> point</td></tr>
 <tr><td>Temp. Correction</td><td><input type="checkbox" name="tc" value="1"> @ <input type="text" name="ctemp" size=4>&deg;C </td></tr>
 <tr><td>Coefficients</td><td><input type="text" name="a3"  size=15>*x^3 + <input type="text" name="a2" size=15>*x^2+ <input type="text" name="a1" size=15>*x + <input type="text" name="a0" size=15> </td></tr>
+<tr><td>LowPass Filter Coefficient</td><td><input type="text" name="lpc"size=4> </td></tr>
+<tr><td>Gravity Stability Threshold</td><td><input type="text" name="stpt"size=4> point</td></tr>
 <tr><td>Save Change</td><td><input type="submit" name="submit" onclick="save();return false;"></input></td></tr>
 </table>
 </form>
@@ -53,6 +55,7 @@ public:
 	SimpleFilter(){ _b = 0.1;}
 	void setInitial(float v){ _y=v;}
 	void setBeta(float b) { _b = b; }
+	float beta(void){ return _b; }
 
 	float addData(float x){
 		_y = _y + _b * (x - _y);
@@ -78,10 +81,11 @@ protected:
     char *_ispindelName;
 
     bool _calculateGravity;
+    uint8_t _stableThreshold;
 
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),_deviceVoltage(INVALID_VOLTAGE),_lastUpdate(0)
-	,_ispindelEnable(false),_ispindelName(NULL),_calculateGravity(false){}
+	,_ispindelEnable(false),_ispindelName(NULL),_calculateGravity(false),_stableThreshold(1){}
     
     bool iSpindelEnabled(void){return _ispindelEnable;}
     
@@ -97,11 +101,14 @@ public:
 		char strgravity[8];
 		len=sprintFloat(strgravity,_gravity,3);
 		strgravity[len]='\0';
-		
+
+		char slowpassfilter[8];
+		len=sprintFloat(slowpassfilter,filter.beta(),2);
+		slowpassfilter[len]='\0';
+
 		const char *spname=(_ispindelName)? _ispindelName:"Unknown";
-		//static const char fmt[] PROGMEM ="G:{\"name\":\"%s\",\"battery\":%s,\"gravity\":%s,\"lu\":%ld}";
-		//sprintf_P(buf,PSTR("G:{\"name\":\"%s\",\"battery\":%s,\"gravity\":%s,\"lu\":%ld}"),spname, strbattery,strgravity,_lastUpdate);
-		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"lu\":%ld}",spname, strbattery,strgravity,_lastUpdate);
+		
+		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d}",spname, strbattery,strgravity,_lastUpdate,slowpassfilter,_stableThreshold);
 
     }
     void config(char* configdata)
@@ -134,6 +141,12 @@ public:
 		_ispindelCoefficients[1]=root["a1"];
 		_ispindelCoefficients[2]=root["a2"];
 		_ispindelCoefficients[3]=root["a3"];				
+
+        if(root.containsKey("lpc")) filter.setBeta(root["lpc"]);
+        if(root.containsKey("stpt")){
+            _stableThreshold=root["stpt"];
+             brewKeeper.setStableThreshold(_stableThreshold);
+        }
 		// debug
 		#if 0
 		Serial.print("Coefficient:");
@@ -196,10 +209,11 @@ public:
 		_gravity = sg; 
 		_lastUpdate=now;
 #if EnableGravitySchedule		
-		brewKeeper.updateGravity(filter.addData(sg));
+        float fdata=filter.addData(sg);
+		brewKeeper.updateGravity(fdata);
+		gravityTracker.add(fdata,now);
 #endif
 		brewLogger.addGravity(_gravity,false);
-		gravityTracker.add(_gravity,now);
 	}
 
 	float gravity(void){ return _gravity;}
@@ -307,43 +321,3 @@ public:
 extern ExternalData externalData;
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
