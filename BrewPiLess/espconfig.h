@@ -8,7 +8,7 @@
 /*   else, UART0(Serial) is used.                                                     */
 /**************************************************************************************/
 
-#define SerialDebug true
+#define SerialDebug false
 
 #if SerialDebug == true
 #define DebugPort Serial
@@ -46,17 +46,3 @@
 // don't change this.
 #define MAX_PROFILE_LEN 1024
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
