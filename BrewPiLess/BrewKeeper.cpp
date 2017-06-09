@@ -107,7 +107,7 @@ bool BrewProfile::load(String filename)
 	DBG_PRINTF("Profile length:%d\n",len);
 	profileBuffer[len]='\0';
 	
-	const int PROFILE_JSON_BUFFER_SIZE = 20* JSON_OBJECT_SIZE(4) + JSON_ARRAY_SIZE(12);
+	const int PROFILE_JSON_BUFFER_SIZE = JSON_ARRAY_SIZE(15) + 7*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(4) + 5*JSON_OBJECT_SIZE(6);
 	DynamicJsonBuffer jsonBuffer(PROFILE_JSON_BUFFER_SIZE);
 	JsonObject& root = jsonBuffer.parseObject(profileBuffer);
 	
@@ -181,10 +181,16 @@ bool BrewProfile::load(String filename)
     			if(entry["g"].is<const char*>()){
     			    const char* attStr=entry["g"];
     			    float att=atof(attStr);
-                    float csg=1.0 + (_OGPoints * (100.0 - att)/100.0);
-                    _steps[i].sg = FloatToGravity(csg);
-
+    			    if( strchr ( attStr, '%' ) > 0){
+                        float csg=1.0 + (_OGPoints * (100.0 - att)/100.0);
+                        _steps[i].sg = FloatToGravity(csg);
     			    DBG_PRINTF(" att:%s sg:%d",attStr,_steps[i].sg);    			    
+
+                    }else{
+        			    float fsg= entry["g"];
+	        		    _steps[i].sg = FloatToGravity(fsg);
+    	    		    DBG_PRINTF(" sg:%d",_steps[i].sg);
+                    }
     			}else{
     			    float fsg= entry["g"];
 	    		    _steps[i].sg = FloatToGravity(fsg);
@@ -195,7 +201,9 @@ bool BrewProfile::load(String filename)
 			if(entry.containsKey("s")){
     			int st= entry["s"];
 	    		_steps[i].stableTime =st;
-    			DBG_PRINTF(" Stable :%d",_steps[i].stableTime);
+	    		_steps[i].stablePoint=(entry.containsKey("x"))? entry["x"]:_stableThreshold;
+	    		
+    			DBG_PRINTF(" Stable :%d@%d",_steps[i].stablePoint,_steps[i].stableTime);
 			}
 
 			DBG_PRINT(" temp:");	
@@ -634,6 +642,9 @@ void makeTime(time_t timeInput, struct tm &tm){
   tm.tm_mon = month + 1;  // jan is month 1  
   tm.tm_mday = time + 1;     // day of month
 }
+
+
+
 
 
 

@@ -10,7 +10,7 @@ typedef int16_t Gravity;
 
 #define INVALID_GRAVITY -1
 #define IsGravityValid(g) ((g)>0)
-#define FloatToGravity(f) ((Gravity)((f) * 1000.0))
+#define FloatToGravity(f) ((Gravity)((f) * 1000.0 +0.5))
 #define GravityToFloat(g) (((float)(g) / 1000.0))
 
 typedef struct _ProfileStep{
@@ -18,6 +18,7 @@ typedef struct _ProfileStep{
  float    days;
  Gravity  sg;
  uint8_t  stableTime;
+ uint8_t  stablePoint;
  char     condition;
 } ProfileStep;
 
@@ -115,6 +116,9 @@ public:
 };
 
 #endif
+
+
+
 
 
 
