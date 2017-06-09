@@ -20,7 +20,7 @@
  * Gravity-based temperature schedule.
  * Save and resuse of beer profiles.
  * Static IP setting.
-
+ * Export saved datat to csv format by offline log viewer.(**new!**)
 # Contents
 ---
 * [Introduction](#introduction)
@@ -41,7 +41,7 @@
   * [Support of Rotary Encoder](#support-of-rotary-encoder)
   * [Wake-up button](#wake-up-button)
 * [Extra](#extra)
-  * [Offline Log Viewer](#offline-log-viewer) 
+  * [Offline Log Viewer](#offline-log-viewer) **Updated!**
   * [Logging Data to Google Sheets](#logging-data-to-google-sheets) 
   * [Upload HTML/Javascript to ESP8266](#upload-htmljavascript-to-esp8266)
   * [Development tools](#development-tools)
@@ -266,15 +266,12 @@ Three conditons and their combinations can be used to specify the condition for 
     chart and guestimate of current stage under certain conditions.
 * Gravity(SG) 
 
-    The condition meets when the gravity reading is ***less than or equal to*** the specified value. The value can be specified as absolute values like 
-    1.012 or percentage of attenuation like 70%. If percentage of attenuation is used, the original gravity must be specified before applying the beer profile.
+    The condition meets when the gravity reading is ***less than or equal to*** the specified value. The value can be specified as absolute values like 1.012 or percentage of attenuation like 70%. If percentage of attenuation is used, the original gravity must be specified before applying the beer profile.
 * Stable reading of gravity(Stable)
 
-    It is specified in unit of hour. Maximum value is 72. The definition of "stability" is when the difference between the lastest gravity reading and 
-    previous gravity reading is less to or equal to a threshold, default to 1. 
+    It is specified in unit of hour. Maximum value is **72**. The definition of "stability" is when the difference between the lastest gravity reading and previous gravity reading is less to or equal to a threshold, default to 1. Set this threshold value in the `Gravity Sensor` setting page. To specify a specific value of ponts, use the notation: `Gravity@Hours`. For example, the condition of `4@48` will meet when the gravity change is less than or equal to (<=) 4 in 48 hours.
 
-It is recommended to use other condition with stable reading. The fermentaton usually kicks off after a period of lag. The lag usually takes from 10 hours 
-to 24 hours. During lag time, the reading is stable.
+It is recommended to use other condition with stable reading. The fermentaton usually kicks off after a period of lag. The lag usually takes from 10 hours to 24 hours. During lag time, the reading is stable.
 
 **Note:**
 1. The values used by beer profile are *filtered* values. Checked [iSpindel Support](#ispindel-support) for detail information.
@@ -325,6 +322,8 @@ Without a rotary encoder input, the backlight of the LCD will never be turned-of
 ## Offline Log Viewer
 Although the flash size of ESP8266 module might be as big as 16 Mega bytes, it is still limited. The logs can be downloaed and viewed offline. Goto `Extra` folder and download the BPLLogVewer.htm/BPLLogVewerV2.htm. Place them anywhere on your computer, and open it by your browser.
 BPLLogVewerV2.htm is for logs created by v2.0/v1.2.7 or after, while BPLLogVewer.htm is for logs created by older version.
+
+The data can be exported as CSV(comma seperated value) file by offlie log viewer. The time exported is Unix time(EPOC time).
 
 ## Logging data to Google Sheets
 Due to the resource limit of ESP8266, establishment of **HTTPS** connection while serving other functions will crash the system. 

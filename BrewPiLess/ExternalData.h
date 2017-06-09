@@ -12,6 +12,8 @@
 #define IsVoltageValid(v) ((v) > 0)
 #define IsGravityValid(g) ((g) > 0)
 
+#define IsGravityInValidRange(g) ((g) > 0.8 && (g) < 1.25)
+
 extern BrewKeeper brewKeeper;
 extern BrewLogger brewLogger;
 extern BrewPiProxy brewPi;
@@ -203,11 +205,13 @@ public:
 	}
 	
 	void setGravity(float sg, time_t now){
-	
-		if(!IsGravityValid(_gravity)) filter.setInitial(sg);
-		
+
 		_gravity = sg; 
 		_lastUpdate=now;
+
+	    if(!IsGravityInValidRange(sg)) return;
+	    
+		if(!IsGravityValid(_gravity)) filter.setInitial(sg);
 #if EnableGravitySchedule		
         float fdata=filter.addData(sg);
 		brewKeeper.updateGravity(fdata);
@@ -276,6 +280,9 @@ public:
   				return false;
   			}
 			float  gravity = root["gravity"];
+			
+			if(!IsGravityInValidRange(gravity)) return true;
+			
 			if(root.containsKey("og")){
 				setOriginalGravity(gravity);
 			}
@@ -321,6 +328,7 @@ public:
 extern ExternalData externalData;
 
 #endif
+
 
 
 
