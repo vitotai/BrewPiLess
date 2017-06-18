@@ -1149,7 +1149,7 @@ void setup(void){
 
 #ifdef STATUS_LINE
 	// brewpi_setup will "clear" the screen.
-	IPAddress ip = WiFi.localIP();
+	IPAddress ip =(WiFiSetup.isApMode())? WiFi.localIP():WiFi.softAPIP();
 	char buf[21];
 	sprintf(buf,"IP:%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
 	display.printStatus(buf);
@@ -1212,6 +1212,11 @@ void loop(void){
   		}
   	}
 }
+
+
+
+
+
 
 
 

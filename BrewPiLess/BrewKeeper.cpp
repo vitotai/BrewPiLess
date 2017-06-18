@@ -87,10 +87,20 @@ void BrewProfile::setUnit(char unit)
 }
 time_t tm_to_timet(struct tm *tm_time);
 
+
 bool BrewProfile::load(String filename)
 {
+    if(_loadProfile(filename)){
+        _loadBrewingStatus(); // load status to get OG
+        return true;
+    }else
+        return false;
+}
+
+bool BrewProfile::_loadProfile(String filename)
+{
 	//DBG_PRINTF("BrewProfile::load\n");
-	_loadBrewingStatus(); // load status to get OG
+//	_loadBrewingStatus(); // load status to get OG
 
 	if(!SPIFFS.exists(filename)){
 		//DBG_PRINTF("file:%s not exist\n",filename.c_str());
@@ -252,14 +262,18 @@ void BrewProfile::_loadBrewingStatus(void){
 		size_t len=pf.readBytesUntil('\n',buf,32);
 		buf[len]='\0';
 		_currentStep=atoi(buf);
+		DBG_PRINTF("step:%d from %s\n",_currentStep,buf);
+		
 		len=pf.readBytesUntil('\n',buf,32);
 		buf[len]='\0';
 		_timeEnterCurrentStep=atoi(buf);
-
+		DBG_PRINTF("_timeEnterCurrentStep:%d from %s\n",_timeEnterCurrentStep,buf);
+		
 		len=pf.readBytesUntil('\n',buf,32);
 		buf[len]='\0';
 		time_t savedStart=atoi(buf);
-
+		DBG_PRINTF("savedStart:%d from %s\n",savedStart,buf);
+		
 		len=pf.readBytesUntil('\n',buf,32);
 		buf[len]='\0';
 		int ogpoints=atoi(buf);
@@ -271,7 +285,7 @@ void BrewProfile::_loadBrewingStatus(void){
 			// start day is later. that meas a new start
 			_currentStep=0;
 			_timeEnterCurrentStep=0;
-			DBG_PRINTF("New profile!\n");
+			DBG_PRINTF("New profile:st %ld  _timeEnterCurrentStep:%ld!\n",_startDay,_timeEnterCurrentStep);
 		}else{
 			if(_currentStep >= _numberOfSteps){
 				DBG_PRINTF("error step: %d >= %d\n",_currentStep,_numberOfSteps);
@@ -642,6 +656,11 @@ void makeTime(time_t timeInput, struct tm &tm){
   tm.tm_mon = month + 1;  // jan is month 1  
   tm.tm_mday = time + 1;     // day of month
 }
+
+
+
+
+
 
 
 

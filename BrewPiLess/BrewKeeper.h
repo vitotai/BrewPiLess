@@ -44,6 +44,8 @@ class BrewProfile
 	void _saveBrewingStatus(void);
 	void _estimateStep(time_t now);
 	void _toNextStep(unsigned long time);
+	
+	bool _loadProfile(String filename);
 public:
 	BrewProfile(void):_profileLoaded(false),_numberOfSteps(0),_unit('U'),_steps(NULL){ 
     	_currentStep =0;
@@ -116,22 +118,4 @@ public:
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

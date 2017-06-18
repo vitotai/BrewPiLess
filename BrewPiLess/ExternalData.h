@@ -205,13 +205,14 @@ public:
 	}
 	
 	void setGravity(float sg, time_t now){
-
+        // copy these two for reporting to web interface
+        float original_sg=_gravity;
 		_gravity = sg; 
 		_lastUpdate=now;
-
+        // verfiy sg, even invalid value will be reported to web interface
 	    if(!IsGravityInValidRange(sg)) return;
 	    
-		if(!IsGravityValid(_gravity)) filter.setInitial(sg);
+		if(!IsGravityValid(original_sg)) filter.setInitial(sg);
 #if EnableGravitySchedule		
         float fdata=filter.addData(sg);
 		brewKeeper.updateGravity(fdata);
@@ -328,6 +329,11 @@ public:
 extern ExternalData externalData;
 
 #endif
+
+
+
+
+
 
 
 

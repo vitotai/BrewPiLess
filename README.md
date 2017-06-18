@@ -49,6 +49,8 @@
   * [Sensor Calibrartion](#sensor-calibration)
   * [Reset WiFi](#reset-wifi)
   * [iSpindel Calibration](#ispindel-calibration) 
+* [FAQ](#faq)
+   
 ---
 # Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
@@ -456,3 +458,9 @@ For those who don't have access to Microsoft Excel like me, the [calibrationSG.h
 ![iSpindel Calibration](img/calibration.jpg)
 
 *Note: I don't have access to MS Excel, so I am not sure if it is exactly the same as the way iSpindel does it. It works pretty good for me, though.*
+
+---
+# FAQ
+* Q: I can't save the device setting.
+  A: Click the "Erase Setting" and try again.
+
