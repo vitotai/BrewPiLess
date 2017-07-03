@@ -29,6 +29,9 @@
 #include "ActuatorAutoOff.h"
 #include "EepromStructs.h"
 
+#if FridgeSensorFallBack
+#include "TempSensorFallback.h"
+#endif
 
 // Set minimum off time to prevent short cycling the compressor in seconds
 const uint16_t MIN_COOL_OFF_TIME = 300;
@@ -199,6 +202,10 @@ class TempControl{
 	public:
 	TEMP_CONTROL_FIELD TempSensor* beerSensor;
 	TEMP_CONTROL_FIELD TempSensor* fridgeSensor;
+#if FridgeSensorFallBack
+    
+#endif
+
 	TEMP_CONTROL_FIELD BasicTempSensor* ambientSensor;
 	TEMP_CONTROL_FIELD Actuator* heater;
 	TEMP_CONTROL_FIELD Actuator* cooler; 
@@ -236,6 +243,11 @@ class TempControl{
 };
 	
 extern TempControl tempControl;
+
+
+
+
+
 
 
 

@@ -372,7 +372,7 @@ public:
 
 		if( _extTemp != INVALID_TEMP_INT){
 			writeBuffer(idx++,(_extTemp >>8) & 0x7F);
-			writeBuffer(idx++,_extTemp && 0xFF);
+			writeBuffer(idx++,_extTemp & 0xFF);
 			_extTemp = INVALID_TEMP_INT;
 		}
 		
@@ -557,6 +557,7 @@ public:
 	void addAuxTemp(float temp)
 	{
 		_extTemp = convertTemperature(temp);
+		DBG_PRINTF("AuxTemp:%d\n",_extTemp);
 	}
 
 private:
@@ -923,27 +924,3 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

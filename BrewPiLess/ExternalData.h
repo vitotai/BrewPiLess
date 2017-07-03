@@ -304,6 +304,9 @@ public:
 			}
 			float itemp=root["temperature"];
 			setAuxTemperatureCelsius(itemp);
+			
+			//Serial.print("temperature:");
+			//Serial.println(itemp);
 
             if(root.containsKey("battery"))
     		    setDeviceVoltage(root["battery"]);			
@@ -329,13 +332,3 @@ public:
 extern ExternalData externalData;
 
 #endif
-
-
-
-
-
-
-
-
-
-
