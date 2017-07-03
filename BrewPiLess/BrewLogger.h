@@ -63,11 +63,14 @@ public:
 	}
 	void begin(void)
 	{
+    	bool resumeSuccess=false;
 		loadIdxFile();
 		checkspace();
 		if(_fileInfo.logname[0]!='\0'){
-			resumeSession();
-		}else{
+			resumeSuccess=resumeSession();
+		}
+		
+		if(!resumeSuccess){
 			DBG_PRINTF("start volatiel log\n");
 			logData();
 			startVolatileLog();
@@ -132,27 +135,105 @@ public:
 		saveIdxFile();
 	}
 
-	void resumeSession()
+    void initProcessSavedData(void){
+        _resumeLastLogTime = _fileInfo.starttime;
+    }
+    size_t processSavedData(char *buffer,size_t size)
+    {
+        size_t idx=0;
+        uint8_t tag,mask;
+    
+        while(idx < size)
+        {
+            // read tag
+			tag =_logBuffer[idx++];
+		    mask=_logBuffer[idx++];
+			if(tag == PeriodTag){
+		        _resumeLastLogTime += _tempLogPeriod/1000;
+		        int numberInRecord=0;
+
+		        for(int i=0;i<7;i++) if(mask & (1<<i)) numberInRecord +=2; 
+
+		        if((numberInRecord + idx) > size){
+		            // not enough data for this record!
+		            // rewind and return
+		            return idx - 2;
+		        }else{
+		            if(mask & (1<<OrderGravity)){
+		                size_t ridx = idx;
+        		        for(int i=0;i<7;i++){
+	        		        if(mask & (1<<i)){
+		        		        if( i == OrderGravity){
+			        	    	    byte d0=_logBuffer[ridx];
+    			        	        byte d1=_logBuffer[ridx+1];
+    				                int gravityInt = (d0 << 8) | d1;
+                                    DBG_PRINTF("resume@%ld, SG:%d\n",_resumeLastLogTime,gravityInt);
+                                    // dont trust the data
+                                    if(gravityInt > 800 && gravityInt < 1250)
+                                        gravityTracker.add((float)gravityInt/1000.0,_resumeLastLogTime);
+				                } // if this is Gravity data
+				                ridx+=2;
+			                } // if the field exists
+			            } // for each bit
+		            } // if gravity data exists
+		            
+		            idx += numberInRecord;
+			    } // else, of data not enough 
+		    }else if(tag == ResumeBrewTag){
+			    _resumeLastLogTime += mask * 60;
+	    	}
+        } // while data available
+        return idx;
+    }
+	bool resumeSession()
 	{
+    	initProcessSavedData();
 		char buff[36];
 		sprintf(buff,"%s/%s",LOG_PATH,_fileInfo.logname);
 
 		_logFile=SPIFFS.open(buff,"a+");
-		
+		if(! _logFile){
+            DBG_PRINTF("resume failed\n");
+            return false;
+		}
 		size_t fsize= _logFile.size();
 
-		_logIndex = fsize % LogBufferSize;
-		_savedLength=fsize - _logIndex;
+		size_t totalRead=0;
+		size_t byteRead;
+		size_t processed;
+		size_t byteToRead=LogBufferSize;
+		size_t left=0;
+		char *readPtr=_logBuffer;
 		
-		if(_savedLength != 0){
-			// need to read to check header
-			_logFile.readBytes(buff,4);
-			_logFile.seek(_savedLength,SeekSet);
+		while(totalRead < fsize){
+		    byteRead =_logFile.readBytes(readPtr,byteToRead);
+		    //process the data
+            processed=processSavedData(_logBuffer,byteRead+left);
+            
+            if(processed != (byteRead+left)){
+                // some data left , copy them to head,
+                // don't use memcpy, because it's the same buffer
+                // memcpy(_logBuffer, _logBuffer + processed, byteRead- processed);
+                char *src=_logBuffer + processed;
+                char *dst=_logBuffer;
+                left =  (byteRead+left)- processed;
+                for(int i=0;i<left;i++) *dst++ = *src++;
+
+	        	byteToRead=LogBufferSize - left;
+    		    readPtr=dst;
+            }else{
+	        	byteToRead=LogBufferSize;
+    		    readPtr=_logBuffer;
+    		    left=0;
+            }
+             DBG_PRINTF("Move %d bytes, read:%d, process:%d \n",left,byteRead,processed);
+		    //
+		    totalRead += byteRead;
 		}
-		
-		_logFile.readBytes(_logBuffer,_logIndex);
-		
 		// log a "new start" log
+		_logFile.seek(0,SeekEnd);
+		_logIndex =0;
+		_savedLength = fsize;
 		DBG_PRINTF("resume, total _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
 		
 		_lastTempLog=0;
@@ -165,6 +246,7 @@ public:
 		// add resume tag
 		addResumeTag();
 		//DBG_PRINTF("resume done _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
+		return true;
 	}
 	
 	bool isLogging(void){ return _recording; }
@@ -290,7 +372,7 @@ public:
 
 		if( _extTemp != INVALID_TEMP_INT){
 			writeBuffer(idx++,(_extTemp >>8) & 0x7F);
-			writeBuffer(idx++,_extTemp && 0xFF);
+			writeBuffer(idx++,_extTemp & 0xFF);
 			_extTemp = INVALID_TEMP_INT;
 		}
 		
@@ -475,13 +557,15 @@ public:
 	void addAuxTemp(float temp)
 	{
 		_extTemp = convertTemperature(temp);
+		DBG_PRINTF("AuxTemp:%d\n",_extTemp);
 	}
 
 private:
 	size_t _fsspace;
 	uint32_t  _tempLogPeriod;
 	uint32_t _lastTempLog;
-
+    uint32_t _resumeLastLogTime;
+    
 	bool _recording;
 
 	size_t _logIndex;
@@ -803,7 +887,7 @@ private:
 		if(idx < 0) return;
 		writeBuffer(idx,ResumeBrewTag); //*ptr = ResumeBrewTag;
 		size_t rtime= TimeKeeper.getTimeSeconds();
-		writeBuffer(idx+1,(rtime - _fileInfo.starttime)/60);  //*(ptr+1)=(uint8_t)((rtime - _fileInfo.starttime)/60);
+		writeBuffer(idx+1,(rtime - _resumeLastLogTime)/60);  //*(ptr+1)=(uint8_t)((rtime - _fileInfo.starttime)/60);
 		commitData(idx,2);
 	}
 		
@@ -840,16 +924,3 @@ private:
 
 extern BrewLogger brewLogger;
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-

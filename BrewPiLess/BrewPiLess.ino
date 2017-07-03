@@ -35,6 +35,8 @@
 #include "espconfig.h"
 #include "TimeKeeper.h"
 #include "mystrlib.h"
+
+#include "GravityTracker.h"
 #include "BrewKeeper.h"
 #ifdef ENABLE_LOGGING
 #include "DataLogger.h"
@@ -131,6 +133,8 @@ const char *nocache_list[]={
 //*******************************************
 
 ExternalData externalData;
+
+GravityTracker gravityTracker;
 
 bool passwordLcd;
 bool stationApMode;
@@ -1145,7 +1149,7 @@ void setup(void){
 
 #ifdef STATUS_LINE
 	// brewpi_setup will "clear" the screen.
-	IPAddress ip = WiFi.localIP();
+	IPAddress ip =(WiFiSetup.isApMode())? WiFi.softAPIP():WiFi.localIP();
 	char buf[21];
 	sprintf(buf,"IP:%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
 	display.printStatus(buf);
@@ -1208,16 +1212,3 @@ void loop(void){
   		}
   	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

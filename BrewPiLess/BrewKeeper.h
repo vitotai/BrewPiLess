@@ -2,6 +2,7 @@
 #define BrewKeeper_H
 #include <Arduino.h>
 #include "espconfig.h"
+#include "GravityTracker.h"
 
 #if EnableGravitySchedule
 
@@ -9,19 +10,22 @@ typedef int16_t Gravity;
 
 #define INVALID_GRAVITY -1
 #define IsGravityValid(g) ((g)>0)
-#define FloatToGravity(f) ((Gravity)((f) * 1000.0))
+#define FloatToGravity(f) ((Gravity)((f) * 1000.0 +0.5))
 #define GravityToFloat(g) (((float)(g) / 1000.0))
 
 typedef struct _ProfileStep{
  float    temp;
  float    days;
- Gravity    sg;
+ Gravity  sg;
+ uint8_t  stableTime;
+ uint8_t  stablePoint;
  char     condition;
 } ProfileStep;
 
 class BrewProfile
 {
 	time_t _startDay;
+	float _OGPoints;
 	
 	int  _numberOfSteps;
 	
@@ -33,22 +37,31 @@ class BrewProfile
 
 	bool _profileLoaded;
 	char _unit;
+	uint8_t _stableThreshold;
 	
 	void _tempConvert(void);
 	void _loadBrewingStatus(void);
 	void _saveBrewingStatus(void);
 	void _estimateStep(time_t now);
 	void _toNextStep(unsigned long time);
+	
+	bool _loadProfile(String filename);
 public:
-	BrewProfile(void):_profileLoaded(false),_numberOfSteps(0),_unit('U'),_steps(NULL){}
+	BrewProfile(void):_profileLoaded(false),_numberOfSteps(0),_unit('U'),_steps(NULL){ 
+    	_currentStep =0;
+    	_timeEnterCurrentStep = 0;
+    	_stableThreshold = 1;
+	}
 	int numberOfSteps(void){ return _numberOfSteps;}
 	bool loaded(void){return _profileLoaded;}
 
 	void setUnit(char unit);
 	bool load(String filename);
+	void setOriginalGravity(float gravity);
 	float tempByTimeGravity(unsigned long time,Gravity gravity);
 
 	void reload(void){_profileLoaded=false;}
+	void setStableThreshold(uint8_t threshold){ _stableThreshold=threshold; }
 };
 
 #else //#if EnableGravitySchedule
@@ -94,360 +107,17 @@ public:
 #if EnableGravitySchedule	
 	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts),_lastGravity(INVALID_GRAVITY){}	
 	void updateGravity(float sg){ _lastGravity=FloatToGravity(sg);}
+	void updateOriginalGravity(float sg){ _profile.setOriginalGravity(sg); }
 #else
 	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts){}	
 #endif
 	void setFile(String filename){_filename=filename;}
 	void keep(time_t now);
 	void reloadProfile(){ _profile.reload(); _lastSetTemp=0;}
+	void setStableThreshold(uint8_t threshold){_profile.setStableThreshold(threshold);}
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
