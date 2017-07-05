@@ -147,21 +147,13 @@ To enter OG, click the **OG value**. Once OG is availble, the Attenuation and AB
 
 ## iSpindel Support
 ### Modification to iSpindel firmware
-**Important!! Without this modification, BrewPiLess will crash after 5 times of report.**
-There is an issue of ESP8266. (To be more specific, it is an issue of LWIP or TCP/IP.)
-**TL;DR** The issue is described here: https://github.com/esp8266/Arduino/issues/2750 
 
-The work-around for it is add a `delay(50);` aftet finishing data report and before ESP8266 goes into deep sleep, so that ESP8266 has a chance to close the connection.
-Around `Line 870@iSpindel.ino` of release 01.05.2017 5.x: 
+**This workaround is in iSpindel 5.2.1.**
 
-```C
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    SerialOut(WiFi.localIP());
-    uploadData(my_api);
-    delay(50); // <<< add this line
-  }
-```  
+~~For 5.2.0, without this modification, BrewPiLess will crash after 5 times of report.~~
+~~There is an issue of ESP8266. (To be more specific, it is an issue of LWIP or TCP/IP.) The issue is described here: https://github.com/esp8266/Arduino/issues/2750~~
+
+~~The work-around for it is add a `delay(50);` aftet finishing data report and before ESP8266 goes into deep sleep, so that ESP8266 has a chance to close the connection.~~
 
 ### Connection setup for iSpindel
 BrewPiLess supports iSpindel by accepting data from iSpindel and acting an **AP** for iSpindel to connect to, BrewPiLess and iSpindel can connect to the same router. 
@@ -462,5 +454,6 @@ For those who don't have access to Microsoft Excel like me, the [calibrationSG.h
 ---
 # FAQ
 * Q: I can't save the device setting.
-  A: Click the "Erase Setting" and try again.
+
+A: Click the "Erase Setting" and try again.
 
