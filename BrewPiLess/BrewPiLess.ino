@@ -1120,7 +1120,8 @@ void setup(void){
 		SPIFFS.info(fs_info);
 		request->send(200,"","totalBytes:" +String(fs_info.totalBytes) +
 		" usedBytes:" + String(fs_info.usedBytes)+" blockSize:" + String(fs_info.blockSize)
-		+" pageSize:" + String(fs_info.pageSize));
+		+" pageSize:" + String(fs_info.pageSize)
+		+" heap:"+String(ESP.getFreeHeap()));
 		//testSPIFFS();
 	});
 	
