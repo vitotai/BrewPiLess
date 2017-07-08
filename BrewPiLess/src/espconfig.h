@@ -8,7 +8,7 @@
 /*   else, UART0(Serial) is used.                                                     */
 /**************************************************************************************/
 
-#define SerialDebug false
+//#define SerialDebug false
 
 #if SerialDebug == true
 #define DebugPort Serial

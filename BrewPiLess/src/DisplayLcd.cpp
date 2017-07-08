@@ -257,7 +257,7 @@ void LcdDisplay::printState(void){
 	}
 	else if(state==COOLING_MIN_TIME){
 		#if SettableMinimumCoolTime
-		time = tempControl.cc.minCoolTime -sinceIdleTime;
+		time =(tempControl.cc.minCoolTime > sinceIdleTime)? (tempControl.cc.minCoolTime -sinceIdleTime):0;
 		#else
 		time = MIN_COOL_ON_TIME-sinceIdleTime;
 		#endif
@@ -265,7 +265,7 @@ void LcdDisplay::printState(void){
 
 	else if(state==HEATING_MIN_TIME){
 		#if SettableMinimumCoolTime
-		time = tempControl.cc.minHeatTime-sinceIdleTime;
+		time = (tempControl.cc.minHeatTime > sinceIdleTime)? (tempControl.cc.minHeatTime-sinceIdleTime):0;
 		#else
 		time = MIN_HEAT_ON_TIME-sinceIdleTime;
 		#endif

@@ -227,6 +227,11 @@ void DeviceManager::uninstallDevice(DeviceConfig& config)
 			s = &unwrapSensor(config.deviceFunction, *ppv);
 			if (s!=&defaultTempSensor) {
 				setSensor(config.deviceFunction, ppv, &defaultTempSensor);
+				#if FridgeSensorFallBack
+				if(config.deviceFunction == DEVICE_BEER_TEMP)
+					tempControl.fridgeSensor->setBackupSensor(&defaultTempSensor);
+				#endif
+
 //				DEBUG_ONLY(logInfoInt(INFO_UNINSTALL_TEMP_SENSOR, config.deviceFunction));
 				delete s;
 			}
@@ -277,6 +282,10 @@ void DeviceManager::installDevice(DeviceConfig& config)
 			else {
 				ts = ((TempSensor*)*ppv);
 				ts->setSensor(s);
+				#if FridgeSensorFallBack
+				if(config.deviceFunction == DEVICE_BEER_TEMP)
+					tempControl.fridgeSensor->setBackupSensor(s);
+				#endif
 				ts->init();
 			}
 #if BREWPI_SIMULATE

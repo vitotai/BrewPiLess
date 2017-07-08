@@ -41,12 +41,25 @@ void TempSensor::init()
 void TempSensor::update()
 {
 	temperature temp;
+	#if FridgeSensorFallBack
+
+	if (_sensor && (temp=_sensor->read())!=TEMP_SENSOR_DISCONNECTED) {
+		_useBackupSensor = false;
+	}else if(_backupSensor && (temp=_backupSensor->read())!=TEMP_SENSOR_DISCONNECTED ){
+		_useBackupSensor = true;
+	}else{
+		failedReadCount++;
+		failedReadCount = min(failedReadCount,int8_t(127));	// limit
+		return;
+	}
+	#else
 	if (!_sensor || (temp=_sensor->read())==TEMP_SENSOR_DISCONNECTED) {
 		failedReadCount++;
 		failedReadCount = min(failedReadCount,int8_t(127));	// limit
 		return;
 	}
-
+	#endif
+	
 	fastFilter.add(temp);
 	slowFilter.add(temp);
 

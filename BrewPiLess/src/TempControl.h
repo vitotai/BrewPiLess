@@ -29,9 +29,7 @@
 #include "ActuatorAutoOff.h"
 #include "EepromStructs.h"
 
-#if FridgeSensorFallBack
-#include "TempSensorFallback.h"
-#endif
+
 
 #if !SettableMinimumCoolTime
 // Set minimum off time to prevent short cycling the compressor in seconds
@@ -209,9 +207,7 @@ class TempControl{
 	public:
 	TEMP_CONTROL_FIELD TempSensor* beerSensor;
 	TEMP_CONTROL_FIELD TempSensor* fridgeSensor;
-#if FridgeSensorFallBack
 
-#endif
 
 	TEMP_CONTROL_FIELD BasicTempSensor* ambientSensor;
 	TEMP_CONTROL_FIELD Actuator* heater;

@@ -203,24 +203,36 @@
 #define PIN_SDA NODEMCU_PIN_D2
 #define PIN_SCL NODEMCU_PIN_D1
 
-//#define SONOFF true
 
-#if SONOFF
+#if  SONOFF
 #define oneWirePin NODEMCU_PIN_D5  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 #define coolingPin NODEMCU_PIN_D6
 #define heatingPin NODEMCU_PIN_D0
 #define doorPin    NODEMCU_PIN_D7
 #define BuzzPin NODEMCU_PIN_D3
 #define BREWPI_LCD false
-#else
+
+#elif Thorrak_PCB
+
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 // actuators
+#define coolingPin NODEMCU_PIN_D5
+#define heatingPin NODEMCU_PIN_D0
+#define doorPin    NODEMCU_PIN_D7
+#define BuzzPin NODEMCU_PIN_D3
+#define WakeupButtonPin NODEMCU_PIN_D4
+
+#else
+
+#define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 #define coolingPin NODEMCU_PIN_D5
 #define heatingPin NODEMCU_PIN_D7
 #define doorPin    NODEMCU_PIN_D4
 #define BuzzPin NODEMCU_PIN_D0
+#define WakeupButtonPin NODEMCU_PIN_D3
 
 #endif
+
 
 #if BREWPI_LCD
 // LCD configurations:
@@ -252,7 +264,6 @@
 //#define rotarySwitchPin 0 // INT2
 
 #if WAKEUP_BUTTON
-#define WakeupButtonPin NODEMCU_PIN_D3
 #if BREWPI_ROTARY_ENCODER
 #error "No wakeup button with rotary encoder"
 #endif
@@ -305,3 +316,8 @@
 #define BUFFER_PILINK_PRINTS 1
 
 #define EARLY_DISPLAY 1
+
+#if GlycolSupport
+#define SettableMinimumCoolTime true
+#define FridgeSensorFallBack true
+#endif

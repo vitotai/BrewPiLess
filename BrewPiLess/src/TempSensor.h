@@ -49,21 +49,37 @@ class TempSensor {
 	TempSensor(TempSensorType sensorType, BasicTempSensor* sensor =NULL)  {
 		updateCounter = 255; // first update for slope filter after (255-4s)
 		setSensor(sensor);
+		#if FridgeSensorFallBack
+		_useBackupSensor=false;
+		_backupSensor=NULL;
+		#endif
 	 }
 
 	 void setSensor(BasicTempSensor* sensor) {
 		 _sensor = sensor;
 		 failedReadCount = -1;
 	 }
-
+	#if FridgeSensorFallBack
+	void setBackupSensor(BasicTempSensor* sensor) {
+		 _backupSensor = sensor;
+	 }
+	#endif
 	bool hasSlowFilter() { return true; }
 	bool hasFastFilter() { return true; }
 	bool hasSlopeFilter() { return true; }
 
 	void init();
-
+	
+	#if FridgeSensorFallBack
+	bool isConnected() {
+			if(_useBackupSensor && _backupSensor)
+				return _backupSensor->isConnected();
+			else
+				return _sensor->isConnected(); 
+		}
+	#else
 	bool isConnected() { return _sensor->isConnected(); }
-
+	#endif
 	void update();
 
 	temperature readFastFiltered(void);
@@ -93,7 +109,10 @@ class TempSensor {
 	TempSensorFilter slopeFilter;
 	unsigned char updateCounter;
 	temperature_precise prevOutputForSlope;
-
+	#if FridgeSensorFallBack
+	BasicTempSensor* _backupSensor;
+	bool _useBackupSensor;
+	#endif
 	// An indication of how stale the data is in the filters. Each time a read fails, this value is incremented.
 	// It's used to reset the filters after a large enough disconnect delay, and on the first init.
 	int8_t failedReadCount;		// -1 for uninitialized, >=0 afterwards.
