@@ -36,7 +36,8 @@
     * [Viewing Chart under AP mode](#viewing-chart-under-ap-mode)
   * [Remote logging](#remote-logging) 
   * [Saved Beer Profiles](#saved-beer-profiles)
-  * [Beer Profile](#beer-profiles) **New!**
+  * [Beer Profile](#beer-profile) **New!**
+  * [Glycol](#glycol) **New!**
 * [Hardware Setup](#hardware-setup)
   * [Support of Rotary Encoder](#support-of-rotary-encoder)
   * [Wake-up button](#wake-up-button)
@@ -274,6 +275,32 @@ The real condition is based on gravity reading by simply multiplying the percent
 The computation is done when the profile is "loaded". Changing the OG after "applying or saving" beer profile has no effect on beer profile. 
 
 ![Apply beer profile](img/beerprofileapply.jpg)
+
+## Glycol
+BrewPi(Less) is designed to control fermenting temperature in a fridge or freezer. To control glycol cooling, some hacks are necessary:
+
+1. build with GlycolSupport option enabled
+    It's simple by adding `-DGlycolSupport=true` to build flag in platformio.ini
+
+    `build_flags = -Wl,-Tesp8266.flash.4m.ld -DGlycolSupport=true`
+
+2. Set minimum cooling/heating on/off time
+    open the page `http://brewpiless.local/testcmd.htm`
+    Set the following options: `minCoolTime`, `minCoolIdleTime`, `minHeatTime`, `minHeatIdleTIme`, `deadTime`. The `deadTime` is the minimum time between cooling and heating. It also defines the minimum waiting time after booting up. Issue a command like this to set minimum cooling on and off to 10 seconds:
+    
+    `j{"minCoolTime":10,"minCoolIdleTime":10}`
+    
+3. Set P.I.D. parameter
+    Setting all P.I.D. to zero will result in the "fridge set" equal to "beer set".
+    
+    `j{"Kp":0,"Ki":0,"Kd":0}`
+
+    You can use `c` (yes, only one single lower case "c" character.) to read back the setting value. If the values don't change, you might need to erase the flash.
+
+4. Use only beer sensor and control the pump. The fridge temperature will read from beer sensor.
+
+*Special Note:*
+You might notice that temperatures of beer and fridge from the same sensor are different. The reason is the values are filtered and and they have different filtering parameters. Those parameters also can be changed by the JSON commands. `fridgeFastFilt`, `fridgeSlowFilt`, `firdgeSlopeFilt`, `beerFastFilt`, `beerSlowFilt`, and `beerSlopeFilt`.
 
 ---
 # Hardware Setup

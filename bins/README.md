@@ -7,16 +7,12 @@ Those images are prebuilt:
  * 20x4 LCD at any address
  * LCD backlight won't turn off automatically, because there is no rotary encoder available.
 
-## sonoff
-* For SONOFF.
-    * Sensor on D5, Coolling on D6 
- * No rotary encoder. No LCD
- * OTA update supported.
- * 64K SPIFFS. limited space for logging.
-
 ## sonoff.512spiffs
 * For SONOFF.
     * Sensor on D5, Coolling on D6 
  * No rotary encoder. No LCD
  * OTA update **NOT** supported.
  * 512K SPIFFS for logging.
+
+## glycol
+* Standard options with GlycolSupport on.
