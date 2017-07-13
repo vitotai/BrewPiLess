@@ -177,7 +177,18 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
+//////////////////////////////////////////////////////////////////////////
+//
+// Board Definitoin
+//
+// 
+#define BrewShield 0
+#define Sonoff 1
+#define Thorrak_PCB 2
 
+#ifndef BOARD
+#define BOARD BrewShield
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -204,7 +215,10 @@
 #define PIN_SCL NODEMCU_PIN_D1
 
 
-#if  SONOFF
+#if  BOARD == Sonoff
+// define this option to disable webserver.
+#define SONOFF true 
+
 #define oneWirePin NODEMCU_PIN_D5  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 #define coolingPin NODEMCU_PIN_D6
 #define heatingPin NODEMCU_PIN_D0
@@ -212,8 +226,7 @@
 #define BuzzPin NODEMCU_PIN_D3
 #define BREWPI_LCD false
 
-#elif Thorrak_PCB
-
+#elif BOARD == Thorrak_PCB
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 // actuators
 #define coolingPin NODEMCU_PIN_D5
@@ -222,15 +235,16 @@
 #define BuzzPin NODEMCU_PIN_D3
 #define WakeupButtonPin NODEMCU_PIN_D4
 
-#else
-
+#elif BOARD == BrewShield
+// default
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 #define coolingPin NODEMCU_PIN_D5
 #define heatingPin NODEMCU_PIN_D7
 #define doorPin    NODEMCU_PIN_D4
 #define BuzzPin NODEMCU_PIN_D0
 #define WakeupButtonPin NODEMCU_PIN_D3
-
+#else
+#error "unknown board"
 #endif
 
 
@@ -317,7 +331,7 @@
 
 #define EARLY_DISPLAY 1
 
-#if GlycolSupport
+#ifdef GlycolSupport
 #define SettableMinimumCoolTime true
 #define FridgeSensorFallBack true
 #endif
