@@ -331,7 +331,7 @@
 
 #define EARLY_DISPLAY 1
 
-#ifdef GlycolSupport
+#ifdef EnableGlycolSupport
 #define SettableMinimumCoolTime true
 #define FridgeSensorFallBack true
 #endif

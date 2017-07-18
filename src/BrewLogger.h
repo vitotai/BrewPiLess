@@ -866,19 +866,17 @@ private:
 	}
 
 	uint16_t convertTemperature(float temp){
+		if(temp >= 225 || temp < -100) 
+			return INVALID_TEMP_INT;
+		
 		int temp_int=(int)(temp * 100.0);
 		//DBG_PRINTF("add temperature:%d\n",temp_int);
 		// valid temp range, 225 ~ -100 
 		// 0 ~ 225: 
 		// -100 ~ 0 :  226  - t  , maximum 32500 ( max uint16 32767)  
-		if(temp_int > 22500 || temp < -10000 ){
-			return INVALID_TEMP_INT;
-		}else{
-			if(temp_int < 0)
-				return (uint16_t)( 22600 - temp_int);
-			else
-				return (uint16_t)temp_int;
-		}
+
+		uint16_t ret=(temp_int < 0)? (uint16_t)(22500 - temp_int):(uint16_t)temp_int;
+		return ret & 0x7FFF;
 	}
 
 	uint16_t convertGravity(float gravity){
