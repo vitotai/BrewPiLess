@@ -889,7 +889,9 @@ private:
 		if(idx < 0) return;
 		writeBuffer(idx,ResumeBrewTag); //*ptr = ResumeBrewTag;
 		size_t rtime= TimeKeeper.getTimeSeconds();
-		writeBuffer(idx+1,(rtime - _resumeLastLogTime)/60);  //*(ptr+1)=(uint8_t)((rtime - _fileInfo.starttime)/60);
+		int gap=(rtime - _resumeLastLogTime)/60;
+		if (gap > 255) gap = 255;
+		writeBuffer(idx+1,(uint8_t)gap);  //*(ptr+1)=(uint8_t)((rtime - _fileInfo.starttime)/60);
 		commitData(idx,2);
 	}
 
