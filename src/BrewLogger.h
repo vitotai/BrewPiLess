@@ -867,13 +867,17 @@ private:
 
 	uint16_t convertTemperature(float temp){
 		int temp_int=(int)(temp * 100.0);
-		// assume temp is smaller than 300, -> maximum temp *100= 30000 < 32767
 		//DBG_PRINTF("add temperature:%d\n",temp_int);
-
-		if(temp_int > 30000 || temp < -100.0 ){
+		// valid temp range, 225 ~ -100 
+		// 0 ~ 225: 
+		// -100 ~ 0 :  226  - t  , maximum 32500 ( max uint16 32767)  
+		if(temp_int > 22500 || temp < -10000 ){
 			return INVALID_TEMP_INT;
 		}else{
-			return (uint16_t)temp_int;
+			if(temp_int < 0)
+				return (uint16_t)( 22600 - temp_int);
+			else
+				return (uint16_t)temp_int;
 		}
 	}
 
