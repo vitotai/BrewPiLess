@@ -90,8 +90,29 @@ time_t tm_to_timet(struct tm *tm_time);
 
 bool BrewProfile::load(String filename)
 {
+	time_t savedStart=0;
+	if(!_statusLoaded){
+		_statusLoaded = true;
+		savedStart=_loadBrewingStatus(); // status need to load before profile
+	}
+	// the profile might be "reloaded" after user update
+	// or the first time loaded. in that case. the status is empty
     if(_loadProfile(filename)){
-        _loadBrewingStatus(); // load status to get OG
+		if(savedStart){
+			if((savedStart != _startDay) ||
+				(_timeEnterCurrentStep < _startDay)){
+				// start day is later. that meas a new start
+				_currentStep=0;
+				_timeEnterCurrentStep=0;
+				DBG_PRINTF("New profile:st %ld  _timeEnterCurrentStep:%ld!\n",_startDay,_timeEnterCurrentStep);
+			}else{
+				if(_currentStep >= _numberOfSteps){
+					DBG_PRINTF("error step: %d >= %d\n",_currentStep,_numberOfSteps);
+				}else{
+					_currentStepDuration =(time_t)(_steps[_currentStep].days * 86400);
+				}
+			}
+		}
         return true;
     }else
         return false;
@@ -100,7 +121,6 @@ bool BrewProfile::load(String filename)
 bool BrewProfile::_loadProfile(String filename)
 {
 	//DBG_PRINTF("BrewProfile::load\n");
-//	_loadBrewingStatus(); // load status to get OG
 
 	if(!SPIFFS.exists(filename)){
 		//DBG_PRINTF("file:%s not exist\n",filename.c_str());
@@ -242,66 +262,75 @@ void BrewProfile::setOriginalGravity(float gravity){
     _saveBrewingStatus();
 }
 
+#define MAX_BREWING_STATE_LEN 256
+
 void BrewProfile::_saveBrewingStatus(void){
 	File pf=SPIFFS.open(BrewStatusFile,"w");
 	if(pf){
 	    int ogpoints=(int) round(_OGPoints * 1000.0);
-		pf.printf("%d\n%ld\n%ld\n%d\n",_currentStep,_timeEnterCurrentStep,_startDay,ogpoints);
+		const int STATUS_JSON_BUFFER_SIZE =  2 *JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(3);
+
+		DynamicJsonBuffer jsonBuffer(STATUS_JSON_BUFFER_SIZE);
+		JsonObject& root = jsonBuffer.createObject();
+		root["s"] = _currentStep;
+		root["e"] = _timeEnterCurrentStep;
+		root["b"] =_startDay;
+		root["og"] = ogpoints;
+		root.printTo(pf);
+		//pf.printf("%d\n%ld\n%ld\n%d\n",_currentStep,_timeEnterCurrentStep,_startDay,ogpoints);
 	}
 	pf.close();
 }
 
-void BrewProfile::_loadBrewingStatus(void){
-	File pf=SPIFFS.open(BrewStatusFile,"r");
+time_t BrewProfile::_loadBrewingStatus(void){
+	
+	time_t savedStart =0;
 
+	File pf=SPIFFS.open(BrewStatusFile,"r");
+	
 	_currentStep=0;
 	_timeEnterCurrentStep=0;
 
 	if(pf){
-		char buf[32];
-		size_t len=pf.readBytesUntil('\n',buf,32);
-		buf[len]='\0';
-		_currentStep=atoi(buf);
-		DBG_PRINTF("step:%d from %s\n",_currentStep,buf);
 
-		len=pf.readBytesUntil('\n',buf,32);
-		buf[len]='\0';
-		_timeEnterCurrentStep=atoi(buf);
-		DBG_PRINTF("_timeEnterCurrentStep:%d from %s\n",_timeEnterCurrentStep,buf);
+		char buffer[MAX_BREWING_STATE_LEN];
+		size_t len=pf.readBytes(buffer,MAX_BREWING_STATE_LEN);
+		pf.close();
+		buffer[len]='\0';
+		DBG_PRINTF("Profile length:%d %s\n",len,buffer);
+		const int STATUS_JSON_BUFFER_SIZE =  2 *JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(3);
+		DynamicJsonBuffer jsonBuffer(STATUS_JSON_BUFFER_SIZE);
+		JsonObject& root = jsonBuffer.parseObject(buffer);
 
-		len=pf.readBytesUntil('\n',buf,32);
-		buf[len]='\0';
-		time_t savedStart=atoi(buf);
-		DBG_PRINTF("savedStart:%d from %s\n",savedStart,buf);
-
-		len=pf.readBytesUntil('\n',buf,32);
-		buf[len]='\0';
-		int ogpoints=atoi(buf);
-        _OGPoints = (float)ogpoints /1000.0;
-		DBG_PRINTF("load step:%d, time:%d ogpt:%d\n",_currentStep,_timeEnterCurrentStep,ogpoints);
-
-		if((savedStart != _startDay) ||
-			(_timeEnterCurrentStep < _startDay)){
-			// start day is later. that meas a new start
-			_currentStep=0;
-			_timeEnterCurrentStep=0;
-			DBG_PRINTF("New profile:st %ld  _timeEnterCurrentStep:%ld!\n",_startDay,_timeEnterCurrentStep);
-		}else{
-			if(_currentStep >= _numberOfSteps){
-				DBG_PRINTF("error step: %d >= %d\n",_currentStep,_numberOfSteps);
-			}else{
-				_currentStepDuration =(time_t)(_steps[_currentStep].days * 86400);
-			}
+		if(!root.success() 
+			|| !root.containsKey("s")
+			|| !root.containsKey("e")
+			|| !root.containsKey("b")
+			|| !root.containsKey("og")	){
+			DBG_PRINTF("brew status failed, size:%d\n",STATUS_JSON_BUFFER_SIZE);
+			return 0;
 		}
+		_currentStep=root["s"];
+		_timeEnterCurrentStep=root["e"];
+		savedStart=root["b"];
+		int ogpoints=root["og"];
+
+		DBG_PRINTF("step:%d, since:%ld, begin:%ld, og:%d\n",_currentStep,_timeEnterCurrentStep,savedStart,ogpoints);
+
+        _OGPoints = (float)ogpoints /1000.0;
 	}else{
 		DBG_PRINTF("%s open failed\n",BrewStatusFile);
 		// try to figure out where we were
 	}
 	pf.close();
+	return savedStart;
 }
 
 void BrewProfile::_estimateStep(time_t now)
 {
+	_timeEnterCurrentStep = _startDay;
+	_currentStep =0;
+/*
 	time_t stime=_startDay;
 	for(int i=0;i<_numberOfSteps;i++)
 	{
@@ -318,6 +347,7 @@ void BrewProfile::_estimateStep(time_t now)
 		stime =next;
 	}
 	_currentStep=_numberOfSteps;
+*/
 }
 
 void BrewProfile::_toNextStep(unsigned long time)

@@ -36,18 +36,21 @@ class BrewProfile
 	ProfileStep *_steps;
 
 	bool _profileLoaded;
+	bool _statusLoaded;
 	char _unit;
 	uint8_t _stableThreshold;
 
 	void _tempConvert(void);
-	void _loadBrewingStatus(void);
+	time_t _loadBrewingStatus(void);
 	void _saveBrewingStatus(void);
+
 	void _estimateStep(time_t now);
+
 	void _toNextStep(unsigned long time);
 
 	bool _loadProfile(String filename);
 public:
-	BrewProfile(void):_profileLoaded(false),_numberOfSteps(0),_unit('U'),_steps(NULL){
+	BrewProfile(void):_profileLoaded(false),_statusLoaded(false),_numberOfSteps(0),_unit('U'),_steps(NULL){
     	_currentStep =0;
     	_timeEnterCurrentStep = 0;
     	_stableThreshold = 1;
