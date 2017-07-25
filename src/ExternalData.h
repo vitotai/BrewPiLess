@@ -206,19 +206,20 @@ public:
 
 	void setGravity(float sg, time_t now){
         // copy these two for reporting to web interface
-        float original_sg=_gravity;
+        float old_sg=_gravity;
 		_gravity = sg;
 		_lastUpdate=now;
         // verfiy sg, even invalid value will be reported to web interface
 	    if(!IsGravityInValidRange(sg)) return;
 
-		if(!IsGravityValid(original_sg)) filter.setInitial(sg);
+		if(!IsGravityValid(old_sg)) filter.setInitial(sg);
 #if EnableGravitySchedule
-        float fdata=filter.addData(sg);
-		brewKeeper.updateGravity(fdata);
-		gravityTracker.add(fdata,now);
+        float filtered_data=filter.addData(sg);
+		// use filter data as input to tracker and beer profile.
+		brewKeeper.updateGravity(filtered_data);
+		gravityTracker.add(filtered_data,now);
 #endif
-		brewLogger.addGravity(_gravity,false);
+		brewLogger.addGravity(sg,false);
 	}
 
 	float gravity(void){ return _gravity;}

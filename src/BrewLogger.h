@@ -38,6 +38,9 @@
 #define OrderExtTemp 5
 #define OrderGravity 6
 
+#define GravityEncode(g) (uint16_t)(10000.0 * (g) + 0.5)
+#define GravityDecode(a) (float)(a)/10000.0
+
 typedef struct _FileIndexEntry{
 	char name[24];
 	unsigned long time;
@@ -169,8 +172,8 @@ public:
     				                int gravityInt = (d0 << 8) | d1;
                                     DBG_PRINTF("resume@%ld, SG:%d\n",_resumeLastLogTime,gravityInt);
                                     // dont trust the data
-                                    if(gravityInt > 800 && gravityInt < 1250)
-                                        gravityTracker.add((float)gravityInt/1000.0,_resumeLastLogTime);
+                                    if(gravityInt > 8000 && gravityInt < 12500)
+                                        gravityTracker.add(GravityDecode(gravityInt),_resumeLastLogTime);
 				                } // if this is Gravity data
 				                ridx+=2;
 			                } // if the field exists
@@ -548,9 +551,9 @@ public:
 	void addGravity(float gravity,bool isOg=false)
 	{
 		if(isOg){
-			_extOriginGravity = convertGravity(gravity);
+			_extOriginGravity = GravityEncode(gravity);
 		}else{
-			_extGravity=convertGravity(gravity);
+			_extGravity=GravityEncode(gravity);
 		}
 	}
 
@@ -879,9 +882,6 @@ private:
 		return ret & 0x7FFF;
 	}
 
-	uint16_t convertGravity(float gravity){
-			return (uint16_t) (1000.0 * gravity + 0.5);
-	}
 
 	void addResumeTag(void)
 	{
