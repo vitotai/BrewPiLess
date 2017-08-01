@@ -31,7 +31,7 @@
 #include "OLEDDisplay.h"
 #include <Wire.h>
 
-class  : public OLEDDisplay {
+class SSD1306Wire : public OLEDDisplay {
   private:
       uint8_t             _address;
       uint8_t             _sda;
@@ -50,7 +50,7 @@ class  : public OLEDDisplay {
      }
 
   public:
-    (uint8_t _address, uint8_t _sda, uint8_t _scl) {
+    SSD1306Wire(uint8_t _address, uint8_t _sda, uint8_t _scl) {
       this->_address = _address;
       this->_sda = _sda;
       this->_scl = _scl;
