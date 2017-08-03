@@ -2,7 +2,8 @@
  *Remember to clear browser cache to get new interface!*
  *Note: New log format after V1.2.7&v2.0!*
  *Note: default username/password/hostname changes to `brewpiless` after v1.2.7*
-
+ **Note: The code is now built in PlatformIO.**
+  
 ## Features
  * I2C LCD support
  * Rotary Encoder support (* not supported by default)
@@ -24,6 +25,7 @@
 # Contents
 ---
 * [Introduction](#introduction)
+    * [Version History](#version-history)
 * [Software configuration](#software-configuration)
   * [Libraries](#libraries)
 * [Usage](#usage)
@@ -84,6 +86,16 @@ The difference bewteen v1.2.7 and v.20 is
 * Incorrect tempeerature chart.
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
+## Version History
+ * v2.2
+    * 4 decimals of gravity
+    * Switch to PlatformIO instead of Arduino IDE.
+ * v2.1
+    * more gravity-based condition 
+ * v2.0
+    * gravity-based beer profil schedule
+ * v1.2.7
+    * iSpindel support 
 # Software configuration
 BrewPi related configuration is defined in `config.h` while networking related configuration is defined in `espconfig.h`. They are both self-explanatory and commented. Please check the files directly.
 
