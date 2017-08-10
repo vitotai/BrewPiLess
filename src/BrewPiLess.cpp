@@ -981,7 +981,10 @@ void initWakeupButton(void){
 }
 #endif //#ifdef WAKEUP_BUTTON
 
-
+#ifdef EMCWorkAround
+uint32_t _lcdReinitTime;
+#define LCDReInitPeriod (10*60*1000)
+#endif
 
 void setup(void){
 
@@ -1156,7 +1159,9 @@ void setup(void){
 	display.printStatus(buf);
 	_displayTime = TimeKeeper.getTimeSeconds() + 20;
 #endif
-
+#ifdef EMCWorkAround
+	_lcdReinitTime = millis();
+#endif
 }
 
 
@@ -1172,6 +1177,14 @@ void loop(void){
 	ESPUpdateServer_loop();
 #endif
 	time_t now=TimeKeeper.getTimeSeconds();
+
+#ifdef EMCWorkAround
+	if( (millis() - _lcdReinitTime) > LCDReInitPeriod){
+		_lcdReinitTime=millis();
+		display.init();
+		display.printAll();
+	}
+#endif
 
 #ifdef STATUS_LINE
 	if(_displayTime < now){

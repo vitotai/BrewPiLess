@@ -10,8 +10,11 @@
 
 #if BREWPI_OLED128x64_LCD
 
+#if BREWPI_OLED_SH1106   // New 
+#include "SH1106.h"
+#else
 #include "SSD1306.h"
-
+#endif
 class IICOledLcd : public Print {
 public:
   IICOledLcd(uint8_t lcd_Addr,uint8_t sda,uint8_t scl);
@@ -89,7 +92,11 @@ public:
   using Print::write;
 
 private:
-  SSD1306  _display;
+#if BREWPI_OLED_SH1106
+SH1106  _display;
+#else
+SSD1306  _display;
+#endif
   uint8_t _Addr;
   uint8_t _currline;
   uint8_t _currpos;
