@@ -11,225 +11,216 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body onload=init()>
-  <div class="frame" id="top-frame">
-    <div id="topbar">
-      <div id="lcd" class="lcddisplay"><span class="lcd-text">
-        <span class="lcd-line" id="lcd-line-0">Live LCD waiting</span>
-        <span class="lcd-line" id="lcd-line-1">for update from</span>
-        <span class="lcd-line" id="lcd-line-2">script...</span>
-        <span class="lcd-line" id="lcd-line-3"></span></p><p>
-        </div>
-        <div id="banner">BrewPiLess v2.1
-          <div id="recording"></div>
-        </div>
-        <div id="menu">
-          <button onclick="window.open('/log')">Data Logging</button>
-          <br>
-          <button onclick="window.open('/setup.htm')">Device Setup</button>
-          <br>
-          <button onclick="window.open('/config')">System Config</button>
-          <br>
-          <button onclick="window.open('/gdc')">Gravity Sensor</button>
-        </div>
-        <div id="gravity-pane">
-          <table>
-            <tr><th>OG:</th><td> <span id="gravity-og"  onclick="inputOG()">--</span><td></tr>
-              <tr><th>SG:</th><td>  <span id="gravity-sg" onclick="inputSG()">--</span><div id="fgstate"></div><td></tr>
-                <tr><th>ATT:</th><td> <span id="gravity-att"> --</span>%<td></tr>
-                  <tr><th>ABV:</th><td> <span id="gravity-abv"> --</span>%<td></tr>
+  <header layout horizontal main-justified cross-center class="header">
+    <h1 class="header_title">BrewPiLess <span class="header_version-display">v2.1</span></h1>
+    <div id="recording"></div>
+    <ul class="options">
+      <li><a href="/log">logs</a></li>
+      <li><a href="/setup.htm">setup</a></li>
+      <li><a href="/config">config</a></li>
+      <li><a href="/gdc">gravity</a></li>
+    </ul>
+  </header>
 
-                  </table>
+  <div viewport>
+  <h4>Name of the view</h4>
+  <div layout horizontal>
+    <div id="div_g" class="chart"></div>
+    <ul flex class="chart-legend">
+      <li class="chart-legend-row time">
+        <div class="beer-chart-legend-time">Date/Time</div>
+      </li>
+      <li class="chart-legend-row beerTemp">
+        <div class="toggle beerTemp" onclick="BChart.toggle('beerTemp')"></div>
+        <div class="legend-label" onclick="BChart.toggle('beerTemp')">Beer Temp</div>
+        <div class="legend-value">--</div>
+      </li>
+      <li class="chart-legend-row beerSet">
+        <div class="toggle beerSet" onclick="BChart.toggle('beerSet')"></div>
+        <div class="legend-label" onclick="BChart.toggle('beerSet')">Beer Set</div>
+        <div class="legend-value">--</div>
+      </li>
+      <li class="chart-legend-row fridgeTemp">
+        <div class="toggle beerSet" onclick="BChart.toggle('fridgeTemp')"></div>
+        <div class="legend-label" onclick="BChart.toggle('fridgeTemp')">Fridge Temp</div>
+        <div class="legend-value">--</div>
+      </li>
+      <li class="chart-legend-row fridgeSet">
+        <div class="toggle beerSet" onclick="BChart.toggle('fridgeSet')"></div>
+        <div class="legend-label" onclick="BChart.toggle('fridgeSet')">Fridge Set</div>
+        <div class="legend-value">--</div>
+      </li>
+      <li class="chart-legend-row roomTemp">
+        <div class="toggle beerSet" onclick="BChart.toggle('roomTemp')"></div>
+        <div class="legend-label" onclick="BChart.toggle('roomTemp')">Room Temp</div>
+        <div class="legend-value">--</div>
+      </li>
+      <li class="chart-legend-row auxTemp">
+        <div class="toggle gravity" onclick="BChart.toggle('auxTemp')"></div>
+        <div class="legend-label" onclick="BChart.toggle('auxTemp')">Aux Temp</div>
+        <div class="legend-value">--</div>
+      </li>
+      <li class="chart-legend-row gravity">
+        <div class="toggle gravity" onclick="BChart.toggle('gravity')"></div>
+        <div class="legend-label" onclick="BChart.toggle('gravity')">Gravity</div>
+        <div class="legend-value">--</div>
+      </li>
+      <li class="chart-legend-row filtersg">
+        <div class="toggle gravity" onclick="BChart.toggle('filtersg')"></div>
+        <div class="legend-label" onclick="BChart.toggle('filtersg')">FilteredSG</div>
+        <div class="legend-value">--</div>
+      </li>
+      <li class="chart-legend-row state">
+        <div class="legend-label">state</div>
+      </li>
+    </ul>
+  </div>
+
+  <ul id="gravity-pane" class="data-pane gravity-pane">
+    <li><strong class="descriptor">Gravity data:</strong></li>
+    <li><span class="descriptor">OG:</span> <span id="gravity-og" onclick="inputOG()">--</span></li>
+    <li><span class="descriptor">SG:</span>  <span id="gravity-sg" onclick="inputSG()">--</span><div id="fgstate"></div></li>
+    <li><span class="descriptor">ATT:</span> <span id="gravity-att"> --</span>%</li>
+    <li><span class="descriptor">ABV:</span> <span id="gravity-abv"> --</span>%</li>
+  </ul>
+
+  <ul id="ispindel-pane" class="data-pane ispindel-pane">
+    <li class="double"><strong class="descriptor">iSpindel data:</strong></li>
+    <li><span class="descriptor">iSpindel name</span> <span id="iSpindel-name"></span></li>
+    <li><span class="descriptor">Battery:</span> <span id="iSpindel-battery">--</span></li>
+    <li><span class="descriptor">Last Update:</span> <span id="iSpindel-last">--</span></li>
+  </ul>
+
+  <!-- <div id="lcd" class="lcddisplay">
+    <span class="lcd-line" id="lcd-line-0">Live LCD waiting</span>
+    <span class="lcd-line" id="lcd-line-1">for update from</span>
+    <span class="lcd-line" id="lcd-line-2">script...</span>
+    <span class="lcd-line" id="lcd-line-3"></span>
+  </div> -->
+
+
+<br /><br /><br /><br /><br /><br /><br /><br />
+</div>
+
+  <!-- ##################################################### -->
+
+
+
+
+
+  <div class="frame" id="bottom-frame">
+    <div class="navbar" id="header">
+      <div id="set-mode-text">Set temperature mode:</div>
+      <div class="navitems">
+        <span class="navitem" id="profile-m">Beer profile</span>
+        <span class="navitem" id="beer-m">Beer Const.</span>
+        <span class="navitem" id="fridge-m">Fridge Const.</span>
+        <span class="navitem" id="off-m">Off</span>
+        <button id="modekeeper-apply" onclick="modekeeper.apply()">Apply</button>
+      </div>
+    </div>
+
+    <div id="containter">
+      <div id="profile-s" class="detail">
+        <div id="profile-edit">
+          <div id="profile-list-pane">
+            <table>
+              <tr><td><button class="rmbutton">X</button><a href="#" class="profile-name"></a></td></tr>
+            </table>
+          </div>
+          <div>
+            <div><span>Start Date:</span><input type="text" size="16" id="startdate" onchange="profileEditor.startDayChange();">
+              <button id="setnow" onclick=profileEditor.startnow()>Now</button>
+              <button id="addbutton" onclick="profileEditor.addRow();">Add</button></div>
+            </div>
+            <table class="profileTable" id="profile_t">
+              <thead><tr><th>T(&deg;<span class="t_unit">C</span>)</th><th>Condition</th><th>Days</th><th>SG</th><th>Stable</th><th>Start Time</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="stage-temp">19</td><td>
+                    <div class="for-time">Ramp</div>
+                    <div class="condition-con">
+                      <select class="condition">
+                        <option value="t">Time</option>
+                        <option value="g">SG</option>
+                        <option value="s">Stable</option>
+                        <option value="a">Time & SG</option>
+                        <option value="o">Time OR SG</option>
+                        <option value="u">Time OR Stable</option>
+                        <option value="v">Time & Stable</option>
+                        <option value="b">SG OR Stable</option>
+                        <option value="x">SG & Stable</option>
+                        <option value="w">ALL</option>
+                        <option value="e">Either</option>
+                      </select>
+                    </div>
+                  </td><td class="stage-time">7</td><td class="stage-sg">1.01</td><td class="stage-stabletime"></td><td class="diaplay-time"></td></tr>
+                </tbody>
+              </table>
+              <div><button id="delbtn" onclick="profileEditor.delRow();">Delete</button>
+                <button id="clearbtn" onclick="profileEditor.clear()">Clear</button>
+                <button id="loadbtn" onclick="PL.toggle()">...</button>
+                <button id="saveasbtn" onclick="PL.saveas()">Save As</button>
+                <button id="savebtn" onclick="saveprofile()">Save</button></div>
+              </div>
+              <div id="tc_chart"></div>
+            </div>
+            <div id="beer-s" class="detail">
+              Set Beer temp:
+              <input type="text" size="6" id="beer-t"></input>&deg;<span class="t_unit">C</span>
+            </div>
+
+            <div id="fridge-s" class="detail">
+              Set Fridge temp:
+              <input type="text" size="6" id="fridge-t"></input>&deg;<span class="t_unit">C</span>
+            </div>
+            <div id="off-s" class="detail">Turning temperature controll Off.</div>
+          </div>
+
+          <div id="dlg_beerprofilereminder" class="modal">
+            <div class="modal-content">
+              <p><span class="msg"></span>Note:
+                For Beer Profoile to work properly,
+                <ol>
+                  <li>Original Gravity Must be specified if SG is specified as percentage(%)</li>
+                  <li>Local data log must be activated if stability of gravity reading is used.</li>
+                </ol>
+                Original Gravity:<input type="text" size="6" value="1.0">
+                <div class="dialog-buttons">
+                  <button class="oknog">OK, OG already set</button>
+                  <button class="ok">OK, Set OG</button>
+                  <button class="cancel">Cancel</button></div>
                 </div>
+              </div>
 
-                <div id="iSpindel-pane">
-                  <table>
-                    <tr><th colspan="2"><span id="iSpindel-name"></span></th></tr>
-                    <tr><th>Battery</th><td> <span id="iSpindel-battery">--</span><td></tr>
-                      <tr><th colspan="2">Last Update</th></tr>
-                      <tr><td colspan="2" align="center"> <span id="iSpindel-last">--</span><td></tr>
-                      </table>
-                    </div>
 
-                  </div>
+              <div id="dlg_loading" class="modal">
+                <div class="modal-content">
+                  <p>Communicating with BrewPiLess controller..</p>
+                </div>
+              </div>
 
-                  <div id="chart-container">
-                    <div id="div_g"></div>
-
-                    <div id="chart-legend" class="chart-legend">
-                      <div class="chart-legend-row time">
-                        <div class="beer-chart-legend-time">Date/Time</div>
-                      </div>
-                      <div class="chart-legend-row beerTemp">
-                        <div class="toggle beerTemp" onclick="BChart.toggle('beerTemp')"></div>
-                        <div class="legend-label" onclick="BChart.toggle('beerTemp')">Beer Temp</div>
-                        <div class="legend-value">--</div>
-                        <br>
-                      </div>
-                      <div class="chart-legend-row beerSet">
-                        <div class="toggle beerSet" onclick="BChart.toggle('beerSet')"></div>
-                        <div class="legend-label" onclick="BChart.toggle('beerSet')">Beer Set</div>
-                        <div class="legend-value">--</div>
-                        <br>
-                      </div>
-                      <div class="chart-legend-row fridgeTemp">
-                        <div class="toggle beerSet" onclick="BChart.toggle('fridgeTemp')"></div>
-                        <div class="legend-label" onclick="BChart.toggle('fridgeTemp')">Fridge Temp</div>
-                        <div class="legend-value">--</div>
-                        <br>
-                      </div>
-                      <div class="chart-legend-row fridgeSet">
-                        <div class="toggle beerSet" onclick="BChart.toggle('fridgeSet')"></div>
-                        <div class="legend-label" onclick="BChart.toggle('fridgeSet')">Fridge Set</div>
-                        <div class="legend-value">--</div>
-                        <br>
-                      </div>
-
-                      <div class="chart-legend-row roomTemp">
-                        <div class="toggle beerSet" onclick="BChart.toggle('roomTemp')"></div>
-                        <div class="legend-label" onclick="BChart.toggle('roomTemp')">Room Temp</div>
-                        <div class="legend-value">--</div>
-                        <br>
-                      </div>
-                      <div class="chart-legend-row auxTemp">
-                        <div class="toggle gravity" onclick="BChart.toggle('auxTemp')"></div>
-                        <div class="legend-label" onclick="BChart.toggle('auxTemp')">Aux Temp</div>
-                        <div class="legend-value">--</div>
-                        <br>
-                      </div>
-                      <div class="chart-legend-row gravity">
-                        <div class="toggle gravity" onclick="BChart.toggle('gravity')"></div>
-                        <div class="legend-label" onclick="BChart.toggle('gravity')">Gravity</div>
-                        <div class="legend-value">--</div>
-                        <br>
-                      </div>
-                      <div class="chart-legend-row filtersg">
-                        <div class="toggle gravity" onclick="BChart.toggle('filtersg')"></div>
-                        <div class="legend-label" onclick="BChart.toggle('filtersg')">FilteredSG</div>
-                        <div class="legend-value">--</div>
-                        <br>
-                      </div>
-
-                      <div class="chart-legend-row state">
-                        <div class="legend-label">state</div>
-                        <br>
-                      </div>
-                    </div>
-
+              <div id="dlg_addgravity" class="modal">
+                <div class="modal-content">
+                  <p><span class="msg"></span><input type="text" size="6" value="1.0">
+                  </p>
+                  <div class="dialog-buttons">
+                    <button onclick="dismissgravity()">Cancel</button>
+                    <button onclick="inputgravity()">OK</button>
                   </div>
                 </div>
-                <div class="frame" id="bottom-frame">
-                  <div class="navbar" id="header">
-                    <div id="set-mode-text">Set temperature mode:</div>
-                    <div class="navitems">
-                      <span class="navitem" id="profile-m">Beer profile</span>
-                      <span class="navitem" id="beer-m">Beer Const.</span>
-                      <span class="navitem" id="fridge-m">Fridge Const.</span>
-                      <span class="navitem" id="off-m">Off</span>
-                      <button id="modekeeper-apply" onclick="modekeeper.apply()">Apply</button>
-                    </div>
-                  </div>
+              </div>
 
-                  <div id="containter">
-                    <div id="profile-s" class="detail">
-                      <div id="profile-edit">
-                        <div id="profile-list-pane">
-                          <table>
-                            <tr><td><button class="rmbutton">X</button><a href="#" class="profile-name"></a></td></tr>
-                          </table>
-                        </div>
-                        <div>
-                          <div><span>Start Date:</span><input type="text" size="16" id="startdate" onchange="profileEditor.startDayChange();">
-                            <button id="setnow" onclick=profileEditor.startnow()>Now</button>
-                            <button id="addbutton" onclick="profileEditor.addRow();">Add</button></div>
-                          </div>
-                          <table class="profileTable" id="profile_t">
-                            <thead><tr><th>T(&deg;<span class="t_unit">C</span>)</th><th>Condition</th><th>Days</th><th>SG</th><th>Stable</th><th>Start Time</th></tr></thead>
-                            <tbody>
-                              <tr>
-                                <td class="stage-temp">19</td><td>
-                                  <div class="for-time">Ramp</div>
-                                  <div class="condition-con">
-                                    <select class="condition">
-                                      <option value="t">Time</option>
-                                      <option value="g">SG</option>
-                                      <option value="s">Stable</option>
-                                      <option value="a">Time & SG</option>
-                                      <option value="o">Time OR SG</option>
-                                      <option value="u">Time OR Stable</option>
-                                      <option value="v">Time & Stable</option>
-                                      <option value="b">SG OR Stable</option>
-                                      <option value="x">SG & Stable</option>
-                                      <option value="w">ALL</option>
-                                      <option value="e">Either</option>
-                                    </select>
-                                  </div>
-                                </td><td class="stage-time">7</td><td class="stage-sg">1.01</td><td class="stage-stabletime"></td><td class="diaplay-time"></td></tr>
-                              </tbody>
-                            </table>
-                            <div><button id="delbtn" onclick="profileEditor.delRow();">Delete</button>
-                              <button id="clearbtn" onclick="profileEditor.clear()">Clear</button>
-                              <button id="loadbtn" onclick="PL.toggle()">...</button>
-                              <button id="saveasbtn" onclick="PL.saveas()">Save As</button>
-                              <button id="savebtn" onclick="saveprofile()">Save</button></div>
-                            </div>
-                            <div id="tc_chart"></div>
-                          </div>
-                          <div id="beer-s" class="detail">
-                            Set Beer temp:
-                            <input type="text" size="6" id="beer-t"></input>&deg;<span class="t_unit">C</span>
-                          </div>
+              <div id="dlg_saveas" class="modal">
+                <div class="modal-content">
+                  <span class="msg">Save Profile As</span>
+                  <br><input type="text" size="32">
+                  <br>*No special letters and space allowed.
+                  <button onclick="PL.cancelSave()">Cancel</button>
+                  <button onclick="PL.doSave()">OK</button>
+                </div>
+              </div>
 
-                          <div id="fridge-s" class="detail">
-                            Set Fridge temp:
-                            <input type="text" size="6" id="fridge-t"></input>&deg;<span class="t_unit">C</span>
-                          </div>
-                          <div id="off-s" class="detail">Turning temperature controll Off.</div>
-                        </div>
-
-                        <div id="dlg_beerprofilereminder" class="modal">
-                          <div class="modal-content">
-                            <p><span class="msg"></span>Note:
-                              For Beer Profoile to work properly,
-                              <ol>
-                                <li>Original Gravity Must be specified if SG is specified as percentage(%)</li>
-                                <li>Local data log must be activated if stability of gravity reading is used.</li>
-                              </ol>
-                              Original Gravity:<input type="text" size="6" value="1.0">
-                              <div class="dialog-buttons">
-                                <button class="oknog">OK, OG already set</button>
-                                <button class="ok">OK, Set OG</button>
-                                <button class="cancel">Cancel</button></div>
-                              </div>
-                            </div>
-
-
-                            <div id="dlg_loading" class="modal">
-                              <div class="modal-content">
-                                <p>Communicating with BrewPiLess controller..</p>
-                              </div>
-                            </div>
-
-                            <div id="dlg_addgravity" class="modal">
-                              <div class="modal-content">
-                                <p><span class="msg"></span><input type="text" size="6" value="1.0">
-                                </p>
-                                <div class="dialog-buttons">
-                                  <button onclick="dismissgravity()">Cancel</button>
-                                  <button onclick="inputgravity()">OK</button>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div id="dlg_saveas" class="modal">
-                              <div class="modal-content">
-                                <span class="msg">Save Profile As</span>
-                                <br><input type="text" size="32">
-                                <br>*No special letters and space allowed.
-                                <button onclick="PL.cancelSave()">Cancel</button>
-                                <button onclick="PL.doSave()">OK</button>
-                              </div>
-                            </div>
-
-                          </div>
-                        </body>
-                        </html>
+            </div>
+          </body>
+          </html>

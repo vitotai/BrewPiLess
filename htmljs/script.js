@@ -1323,7 +1323,7 @@ var ControlChart={
         // iSpindel
         if(typeof window.iSpindel == "undefined"){
           window.iSpindel = true;
-          Q("#iSpindel-pane").style.display="block";
+          Q("#ispindel-pane").style.display="block";
         }
         Q("#iSpindel-name").innerHTML = msg.name;
         if(typeof msg["battery"] != "undefined")

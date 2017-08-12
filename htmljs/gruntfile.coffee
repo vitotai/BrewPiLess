@@ -87,8 +87,6 @@ module.exports = (grunt) ->
       dev:
         options:
           style: 'expanded'
-          debugInfo: true
-          lineNumbers: true
         expand: true
         cwd: '.'
         src: [ '*.scss' ]
@@ -106,13 +104,15 @@ module.exports = (grunt) ->
   grunt.registerTask 'build', [
     #'jshint'
     'copy'
+    'htmlmin:dev'
+    'sass:dev'
     'comboall'
     'htmlmin:dist'
-    'sass:dist'
   ]
 
   grunt.registerTask 'dev', [
     #'jshint'
+    'copy'
     'htmlmin:dev'
     'sass:dev'
     'watch'

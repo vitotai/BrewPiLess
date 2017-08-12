@@ -1,0 +1,228 @@
+/*
+* ------------------------------------------------------------------------------------------------- DO NOT MODIFY THIS FILE!
+* This CSS maps the layout attributes and the flex-item attributes to the style information.
+*/
+/*******************************
+Flex Layout
+*******************************/
+
+[viewport] {
+  padding: 0 16px;
+}
+
+html [layout], html [layout][horizontal], html [layout][vertical] {
+  display: flex;
+}
+//
+// html [layout][horizontal][inline], html [layout][vertical][inline] {
+//   display: inline-flex;
+// }
+
+html [layout][horizontal] {
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  flex-direction: row;
+}
+//
+// html [layout][horizontal][reverse] {
+//   -webkit-box-orient: horizontal;
+//   -webkit-box-direction: reverse;
+//   flex-direction: row-reverse;
+// }
+
+html [layout][vertical] {
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+}
+//
+// html [layout][vertical][reverse] {
+//   -webkit-box-orient: vertical;
+//   -webkit-box-direction: reverse;
+//   flex-direction: column-reverse;
+// }
+//
+// html [layout][wrap] {
+//   flex-wrap: wrap;
+// }
+//
+// html [layout][wrap-reverse] {
+//   flex-wrap: wrap-reverse;
+// }
+
+html [flex] {
+  flex: 1;
+  flex-basis: 0.000000001px;
+}
+//
+// html [vertical][layout] > [flex][auto-vertical], html [vertical][layout]::shadow [flex][auto-vertical] {
+//   flex-basis: auto;
+// }
+//
+// html [flex][auto] {
+//   flex-basis: auto;
+// }
+//
+// html [flex][none] {
+//   flex: none;
+// }
+//
+// html [flex][one] {
+//   flex: 1;
+// }
+//
+// html [flex][two] {
+//   flex: 2;
+// }
+//
+// html [flex][three] {
+//   flex: 3;
+// }
+//
+// html [flex][four] {
+//   flex: 4;
+// }
+//
+// html [flex][five] {
+//   flex: 5;
+// }
+//
+// html [flex][six] {
+//   flex: 6;
+// }
+//
+// html [flex][seven] {
+//   flex: 7;
+// }
+//
+// html [flex][eight] {
+//   flex: 8;
+// }
+//
+// html [flex][nine] {
+//   flex: 9;
+// }
+//
+// html [flex][ten] {
+//   flex: 10;
+// }
+//
+// html [flex][eleven] {
+//   flex: 11;
+// }
+//
+// html [flex][twelve] {
+//   flex: 12;
+// }
+
+/* alignment in cross axis */
+
+// html [layout][cross-start] {
+//   align-items: flex-start;
+// }
+
+html [layout][cross-center], html [layout][center-center] {
+  align-items: center;
+}
+//
+// html [layout][cross-end] {
+//   align-items: flex-end;
+// }
+
+/* alignment in main axis */
+
+// html [layout][main-start] {
+//   justify-content: flex-start;
+// }
+
+html [layout][main-center], html [layout][center-center] {
+  justify-content: center;
+}
+
+// html [layout][main-end] {
+//   justify-content: flex-end;
+// }
+//
+html [layout][main-justified] {
+  justify-content: space-between;
+}
+
+html [layout][main-distributed] {
+  justify-content: space-around;
+}
+
+// /* line alignment in cross axis */
+//
+// html [layout][line-start] {
+//   align-content: flex-start;
+// }
+//
+// html [layout][line-center], html [layout][center-center] {
+//   align-content: center;
+// }
+//
+// html [layout][line-end] {
+//   align-content: flex-end;
+// }
+//
+// html [layout][line-justified] {
+//   align-content: space-between;
+// }
+//
+// html [layout][line-distributed] {
+//   align-content: space-around;
+// }
+//
+// html [layout][line-stretch] {
+//   align-content: stretch;
+// }
+
+// /* main axis scroll */
+// html [layout][horizontal][scroll] {
+//   overflow-x: auto;
+//   overflow-y: hidden;
+//   padding-bottom: 5px;
+// }
+//
+// html [layout][vertical][scroll] {
+//   overflow-x: hidden;
+//   overflow-y: auto;
+//   padding-right: 5px;
+// }
+//
+// /* self alignment */
+//
+// html [self-start] {
+//   align-self: flex-start;
+// }
+//
+// html [self-center] {
+//   align-self: center;
+// }
+//
+// html [self-end] {
+//   align-self: flex-end;
+// }
+//
+// html [self-stretch] {
+//   align-self: stretch;
+// }
+//
+// html [self-center-center] {
+//   margin: auto;
+// }
+
+
+
+/*******************************
+Other Layout
+*******************************/
+
+/* ie support for hidden */
+html [hidden] {
+  display: none !important;
+}
+
+html [relative] {
+  position: relative;
+}
