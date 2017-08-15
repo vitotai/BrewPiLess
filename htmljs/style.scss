@@ -3,11 +3,26 @@
 @import 'typo';
 @import 'layout';
 
+/** Vars **/
+
+$primary-color: teal;
+$secondary-color: lighten($primary-color, 20);
+$accent-color: red;
+
+$beer-temp-color: rgb(41,170,41);
+$beer-set-color: rgb(240, 100, 100);
+$fridge-temp-color: rgb(89, 184, 255);
+$fridge-set-color: rgb(255, 161, 76);
+$room-temp-color: #AAAAAA;
+$gravity-color: #f5e127;
+$aux-temp-color: rgb(153,0,153);
+$filtersg-color: #000abb;
+
 /** Header **/
 
 .header {
 	height: 64px;
-	background: teal;
+	background: $primary-color;
 	box-shadow: 0px 1px 8px rgba(0, 0, 0, 0.3);
 	padding: 0 16px;
 }
@@ -48,19 +63,118 @@
 	}
 }
 
+/* Data panes */
+[subheader] {
+		background: $secondary-color;
+}
+
+.data-pane {
+	list-style-type: none;
+	display: block;
+	width: 100%;
+	padding: 0 8px;
+	vertical-align: middle;
+	> li {
+		display: inline-block;
+		width: 120px;
+		vertical-align: middle;
+		&.double {
+			width: 240px;
+		}
+	}
+	.descriptor {
+		display: inline-block;
+	}
+}
+
+
+/** Switch **/
+
+.switch-input {
+  display: none;
+}
+.switch-label {
+  position: relative;
+  display: inline-block;
+  min-width: 148px;
+  cursor: pointer;
+  font-weight: 500;
+  text-align: left;
+  margin: 0;
+  padding: 4px 0 4px 44px;
+}
+.switch-label:before, .switch-label:after {
+  content: "";
+  position: absolute;
+  margin: 0;
+  outline: 0;
+  top: 50%;
+  -ms-transform: translate(0, -50%);
+  -webkit-transform: translate(0, -50%);
+  transform: translate(0, -50%);
+  -webkit-transition: all 0.3s ease;
+  transition: all 0.3s ease;
+}
+.switch-label:before {
+  left: 1px;
+  width: 34px;
+  height: 14px;
+  background-color: #9E9E9E;
+  border-radius: 8px;
+}
+.switch-label:after {
+  left: 0;
+  width: 20px;
+  height: 20px;
+  background-color: #FAFAFA;
+  border-radius: 50%;
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.14), 0 2px 2px 0 rgba(0, 0, 0, 0.098), 0 1px 5px 0 rgba(0, 0, 0, 0.084);
+}
+.switch-input:checked + .switch-label:before {
+  background-color: #A5D6A7;
+}
+.switch-input:checked + .switch-label:after {
+  background-color: #4CAF50;
+  transform: translate(80%, -50%);
+}
+.switch-input:checked + label[for=beer-temp].switch-label:after {
+  background-color: $beer-temp-color;
+}
+.switch-input:checked + label[for=beer-set].switch-label:after {
+  background-color: $beer-set-color;
+}
+.switch-input:checked + label[for=fridge-temp].switch-label:after {
+  background-color: $fridge-temp-color;
+}
+.switch-input:checked + label[for=fridge-set].switch-label:after {
+  background-color: $fridge-set-color;
+}
+.switch-input:checked + label[for=room-temp].switch-label:after {
+  background-color: $room-temp-color;
+}
+.switch-input:checked + label[for=gravity].switch-label:after {
+  background-color: $gravity-color;
+}
+.switch-input:checked + label[for=aux-temp].switch-label:after {
+  background-color: $aux-temp-color;
+}
+.switch-input:checked + label[for=filtersg].switch-label:after {
+  background-color: $filtersg-color;
+}
+
 /** Chart **/
 
 .chart {
-	width:800px;
+	width:80%;
 	height:390px;
-	background: #BBB;
+	// background: #BBB;
 }
 
 .chart-legend {
 	list-style-type: none;
 }
 .chart-legend-row {
-	padding:  8px 0 0 16px;
+	padding:  8px 16px 0 16px;
 	> div {
 		display: inline-block;
 	}
@@ -85,27 +199,6 @@
 	font-weight: bold;
 	&:hover {
 		cursor:pointer;
-	}
-}
-
-/* Data panes */
-.data-pane {
-	list-style-type: none;
-	display: block;
-	width: 100%;
-	background: #DDD;
-	padding: 0 8px;
-	vertical-align: middle;
-	> li {
-		display: inline-block;
-		width: 120px;
-		vertical-align: middle;
-		&.double {
-			width: 240px;
-		}
-	}
-	.descriptor {
-		display: inline-block;
 	}
 }
 

@@ -22,74 +22,69 @@
     </ul>
   </header>
 
+  <div subheader>
+    <ul id="gravity-pane" class="data-pane gravity-pane" viewport>
+      <li><strong class="descriptor">current data:</strong></li>
+      <li><span class="descriptor">OG:</span> <span id="gravity-og" onclick="inputOG()">--</span></li>
+      <li><span class="descriptor">SG:</span>  <span id="gravity-sg" onclick="inputSG()">--</span><div id="fgstate"></div></li>
+      <li><span class="descriptor">ATT:</span> <span id="gravity-att"> --</span>%</li>
+      <li><span class="descriptor">ABV:</span> <span id="gravity-abv"> --</span>%</li>
+      <li><span class="descriptor">Battery:</span> <span id="iSpindel-battery">--</span></li>
+      <li><span class="descriptor">Last Update:</span> <span id="iSpindel-last">--</span></li>
+    </ul>
+  </div>
+
   <div viewport>
   <h4>Name of the view</h4>
   <div layout horizontal>
     <div id="div_g" class="chart"></div>
     <ul flex class="chart-legend">
-      <li class="chart-legend-row time">
-        <div class="beer-chart-legend-time">Date/Time</div>
+      <li layout horizontal main-justified class="chart-legend-row time">
+        <span class="beer-chart-legend-time">Date/Time</span>
+        <span class="beer-chart-state">state</span>
       </li>
-      <li class="chart-legend-row beerTemp">
-        <div class="toggle beerTemp" onclick="BChart.toggle('beerTemp')"></div>
-        <div class="legend-label" onclick="BChart.toggle('beerTemp')">Beer Temp</div>
+      <li layout horizontal main-justified class="chart-legend-row beer-temp">
+        <input type="checkbox" id="beer-temp" name="set-name" class="switch-input" checked>
+      	<label onclick="BChart.toggle('beerTemp')" for="beer-temp" class="switch-label">Beer Temp:</label>
         <div class="legend-value">--</div>
       </li>
-      <li class="chart-legend-row beerSet">
-        <div class="toggle beerSet" onclick="BChart.toggle('beerSet')"></div>
-        <div class="legend-label" onclick="BChart.toggle('beerSet')">Beer Set</div>
+      <li layout horizontal main-justified class="chart-legend-row beer-set">
+        <input type="checkbox" id="beer-set" name="set-name" class="switch-input" checked>
+        <label onclick="BChart.toggle('beerSet')" for="beer-set" class="switch-label">Beer Set:</label>
         <div class="legend-value">--</div>
       </li>
-      <li class="chart-legend-row fridgeTemp">
-        <div class="toggle beerSet" onclick="BChart.toggle('fridgeTemp')"></div>
-        <div class="legend-label" onclick="BChart.toggle('fridgeTemp')">Fridge Temp</div>
+      <li layout horizontal main-justified class="chart-legend-row fridge-temp">
+        <input type="checkbox" id="fridge-temp" name="set-name" class="switch-input" checked>
+        <label onclick="BChart.toggle('fridgeTemp')" for="fridge-temp" class="switch-label">Fridge Temp:</label>
         <div class="legend-value">--</div>
       </li>
-      <li class="chart-legend-row fridgeSet">
-        <div class="toggle beerSet" onclick="BChart.toggle('fridgeSet')"></div>
-        <div class="legend-label" onclick="BChart.toggle('fridgeSet')">Fridge Set</div>
+      <li layout horizontal main-justified class="chart-legend-row fridge-set">
+        <input type="checkbox" id="fridge-set" name="set-name" class="switch-input" checked>
+        <label onclick="BChart.toggle('fridgeSet')" for="fridge-set" class="switch-label">Fridge Set:</label>
         <div class="legend-value">--</div>
       </li>
-      <li class="chart-legend-row roomTemp">
-        <div class="toggle beerSet" onclick="BChart.toggle('roomTemp')"></div>
-        <div class="legend-label" onclick="BChart.toggle('roomTemp')">Room Temp</div>
+      <li layout horizontal main-justified class="chart-legend-row room-temp">
+        <input type="checkbox" id="room-temp" name="set-name" class="switch-input" checked>
+        <label onclick="BChart.toggle('roomTemp')" for="room-temp" class="switch-label">Room Temp:</label>
         <div class="legend-value">--</div>
       </li>
-      <li class="chart-legend-row auxTemp">
-        <div class="toggle gravity" onclick="BChart.toggle('auxTemp')"></div>
-        <div class="legend-label" onclick="BChart.toggle('auxTemp')">Aux Temp</div>
+      <li layout horizontal main-justified class="chart-legend-row aux-temp">
+        <input type="checkbox" id="aux-temp" name="set-name" class="switch-input" checked>
+        <label onclick="BChart.toggle('auxTemp')" for="aux-temp" class="switch-label">Aux Temp:</label>
         <div class="legend-value">--</div>
       </li>
-      <li class="chart-legend-row gravity">
-        <div class="toggle gravity" onclick="BChart.toggle('gravity')"></div>
-        <div class="legend-label" onclick="BChart.toggle('gravity')">Gravity</div>
+      <li layout horizontal main-justified class="chart-legend-row gravity">
+        <input type="checkbox" id="gravity" name="set-name" class="switch-input" checked>
+        <label onclick="BChart.toggle('gravity')" for="gravity" class="switch-label">Gravity:</label>
         <div class="legend-value">--</div>
       </li>
-      <li class="chart-legend-row filtersg">
-        <div class="toggle gravity" onclick="BChart.toggle('filtersg')"></div>
-        <div class="legend-label" onclick="BChart.toggle('filtersg')">FilteredSG</div>
+      <li layout horizontal main-justified class="chart-legend-row filtersg">
+        <input type="checkbox" id="filtersg" name="set-name" class="switch-input" checked>
+        <label onclick="BChart.toggle('filtersg')" for="filtersg" class="switch-label">Filter SG:</label>
         <div class="legend-value">--</div>
-      </li>
-      <li class="chart-legend-row state">
-        <div class="legend-label">state</div>
       </li>
     </ul>
   </div>
-
-  <ul id="gravity-pane" class="data-pane gravity-pane">
-    <li><strong class="descriptor">Gravity data:</strong></li>
-    <li><span class="descriptor">OG:</span> <span id="gravity-og" onclick="inputOG()">--</span></li>
-    <li><span class="descriptor">SG:</span>  <span id="gravity-sg" onclick="inputSG()">--</span><div id="fgstate"></div></li>
-    <li><span class="descriptor">ATT:</span> <span id="gravity-att"> --</span>%</li>
-    <li><span class="descriptor">ABV:</span> <span id="gravity-abv"> --</span>%</li>
-  </ul>
-
-  <ul id="ispindel-pane" class="data-pane ispindel-pane">
-    <li class="double"><strong class="descriptor">iSpindel data:</strong></li>
-    <li><span class="descriptor">iSpindel name</span> <span id="iSpindel-name"></span></li>
-    <li><span class="descriptor">Battery:</span> <span id="iSpindel-battery">--</span></li>
-    <li><span class="descriptor">Last Update:</span> <span id="iSpindel-last">--</span></li>
-  </ul>
 
   <!-- <div id="lcd" class="lcddisplay">
     <span class="lcd-line" id="lcd-line-0">Live LCD waiting</span>

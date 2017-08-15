@@ -125,13 +125,12 @@ BrewChart.prototype.formatDate=function(d){
 BrewChart.prototype.showLegend=function(date,row){
   var d=new Date(date);
   Q(".beer-chart-legend-time").innerHTML = this.formatDate(d);
-  Q(".chart-legend-row.beerTemp .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 2));
-  Q(".chart-legend-row.beerSet .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 1));
-  Q(".chart-legend-row.fridgeTemp .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 3));
-  Q(".chart-legend-row.fridgeSet .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 4));
-  Q(".chart-legend-row.roomTemp .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 5));
-
-  Q(".chart-legend-row.auxTemp .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 6));
+  Q(".chart-legend-row.beer-temp .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 2));
+  Q(".chart-legend-row.beer-set .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 1));
+  Q(".chart-legend-row.fridge-temp .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 3));
+  Q(".chart-legend-row.fridge-set .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 4));
+  Q(".chart-legend-row.room-temp .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 5));
+  Q(".chart-legend-row.aux-temp .legend-value").innerHTML=this.tempFormat(this.chart.getValue(row, 6));
 
   var g=this.chart.getValue(row, 7);
   Q(".chart-legend-row.gravity .legend-value").innerHTML=(!g || isNaN(g))? "--":g.toFixed(4);
@@ -140,7 +139,7 @@ BrewChart.prototype.showLegend=function(date,row){
 
   var state = parseInt(this.state[row]);
   if ( !isNaN(state) ) {
-    Q('.chart-legend-row.state .legend-label').innerHTML=STATES[state].text;
+    Q('.beer-chart-state').innerHTML=STATES[state].text;
   }
 };
 
@@ -150,7 +149,7 @@ BrewChart.prototype.hideLegend=function(){
     val.innerHTML = "--";
   });
   Q(".beer-chart-legend-time").innerHTML =this.dateLabel; //"Date/Time";
-  Q('.chart-legend-row.state .legend-label').innerHTML="state";
+  Q('.beer-chart-state').innerHTML="state";
 };
 
 BrewChart.prototype.tempFormat=function(y){
@@ -160,41 +159,13 @@ BrewChart.prototype.tempFormat=function(y){
   return parseFloat(v).toFixed(2) + DEG;
 };
 BrewChart.prototype.initLegend=function(){
-  // init color
-  Q(".chart-legend-row.beerTemp").style.color = BrewChart.Colors[1];
-  Q(".beerTemp .toggle").style.backgroundColor=BrewChart.Colors[1];
-
-  Q(".chart-legend-row.beerSet").style.color = BrewChart.Colors[0];
-  Q(".beerSet .toggle").style.backgroundColor=BrewChart.Colors[0];
-
-  Q(".chart-legend-row.fridgeTemp").style.color = BrewChart.Colors[2];
-  Q(".fridgeTemp .toggle").style.backgroundColor=BrewChart.Colors[2];
-
-  Q(".chart-legend-row.fridgeSet").style.color = BrewChart.Colors[3];
-  Q(".fridgeSet .toggle").style.backgroundColor=BrewChart.Colors[3];
-
-  Q(".chart-legend-row.roomTemp").style.color = BrewChart.Colors[4];
-  Q(".roomTemp .toggle").style.backgroundColor=BrewChart.Colors[4];
-
-  Q(".chart-legend-row.gravity").style.color = BrewChart.Colors[6];
-  Q(".gravity .toggle").style.backgroundColor=BrewChart.Colors[6];
-
-  Q(".chart-legend-row.auxTemp").style.color = BrewChart.Colors[5];
-  Q(".auxTemp .toggle").style.backgroundColor=BrewChart.Colors[5];
-
-  Q(".chart-legend-row.filtersg").style.color = BrewChart.Colors[7];
-  Q(".filtersg .toggle").style.backgroundColor=BrewChart.Colors[7];
-
-
   this.dateLabel=Q(".beer-chart-legend-time").innerHTML;
 };
 BrewChart.prototype.toggleLine=function(line){
   this.shownlist[line] = !this.shownlist[line];
   if(this.shownlist[line]){
-    Q( "." + line +" .toggle").style.backgroundColor= Q(".chart-legend-row." + line).style.color;
     this.chart.setVisibility(this.chart.getPropertiesForSeries(line).column-1, true);
   }else{
-    Q( "." + line +" .toggle").style.backgroundColor="transparent";
     this.chart.setVisibility(this.chart.getPropertiesForSeries(line).column-1, false);
   }
 };
@@ -260,7 +231,6 @@ t.chart = new Dygraph(document.getElementById(t.cid),t.data,opt);
 };
 var STATES=[{name:"IDLE",text:"Idle"},{name:"STATE_OFF",text:"Off"},{name:"DOOR_OPEN",text:"Door Open",doorOpen:true},{name:"HEATING",text:"Heating"},{name:"COOLING",text:"Cooling"},{name:"WAITING_TO_COOL",text:"Waiting to Cool",waiting:true},{name:"WAITING_TO_HEAT",text:"Waiting to Heat",waiting:true},{name:"WAITING_FOR_PEAK_DETECT",text:"Waiting for Peak",waiting:true},{name:"COOLING_MIN_TIME",text:"Cooling Min Time",extending:true},{name:"HEATING_MIN_TIME",text:"Heating Min Time",extending:true}];
 BrewChart.Mode={b:"Beer Constant",f:"Fridge Constant",o:"Off",p:"Profile"};
-BrewChart.Colors=["rgb(240, 100, 100)","rgb(41,170,41)","rgb(89, 184, 255)","rgb(255, 161, 76)","#AAAAAA","#f5e127","rgb(153,0,153)","#000abb"];
 BrewChart.Labels=['Time','beerSet', 'beerTemp','fridgeTemp','fridgeSet','roomTemp','auxTemp','gravity','filtersg'];
 
 BrewChart.prototype.addMode=function(m){
