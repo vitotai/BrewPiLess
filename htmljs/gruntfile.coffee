@@ -13,10 +13,10 @@ module.exports = (grunt) ->
     copy:
       jsfiles:
         files: [{
-          expand: false
-          cwd: '.'
-          src: 'src/js/*.js'
-          dest: 'build/'
+          expand: true
+          cwd: './src/js/'
+          src: '*.js'
+          dest: './build/'
         }]
 
     htmlmin:
@@ -80,8 +80,8 @@ module.exports = (grunt) ->
         options:
           style: 'expanded'
         expand: true
-        cwd: '.'
-        src: [ 'src/styles/*.scss' ]
+        cwd: 'src/styles/'
+        src: [ '*.scss' ]
         dest: './build/'
         ext: '.css'
 
