@@ -55,7 +55,13 @@ class LcdDisplay DISPLAY_SUPERCLASS
 	public:
 	// initializes the lcd display
 	DISPLAY_METHOD void init(void);
-
+#ifdef EMIWorkaround
+	DISPLAY_METHOD void refresh(void){
+		lcd.begin(20, 4);
+		lcd.clear();
+		printAll();
+	}
+#endif
 	DISPLAY_METHOD void printAll() {
 		printStationaryText();
 		printState();

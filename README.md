@@ -87,6 +87,10 @@ The difference bewteen v1.2.7 and v.20 is
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * v2.3
+    * Fix error in time of reset. (New log format! Use new log viewer)
+    * State coloring in chart
+    * Remove "view" action in log list.
  * v2.2
     * 4 decimals of gravity
     * Switch to PlatformIO instead of Arduino IDE.
