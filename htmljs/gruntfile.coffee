@@ -15,7 +15,7 @@ module.exports = (grunt) ->
         files: [{
           expand: false
           cwd: '.'
-          src: '*.js'
+          src: 'src/js/*.js'
           dest: 'build/'
         }]
 
@@ -44,7 +44,7 @@ module.exports = (grunt) ->
           minifyJS: false,
           minifyCSS: false
         files: [{
-          'build/index.html': 'index.html'
+          'build/index.html': 'src/index.html'
         }]
 
     comboall:
@@ -76,26 +76,18 @@ module.exports = (grunt) ->
           console: true
 
     sass:
-      dist:
-        options:
-          style: 'compressed'
-        expand: true
-        cwd: './app/styles/sass/'
-        src: [ '*.scss' ]
-        dest: './app/styles/'
-        ext: '.css'
       dev:
         options:
           style: 'expanded'
         expand: true
         cwd: '.'
-        src: [ '*.scss' ]
+        src: [ 'src/styles/*.scss' ]
         dest: './build/'
         ext: '.css'
 
     watch:
       files: [
-        'index.html'
+        'src/index.html'
         '<%= jshint.files %>'
         '<%= sass.dev.src %>'
       ]

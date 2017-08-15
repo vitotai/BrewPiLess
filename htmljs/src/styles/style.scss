@@ -72,15 +72,9 @@ $filtersg-color: #000abb;
 	list-style-type: none;
 	display: block;
 	width: 100%;
-	padding: 0 8px;
-	vertical-align: middle;
 	> li {
 		display: inline-block;
 		width: 120px;
-		vertical-align: middle;
-		&.double {
-			width: 240px;
-		}
 	}
 	.descriptor {
 		display: inline-block;
@@ -165,13 +159,13 @@ $filtersg-color: #000abb;
 /** Chart **/
 
 .chart {
-	width:80%;
+	width: calc(100% - 240px);
 	height:390px;
-	// background: #BBB;
 }
 
 .chart-legend {
 	list-style-type: none;
+	width: 240px;
 }
 .chart-legend-row {
 	padding:  8px 16px 0 16px;
