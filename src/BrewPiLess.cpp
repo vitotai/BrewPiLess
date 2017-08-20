@@ -606,6 +606,14 @@ void notifyLogStatus(void)
 {
 	stringAvailable("V:{\"reload\":\"chart\"}");
 }
+
+void reportRssi(void)
+{
+	char buf[32];
+	sprintf(buf,"V:{\"rssi\":%d}",WiFi.RSSI());
+	stringAvailable(buf);
+}
+
 #define MAX_DATA_SIZE 256
 
 class LogHandler:public AsyncWebHandler
@@ -1164,6 +1172,8 @@ void setup(void){
 #endif
 }
 
+uint32_t _rssiReportTime;
+#define RssiReportPeriod 10
 
 void loop(void){
 //{brewpi
@@ -1196,6 +1206,11 @@ void loop(void){
 		display.printStatus(buf);
 	}
 #endif
+	if( (now - _rssiReportTime) > RssiReportPeriod){
+		_rssiReportTime =now;
+		reportRssi();
+	}
+
   	brewKeeper.keep(now);
 
   	brewPi.loop();
