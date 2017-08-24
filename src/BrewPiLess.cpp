@@ -120,6 +120,8 @@ R"END(
 
 #define GRAVITY_PATH       "/gravity"
 
+#define GETSTATUS_PATH "/getstatus"
+
 #define DEFAULT_INDEX_FILE     "index.htm"
 
 const char *public_list[]={
@@ -430,6 +432,20 @@ public:
 	        return request->requestAuthentication();
 
 			handleFilePuts(request);
+		}else if(request->method() == HTTP_GET && request->url() == GETSTATUS_PATH){
+			uint8_t mode, state;
+			float beerSet, beerTemp, fridgeTemp, fridgeSet, roomTemp;
+			brewPi.getAllStatus(&state, &mode, &beerTemp, &beerSet, &fridgeTemp, &fridgeSet, &roomTemp);
+			#define TEMPorNull(a) (IS_FLOAT_TEMP_VALID(a)?  String(a):String("null"))
+			String json=String("{\"mode\":") + String((char) mode)
+			+ String(",\"state\":") + String(state)
+			+ String(",\"beerSet\":") + TEMPorNull(beerSet)
+			+ String(",\"beerTemp\":") + TEMPorNull(beerTemp)
+			+ String(",\"fridgeSet\":") + TEMPorNull(fridgeSet)
+			+ String(",\"fridgeTemp\":") + TEMPorNull(fridgeTemp)
+			+ String(",\"roomTemp\":") + TEMPorNull(roomTemp)
+			+String("}");
+			request->send(200,"application/json",json);
 
 	 	#ifdef ENABLE_LOGGING
 	 	}else if (request->url() == LOGGING_PATH){
@@ -470,7 +486,8 @@ public:
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET){
 	 		if(request->url() == POLLING_PATH || request->url() == CONFIG_PATH || request->url() == TIME_PATH
-	 		|| request->url() == RESETWIFI_PATH || request->url() == CONTROL_CC_PATH
+			 || request->url() == RESETWIFI_PATH || request->url() == CONTROL_CC_PATH
+			 || request->url() == GETSTATUS_PATH
 	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
 	 		#endif
