@@ -437,9 +437,9 @@ public:
 			float beerSet, beerTemp, fridgeTemp, fridgeSet, roomTemp;
 			brewPi.getAllStatus(&state, &mode, &beerTemp, &beerSet, &fridgeTemp, &fridgeSet, &roomTemp);
 			#define TEMPorNull(a) (IS_FLOAT_TEMP_VALID(a)?  String(a):String("null"))
-			String json=String("{\"mode\":") + String((char) mode)
-			+ String(",\"state\":\"") + String(state)
-			+ String("\",\"beerSet\":") + TEMPorNull(beerSet)
+			String json=String("{\"mode\":\"") + String((char) mode)
+			+ String("\",\"state\":") + String(state)
+			+ String(",\"beerSet\":") + TEMPorNull(beerSet)
 			+ String(",\"beerTemp\":") + TEMPorNull(beerTemp)
 			+ String(",\"fridgeSet\":") + TEMPorNull(fridgeSet)
 			+ String(",\"fridgeTemp\":") + TEMPorNull(fridgeTemp)
