@@ -335,3 +335,5 @@
 #define SettableMinimumCoolTime true
 #define FridgeSensorFallBack true
 #endif
+
+#define EMIWorkaround 1
