@@ -631,6 +631,19 @@ void reportRssi(void)
 	stringAvailable(buf);
 }
 
+void onClientConnected(AsyncEventSourceClient *client){
+	DBG_PRINTF("SSE Connect\n");
+	char buf[128];
+	// gravity related info.
+	if(externalData.iSpindelEnabled()){
+		externalData.sseNotify(buf);
+		client->send(buf);
+	}
+	// RSSI && 
+	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d}",hostnetworkname,BPL_VERSION,WiFi.RSSI());
+	client->send(buf);
+}
+
 #define MAX_DATA_SIZE 256
 
 class LogHandler:public AsyncWebHandler
@@ -1121,14 +1134,7 @@ void setup(void){
 #endif
 
 #if UseServerSideEvent == true
-	sse.onConnect([](AsyncEventSourceClient *client){
-		DBG_PRINTF("SSE Connect\n");
-		if(externalData.iSpindelEnabled()){
-			char buf[128];
-			externalData.sseNotify(buf);
-			sse.send(buf);
-		}
-  	});
+	sse.onConnect(onClientConnected);
 	server.addHandler(&sse);
 #endif
 

@@ -337,3 +337,4 @@
 #endif
 
 #define EMIWorkaround 1
+#define BPL_VERSION "2.3.2"
