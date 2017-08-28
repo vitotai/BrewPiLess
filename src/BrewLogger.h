@@ -183,7 +183,16 @@ public:
 		            idx += numberInRecord;
 			    } // else, of data not enough
 		    }else if(tag == ResumeBrewTag){
-			    _resumeLastLogTime += mask * 60;
+				if((2 + idx) > size){
+		            // not enough data for this record!
+		            // rewind and return
+		            return idx - 2;
+				}else{
+					size_t d1 =_logBuffer[idx++];
+		    		size_t d0 =_logBuffer[idx++];
+					size_t tdiff= (mask <<16) + (d1 << 8) + d0;
+			    	_resumeLastLogTime = _fileInfo.starttime + tdiff;
+				}
 	    	}
         } // while data available
         return idx;
@@ -200,6 +209,8 @@ public:
             return false;
 		}
 		size_t fsize= _logFile.size();
+ 		
+		 DBG_PRINTF("resume file:%s size:%d\n",buff,fsize);
 
 		size_t totalRead=0;
 		size_t byteRead;
@@ -885,14 +896,17 @@ private:
 
 	void addResumeTag(void)
 	{
-		int idx = allocByte(2);
+		int idx = allocByte(4);
 		if(idx < 0) return;
 		writeBuffer(idx,ResumeBrewTag); //*ptr = ResumeBrewTag;
 		size_t rtime= TimeKeeper.getTimeSeconds();
-		int gap=(rtime - _resumeLastLogTime)/60;
-		if (gap > 255) gap = 255;
-		writeBuffer(idx+1,(uint8_t)gap);  //*(ptr+1)=(uint8_t)((rtime - _fileInfo.starttime)/60);
-		commitData(idx,2);
+		size_t gap=rtime - _fileInfo.starttime;
+		DBG_PRINTF("resume, start:%d, current:%d gap:%d\n",_fileInfo.starttime,rtime,gap);
+		//if (gap > 255) gap = 255;
+		writeBuffer(idx+1,(uint8_t) (gap>>16)&0xFF );
+		writeBuffer(idx+2,(uint8_t) (gap>>8)&0xFF );
+		writeBuffer(idx+3,(uint8_t) (gap)&0xFF);
+		commitData(idx,4);
 	}
 
 	FileIndexes _fileInfo;

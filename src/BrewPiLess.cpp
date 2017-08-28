@@ -120,6 +120,8 @@ R"END(
 
 #define GRAVITY_PATH       "/gravity"
 
+#define GETSTATUS_PATH "/getstatus"
+
 #define DEFAULT_INDEX_FILE     "index.htm"
 
 const char *public_list[]={
@@ -430,6 +432,20 @@ public:
 	        return request->requestAuthentication();
 
 			handleFilePuts(request);
+		}else if(request->method() == HTTP_GET && request->url() == GETSTATUS_PATH){
+			uint8_t mode, state;
+			float beerSet, beerTemp, fridgeTemp, fridgeSet, roomTemp;
+			brewPi.getAllStatus(&state, &mode, &beerTemp, &beerSet, &fridgeTemp, &fridgeSet, &roomTemp);
+			#define TEMPorNull(a) (IS_FLOAT_TEMP_VALID(a)?  String(a):String("null"))
+			String json=String("{\"mode\":\"") + String((char) mode)
+			+ String("\",\"state\":") + String(state)
+			+ String(",\"beerSet\":") + TEMPorNull(beerSet)
+			+ String(",\"beerTemp\":") + TEMPorNull(beerTemp)
+			+ String(",\"fridgeSet\":") + TEMPorNull(fridgeSet)
+			+ String(",\"fridgeTemp\":") + TEMPorNull(fridgeTemp)
+			+ String(",\"roomTemp\":") + TEMPorNull(roomTemp)
+			+String("}");
+			request->send(200,"application/json",json);
 
 	 	#ifdef ENABLE_LOGGING
 	 	}else if (request->url() == LOGGING_PATH){
@@ -470,7 +486,8 @@ public:
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET){
 	 		if(request->url() == POLLING_PATH || request->url() == CONFIG_PATH || request->url() == TIME_PATH
-	 		|| request->url() == RESETWIFI_PATH || request->url() == CONTROL_CC_PATH
+			 || request->url() == RESETWIFI_PATH || request->url() == CONTROL_CC_PATH
+			 || request->url() == GETSTATUS_PATH
 	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
 	 		#endif
@@ -606,6 +623,27 @@ void notifyLogStatus(void)
 {
 	stringAvailable("V:{\"reload\":\"chart\"}");
 }
+
+void reportRssi(void)
+{
+	char buf[32];
+	sprintf(buf,"V:{\"rssi\":%d}",WiFi.RSSI());
+	stringAvailable(buf);
+}
+
+void onClientConnected(AsyncEventSourceClient *client){
+	DBG_PRINTF("SSE Connect\n");
+	char buf[128];
+	// gravity related info.
+	if(externalData.iSpindelEnabled()){
+		externalData.sseNotify(buf);
+		client->send(buf);
+	}
+	// RSSI && 
+	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d}",hostnetworkname,BPL_VERSION,WiFi.RSSI());
+	client->send(buf);
+}
+
 #define MAX_DATA_SIZE 256
 
 class LogHandler:public AsyncWebHandler
@@ -981,7 +1019,7 @@ void initWakeupButton(void){
 }
 #endif //#ifdef WAKEUP_BUTTON
 
-#ifdef EMCWorkAround
+#ifdef EMIWorkaround
 uint32_t _lcdReinitTime;
 #define LCDReInitPeriod (10*60*1000)
 #endif
@@ -1096,14 +1134,7 @@ void setup(void){
 #endif
 
 #if UseServerSideEvent == true
-	sse.onConnect([](AsyncEventSourceClient *client){
-		DBG_PRINTF("SSE Connect\n");
-		if(externalData.iSpindelEnabled()){
-			char buf[128];
-			externalData.sseNotify(buf);
-			sse.send(buf);
-		}
-  	});
+	sse.onConnect(onClientConnected);
 	server.addHandler(&sse);
 #endif
 
@@ -1159,11 +1190,13 @@ void setup(void){
 	display.printStatus(buf);
 	_displayTime = TimeKeeper.getTimeSeconds() + 20;
 #endif
-#ifdef EMCWorkAround
+#ifdef EMIWorkaround
 	_lcdReinitTime = millis();
 #endif
 }
 
+uint32_t _rssiReportTime;
+#define RssiReportPeriod 10
 
 void loop(void){
 //{brewpi
@@ -1178,11 +1211,10 @@ void loop(void){
 #endif
 	time_t now=TimeKeeper.getTimeSeconds();
 
-#ifdef EMCWorkAround
+#ifdef EMIWorkAround
 	if( (millis() - _lcdReinitTime) > LCDReInitPeriod){
 		_lcdReinitTime=millis();
-		display.init();
-		display.printAll();
+		display.fresh();
 	}
 #endif
 
@@ -1197,6 +1229,11 @@ void loop(void){
 		display.printStatus(buf);
 	}
 #endif
+	if( (now - _rssiReportTime) > RssiReportPeriod){
+		_rssiReportTime =now;
+		reportRssi();
+	}
+
   	brewKeeper.keep(now);
 
   	brewPi.loop();
