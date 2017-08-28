@@ -6,10 +6,6 @@
 Flex Layout
 *******************************/
 
-[viewport] {
-  padding: 0 16px;
-}
-
 html [layout], html [layout][horizontal], html [layout][vertical] {
   display: flex;
 }

@@ -87,11 +87,9 @@ module.exports = (grunt) ->
 
     watch:
       files: [
-        'src/index.html'
-        '<%= jshint.files %>'
-        '<%= sass.dev.src %>'
+        'src/**/*'
       ]
-      tasks: 'dev'
+      tasks: 'default'
 
   grunt.registerTask 'build', [
     #'jshint'
@@ -102,7 +100,7 @@ module.exports = (grunt) ->
     'htmlmin:dist'
   ]
 
-  grunt.registerTask 'dev', [
+  grunt.registerTask 'default', [
     #'jshint'
     'copy'
     'htmlmin:dev'

@@ -1,3 +1,5 @@
+var JSVERION="2.3.2";
+
 /**********************************************************************
 created by Vito Tai
 Copyright (C) 2016 Vito Tai
@@ -1320,9 +1322,26 @@ var ControlChart={
 
     }
 
+    function displayrssi(x){
+      var strength=[-1000,-90,-80,-70,-67];
+      var bar=4;
+      for(;bar>=0;bar--){
+        if(strength[bar] < x ) break;
+      }
+      var bars=document.getElementsByClassName("rssi-bar");
+      for(var i=0;i< bars.length;i++){
+        bars[i].style.backgroundColor=(i < bar)? "white":"rgb(82, 146, 194)";
+      }
+      Q("#wifisignal").innerHTML=(x>0)? "?":Math.min(Math.max(2 * (x + 100), 0), 100);
+    }
+
     function init()
     {
       BChart.init("div_g");
+
+      var rssi=Q("#rssi");
+      rssi.onmouseover=function(){Q("#wifisignal").style.display="block";};
+      rssi.onmouseout=function(){Q("#wifisignal").style.display="none";};
 
       var gotMsg=true;
       onload(function(){
@@ -1341,85 +1360,99 @@ var ControlChart={
           },
           handlers:{
             L:function(lines){gotMsg=true; for(var i=0;i<4;i++) setLcdText("lcd-line-" + i,lines[i]);},
-            V:function(c){ console.log("forced reload chart"); BChart.reqnow(); },
-            G:function(c){ gravityDevice(c); }
-          }
-        });
-
-        BChart.start();
-
+            V:function(c){  if(typeof c["rssi"] != "undefined"){
+              displayrssi(c["rssi"]);
+            }
+            if(typeof c["reload"] != "undefined"){
+              console.log("forced reload chart");
+              BChart.reqnow();
+            }
+            if(typeof c["nn"]!="undefined"){
+              Q("#hostname").innerHTML = c["nn"];
+            }
+            if(typeof c["ver"]!="undefined"){
+              if(JSVERION != c["ver"]) alert("Version Mismatched!. Reload the page.");
+              Q("#verinfo").innerHTML = "v" + c["ver"];
+            }
+          },
+          G:function(c){ gravityDevice(c); }
+        }
       });
 
+      BChart.start();
+
+    });
+
+  }
+  var BrewMath={
+    abv:function(og,fg){return ((76.08 * (og-fg) / (1.775-og)) * (fg / 0.794)).toFixed(1);},
+    att:function(og,fg){ return Math.round((og-fg)/(og -1) * 100);},
+    sg2pla:function(sg){ return -616.868 + 1111.14 * sg - 630.272 * sg * sg + 135.997 * sg*sg*sg;},
+    pla2sg:function(pla){ return 1 + (pla/(258.6 - ((pla/258.2) * 227.1))); }
+  };
+
+  function updateGravity(sg)
+  {
+    //if(typeof window.sg != "undefined") return;
+    window.sg=sg;
+    Q("#gravity-sg").innerHTML = sg.toFixed(3);
+    if(typeof window.og != "undefined"){
+      Q("#gravity-att").innerHTML = BrewMath.att(window.og,sg);
+      Q("#gravity-abv").innerHTML = BrewMath.abv(window.og,sg);
     }
-    var BrewMath={
-      abv:function(og,fg){return ((76.08 * (og-fg) / (1.775-og)) * (fg / 0.794)).toFixed(1);},
-      att:function(og,fg){ return Math.round((og-fg)/(og -1) * 100);},
-      sg2pla:function(sg){ return -616.868 + 1111.14 * sg - 630.272 * sg * sg + 135.997 * sg*sg*sg;},
-      pla2sg:function(pla){ return 1 + (pla/(258.6 - ((pla/258.2) * 227.1))); }
-    };
+  }
 
-    function updateGravity(sg)
-    {
-      //if(typeof window.sg != "undefined") return;
-      window.sg=sg;
-      Q("#gravity-sg").innerHTML = sg.toFixed(3);
-      if(typeof window.og != "undefined"){
-        Q("#gravity-att").innerHTML = BrewMath.att(window.og,sg);
-        Q("#gravity-abv").innerHTML = BrewMath.abv(window.og,sg);
-      }
-    }
+  function updateOriginGravity(og){
+    if(typeof window.og != "undefined" && window.og == og) return;
+    window.og=og;
+    Q("#gravity-og").innerHTML = og.toFixed(3);
+    if(typeof window.sg != "undefined")
+    updateGravity(window.sg);
+  }
 
-    function updateOriginGravity(og){
-      if(typeof window.og != "undefined" && window.og == og) return;
-      window.og=og;
-      Q("#gravity-og").innerHTML = og.toFixed(3);
-      if(typeof window.sg != "undefined")
-      updateGravity(window.sg);
-    }
+  function showgravitydlg(msg)
+  {
+    Q('#dlg_addgravity .msg').innerHTML=msg;
+    Q('#dlg_addgravity').style.display = "block";
+  }
 
-    function showgravitydlg(msg)
-    {
-      Q('#dlg_addgravity .msg').innerHTML=msg;
-      Q('#dlg_addgravity').style.display = "block";
-    }
+  function dismissgravity()
+  {
+    Q('#dlg_addgravity').style.display = "none";
+  }
 
-    function dismissgravity()
-    {
-      Q('#dlg_addgravity').style.display = "none";
-    }
+  function inputgravity()
+  {
+    var gravity=parseFloat(Q("#dlg_addgravity input").value);
 
-    function inputgravity()
-    {
-      var gravity=parseFloat(Q("#dlg_addgravity input").value);
+    if(gravity < 0.8 || gravity > 1.25) return;
+    dismissgravity();
+    openDlgLoading();
 
-      if(gravity < 0.8 || gravity > 1.25) return;
-      dismissgravity();
-      openDlgLoading();
+    if(window.isog) updateOriginGravity(gravity);
+    else updateGravity(gravity);
 
-      if(window.isog) updateOriginGravity(gravity);
-      else updateGravity(gravity);
-
-      var data={name:"webjs",gravity:gravity};
-      if(window.isog)
-      data.og=1;
-      s_ajax({
-        url:"gravity", m:"POST",mime:"application/json",
-        data:JSON.stringify(data),
-        success:function(d){
-          closeDlgLoading();
-        },
-        fail:function(d){alert("failed:"+d);
+    var data={name:"webjs",gravity:gravity};
+    if(window.isog)
+    data.og=1;
+    s_ajax({
+      url:"gravity", m:"POST",mime:"application/json",
+      data:JSON.stringify(data),
+      success:function(d){
         closeDlgLoading();
-      }});
+      },
+      fail:function(d){alert("failed:"+d);
+      closeDlgLoading();
+    }});
 
-    }
-    function inputSG()
-    {
-      window.isog=false;
-      showgravitydlg("Add gravity Record:");
-    }
-    function inputOG()
-    {
-      window.isog=true;
-      showgravitydlg("Set Original Gravity:");
-    }
+  }
+  function inputSG()
+  {
+    window.isog=false;
+    showgravitydlg("Add gravity Record:");
+  }
+  function inputOG()
+  {
+    window.isog=true;
+    showgravitydlg("Set Original Gravity:");
+  }
