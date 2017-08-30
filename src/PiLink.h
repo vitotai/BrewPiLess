@@ -62,7 +62,7 @@ class PiLink{
 
 	static void receiveJson(void); // receive settings as JSON key:value pairs
 
-	static void print(char *fmt, ...); // use when format string is stored in RAM
+	static void print(const char *fmt, ...); // use when format string is stored in RAM
 #ifdef ARDUINO
 	static void print(char c)       // inline for arduino
 #ifndef ESP8266

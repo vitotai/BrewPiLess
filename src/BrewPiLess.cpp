@@ -185,7 +185,7 @@ void initTime(bool apmode)
 	if(apmode){
 		TimeKeeper.begin();
 	}else{
-		TimeKeeper.begin("time.nist.gov","time.windows.com","de.pool.ntp.org");
+		TimeKeeper.begin((char*)"time.nist.gov",(char*)"time.windows.com",(char*)"de.pool.ntp.org");
 	}
 }
 

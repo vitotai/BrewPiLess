@@ -36,6 +36,9 @@
 #define LCD_ENTRYMODESET 0x04
 #define LCD_DISPLAYCONTROL 0x08
 #define LCD_CURSORSHIFT 0x10
+#ifdef LCD_FUNCTIONSET
+#undef LCD_FUNCTIONSET
+#endif
 #define LCD_FUNCTIONSET 0x28
 #define LCD_SETCGRAMADDR 0x40
 #define LCD_SETDDRAMADDR 0x80
@@ -76,6 +79,9 @@
 #define LCD_SHIFT_DATA_MASK 0xF0 // Data bits, QE = D4, QF = D5, QG = D6, QH = D7
 
 // Backlight is switched with a P-channel MOSFET, so signal is inverted.
+#ifdef BACKLIGHT_AUTO_OFF_PERIOD
+#undef BACKLIGHT_AUTO_OFF_PERIOD
+#endif
 #define BACKLIGHT_AUTO_OFF_PERIOD 600
 
 class SpiLcd : public Print {
