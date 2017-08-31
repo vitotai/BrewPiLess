@@ -44,10 +44,10 @@ class BrewProfile
 	time_t _loadBrewingStatus(void);
 	void _saveBrewingStatus(void);
 
-	void _estimateStep(time_t now);
+	void _estimateStep(time_t now,Gravity gravity);
 
 	void _toNextStep(unsigned long time);
-
+	bool checkCondition(unsigned long time,Gravity gravity);
 	bool _loadProfile(String filename);
 public:
 	BrewProfile(void):_profileLoaded(false),_statusLoaded(false),_numberOfSteps(0),_unit('U'),_steps(NULL){
@@ -80,7 +80,7 @@ class BrewProfile
 
 	void _tempConvert(void);
 public:
-	BrewProfile(void):_profileLoaded(false),_numberOfSteps(0),_unit('U'),_setTemps(NULL),_times(NULL){}
+	BrewProfile(void):_profileLoaded(false),_numberOfSteps(0),_unit('U'),_setTemps(NULL),_times(NULL),_startDay(0){}
 	int numberOfSteps(void){ return _numberOfSteps;}
 	bool loaded(void){return _profileLoaded;}
 
