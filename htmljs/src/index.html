@@ -11,10 +11,10 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body onload=init()>
-  <header layout horizontal main-justified cross-center class="header">
-    <h1 class="header_title">BrewPiLess <span id="hostname" class="header_version-display">v2.1</span></h1>
-    <div id="versionsignal"><div id="verinfo">v2</div>
+  <header layout horizontal main-justified cross-center relative class="header">
+    <h1 class="header_title"><span id="hostname">BrewPiLess</span> <span id="verinfo" class="header_version-display">v2.1</span></h1>
     <ul class="options">
+      <li><a href="/control.html">control</a></li>
       <li><a href="/log">logs</a></li>
       <li><a href="/setup.htm">setup</a></li>
       <li><a href="/config">config</a></li>
@@ -24,18 +24,25 @@
 
   <div viewport layout horizontal>
     <div side>
-      <div id="lcd" class="lcddisplay">
-        <span class="lcd-line" id="lcd-line-0">Live LCD waiting</span>
-        <span class="lcd-line" id="lcd-line-1">for update from</span>
-        <span class="lcd-line" id="lcd-line-2">script...</span>
-        <span class="lcd-line" id="lcd-line-3"></span>
-      </div>
-      <div id="rssi">
-        <div class="rssi-bar rssi-bar1"></div>
-        <div class="rssi-bar rssi-bar2"></div>
-        <div class="rssi-bar rssi-bar3"></div>
-        <div class="rssi-bar rssi-bar4"></div>
-        <div id="wifisignal">?</div>
+      <div id="status" class="status-display">
+        <ul id="status-pane" class="data-pane status-pane">
+          <li><strong class="heading">status:</strong></li>
+          <li class="error">waiting for update from script ...</li>
+          <li layout horizontal main-justified class="lcd-line-0"></li>
+          <li layout horizontal main-justified class="lcd-line-1"></li>
+          <li layout horizontal main-justified class="lcd-line-2"></li>
+          <li layout horizontal main-justified class="lcd-line-3"></li>
+          <li layout horizontal main-justified>
+            <span class="descriptor">wifi:</span>
+            <div id="rssi">
+              <div class="rssi-bar rssi-bar1"></div>
+              <div class="rssi-bar rssi-bar2"></div>
+              <div class="rssi-bar rssi-bar3"></div>
+              <div class="rssi-bar rssi-bar4"></div>
+              <div id="wifisignal">?</div>
+            </div>
+          </li>
+        </ul>
       </div>
       <div id="recording"></div>
       <ul id="gravity-pane" class="data-pane gravity-pane">
@@ -103,12 +110,33 @@
           </li>
         </ul>
       </div>
-      
+
     </div>
   </div>
 
-  <footer class="footer">
-    Footer
+  <footer layout horizontal main-justified cross-center class="footer">
+    <span>BrewPiLess &copy; <a href="https://github.com/vitotai/">vitotai</a></span>
+    <span><a href="https://github.com/vitotai/BrewPiLess/">project on GitHub</a></span>
   </footer>
+
+  <!-- Modals -->
+  <div id="dlg_loading" class="modal">
+    <div class="modal-content">
+      <p>Communicating with BrewPiLess controller..</p>
+    </div>
+  </div>
+
+  <div id="dlg_addgravity" class="modal">
+    <div class="modal-content">
+      <p style="padding: 16px 0;">
+        <span class="msg"></span>
+        <input type="text" size="6" value="1.0">
+      </p>
+      <div class="dialog-buttons">
+        <button class="btn btn--primary" onclick="inputgravity()">OK</button>
+        <button class="btn" onclick="dismissgravity()">Cancel</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

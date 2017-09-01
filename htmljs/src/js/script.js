@@ -410,14 +410,7 @@ function updateTempUnit(u) {
   }
 }
 
-// function openDlgLoading(){document.getElementById('dlg_loading').style.display = "block";}
-// function closeDlgLoading(){document.getElementById('dlg_loading').style.display = "none";}
-
 function onload(next) {
-  // modekeeper.init();
-
-  // openDlgLoading();
-
   function complete(){
     var initial=true;
     function initComp(){
@@ -549,28 +542,20 @@ var BChart={
   }
 };
 
-function setLcdText(id,html) {
-  var d=document.getElementById(id);
-  d.innerHTML=html;
-}
-
 function communicationError() {
-  setLcdText("lcd-line-0","Failed to");
-  setLcdText("lcd-line-1","connect to");
-  setLcdText("lcd-line-2","Server");
-  setLcdText("lcd-line-3","");
+  Q('#status-pane .error').style.display='list-item';
+  Q('#status-pane .error').innerHTML="Failed to connect to server.";
 }
 
 function controllerError() {
-  setLcdText("lcd-line-0","Controller not");
-  setLcdText("lcd-line-1","updating data");
-  setLcdText("lcd-line-2","...");
-  setLcdText("lcd-line-3","");
-  /*setTimeout(function(){
-  console.log("reconnect");
-  BWF.reconnect();
-},5000);*/
+  Q('#status-pane .error').style.display='list-item';
+  Q('#status-pane .error').innerHTML="Controller not updating data ...";
 };
+
+function setLcdText(i, msg) {
+  Q('#status-pane .error').style.display='none';
+  Q('#status-pane .' + i).innerHTML=msg;
+}
 
 function gravityDevice(msg) {
   if(typeof msg["name"] == "undefined") return;
@@ -625,45 +610,42 @@ function init() {
   rssi.onmouseout=function(){Q("#wifisignal").style.display="none";};
 
   var gotMsg=true;
-  onload(function(){
-    BWF.init({
-      onconnect:function(){
+
+  BWF.init({
+    onconnect:function(){
+      BWF.send("l");
+      setInterval(function(){
+        if(!gotMsg) controllerError();
         BWF.send("l");
-        setInterval(function(){
-          if(!gotMsg) controllerError();
-          BWF.send("l");
-          gotMsg=false;
-        },5000);
+        gotMsg=false;
+      },5000);
+    },
+    error:function(e){
+      communicationError();
+    },
+    handlers:{
+      L:function(lines){gotMsg=true; for(var i=0;i<4;i++) setLcdText("lcd-line-" + i, lines[i]);},
+      V:function(c){
+        if(typeof c["rssi"] != "undefined"){
+          displayrssi(c["rssi"]);
+        }
+        if(typeof c["reload"] != "undefined"){
+          console.log("forced reload chart");
+          BChart.reqnow();
+        }
+        if(typeof c["nn"]!="undefined"){
+          Q("#hostname").innerHTML = c["nn"];
+        }
+        if(typeof c["ver"]!="undefined"){
+          if(JSVERION != c["ver"]) alert("Version Mismatched!. Reload the page.");
+          Q("#verinfo").innerHTML = "v" + c["ver"];
+        }
       },
-      error:function(e){
-        //console.log("error");
-        communicationError();
-      },
-      handlers:{
-        L:function(lines){gotMsg=true; for(var i=0;i<4;i++) setLcdText("lcd-line-" + i,lines[i]);},
-        V:function(c){
-          if(typeof c["rssi"] != "undefined"){
-            displayrssi(c["rssi"]);
-          }
-          if(typeof c["reload"] != "undefined"){
-            console.log("forced reload chart");
-            BChart.reqnow();
-          }
-          if(typeof c["nn"]!="undefined"){
-            Q("#hostname").innerHTML = c["nn"];
-          }
-          if(typeof c["ver"]!="undefined"){
-            if(JSVERION != c["ver"]) alert("Version Mismatched!. Reload the page.");
-            Q("#verinfo").innerHTML = "v" + c["ver"];
-          }
-        },
-        G:function(c){ gravityDevice(c); }
-      }
-    });
-
-    BChart.start();
-
+      G:function(c){ gravityDevice(c); }
+    }
   });
+
+  BChart.start();
 };
 
 var BrewMath={
@@ -692,12 +674,21 @@ function updateOriginGravity(og){
 }
 
 function showgravitydlg(msg) {
+  console.log('show')
   Q('#dlg_addgravity .msg').innerHTML=msg;
-  Q('#dlg_addgravity').style.display = "block";
+  Q('#dlg_addgravity').style.display = "flex";
 }
 
 function dismissgravity() {
   Q('#dlg_addgravity').style.display = "none";
+}
+
+function openDlgLoading() {
+    document.getElementById('dlg_loading').style.display = "block";
+}
+
+function closeDlgLoading() {
+    document.getElementById('dlg_loading').style.display = "none";
 }
 
 function inputgravity() {
