@@ -7,6 +7,7 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-jshint'
   grunt.loadNpmTasks 'grunt-contrib-sass'
   grunt.loadNpmTasks 'grunt-contrib-watch'
+  grunt.loadNpmTasks 'grunt-postcss'
 
   grunt.initConfig
 
@@ -31,7 +32,8 @@ module.exports = (grunt) ->
           minifyJS: true,
           minifyCSS: true
         files: [{
-          'dist/index.html': 'dist/index.html'
+          'dist/index.html': 'dist/index.html',
+          'dist/control.html': 'dist/control.html'
         }]
       dev:
         options:
@@ -44,13 +46,15 @@ module.exports = (grunt) ->
           minifyJS: false,
           minifyCSS: false
         files: [{
-          'build/index.html': 'src/index.html'
+          'build/index.html': 'src/index.html',
+          'build/control.html': 'src/control.html'
         }]
 
     comboall:
       main:
         files: [
-            {'dist/index.html': ['build/index.html']}
+            { 'dist/index.html': ['build/index.html'] },
+            { 'dist/control.html': ['build/control.html'] }
         ]
 
     jshint:
@@ -85,6 +89,13 @@ module.exports = (grunt) ->
         dest: './build/'
         ext: '.css'
 
+    postcss:
+      options:
+        map: true
+        processors: [ require('autoprefixer') ]
+      dist:
+        src: 'build/*.css'
+
     watch:
       files: [
         'src/**/*'
@@ -96,6 +107,7 @@ module.exports = (grunt) ->
     'copy'
     'htmlmin:dev'
     'sass:dev'
+    'postcss'
     'comboall'
     'htmlmin:dist'
   ]
@@ -105,5 +117,6 @@ module.exports = (grunt) ->
     'copy'
     'htmlmin:dev'
     'sass:dev'
+    'postcss'
     'watch'
   ]

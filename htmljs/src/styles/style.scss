@@ -23,8 +23,9 @@ $filtersg-color: #000abb;
 .header {
 	height: 64px;
 	background: $primary-color;
-	box-shadow: 0px 1px 8px rgba(0, 0, 0, 0.3);
+	box-shadow: 0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);
 	padding: 0 16px;
+	z-index: 2;
 }
 
 .header_title {
@@ -63,11 +64,20 @@ $filtersg-color: #000abb;
 	}
 }
 
+/** Footer **/
+
 .footer {
 	height: 40px;
 	background: #222;
-	color: #FFF;
+	color: rgba(255,255,255,0.87);
+	padding: 0 16px;
+	a {
+		color: rgba(255,255,255,0.87);
+		font-weight: bold;
+	}
 }
+
+/** Content **/
 
 [viewport] {
 	height: calc(100% - 104px);
@@ -76,12 +86,11 @@ $filtersg-color: #000abb;
 [main] {
 	padding: 16px;
 	overflow-y: auto;
-	background: #FFF;
 }
 
 /* Data panes */
 [side] {
-	box-shadow: 2px 0 2px rgba(0,0,0,0.3);
+	box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12), 0 3px 1px -2px rgba(0,0,0,.2);
 	width: 300px;
 	padding: 16px;
 	overflow-y: auto;
@@ -220,11 +229,9 @@ $filtersg-color: #000abb;
 	}
 }
 
+/** WIFI **/
 
-
-/** OLD **/
-
-#rssi {position:relative; margin: 0px 16px 0px 0px; height: 24px; width: 24px; display:inline-block;}
+#rssi {position:relative; height: 16px; width: 24px; display:inline-block;}
 #wifisignal{
 	font-size: 12pt;
 	color:black;
@@ -236,161 +243,66 @@ $filtersg-color: #000abb;
 }
 .rssi-bar {position:absolute; bottom:0; float:left; width: 4px; border-radius: 1px; background-color: #FFFFFF;}
 .rssi-bar1 {height: 4px; left:0px;}
-.rssi-bar2 {height: 12px; left:6px;}
-.rssi-bar3 {height: 18px; left:12px;}
-.rssi-bar4 {height: 24px; left:18px;}
+.rssi-bar2 {height: 8px; left:6px;}
+.rssi-bar3 {height: 12px; left:12px;}
+.rssi-bar4 {height: 16px; left:18px;}
 
+/** Buttons **/
 
-#div_lb{display: none;}
+.btn {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    height: 35px;
+    line-height: 35px;
+    padding: 0 1.5rem;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .8px;
+    text-align: center;
+    text-transform: uppercase;
+    vertical-align: middle;
+    white-space: nowrap;
+    outline: none;
+    border: none;
+    user-select: none;
+    transition: all .3s ease-out;
+		background-color: transparent;
+}
 
-.hide{ display:none;}
+.btn--primary {
+	color: $accent-color;
+}
 
+.btn:hover {
+	background-color: hsla(0,0%,60%,.2);
+}
 
+/** Modal **/
+.modal {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	z-index: 1000;
+	transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+	transition-delay: 0s;
+	background: rgba(0,0,0,0.3);
+}
 
-#bottom-frame { height:380px; }
-
-
-
-/* control*/
-
-.navbar {
-	margin:0; padding:.2em .2em 0;
-	border:1px solid #4297d7;
-	background:#5c9ccc;
-	color:#ffffff;
-	height:4em;
-	display:block;
-	position:relative;}
-
-	#set-mode-text {
-		margin-left: 2px;
-		margin: .2em;}
-		.navitem {
-			background:#dfeffc;
-			font-weight: bold;
-			color: #2e6e9e;
-			margin: .2em .2em 0 0;
-			padding: .5em;
-			border-top-right-radius: 5px; border-top-left-radius: 5px;
-		}
-
-		.nav-selected {
-			background:#ffffff;
-			font-weight: bold;
-			color: #e17009;
-			margin: .2em .2em 0 0;
-			padding: .5em .5em .6em .5em;}
-
-			.navitems {
-				display:block;
-				margin-top: 2em;}
-
-				#apply{
-					background:#dfeffc;
-					font-weight: bold;
-					color: #2e6e9e;
-					margin: .2em .1em 0 0;
-					padding: .5em;}
-
-					#containter { margin: 0.5em; width:965px;}
-
-					.detail{}
-					.profileTable td,th {    padding: 3px;
-						text-align: center;}
-						.profileTable tbody TR.odd {
-							background: #f7f7f7;}
-
-							.profileTable tbody TR.even { width:100%; }
-
-							.profileTable TH {
-								border: 1px solid #4297d7;
-								background: #5c9ccc;
-								color: #ffffff;
-								font-weight: bold;}
-
-								table.profileTable { width:100%;}
-
-								#bottom-frame button {
-									color: #1d5987;
-									background:#dfeffc;
-									font-weight:bold;
-									border-radius: 6px;
-									margin: 4px;
-								}
-								#addbutton{
-									width: 120px;}
-									#header { width: 968px;}
-									#clearbtn { width:18%;}
-									#savebtn { width:25%;}
-									#delbtn {width:18%;}
-
-									.modal {
-										display: none; /* Hidden by default */
-										position: fixed; /* Stay in place */
-										z-index: 100; /* Sit on top */
-										padding-top: 100px; /* Location of the box */
-										left: 0;
-										top: 0;
-										width: 100%; /* Full width */
-										height: 100%; /* Full height */
-										overflow: auto; /* Enable scroll if needed */
-										background-color: rgb(0,0,0); /* Fallback color */
-										background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-									}
-
-									/* Modal Content */
-
-									.modal-content {
-										background-color: #fefefe;
-										margin: auto;
-										padding: 10px;
-										border: 1px solid #888;
-										width: 340px;
-										height: 220px;
-										border-radius:8px;
-
-									}
-
-									#dlg_addgravity button{
-										width:56px;
-										margin-top: 2px;
-									}
-									.dialog-buttons{
-
-									}
-
-									#modekeeper-apply{margin-top: 0px;}
-									#profile-edit {  margin:6px; width:510px; position:relative; }
-									#tc_chart { width:430px; height: 280px;  margin:6px;}
-
-
-									#profile-list-pane {
-										position:absolute;
-										background-color:#fafaf0;
-										border-style: outset;
-										border: solid 3px;
-
-										height:100%;
-										width:200px;
-										overflow:auto;
-										left:-300px;
-										top: 0px;
-										overflow: auto;
-									}
-									#profile-list-pane td{
-										white-space: nowrap;
-										overflow: hidden;
-									}
-									#profile-list-pane .rmbutton{
-										color:red;
-									}
-									#profile-list-pane a, #profile-list-pane u {
-										text-decoration: none;
-									}
-									#fgstate {
-										width: 10px;
-										height: 10px;
-										border-radius: 6px;
-										margin: 4px 0 0 0;
-										border: 0px;
-									}
+.modal-content {
+	position: relative;
+	padding: 2.4rem;
+	background: #ffebee;
+	background-clip: padding-box;
+	box-shadow: 0 12px 15px 0 rgba(0,0,0,0.25);
+	transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+	max-width: 600px;
+	padding: 1.2rem;
+}
