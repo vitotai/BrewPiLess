@@ -1,0 +1,165 @@
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrewPiLess reporting for duty!</title>
+  <meta name="apple-mobile-web-app-title" content="BrewPiLess">
+  <meta name="apple-mobile-web-app-capable" content="yes" >
+  <script type="text/javascript" src="dygraph-combined.js"></script>
+  <script type="text/javascript" src="bwf.js"></script>
+  <script type="text/javascript" src="script-control.js"></script>
+  <link rel="stylesheet" href="style-control.css">
+</head>
+<body onload=init()>
+  <header layout horizontal main-justified cross-center class="header">
+    <h1 class="header_title"><span id="hostname">BrewPiLess</span> <span id="verinfo" class="header_version-display">v2.1</span></h1>
+    <ul class="options">
+            <li><a href="/control.html">control</a></li>
+      <li><a href="/log">logs</a></li>
+      <li><a href="/setup.htm">setup</a></li>
+      <li><a href="/config">config</a></li>
+      <li><a href="/gdc">gravity</a></li>
+    </ul>
+  </header>
+
+  <div viewport layout horizontal>
+    <div class="frame" id="bottom-frame">
+      <div class="navbar" id="header">
+        <div id="set-mode-text">Set temperature mode:</div>
+        <div class="navitems">
+          <span class="navitem" id="profile-m">Beer profile</span>
+          <span class="navitem" id="beer-m">Beer Const.</span>
+          <span class="navitem" id="fridge-m">Fridge Const.</span>
+          <span class="navitem" id="off-m">Off</span>
+          <button id="modekeeper-apply" onclick="modekeeper.apply()">Apply</button>
+        </div>
+      </div>
+
+      <div id="containter">
+        <div id="profile-s" class="detail">
+          <div id="profile-edit">
+            <div id="profile-list-pane">
+              <table>
+                <tr>
+                  <td><button class="rmbutton">X</button>
+                    <a href="#" class="profile-name"></a>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <div>
+              <div><span>Start Date:</span><input type="text" size="16" id="startdate" onchange="profileEditor.startDayChange();">
+                <button id="setnow" onclick=profileEditor.startnow()>Now</button>
+                <button id="addbutton" onclick="profileEditor.addRow();">Add</button></div>
+              </div>
+              <table class="profileTable" id="profile_t">
+                <thead>
+                  <tr>
+                    <th>T(&deg;<span class="t_unit">C</span>)</th>
+                    <th>Condition</th>
+                    <th>Days</th>
+                    <th>SG</th>
+                    <th>Stable</th>
+                    <th>Start Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="stage-temp">19</td>
+                    <td>
+                      <div class="for-time">Ramp</div>
+                      <div class="condition-con">
+                        <select class="condition">
+                          <option value="t">Time</option>
+                          <option value="g">SG</option>
+                          <option value="s">Stable</option>
+                          <option value="a">Time & SG</option>
+                          <option value="o">Time OR SG</option>
+                          <option value="u">Time OR Stable</option>
+                          <option value="v">Time & Stable</option>
+                          <option value="b">SG OR Stable</option>
+                          <option value="x">SG & Stable</option>
+                          <option value="w">ALL</option>
+                          <option value="e">Either</option>
+                        </select>
+                      </div>
+                    </td>
+                    <td class="stage-time">7</td>
+                    <td class="stage-sg">1.01</td>
+                    <td class="stage-stabletime"></td>
+                    <td class="diaplay-time"></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div><button id="delbtn" onclick="profileEditor.delRow();">Delete</button>
+                <button id="clearbtn" onclick="profileEditor.clear()">Clear</button>
+                <button id="loadbtn" onclick="PL.toggle()">...</button>
+                <button id="saveasbtn" onclick="PL.saveas()">Save As</button>
+                <button id="savebtn" onclick="saveprofile()">Save</button></div>
+              </div>
+              <div id="tc_chart"></div>
+            </div>
+            <div id="beer-s" class="detail">
+              Set Beer temp:
+              <input type="text" size="6" id="beer-t"></input>&deg;<span class="t_unit">C</span>
+            </div>
+
+            <div id="fridge-s" class="detail">
+              Set Fridge temp:
+              <input type="text" size="6" id="fridge-t"></input>&deg;<span class="t_unit">C</span>
+            </div>
+            <div id="off-s" class="detail">Turning temperature controll Off.</div>
+          </div>
+
+          <div id="dlg_beerprofilereminder" class="modal">
+            <div class="modal-content">
+              <p><span class="msg"></span>Note: For Beer Profoile to work properly,
+                <ol>
+                  <li>Original Gravity Must be specified if SG is specified as percentage(%)</li>
+                  <li>Local data log must be activated if stability of gravity reading is used.</li>
+                </ol>
+                Original Gravity:<input type="text" size="6" value="1.0">
+                <div class="dialog-buttons">
+                  <button class="oknog">OK, OG already set</button>
+                  <button class="ok">OK, Set OG</button>
+                  <button class="cancel">Cancel</button></div>
+                </div>
+              </div>
+
+
+              <div id="dlg_loading" class="modal">
+                <div class="modal-content">
+                  <p>Communicating with BrewPiLess controller..</p>
+                </div>
+              </div>
+
+              <div id="dlg_addgravity" class="modal">
+                <div class="modal-content">
+                  <p><span class="msg"></span><input type="text" size="6" value="1.0">
+                  </p>
+                  <div class="dialog-buttons">
+                    <button onclick="dismissgravity()">Cancel</button>
+                    <button onclick="inputgravity()">OK</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="dlg_saveas" class="modal">
+                <div class="modal-content">
+                  <span class="msg">Save Profile As</span>
+                  <br><input type="text" size="32">
+                  <br>*No special letters and space allowed.
+                  <button onclick="PL.cancelSave()">Cancel</button>
+                  <button onclick="PL.doSave()">OK</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <footer layout horizontal main-justified cross-center class="footer">
+            <span>BrewPiLess &copy; <a href="https://github.com/vitotai/">vitotai</a></span>
+            <span><a href="https://github.com/vitotai/BrewPiLess/">project on GitHub</a></span>
+          </footer>
+        </body>
+        </html>
