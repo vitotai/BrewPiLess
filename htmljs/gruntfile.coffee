@@ -2,6 +2,7 @@
 
 module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-combo-html-css-js'
+  grunt.loadNpmTasks 'grunt-contrib-compress'
   grunt.loadNpmTasks 'grunt-contrib-copy'
   grunt.loadNpmTasks 'grunt-contrib-htmlmin'
   grunt.loadNpmTasks 'grunt-contrib-jshint'
@@ -96,6 +97,18 @@ module.exports = (grunt) ->
       dist:
         src: 'build/*.css'
 
+    compress:
+      main:
+        options:
+          mode: 'gzip'
+        expand: true
+        files: [{
+          expand: true
+          src: ['dist/*.htm']
+          dest: '.'
+          ext: '.htm.gz'
+        }]
+
     watch:
       files: [
         'src/**/*'
@@ -110,6 +123,7 @@ module.exports = (grunt) ->
     'postcss'
     'comboall'
     'htmlmin:dist'
+    'compress'
   ]
 
   grunt.registerTask 'default', [
