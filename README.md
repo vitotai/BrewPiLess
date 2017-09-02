@@ -504,5 +504,18 @@ For those who don't have access to Microsoft Excel like me, the [calibrationSG.h
 # FAQ
 * Q: I can't save the device setting.
 
-A: Click the "Erase Setting" and try again.
+    A: Click the "Erase Setting" and try again.
+
+* Q: The meaing of WiFi signal.
+
+    A: 
+    | bars  | Signal Strength   | Note       |
+    | ----- |:-------------:| :--------------------|
+    |  4    |  > -67 dBm   | Very good.	|
+    |  3    |  -67 ~ -70 dBm   |good.	|
+    |  2    |  -70 ~ -80 dBm   | minimum for reliable connectivity.	|
+    |  1    |  -80 ~ -90 dBm   | minimum for basic connectivity. unreliable.	|
+    |  0    |  < -90 dBm   | Unstable signal	|
+
+
 
