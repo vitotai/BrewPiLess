@@ -544,19 +544,12 @@ var BChart={
 };
 
 function communicationError() {
-  Q('#status-pane .error').style.display='list-item';
-  Q('#status-pane .error').innerHTML="Failed to connect to server.";
+  Q('.error').innerHTML="Failed to connect to server.";
 }
 
 function controllerError() {
-  Q('#status-pane .error').style.display='list-item';
-  Q('#status-pane .error').innerHTML="Controller not updating data ...";
+  Q('.error').innerHTML="Controller not updating data.";
 };
-
-function setLcdText(i, msg) {
-  Q('#status-pane .error').style.display='none';
-  Q('#status-pane .' + i).innerHTML=msg;
-}
 
 function gravityDevice(msg) {
   if(typeof msg["name"] == "undefined") return;
@@ -625,7 +618,10 @@ function init() {
       communicationError();
     },
     handlers:{
-      L:function(lines){gotMsg=true; for(var i=0;i<4;i++) setLcdText("lcd-line-" + i, lines[i]);},
+      L: function(t) {
+          e = !0;
+          processLcdText(t);
+      },
       V:function(c){
         if(typeof c["rssi"] != "undefined"){
           displayrssi(c["rssi"]);
@@ -724,4 +720,73 @@ function inputSG() {
 function inputOG() {
   window.isog=true;
   showgravitydlg("Set Original Gravity:");
+}
+
+function parseLcdText(lines) {
+    var status = {};
+    var modePatterns = {
+        b: /Mode\s+Beer\s+Const/i,
+        f: /Mode\s+Fridge\s+Const/i,
+        p: /Mode\s+Beer\s+Profile/i,
+        o: /Mode\s+Off/i
+    };
+    var modes = Object.keys(modePatterns);
+    status.ControlMode = "i";
+    for (var m = 0; m < modes.length; m++) {
+        if (modePatterns[modes[m]].test(lines[0])) {
+            status.ControlMode = modes[m];
+            break;
+        }
+    }
+    status.ControlState = i;
+    var tempRE = /\s*(\w+)\s+(.+)\s+(.+)\s+.+([CF])\s*$/;
+    for (var i = 1; i < 3; i++) {
+        var temps = tempRE.exec(lines[i]);
+        status[temps[1] + "Temp"] = temps[2];
+        status[temps[1] + "Set"] = temps[3];
+        status.format = temps[4];
+    }
+    var i = 0;
+    var statePatterns = [
+        /Idling\s+for\s+(\d+h\d+m\d+)\s*$/i,
+        /control\s+OFF/i,
+        /Door\s+Open/i,
+        /Heating\s+for\s+(\d+h\d+m\d+)\s*$/i,
+        /Cooling\s+for\s+(\d+h\d+m\d+)\s*$/i,
+        /Wait\s+to\s+Cool\s+(\d+h\d+m\d+)\s*$/i,
+        /Wait\s+to\s+Heat\s+(\d+h\d+m\d+)\s*$/i,
+        /Wait\s+for\s+Peak/i,
+        /Cool\s+Time\s+left\s+(\d+h\d+m\d+)\s*$/i,
+        /Heat\s+Time\s+left\s+(\d+h\d+m\d+)\s*$/i
+    ];
+    for (i = 0; i < statePatterns.length; i++) {
+        var match = statePatterns[i].exec(lines[3]);
+        if (match) {
+            status.ControlStateSince = (typeof match[1] === "undefined") ? "" : match[1];
+            break;
+        }
+    }
+    status.ControlState = i;
+    return status;
+}
+
+function processLcdText(lines) {
+    Q('.error').innerHTML="";
+    var status = parseLcdText(lines);
+    var ModeString = {
+        o: "OFF",
+        b: "Beer Constant",
+        f: "Fridge Const",
+        p: "Beer Profile",
+        i: "Invalid"
+    };
+    Object.keys(status).map(function(key, i) {
+        var div = Q("#lcd" + key);
+        if (div) {
+            if (key == "ControlMode") div.innerHTML = ModeString[status[key]];
+            else if (key == "ControlState") div.innerHTML = STATES[status[key]].text;
+            else div.innerHTML = status[key];
+        }
+    });
+
 }

@@ -26,27 +26,18 @@
     <div side>
       <div id="status" class="status-display">
         <ul id="status-pane" class="data-pane status-pane">
-          <li><strong class="heading">status:</strong></li>
-          <li class="error">waiting for update from script ...</li>
-          <li layout horizontal main-justified class="lcd-line-0"></li>
-          <li layout horizontal main-justified class="lcd-line-1"></li>
-          <li layout horizontal main-justified class="lcd-line-2"></li>
-          <li layout horizontal main-justified class="lcd-line-3"></li>
-          <li layout horizontal main-justified>
-            <span class="descriptor">wifi:</span>
-            <div id="rssi">
-              <div class="rssi-bar rssi-bar1"></div>
-              <div class="rssi-bar rssi-bar2"></div>
-              <div class="rssi-bar rssi-bar3"></div>
-              <div class="rssi-bar rssi-bar4"></div>
-              <div id="wifisignal">?</div>
-            </div>
-          </li>
+          <li class="heading" layout horizontal main-justified><strong>status:</strong><div style="display: inline-block"><strong id="lcdControlState"></strong> <span class="for">for</span> <span id="lcdControlStateSince"></span></div></li>
+          <li layout horizontal main-justified><span class="descriptor">Mode:</span><span id="lcdControlMode"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">BeerTemp:</span><span id="lcdBeerTemp"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">BeerSet:</span><span id="lcdBeerSet"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">FridgeTemp:</span><span id="lcdFridgeTemp"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">FridgeSet:</span><span id="lcdFridgeSet"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">RoomTemp:</span><span id="lcdRoomTemp"></span></li>
         </ul>
       </div>
-      <div id="recording"></div>
+
       <ul id="gravity-pane" class="data-pane gravity-pane">
-        <li><strong class="heading">current data:</strong></li>
+        <li class="heading"><strong>current data:</strong></li>
         <li layout horizontal main-justified><span class="descriptor">original gravity:</span> <span id="gravity-og" onclick="inputOG()">--</span></li>
         <li layout horizontal main-justified><span class="descriptor">SG:</span>  <span id="gravity-sg" onclick="inputSG()">--</span></li>
         <li layout horizontal main-justified><span class="descriptor">final gravity state:</span>  <div id="fgstate"></div></li>
@@ -54,9 +45,23 @@
         <li layout horizontal main-justified><span class="descriptor">ABV:</span> <span id="gravity-abv"> --%</span></li>
       </ul>
       <ul class="data-pane spindle-pine">
-        <li><strong class="heading">spindel data:</strong></li>
+        <li class="heading"><strong>spindel data:</strong></li>
         <li layout horizontal main-justified><span class="descriptor">Battery:</span> <span id="iSpindel-battery">--</span></li>
         <li layout horizontal main-justified><span class="descriptor">Last Update:</span> <span id="iSpindel-last">--</span></li>
+      </ul>
+      <ul class="data-pane">
+        <li class="heading"><strong>system:</strong></li>
+        <li layout horizontal main-justified><span class="descriptor">writing log:</span><span id="recording"></span></li>
+        <li layout horizontal main-justified>
+          <span class="descriptor">wifi:</span>
+          <div id="rssi">
+            <div class="rssi-bar rssi-bar1"></div>
+            <div class="rssi-bar rssi-bar2"></div>
+            <div class="rssi-bar rssi-bar3"></div>
+            <div class="rssi-bar rssi-bar4"></div>
+            <div id="wifisignal">?</div>
+          </div>
+        </li>
       </ul>
     </div>
     <div main flex>
@@ -118,6 +123,9 @@
     <span>BrewPiLess &copy; <a href="https://github.com/vitotai/">vitotai</a></span>
     <span><a href="https://github.com/vitotai/BrewPiLess/">project on GitHub</a></span>
   </footer>
+
+  <!-- Notification -->
+  <div class=error>waiting for update from script ...</div>
 
   <!-- Modals -->
   <div id="dlg_loading" class="modal">
