@@ -656,15 +656,11 @@ function displayrssi(x){
   for(var i=0;i< bars.length;i++){
     bars[i].style.backgroundColor=(i < bar)? "#888" : "#DDD";
   }
-  Q("#rssi").title=(x>0) ? "?":Math.min(Math.max(2 * (x + 100), 0), 100);
+  Q("#rssi").title=(x>0) ? "?": Math.min(Math.max(2 * (x + 100), 0), 100) + "%";
 };
 
 function init() {
   BChart.init("div_g");
-
-  var rssi=Q("#rssi");
-  rssi.onmouseover=function(){Q("#wifisignal").style.display="block";};
-  rssi.onmouseout=function(){Q("#wifisignal").style.display="none";};
 
   var gotMsg=true;
 
