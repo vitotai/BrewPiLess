@@ -591,9 +591,9 @@ function displayrssi(x){
   }
   var bars=document.getElementsByClassName("rssi-bar");
   for(var i=0;i< bars.length;i++){
-    bars[i].style.backgroundColor=(i < bar)? "white":"rgb(82, 146, 194)";
+    bars[i].style.backgroundColor=(i < bar)? "#888" : "#DDD";
   }
-  Q("#wifisignal").innerHTML=(x>0)? "?":Math.min(Math.max(2 * (x + 100), 0), 100);
+  Q("#rssi").title=(x>0) ? "?":Math.min(Math.max(2 * (x + 100), 0), 100);
 };
 
 function init() {
