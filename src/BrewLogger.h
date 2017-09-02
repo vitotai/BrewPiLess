@@ -96,7 +96,7 @@ public:
 	{
 		// populate JS
 		String ret=String("{\"rec\":");
-		if(_fileInfo.logname[0] != NULL){
+		if(_fileInfo.logname[0] != 0){
 			ret += "1, \"log\":\"" + String(_fileInfo.logname)
 				+"\",\"start\":" + String(_fileInfo.starttime);
 		}else{
@@ -106,7 +106,7 @@ public:
 		ret += ",\"list\":[";
 
 		for(int i=0;i<MAX_FILE_NUMBER;i++){
-			if(_fileInfo.files[i].name[0] == NULL) break;
+			if(_fileInfo.files[i].name[0] == 0) break;
 			if(i!=0) ret +=",";
 			ret +="{\"name\":\"" + String(_fileInfo.files[i].name);
 			ret +="\",\"time\":" +String(_fileInfo.files[i].time) +"}";
@@ -311,7 +311,7 @@ public:
 		int index=0;
 		for(;index<MAX_FILE_NUMBER;index++)
 		{
-			if(_fileInfo.files[index].name[0] == NULL) break;
+			if(_fileInfo.files[index].name[0] == 0) break;
 		}
 		// exceptional case.
 		if(index == MAX_FILE_NUMBER){

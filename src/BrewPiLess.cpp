@@ -185,7 +185,7 @@ void initTime(bool apmode)
 	if(apmode){
 		TimeKeeper.begin();
 	}else{
-		TimeKeeper.begin("time.nist.gov","time.windows.com","de.pool.ntp.org");
+		TimeKeeper.begin((char*)"time.nist.gov",(char*)"time.windows.com",(char*)"de.pool.ntp.org");
 	}
 }
 
@@ -255,8 +255,16 @@ class BrewPiWebHandler: public AsyncWebHandler
 	    unsigned int dum2;
 
 	    if(getEmbeddedFile(path.c_str(),dum,dum2)) return true;
-	    if(path.endsWith(CHART_LIB_PATH) && SPIFFS.exists(CHART_LIB_PATH)) return true;
-	    return false;
+		if(path.endsWith(CHART_LIB_PATH) && SPIFFS.exists(CHART_LIB_PATH)) return true;
+		// safari workaround.
+		if(path.endsWith(".js")){
+			String pathWithJgz = path.substring(0,path.lastIndexOf('.')) + ".jgz";
+			 //DBG_PRINTF("checking with:%s\n",pathWithJgz.c_str());
+			 if(SPIFFS.exists(pathWithJgz)) return true;
+		}
+		String pathWithGz = path + ".gz";
+		if(SPIFFS.exists(pathWithGz)) return true;
+		return false;
     }
 
 	void sendProgmem(AsyncWebServerRequest *request,const char* html)
@@ -278,6 +286,29 @@ class BrewPiWebHandler: public AsyncWebHandler
 
 	void sendFile(AsyncWebServerRequest *request,String path)
 	{
+		//workaround for safari
+		if(path.endsWith(".js")){
+			String pathWithJgz = path.substring(0,path.lastIndexOf('.')) + ".jgz";
+			if(SPIFFS.exists(pathWithJgz)){
+				AsyncWebServerResponse * response = request->beginResponse(SPIFFS, pathWithJgz,"application/javascript");
+				response->addHeader("Content-Encoding", "gzip");
+				response->addHeader("Cache-Control","max-age=2592000");
+				response->addHeader("Content-Type","application/javascript");
+				request->send(response);
+
+				return;
+			}
+		}
+		String pathWithGz = path + ".gz";
+		if(SPIFFS.exists(pathWithGz)){
+			AsyncWebServerResponse * response = request->beginResponse(SPIFFS, pathWithGz,"application/x-gzip");
+			response->addHeader("Content-Encoding", "gzip");
+			response->addHeader("Cache-Control","max-age=2592000");
+			response->addHeader("Content-Type",getContentType(path));
+			request->send(response);
+			return;
+		}
+		  
 		if(SPIFFS.exists(path)){
 			//request->send(SPIFFS, path);
 			bool nocache=false;
@@ -310,7 +341,22 @@ class BrewPiWebHandler: public AsyncWebHandler
 			}else sendProgmem(request,(const char*)file);
 		}
 	}
-
+	String getContentType(String filename){
+		if(filename.endsWith(".htm")) return "text/html";
+		else if(filename.endsWith(".html")) return "text/html";
+		else if(filename.endsWith(".css")) return "text/css";
+		else if(filename.endsWith(".js")) return "application/javascript";
+		else if(filename.endsWith(".png")) return "image/png";
+		else if(filename.endsWith(".gif")) return "image/gif";
+		else if(filename.endsWith(".jpg")) return "image/jpeg";
+		else if(filename.endsWith(".ico")) return "image/x-icon";
+		else if(filename.endsWith(".xml")) return "text/xml";
+		else if(filename.endsWith(".pdf")) return "application/x-pdf";
+		else if(filename.endsWith(".zip")) return "application/x-zip";
+		else if(filename.endsWith(".gz")) return "application/x-gzip";
+		return "text/plain";
+	  }
+	  
 public:
 	BrewPiWebHandler(void){}
 
@@ -499,7 +545,6 @@ public:
 	 			if(path.endsWith("/")) path +=DEFAULT_INDEX_FILE;
 	 			//DBG_PRINTF("request:%s\n",path.c_str());
 				if(fileExists(path)) return true; //if(SPIFFS.exists(path)) return true;
-
 				//DBG_PRINTF("request:%s not found\n",path.c_str());
 			}
 	 	}else if(request->method() == HTTP_DELETE && request->url() == DELETE_PATH){

@@ -39,7 +39,7 @@ void TimeKeeperClass::begin(char* server1,char* server2,char* server3)
 {
 	_online=true;
   	if(server1) sntp_setservername(0,server1);
-  	else sntp_setservername(0,"time.nist.gov");
+  	else sntp_setservername(0,(char*)"time.nist.gov");
   	if(server2) sntp_setservername(1,server2);
   	if(server3) sntp_setservername(2,server3);
   	sntp_set_timezone(0);

@@ -90,10 +90,12 @@ time_t tm_to_timet(struct tm *tm_time);
 
 bool BrewProfile::load(String filename)
 {
-	time_t savedStart=0;
+	time_t savedStart;
 	if(!_statusLoaded){
 		_statusLoaded = true;
 		savedStart=_loadBrewingStatus(); // status need to load before profile
+	}else{
+		savedStart=_startDay;
 	}
 	// the profile might be "reloaded" after user update
 	// or the first time loaded. in that case. the status is empty
@@ -104,6 +106,7 @@ bool BrewProfile::load(String filename)
 				// start day is later. that meas a new start
 				_currentStep=0;
 				_timeEnterCurrentStep=0;
+				_currentStepDuration =(time_t)(_steps[0].days * 86400);
 				DBG_PRINTF("New profile:st %ld  _timeEnterCurrentStep:%ld!\n",_startDay,_timeEnterCurrentStep);
 			}else{
 				if(_currentStep >= _numberOfSteps){
@@ -326,40 +329,71 @@ time_t BrewProfile::_loadBrewingStatus(void){
 	return savedStart;
 }
 
-void BrewProfile::_estimateStep(time_t now)
+void BrewProfile::_estimateStep(time_t now,Gravity gravity)
 {
 	_timeEnterCurrentStep = _startDay;
 	_currentStep =0;
-/*
-	time_t stime=_startDay;
-	for(int i=0;i<_numberOfSteps;i++)
+	while(_currentStep<_numberOfSteps)
 	{
-		time_t duration=(time_t)(_steps[i].days * 86400);
-		time_t next= stime + duration;
-
-		if(stime <= now && now < next ){
-			_currentStep = i;
-			_timeEnterCurrentStep = stime;
-			_currentStepDuration= duration;
-			DBG_PRINTF("estimate step:%d, time:%d, duration:%d\n",_currentStep,_timeEnterCurrentStep,_currentStepDuration);
-			return;
+		_currentStepDuration=(time_t)(_steps[_currentStep].days * 86400);
+		if(checkCondition(now,gravity)){
+			_timeEnterCurrentStep += _currentStepDuration;
+			_currentStep++;
+		}else{
+			break;
 		}
-		stime =next;
 	}
-	_currentStep=_numberOfSteps;
-*/
 }
 
 void BrewProfile::_toNextStep(unsigned long time)
 {
 	do{
 		_currentStep++;
-		_timeEnterCurrentStep=time;
 		if(_currentStep < _numberOfSteps)
 			_currentStepDuration =(time_t)(_steps[_currentStep].days * 86400);
 	}while(_currentStepDuration == 0 && _currentStep < _numberOfSteps );
+	_timeEnterCurrentStep=time;	
 	_saveBrewingStatus();
 	DBG_PRINTF("_toNextStep:%d current:%ld, duration:%ld\n",_currentStep,time, _currentStepDuration );
+}
+
+bool BrewProfile::checkCondition(unsigned long time,Gravity gravity){
+
+	char condition=_steps[_currentStep].condition;
+	bool timeCondition =(_currentStepDuration <= (time - _timeEnterCurrentStep));
+	
+	if(condition == 'r' || condition == 't'){
+		if(timeCondition) return true;
+	}else{
+
+		bool sgCondition=(IsGravityValid(gravity))? (gravity <= _steps[_currentStep].sg):false;
+		bool stableSg = gravityTracker.stable(_steps[_currentStep].stableTime);
+
+		DBG_PRINTF("tempByTimeGravity: sgC:%c,gravity=%d, target=%d\n",sgCondition? 'Y':'N',gravity,_steps[_currentStep].sg);
+	
+		if(condition == 'g'){
+			if(sgCondition) return true;
+		}else if(condition == 'a'){
+			if(timeCondition && sgCondition) return true;
+		}else if(condition == 'o'){
+			if(timeCondition || sgCondition) return true;
+		}else if(condition == 's'){ // stable
+			if(stableSg ) return true;
+		}else if(condition == 'u'){ // time || stable
+			if(timeCondition  || stableSg ) return true;
+		}else if(condition == 'v'){ // time && stable
+			if(timeCondition  && stableSg ) return true;
+		}else if(condition == 'b'){ // sg || stable
+			if(sgCondition  || stableSg ) return true;
+		}else if(condition == 'x'){ // sg && stable
+			if(sgCondition  && stableSg ) return true;
+		}else if(condition == 'w'){ // time && sg && stable
+			if(sgCondition  && timeCondition && stableSg ) return true;
+		}else if(condition == 'e'){ // time || sg || stable
+			if(sgCondition  || timeCondition || stableSg ) return true;
+		}
+	}
+	return false;
 }
 
 float BrewProfile::tempByTimeGravity(unsigned long time,Gravity gravity)
@@ -367,82 +401,17 @@ float BrewProfile::tempByTimeGravity(unsigned long time,Gravity gravity)
 	if(time < _startDay) return INVALID_CONTROL_TEMP;
 
 	if(	_currentStep==0 && _timeEnterCurrentStep==0){
-		_estimateStep(time);
+		_estimateStep(time,gravity);
 	}
 	if(_currentStep >= _numberOfSteps) return INVALID_CONTROL_TEMP;
 
 	DBG_PRINTF("tempByTimeGravity:now:%ld, step:%d, type=%c, last elapsed:%ld\n",time,_currentStep,_steps[_currentStep].condition,time - _timeEnterCurrentStep);
 
-    if(_steps[_currentStep].condition == 'r' ||
-    	_steps[_currentStep].condition == 't'){
-    	if(_currentStepDuration <= (time - _timeEnterCurrentStep)){
+    if(checkCondition(time,gravity)){
     		// advance to next stage
     		_toNextStep(time);
-    	}
-    }else{
-
-    	bool sgCondition=(IsGravityValid(gravity))? (gravity <= _steps[_currentStep].sg):false;
-
-    	DBG_PRINTF("tempByTimeGravity: sgC:%c,gravity=%d, target=%d\n",sgCondition? 'Y':'N',gravity,_steps[_currentStep].sg);
-/*
-   <option value="t">Time</option>
-   <option value="g">SG</option>
-   <option value="s">Stable</option>
-   <option value="a">Time & SG</option>
-   <option value="o">Time OR SG</option>
-   <option value="u">Time OR Stable</option>
-   <option value="v">Time & Stable</option>
-    <option value="b">SG OR Stable</option>
-    <option value="x">SG & Stable</option>
-    <option value="w">ALL</option>
-    <option value="e">Either</option>
-*/
-    #define TIME (_currentStepDuration <= (time - _timeEnterCurrentStep))
-    #define STABLE gravityTracker.stable(_steps[_currentStep].stableTime)
-
-    	if(_steps[_currentStep].condition == 'g'){
-    		if(sgCondition){
-    			_toNextStep(time);
-    		}
-    	}else if(_steps[_currentStep].condition == 'a'){
-    		if(TIME && sgCondition){
-    	   		_toNextStep(time);
-    		}
-    	}else if(_steps[_currentStep].condition == 'o'){
-    		if(TIME || sgCondition){
-    	   		_toNextStep(time);
-    		}
-		}else if(_steps[_currentStep].condition == 's'){ // stable
-		    if(STABLE ){
-    		    _toNextStep(time);
-		    }
-		}else if(_steps[_currentStep].condition == 'u'){ // time || stable
-		    if(TIME  || STABLE ){
-    		    _toNextStep(time);
-		    }
-		}else if(_steps[_currentStep].condition == 'v'){ // time && stable
-		    if(TIME  && STABLE ){
-    		    _toNextStep(time);
-		    }
-		}else if(_steps[_currentStep].condition == 'b'){ // sg || stable
-		    if(sgCondition  || STABLE ){
-    		    _toNextStep(time);
-		    }
-		}else if(_steps[_currentStep].condition == 'x'){ // sg && stable
-		    if(sgCondition  && STABLE ){
-    		    _toNextStep(time);
-		    }
-		}else if(_steps[_currentStep].condition == 'w'){ // time && sg && stable
-		    if(sgCondition  && TIME && STABLE ){
-    		    _toNextStep(time);
-		    }
-		}else if(_steps[_currentStep].condition == 'e'){ // time || sg || stable
-		    if(sgCondition  || TIME || STABLE ){
-    		    _toNextStep(time);
-		    }
-		}
-	}
-
+    }
+;
 	if(_currentStep >= _numberOfSteps) return INVALID_CONTROL_TEMP;
 
 	if(_steps[_currentStep].condition == 'r'){

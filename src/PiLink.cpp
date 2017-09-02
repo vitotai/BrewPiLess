@@ -145,7 +145,7 @@ void PiLink::print_P(const char *fmt, ... ){
 }
 
 // create a printf like interface to the Arduino Serial function. Format string stored in RAM
-void PiLink::print(char *fmt, ... ){
+void PiLink::print(const char *fmt, ... ){
 	va_list args;
 	va_start (args, fmt );
 	vsnprintf(printfBuff, PRINTF_BUFFER_SIZE, fmt, args);

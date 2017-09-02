@@ -224,6 +224,9 @@
 #define heatingPin NODEMCU_PIN_D0
 #define doorPin    NODEMCU_PIN_D7
 #define BuzzPin NODEMCU_PIN_D3
+#ifdef BREWPI_LCD
+#undef BREWPI_LCD 
+#endif
 #define BREWPI_LCD false
 
 #elif BOARD == Thorrak_PCB

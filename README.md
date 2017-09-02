@@ -87,6 +87,9 @@ The difference bewteen v1.2.7 and v.20 is
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * v2.3.2
+    * Beer Profile scheculde bug fix
+    * Show hostname at banner
  * v2.3.1
     * WiFi signal
     * /getstatus web service
@@ -501,5 +504,18 @@ For those who don't have access to Microsoft Excel like me, the [calibrationSG.h
 # FAQ
 * Q: I can't save the device setting.
 
-A: Click the "Erase Setting" and try again.
+    A: Click the "Erase Setting" and try again.
+
+* Q: The meaing of WiFi signal.
+
+    A: 
+    | bars  | Signal Strength   | Note       |
+    | ----- |:-------------:| :--------------------|
+    |  4    |  > -67 dBm   | Very good.	|
+    |  3    |  -67 ~ -70 dBm   |good.	|
+    |  2    |  -70 ~ -80 dBm   | minimum for reliable connectivity.	|
+    |  1    |  -80 ~ -90 dBm   | minimum for basic connectivity. unreliable.	|
+    |  0    |  < -90 dBm   | Unstable signal	|
+
+
 

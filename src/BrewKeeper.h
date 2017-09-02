@@ -44,10 +44,10 @@ class BrewProfile
 	time_t _loadBrewingStatus(void);
 	void _saveBrewingStatus(void);
 
-	void _estimateStep(time_t now);
+	void _estimateStep(time_t now,Gravity gravity);
 
 	void _toNextStep(unsigned long time);
-
+	bool checkCondition(unsigned long time,Gravity gravity);
 	bool _loadProfile(String filename);
 public:
 	BrewProfile(void):_profileLoaded(false),_statusLoaded(false),_numberOfSteps(0),_unit('U'),_steps(NULL){
@@ -80,7 +80,7 @@ class BrewProfile
 
 	void _tempConvert(void);
 public:
-	BrewProfile(void):_profileLoaded(false),_numberOfSteps(0),_unit('U'),_setTemps(NULL),_times(NULL){}
+	BrewProfile(void):_profileLoaded(false),_numberOfSteps(0),_unit('U'),_setTemps(NULL),_times(NULL),_startDay(0){}
 	int numberOfSteps(void){ return _numberOfSteps;}
 	bool loaded(void){return _profileLoaded;}
 
@@ -108,11 +108,11 @@ protected:
 	void _loadProfile(void);
 public:
 #if EnableGravitySchedule
-	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts),_lastGravity(INVALID_GRAVITY){}
+	BrewKeeper(void(*puts)(const char*)):_filename(""),_write(puts),_lastGravity(INVALID_GRAVITY){}
 	void updateGravity(float sg){ _lastGravity=FloatToGravity(sg);}
 	void updateOriginalGravity(float sg){ _profile.setOriginalGravity(sg); }
 #else
-	BrewKeeper(void(*puts)(const char*)):_filename(NULL),_write(puts){}
+	BrewKeeper(void(*puts)(const char*)):_filename(""),_write(puts){}
 #endif
 	void setFile(String filename){_filename=filename;}
 	void keep(time_t now);
