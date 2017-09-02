@@ -26,21 +26,24 @@
     <div side>
       <div id="status" class="status-display">
         <ul id="status-pane" class="data-pane status-pane">
-          <li class="heading" layout horizontal main-justified><strong>status:</strong><div style="display: inline-block"><strong id="lcdControlState"></strong> <span class="for">for</span> <span id="lcdControlStateSince"></span></div></li>
+          <li class="heading" layout horizontal main-justified><strong>Status:</strong><div style="display: inline-block"><strong id="lcdControlState"></strong> <span class="for">for</span> <span id="lcdControlStateSince"></span></div></li>
           <li layout horizontal main-justified><span class="descriptor">Mode:</span><span id="lcdControlMode"></span></li>
-          <li layout horizontal main-justified><span class="descriptor">BeerTemp:</span><span id="lcdBeerTemp"></span></li>
-          <li layout horizontal main-justified><span class="descriptor">BeerSet:</span><span id="lcdBeerSet"></span></li>
-          <li layout horizontal main-justified><span class="descriptor">FridgeTemp:</span><span id="lcdFridgeTemp"></span></li>
-          <li layout horizontal main-justified><span class="descriptor">FridgeSet:</span><span id="lcdFridgeSet"></span></li>
-          <li layout horizontal main-justified><span class="descriptor">RoomTemp:</span><span id="lcdRoomTemp"></span></li>
+        </ul>
+        <ul class="data-pane">
+          <li class="heading"><strong>temperature data:</strong></li>
+          <li layout horizontal main-justified><span class="descriptor">Beer Temp:</span><span id="lcdBeerTemp"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">Beer Set:</span><span id="lcdBeerSet"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">Fridge Temp:</span><span id="lcdFridgeTemp"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">Fridge Set:</span><span id="lcdFridgeSet"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">Room Temp:</span><span id="lcdRoomTemp"></span></li>
         </ul>
       </div>
 
       <ul id="gravity-pane" class="data-pane gravity-pane">
-        <li class="heading"><strong>current data:</strong></li>
-        <li layout horizontal main-justified><span class="descriptor">original gravity:</span> <span id="gravity-og" onclick="inputOG()">--</span></li>
-        <li layout horizontal main-justified><span class="descriptor">SG:</span>  <span id="gravity-sg" onclick="inputSG()">--</span></li>
-        <li layout horizontal main-justified><span class="descriptor">final gravity state:</span>  <div id="fgstate"></div></li>
+        <li class="heading"><strong>gravity data:</strong></li>
+        <li layout horizontal main-justified><span class="descriptor">Original Gravity:</span> <span id="gravity-og" onclick="inputOG()">--</span></li>
+        <li layout horizontal main-justified><span class="descriptor">Specific Gravity:</span>  <span id="gravity-sg" onclick="inputSG()">--</span></li>
+        <li layout horizontal main-justified><span class="descriptor">Final Gravity State:</span>  <div id="fgstate"></div></li>
         <li layout horizontal main-justified><span class="descriptor">ATT:</span> <span id="gravity-att"> --%</span></li>
         <li layout horizontal main-justified><span class="descriptor">ABV:</span> <span id="gravity-abv"> --%</span></li>
       </ul>
@@ -51,9 +54,9 @@
       </ul>
       <ul class="data-pane">
         <li class="heading"><strong>system:</strong></li>
-        <li layout horizontal main-justified><span class="descriptor">writing log:</span><span id="recording"></span></li>
+        <li layout horizontal main-justified><span class="descriptor">Writing Log:</span><span id="recording"></span></li>
         <li layout horizontal main-justified>
-          <span class="descriptor">wifi:</span>
+          <span class="descriptor">Wifi:</span>
           <div id="rssi">
             <div class="rssi-bar rssi-bar1"></div>
             <div class="rssi-bar rssi-bar2"></div>

@@ -261,6 +261,16 @@ $filtersg-color: #000abb;
 .rssi-bar3 {height: 12px; left:12px;}
 .rssi-bar4 {height: 16px; left:18px;}
 
+/** FG State **/
+
+#fgstate {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		margin: 6px 0 0 0;
+		border: 0px;
+}
+
 /** Buttons **/
 
 .btn {
