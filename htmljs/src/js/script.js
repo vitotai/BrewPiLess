@@ -233,10 +233,73 @@ t.chart.setAnnotations(t.anno);
 t.chart = new Dygraph(document.getElementById(t.cid),t.data,opt);
 };
 
-var STATES=[{name:"IDLE",text:"Idle"},{name:"STATE_OFF",text:"Off"},{name:"DOOR_OPEN",text:"Door Open",doorOpen:true},{name:"HEATING",text:"Heating"},{name:"COOLING",text:"Cooling"},{name:"WAITING_TO_COOL",text:"Waiting to Cool",waiting:true},{name:"WAITING_TO_HEAT",text:"Waiting to Heat",waiting:true},{name:"WAITING_FOR_PEAK_DETECT",text:"Waiting for Peak",waiting:true},{name:"COOLING_MIN_TIME",text:"Cooling Min Time",extending:true},{name:"HEATING_MIN_TIME",text:"Heating Min Time",extending:true}];
-BrewChart.Mode={b:"Beer Constant",f:"Fridge Constant",o:"Off",p:"Profile"};
-BrewChart.Labels=['Time','beerSet', 'beerTemp','fridgeTemp','fridgeSet','roomTemp','auxTemp','gravity','filtersg'];
-BrewChart.Colors = ["rgb(240, 100, 100)", "rgb(41,170,41)", "rgb(89, 184, 255)", "rgb(255, 161, 76)", "#AAAAAA", "#f5e127", "rgb(153,0,153)", "#000abb"];
+var STATES = [{
+  name: "IDLE",
+  text: "Idle"
+}, {
+  name: "STATE_OFF",
+  text: "Off"
+}, {
+  name: "DOOR_OPEN",
+  text: "Door Open",
+  doorOpen: !0
+}, {
+  name: "HEATING",
+  text: "Heating"
+}, {
+  name: "COOLING",
+  text: "Cooling"
+}, {
+  name: "WAITING_TO_COOL",
+  text: "Waiting to Cool",
+  waiting: !0
+}, {
+  name: "WAITING_TO_HEAT",
+  text: "Waiting to Heat",
+  waiting: !0
+}, {
+  name: "WAITING_FOR_PEAK_DETECT",
+  text: "Waiting for Peak",
+  waiting: !0
+}, {
+  name: "COOLING_MIN_TIME",
+  text: "Cooling Min Time",
+  extending: !0
+}, {
+  name: "HEATING_MIN_TIME",
+  text: "Heating Min Time",
+  extending: !0
+}];
+
+BrewChart.Mode = {
+  b:"Beer Constant",
+  f:"Fridge Constant",
+  o:"Off",
+  p:"Profile"
+};
+
+BrewChart.Labels = [
+  'Time',
+  'beerSet',
+  'beerTemp',
+  'fridgeTemp',
+  'fridgeSet',
+  'roomTemp',
+  'auxTemp',
+  'gravity',
+  'filtersg'
+];
+
+BrewChart.Colors = [
+  "rgb(240, 100, 100)",
+  "rgb(41,170,41)",
+  "rgb(89, 184, 255)",
+  "rgb(255, 161, 76)",
+  "#AAAAAA",
+  "#f5e127",
+  "rgb(153,0,153)",
+  "#000abb"
+];
 
 BrewChart.prototype.addMode=function(m){
   var s=String.fromCharCode(m);
@@ -619,8 +682,8 @@ function init() {
     },
     handlers:{
       L: function(t) {
-          e = !0;
-          processLcdText(t);
+        e = !0;
+        processLcdText(t);
       },
       V:function(c){
         if(typeof c["rssi"] != "undefined"){
@@ -681,11 +744,11 @@ function dismissgravity() {
 }
 
 function openDlgLoading() {
-    document.getElementById('dlg_loading').style.display = "block";
+  document.getElementById('dlg_loading').style.display = "block";
 }
 
 function closeDlgLoading() {
-    document.getElementById('dlg_loading').style.display = "none";
+  document.getElementById('dlg_loading').style.display = "none";
 }
 
 function inputgravity() {
@@ -723,70 +786,71 @@ function inputOG() {
 }
 
 function parseLcdText(lines) {
-    var status = {};
-    var modePatterns = {
-        b: /Mode\s+Beer\s+Const/i,
-        f: /Mode\s+Fridge\s+Const/i,
-        p: /Mode\s+Beer\s+Profile/i,
-        o: /Mode\s+Off/i
-    };
-    var modes = Object.keys(modePatterns);
-    status.ControlMode = "i";
-    for (var m = 0; m < modes.length; m++) {
-        if (modePatterns[modes[m]].test(lines[0])) {
-            status.ControlMode = modes[m];
-            break;
-        }
+  var status = {};
+  var modePatterns = {
+    b: /Mode\s+Beer\s+Const/i,
+    f: /Mode\s+Fridge\s+Const/i,
+    p: /Mode\s+Beer\s+Profile/i,
+    o: /Mode\s+Off/i
+  };
+  var modes = Object.keys(modePatterns);
+  status.ControlMode = "i";
+  for (var m = 0; m < modes.length; m++) {
+    if (modePatterns[modes[m]].test(lines[0])) {
+      status.ControlMode = modes[m];
+      break;
     }
-    status.ControlState = i;
-    var tempRE = /\s*(\w+)\s+(.+)\s+(.+)\s+.+([CF])\s*$/;
-    for (var i = 1; i < 3; i++) {
-        var temps = tempRE.exec(lines[i]);
-        status[temps[1] + "Temp"] = temps[2];
-        status[temps[1] + "Set"] = temps[3];
-        status.format = temps[4];
+  }
+  status.ControlState = i;
+  var tempRE = /\s*(\w+)\s+(.+)\s+(.+)\s+.+([CF])\s*$/;
+  for (var i = 1; i < 3; i++) {
+    var temps = tempRE.exec(lines[i]);
+    status[temps[1] + "Temp"] = temps[2];
+    status[temps[1] + "Set"] = temps[3];
+    status.format = temps[4];
+  }
+  var i = 0;
+  var statePatterns = [
+    /Idling\s+for\s+(\d+h\d+m\d+)\s*$/i,
+    /control\s+OFF/i,
+    /Door\s+Open/i,
+    /Heating\s+for\s+(\d+h\d+m\d+)\s*$/i,
+    /Cooling\s+for\s+(\d+h\d+m\d+)\s*$/i,
+    /Wait\s+to\s+Cool\s+(\d+h\d+m\d+)\s*$/i,
+    /Wait\s+to\s+Heat\s+(\d+h\d+m\d+)\s*$/i,
+    /Wait\s+for\s+Peak/i,
+    /Cool\s+Time\s+left\s+(\d+h\d+m\d+)\s*$/i,
+    /Heat\s+Time\s+left\s+(\d+h\d+m\d+)\s*$/i
+  ];
+  for (i = 0; i < statePatterns.length; i++) {
+    var match = statePatterns[i].exec(lines[3]);
+    if (match) {
+      status.ControlStateSince = (typeof match[1] === "undefined") ? "" : match[1];
+      break;
     }
-    var i = 0;
-    var statePatterns = [
-        /Idling\s+for\s+(\d+h\d+m\d+)\s*$/i,
-        /control\s+OFF/i,
-        /Door\s+Open/i,
-        /Heating\s+for\s+(\d+h\d+m\d+)\s*$/i,
-        /Cooling\s+for\s+(\d+h\d+m\d+)\s*$/i,
-        /Wait\s+to\s+Cool\s+(\d+h\d+m\d+)\s*$/i,
-        /Wait\s+to\s+Heat\s+(\d+h\d+m\d+)\s*$/i,
-        /Wait\s+for\s+Peak/i,
-        /Cool\s+Time\s+left\s+(\d+h\d+m\d+)\s*$/i,
-        /Heat\s+Time\s+left\s+(\d+h\d+m\d+)\s*$/i
-    ];
-    for (i = 0; i < statePatterns.length; i++) {
-        var match = statePatterns[i].exec(lines[3]);
-        if (match) {
-            status.ControlStateSince = (typeof match[1] === "undefined") ? "" : match[1];
-            break;
-        }
-    }
-    status.ControlState = i;
-    return status;
+  }
+  status.ControlState = i;
+  return status;
 }
 
 function processLcdText(lines) {
-    Q('.error').innerHTML="";
-    var status = parseLcdText(lines);
-    var ModeString = {
-        o: "OFF",
-        b: "Beer Constant",
-        f: "Fridge Const",
-        p: "Beer Profile",
-        i: "Invalid"
-    };
-    Object.keys(status).map(function(key, i) {
-        var div = Q("#lcd" + key);
-        if (div) {
-            if (key == "ControlMode") div.innerHTML = ModeString[status[key]];
-            else if (key == "ControlState") div.innerHTML = STATES[status[key]].text;
-            else div.innerHTML = status[key];
-        }
-    });
+  Q('.error').innerHTML="";
+  var status = parseLcdText(lines);
+  var ModeString = {
+    o: "OFF",
+    b: "Beer Constant",
+    f: "Fridge Const",
+    p: "Beer Profile",
+    i: "Invalid"
+  };
+  Object.keys(status).map(function(key, i) {
+    console.log(key, status[key])
+    var div = Q("#lcd" + key);
+    if (div) {
+      if (key == "ControlMode") div.innerHTML = ModeString[status[key]];
+      else if (key == "ControlState") div.innerHTML = STATES[status[key]].text;
+      else div.innerHTML = status[key];
+    }
+  });
 
 }
