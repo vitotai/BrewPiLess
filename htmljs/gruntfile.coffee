@@ -32,8 +32,8 @@ module.exports = (grunt) ->
           minifyJS: true,
           minifyCSS: true
         files: [{
-          'dist/index.html': 'dist/index.html',
-          'dist/control.html': 'dist/control.html'
+          'dist/index.htm': 'dist/index.htm',
+          'dist/control.htm': 'dist/control.htm'
         }]
       dev:
         options:
@@ -53,8 +53,8 @@ module.exports = (grunt) ->
     comboall:
       main:
         files: [
-            { 'dist/index.html': ['build/index.html'] },
-            { 'dist/control.html': ['build/control.html'] }
+            { 'dist/index.htm': ['build/index.html'] },
+            { 'dist/control.htm': ['build/control.html'] }
         ]
 
     jshint:
