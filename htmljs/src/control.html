@@ -29,14 +29,14 @@
   <div viewport layout vertical>
     <div main>
 
-      <div class="navbar">
+      <div class="navbar" horizontal layout main-justified cross-center>
         <div class="navitems">
           <a class="navitem" id="profile-m" href="#profile-s">Beer profile</a>
           <a class="navitem" id="beer-m" href="#beer-s">Beer Const.</a>
           <a class="navitem" id="fridge-m" href="#fridge-s">Fridge Const.</a>
           <a class="navitem" id="off-m" href="#off-s">Off</a>
-          <span class="yellow-bar"></span>
         </div>
+        <button id="modekeeper-apply" class="btn btn--raised" style="max-width: 200px;" onclick="modekeeper.apply()">Apply</button>
       </div>
 
       <div id="profile-s" layout horizontal>
@@ -71,7 +71,7 @@
                 <td>
                   <div class="for-time">Ramp</div>
                   <div class="condition-con">
-                    <select class="condition">
+                    <select class="condition md">
                       <option value="t">Time</option>
                       <option value="g">SG</option>
                       <option value="s">Stable</option>
@@ -104,18 +104,19 @@
         <div id="tc_chart"></div>
       </div>
 
-      <div id="beer-s" class="detail">
-        Set Beer temp:
-        <input type="text" size="6" id="beer-t"></input>&deg;<span class="t_unit">C</span>
+      <div id="beer-s" class="detail" style="margin: 16px 0;" layout horizontal cross-center>
+        <span>Set beer temperature:</span>
+        <input type="number" size="6" id="beer-t" style="max-width: 200px"></input>&deg;<span class="t_unit">C</span>
       </div>
 
-      <div id="fridge-s" class="detail">
-        Set Fridge temp:
-        <input type="text" size="6" id="fridge-t"></input>&deg;<span class="t_unit">C</span>
+      <div id="fridge-s" class="detail"  style="margin: 16px 0;" layout horizontal cross-center>
+        <span>Set fridge temperature:</span>
+        <input type="number" size="6" id="fridge-t" style="max-width: 200px"></input>&deg;<span class="t_unit">C</span>
       </div>
-      <div id="off-s" class="detail">Turning temperature controll Off.</div>
 
-      <button id="modekeeper-apply" class="btn btn--raised" style="max-width: 200px;" onclick="modekeeper.apply()">Apply</button>
+      <div id="off-s" class="detail">
+        <span style="margin: 16px 0;">Turning temperature controll <strong>off</strong>.</span>
+      </div>
 
     </div>
   </div>

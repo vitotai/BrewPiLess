@@ -5,14 +5,19 @@
 @import 'layout/base';
 @import 'ui-elements/buttons';
 @import 'ui-elements/modal';
+@import 'ui-elements/select';
 
 
 /** Tabs **/
+
+.navbar {
+    border-bottom: 1px solid #e0e0e0;
+}
+
 .navitems {
   position: relative;
   display: block;
   padding:0;
-  border-bottom: 1px solid #e0e0e0;
 }
 
 .navitem {
@@ -51,29 +56,41 @@
 
 .detail {}
 
-.profileTable td,
-th {
-  padding: 3px;
+.profileTable td, th {
+  padding: 6px 4px;
   text-align: center;
 }
 
-.profileTable tbody TR.odd {
-  background: #f7f7f7;
+.profileTable td:not(:last-child), th:not(:last-child) {
+  border-right: 1px solid rgba(0,0,0,0.87);
 }
 
-.profileTable tbody TR.even {
-  width: 100%;
+.profileTable tbody:empty:before {
+  content: 'No data.';
+  padding: 16px;
+  display: block;
 }
 
-.profileTable TH {
-  border: 1px solid #4297d7;
-  background: #5c9ccc;
-  color: #ffffff;
-  font-weight: bold;
+.profileTable tbody tr.odd {
+  background: #EEE;
+}
+
+.profileTable tbody tr.even {
+  background: #FFF;
+}
+
+.for-time {
+  margin-left: 8px;
+  text-align: left;
 }
 
 table.profileTable {
   width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    border-bottom: 1px solid rgba(0,0,0,0.87);
+  }
 }
 
 .profile-load-heading {
@@ -97,6 +114,9 @@ table.profileTable {
   margin: 8px 0;
 }
 
+.condition-con {
+  position: relative;
+}
 
 #profile-edit {
   margin: 6px;
