@@ -17,9 +17,9 @@ module.exports = (grunt) ->
       jsfiles:
         files: [{
           expand: true
-          cwd: './src/js/'
-          src: '*.js'
-          dest: './build/'
+          cwd: './src/js'
+          src: '**/*.js'
+          dest: './build/js/'
         }]
 
     htmlmin:

@@ -5,12 +5,15 @@
   <title>BrewPiLess reporting for duty!</title>
   <meta name="apple-mobile-web-app-title" content="BrewPiLess">
   <meta name="apple-mobile-web-app-capable" content="yes" >
-  <script type="text/javascript" src="dygraph-combined.js"></script>
-  <script type="text/javascript" src="bwf.js"></script>
-  <script type="text/javascript" src="script-control.js"></script>
+  <script type="text/javascript" src="js/vendor/dygraph-combined.js"></script>
+  <script type="text/javascript" src="js/vendor/bwf.js"></script>
+  <script type="text/javascript" src="js/vendor/chart.js"></script>
+  <script type="text/javascript" src="js/shared.js"></script>
+  <script type="text/javascript" src="js/script-control.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
   <link rel="stylesheet" href="style-control.css">
 </head>
-<body onload=init()>
+<body onload="init()">
   <header layout horizontal main-justified cross-center class="header">
     <h1 class="header_title"><span id="hostname">BrewPiLess</span> <span id="verinfo" class="header_version-display">v2.1</span></h1>
     <ul class="options">
@@ -162,5 +165,16 @@
             <span>BrewPiLess &copy; <a href="https://github.com/vitotai/">vitotai</a></span>
             <span><a href="https://github.com/vitotai/BrewPiLess/">project on GitHub</a></span>
           </footer>
+
+          <!-- Notification -->
+          <div class=error>waiting for update from script ...</div>
+
+          <!-- Modals -->
+          <div id="dlg_loading" class="modal">
+            <div class="modal-content">
+              <p>Communicating with BrewPiLess controller..</p>
+            </div>
+          </div>
+          
         </body>
         </html>

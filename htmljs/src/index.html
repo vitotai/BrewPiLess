@@ -5,11 +5,11 @@
   <title>BrewPiLess reporting for duty!</title>
   <meta name="apple-mobile-web-app-title" content="BrewPiLess">
   <meta name="apple-mobile-web-app-capable" content="yes" >
-  <script type="text/javascript" src="util.js"></script>
-  <script type="text/javascript" src="dygraph-combined.js"></script>
-  <script type="text/javascript" src="bwf.js"></script>
-  <script type="text/javascript" src="chart.js"></script>
-  <script type="text/javascript" src="script.js"></script>
+  <script type="text/javascript" src="js/vendor/dygraph-combined.js"></script>
+  <script type="text/javascript" src="js/vendor/bwf.js"></script>
+  <script type="text/javascript" src="js/vendor/chart.js"></script>
+  <script type="text/javascript" src="js/shared.js"></script>
+  <script type="text/javascript" src="js/script.js"></script>
   <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -142,13 +142,14 @@
 
   <div id="dlg_addgravity" class="modal">
     <div class="modal-content">
-      <p style="padding: 16px 0;">
-        <span class="msg"></span>
-        <input type="text" size="6" value="1.0">
+      <h2 class="message"></h2>
+      <p>
+        Please enter a value between 0.8 and 1.25.
       </p>
+      <input type="number" size="6" placeholder="Gravity" min="0.8" max="1.25" step="any">
       <div class="dialog-buttons">
-        <button class="btn btn--primary" onclick="inputgravity()">OK</button>
-        <button class="btn" onclick="dismissgravity()">Cancel</button>
+        <input class="btn btn--primary btn--ok" onclick="inputgravity()" type="button" value="OK">
+        <input class="btn" onclick="dismissgravity()" type="button" value="Cancel">
       </div>
     </div>
   </div>
