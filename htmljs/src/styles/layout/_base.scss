@@ -84,7 +84,7 @@
 }
 
 /** Inputs **/
-input[type="number"], input[type="text"] {
+input[type="number"], input[type="text"], input[type="datetime-local"] {
   width: 100%;
 	margin: 16px 0;
   display: block;
