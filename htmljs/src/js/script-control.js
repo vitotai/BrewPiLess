@@ -676,7 +676,7 @@ var modekeeper = {
     },
     select: function(m) {
         document.getElementById(m + "-m").className += ' nav-selected';
-        document.getElementById(m + "-s").style.display = "block";
+        document.getElementById(m + "-s").style.display = "flex";
     },
     init: function() {
         var me = this;
