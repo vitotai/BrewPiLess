@@ -19,6 +19,7 @@
 	user-select: none;
 	transition: all .3s ease-out;
 	background-color: transparent;
+	margin-right: 8px;
 
 	&[disabled] {
 		color: $divider-color;
