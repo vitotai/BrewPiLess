@@ -19,6 +19,14 @@
 	user-select: none;
 	transition: all .3s ease-out;
 	background-color: transparent;
+
+	&[disabled] {
+		color: $divider-color;
+		&:hover {
+			background-color: transparent;
+			cursor: not-allowed;
+		}
+	}
 }
 
 .btn--primary {
@@ -27,4 +35,5 @@
 
 .btn:hover {
 	background-color: hsla(0,0%,60%,.2);
+	cursor: pointer;
 }
