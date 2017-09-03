@@ -16,7 +16,7 @@ var profileEditor = {
         var nd = new Date(document.getElementById(this.C_startday_Id).value);
         if (isNaN(nd.getTime())) {
             // console.log("invalid date");
-            document.getElementById(this.C_startday_Id).value = formatDate(this.sd);
+            document.getElementById(this.C_startday_Id).value = formatDateForPicker(this.sd);
         } else {
             // console.log(nd);
             this.sd = nd;
@@ -26,7 +26,7 @@ var profileEditor = {
     },
     startnow: function() {
         var d = new Date();
-        document.getElementById(this.C_startday_Id).value = formatDate(d);
+        document.getElementById(this.C_startday_Id).value = formatDateForPicker(d);
         this.sd = d;
         this.reorg();
         this.markdirty(true);
@@ -315,7 +315,7 @@ var profileEditor = {
 
     initable: function(c, e) {
         this.sd = e;
-        document.getElementById(this.C_startday_Id).value = formatDate(e);
+        document.getElementById(this.C_startday_Id).value = formatDateForPicker(e);
         var b = document.getElementById("profile_t").getElementsByTagName("tbody")[0];
         this.row = b.getElementsByTagName("tr")[0];
         b.removeChild(this.row);
@@ -481,9 +481,9 @@ var PL = {
     },
     list: function(i) {
         var a = this;
-        var h = Q(a.div).querySelector("tbody");
+        var h = Q(a.div).querySelector(".profile-list");
         var e;
-        while (e = h.querySelector("tr:nth-of-type(1)")) {
+        while (e = h.querySelector("li:nth-of-type(1)")) {
             h.removeChild(e)
         }
         var b = a.row;
@@ -493,7 +493,8 @@ var PL = {
             c.querySelector(".profile-name").onclick = function(j) {
                 j.preventDefault();
                 a.load(g);
-                return false
+                closeProfileListModal();
+                return false;
             };
             c.querySelector(".rmbutton").onclick = function() {
                 a.rm(g)
@@ -511,7 +512,7 @@ var PL = {
     init: function() {
         var a = this;
         a.initialized = true;
-        a.row = Q(a.div).querySelector("tr:nth-of-type(1)");
+        a.row = Q(a.div).querySelector("li:nth-of-type(1)");
         a.row.parentNode.removeChild(a.row);
         s_ajax({
             url: a.url_list,
@@ -538,13 +539,13 @@ var PL = {
         }
         this.shown = !this.shown;
         if (this.shown) {
-            Q(this.div).style.left = "0px"
+            Q(this.div).style.display = "flex"
         } else {
-            Q(this.div).style.left = "-300px"
+            Q(this.div).style.display = "none"
         }
     },
     saveas: function() {
-        Q("#dlg_saveas").style.display = "block"
+        Q("#dlg_saveas").style.display = "flex"
     },
     cancelSave: function() {
         Q("#dlg_saveas").style.display = "none"
@@ -579,6 +580,10 @@ var PL = {
         })
     }
 };
+
+function closeProfileListModal() {
+  Q('#profile-list-pane').style.display = "none";
+}
 /* end of PL*/
 
 var BrewPiSetting = {

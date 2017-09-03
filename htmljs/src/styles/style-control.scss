@@ -76,6 +76,27 @@ table.profileTable {
   width: 100%;
 }
 
+.profile-load-heading {
+  font-size: 18px;
+    text-transform: uppercase;
+    margin-top: 0;
+}
+
+.btn--delete {
+  content: url("data:image/svg+xml; utf8, <svg fill='#000000' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+}
+
+.start-date {
+  font-weight: bold;
+    text-transform: uppercase;
+    display: inline-block;
+    margin-right: 16px;
+}
+
+.spacing {
+  margin: 8px 0;
+}
+
 
 #profile-edit {
   margin: 6px;
@@ -87,32 +108,4 @@ table.profileTable {
   width: calc(100% - 510px);
 height: 390px;
 margin: 16px 0;
-}
-
-
-#profile-list-pane {
-  position: absolute;
-  background-color: #fafaf0;
-  border-style: outset;
-  border: solid 3px;
-  height: 100%;
-  width: 200px;
-  overflow: auto;
-  left: -300px;
-  top: 0px;
-  overflow: auto;
-}
-
-#profile-list-pane td {
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-#profile-list-pane .rmbutton {
-  color: red;
-}
-
-#profile-list-pane a,
-#profile-list-pane u {
-  text-decoration: none;
 }

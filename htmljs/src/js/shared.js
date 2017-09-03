@@ -15,6 +15,13 @@ function formatDate(dt)
   return dt.toLocaleDateString() + " "+ dd(h) +":"+dd(m);
 }
 
+function formatDateForPicker(date) {
+  var h = date.getHours();
+  var m = date.getMinutes();
+  function dd(n){return (n<10)? '0' + n:n;}
+  return date.getFullYear() + "-" + dd(date.getMonth() + 1) + "-" + dd(date.getDate()) + "T" + dd(h) +":"+dd(m);
+}
+
 function C2F(c){return Math.round((c*1.8+32)*10)/10};
 function F2C(f){return Math.round((f-32)/1.8*10)/10};
 

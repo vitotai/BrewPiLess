@@ -41,19 +41,18 @@
 
       <div id="profile-s" layout horizontal>
         <div id="profile-edit">
-          <div id="profile-list-pane">
-            <table>
-              <tr>
-                <td><button class="rmbutton">X</button>
-                  <a href="#" class="profile-name"></a>
-                </td>
-              </tr>
-            </table>
+          <div layout horizontal main-justified cross-center>
+            <div layout horizontal cross-center>
+              <span class="start-date">Start Date:</span>
+              <input type="datetime-local" style="max-width: 200px;margin: 8px 0 16px;" id="startdate" onchange="profileEditor.startDayChange();">
+            </div>
           </div>
-          <div layout horizontal cross-center>
-            <span>Start Date:</span> <input type="text" style="max-width: 200px;" id="startdate" onchange="profileEditor.startDayChange();">
-            <button id="setnow" onclick=profileEditor.startnow() class="btn">Now</button>
-            <button id="addbutton" onclick="profileEditor.addRow();" class="btn btn-primary">Add</button>
+          <div layout horizontal main-justified cross-center class="spacing">
+            <button id="addbutton" onclick="profileEditor.addRow();" class="btn btn--raised">Add</button>
+            <div layout horizontal>
+              <button id="delbtn" class="btn" onclick="profileEditor.delRow();">Delete Last Item</button>
+              <button id="clearbtn" class="btn" onclick="profileEditor.clear()">Clear All</button>
+            </div>
           </div>
           <table class="profileTable" id="profile_t">
             <thead>
@@ -94,12 +93,12 @@
               </tr>
             </tbody>
           </table>
-          <div>
-            <button id="delbtn" onclick="profileEditor.delRow();">Delete</button>
-            <button id="clearbtn" onclick="profileEditor.clear()">Clear</button>
-            <button id="loadbtn" onclick="PL.toggle()">...</button>
-            <button id="saveasbtn" onclick="PL.saveas()">Save As</button>
-            <button id="savebtn" onclick="saveprofile()">Save</button>
+          <div layout horizontal main-justified cross-center class="spacing">
+            <div layout horizontal>
+              <button id="savebtn" class="btn btn--raised" onclick="saveprofile()">Save</button>
+              <button id="saveasbtn" class="btn" onclick="PL.saveas()">Save As</button>
+            </div>
+            <button id="loadbtn"  class="btn" onclick="PL.toggle()">Load</button>
           </div>
         </div>
         <div id="tc_chart"></div>
@@ -136,6 +135,19 @@
     </div>
   </div>
 
+  <div id="profile-list-pane" class="modal">
+    <div class="modal-content">
+      <h2 class="profile-load-heading">Load Profile</h2>
+      <ul class="profile-list" style="margin: 16px 0;">
+        <li layout horizontal main-justified cross-center style="margin: 8px 0;">
+          <a href="#" class="profile-name"></a>
+          <span class="btn--delete rmbutton"></span>
+        </li>
+      </ul>
+      <button class="btn" onclick="closeProfileListModal()">Cancel</button>
+    </div>
+  </div>
+
   <div id="dlg_beerprofilereminder" class="modal">
     <div class="modal-content">
       <span class="msg"></span>Note: For Beer Profoile to work properly,
@@ -148,17 +160,6 @@
         <button class="oknog">OK, OG already set</button>
         <button class="ok">OK, Set OG</button>
         <button class="cancel">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="dlg_addgravity" class="modal">
-    <div class="modal-content">
-      <p><span class="msg"></span><input type="text" size="6" value="1.0">
-      </p>
-      <div class="dialog-buttons">
-        <button onclick="dismissgravity()">Cancel</button>
-        <button onclick="inputgravity()">OK</button>
       </div>
     </div>
   </div>
