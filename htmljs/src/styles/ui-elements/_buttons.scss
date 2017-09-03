@@ -1,0 +1,30 @@
+/** Buttons **/
+
+.btn {
+	display: inline-block;
+	position: relative;
+	cursor: pointer;
+	height: 35px;
+	line-height: 35px;
+	padding: 0 1.5rem;
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: .8px;
+	text-align: center;
+	text-transform: uppercase;
+	vertical-align: middle;
+	white-space: nowrap;
+	outline: none;
+	border: none;
+	user-select: none;
+	transition: all .3s ease-out;
+	background-color: transparent;
+}
+
+.btn--primary {
+	color: $accent-color;
+}
+
+.btn:hover {
+	background-color: hsla(0,0%,60%,.2);
+}

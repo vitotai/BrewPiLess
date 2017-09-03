@@ -1,3 +1,23 @@
+/** Colors **/
+
+$primary-color-dark:   #00796B;
+$primary-color:        #009688;
+$primary-color-light:  #B2DFDB;
+$primary-color-text:   #FFFFFF;
+$accent-color:         #FFC107;
+$primary-text-color:   #212121;
+$secondary-text-color: #757575;
+$divider-color:        #BDBDBD;
+
+$beer-temp-color:      rgb(41,170,41);
+$beer-set-color:       rgb(240, 100, 100);
+$fridge-temp-color:    rgb(89, 184, 255);
+$fridge-set-color:     rgb(255, 161, 76);
+$room-temp-color:      #AAAAAA;
+$gravity-color:        #f5e127;
+$aux-temp-color:       rgb(153,0,153);
+$filtersg-color:       #000abb;
+
 // Media Query Ranges
 $small-screen-up: 601px !default;
 $medium-screen-up: 993px !default;

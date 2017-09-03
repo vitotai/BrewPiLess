@@ -1,0 +1,67 @@
+/** Switch **/
+
+.switch-input {
+	display: none;
+}
+.switch-label {
+	position: relative;
+	display: inline-block;
+	min-width: 148px;
+	cursor: pointer;
+	font-weight: 500;
+	text-align: left;
+	margin: 0;
+	padding: 4px 0 4px 44px;
+}
+.switch-label:before, .switch-label:after {
+	content: "";
+	position: absolute;
+	margin: 0;
+	outline: 0;
+	top: 50%;
+	transform: translate(0, -50%);
+	transition: all 0.3s ease;
+}
+.switch-label:before {
+	left: 1px;
+	width: 34px;
+	height: 14px;
+	background-color: #DDD;
+	border-radius: 8px;
+}
+.switch-label:after {
+	left: 0;
+	width: 20px;
+	height: 20px;
+	background-color: #FAFAFA;
+	border-radius: 50%;
+	box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.14), 0 2px 2px 0 rgba(0, 0, 0, 0.098), 0 1px 5px 0 rgba(0, 0, 0, 0.084);
+}
+.switch-input:checked + .switch-label:after {
+	background-color: #4CAF50;
+	transform: translate(80%, -50%);
+}
+.switch-input:checked + label[for=beer-temp].switch-label:after {
+	background-color: $beer-temp-color;
+}
+.switch-input:checked + label[for=beer-set].switch-label:after {
+	background-color: $beer-set-color;
+}
+.switch-input:checked + label[for=fridge-temp].switch-label:after {
+	background-color: $fridge-temp-color;
+}
+.switch-input:checked + label[for=fridge-set].switch-label:after {
+	background-color: $fridge-set-color;
+}
+.switch-input:checked + label[for=room-temp].switch-label:after {
+	background-color: $room-temp-color;
+}
+.switch-input:checked + label[for=gravity].switch-label:after {
+	background-color: $gravity-color;
+}
+.switch-input:checked + label[for=aux-temp].switch-label:after {
+	background-color: $aux-temp-color;
+}
+.switch-input:checked + label[for=filtersg].switch-label:after {
+	background-color: $filtersg-color;
+}

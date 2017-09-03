@@ -1,8 +1,8 @@
-@import 'vars';
-@import 'reset';
-@import 'typo';
-@import 'layout';
-@import 'style';
+@import 'import/vars';
+@import 'layout/reset';
+@import 'layout/typo';
+@import 'layout/layout';
+@import 'layout/base';
 
 /* LCD display styling */
 
