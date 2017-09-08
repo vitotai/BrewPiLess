@@ -846,24 +846,15 @@ function init() {
   var gotMsg=true;
 
   BWF.init({
-    onconnect:function(){
-      BWF.send("l");
-      setInterval(function(){
-        if(!gotMsg) controllerError();
-        BWF.send("l");
-        gotMsg=false;
-      },5000);
-    },
-    error:function(e){
-      communicationError();
-    },
     handlers:{
       V:function(c){
         if(typeof c["nn"]!="undefined"){
           Q("#hostname").innerHTML = c["nn"];
         }
         if(typeof c["ver"]!="undefined"){
-          if(JSVERION != c["ver"]) alert("Version Mismatched!. Reload the page.");
+          if(JSVERION != c["ver"]) {
+            alert("Version Mismatched!. Reload the page.");
+          }
           Q("#verinfo").innerHTML = "v" + c["ver"];
         }
       }
