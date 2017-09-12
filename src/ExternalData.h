@@ -29,29 +29,6 @@ extern BrewPiProxy brewPi;
 
 #define C2F(t) ((t)*1.8+32)
 
-const char gravityconfig_html[]  PROGMEM =R"END(
-<html><head><title>Gravity Device</title><meta http-equiv="content-type" content="text/html; charset=utf-8" >
-<script>
-function s_ajax(b){var c=new XMLHttpRequest();c.onreadystatechange=function(){if(c.readyState==4){if(c.status==200){b.success(c.responseText)}else{c.onerror(c.status)}}};c.ontimeout=function(){if(typeof b["timeout"]!="undefined")b.timeout();else c.onerror(-1)},c.onerror=function(a){if(typeof b["fail"]!="undefined")b.fail(a)};c.open(b.m,b.url,true);if(typeof b["data"]!="undefined"){c.setRequestHeader("Content-Type",(typeof b["mime"]!="undefined")?b["mime"]:"application/x-www-form-urlencoded");c.send(b.data)}else c.send()}var Q=function(d){return document.querySelector(d)};function fill(a){for(var b in a){var c=Q("input[name="+b+"]");if(c.type=="checkbox")c.checked=a[b];else c.value=a[b]}}function save(){var b=document.getElementsByTagName("input");var c={};for(var i=0;i<b.length;i++){var d=b[i];if(d.type=="checkbox")c[d.name]=d.checked;else if(d.type=="text")c[d.name]=d.value}console.log("result="+JSON.stringify(c));s_ajax({url:window.location.href,m:"POST",mime:"text/plain",data:JSON.stringify(c),success:function(a){alert("done.")},fail:function(a){alert("failed updating data:"+a)}})}function init(){s_ajax({url:window.location.href+"?data=1",m:"GET",success:function(a){fill(JSON.parse(a))},fail:function(a){}})}
-</script>
-</head><body onload=init()>
-<form action="" method="post">
-<table>
-<tr><td>iSpindel</td><td><input type="checkbox" name="ispindel" value="1"></td></tr>
-<tr><td>Calculated by BPL</td><td><input type="checkbox" name="cbpl" value="1"> </td></tr>
-<tr><td>SG Calibration</td><td><input type="text" name="gc"size=4> point</td></tr>
-<tr><td>Temp. Correction</td><td><input type="checkbox" name="tc" value="1"> @ <input type="text" name="ctemp" size=4>&deg;C </td></tr>
-<tr><td>Coefficients</td><td><input type="text" name="a3"  size=15>*x^3 + <input type="text" name="a2" size=15>*x^2+ <input type="text" name="a1" size=15>*x + <input type="text" name="a0" size=15> </td></tr>
-<tr><td>LowPass Filter Coefficient</td><td><input type="text" name="lpc"size=4> </td></tr>
-<tr><td>Gravity Stability Threshold</td><td><input type="text" name="stpt"size=4> point</td></tr>
-<tr><td>Save Change</td><td><input type="submit" name="submit" onclick="save();return false;"></input></td></tr>
-</table>
-</form>
-</form>
-</body></html>
-)END";
-
-
 class SimpleFilter
 {
 	float _y;
@@ -94,7 +71,7 @@ public:
 
     bool iSpindelEnabled(void){return _ispindelEnable;}
 
-    const char * html(void) { return gravityconfig_html;}
+    //const char * html(void) { return gravityconfig_html;}
 
     void sseNotify(char *buf){
 

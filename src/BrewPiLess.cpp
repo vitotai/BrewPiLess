@@ -70,6 +70,7 @@ R"END(
 {"name":"brewpiless",
 "user":"brewpiless",
 "pass":"brewpiless",
+"title":"brewpiless",
 "protect":0,
 "ap":0
 }
@@ -80,6 +81,7 @@ R"END(
 {"name":"%s",
 "user":"%s",
 "pass":"%s",
+"title":"%s",
 "protect":%d,
 "ap":%d
 }
@@ -130,7 +132,8 @@ const char *public_list[]={
 };
 
 const char *nocache_list[]={
-"/brewing.json"
+"/brewing.json",
+"/brewpi.cfg"
 };
 //*******************************************
 
@@ -143,6 +146,8 @@ bool stationApMode;
 char username[32];
 char password[32];
 char hostnetworkname[32];
+char titlelabel[32];
+
 AsyncWebServer server(80);
 BrewPiProxy brewPi;
 BrewKeeper brewKeeper([](const char* str){ brewPi.putLine(str);});
@@ -168,13 +173,6 @@ const char confightml[] PROGMEM =R"END(
 <tr><td>Always softAP</td><td><input type="checkbox" name="ap" value="yes" %s></td></tr>
 <tr><td>Save Change</td><td><input type="submit" name="submit"></input></td></tr>
 </table></form></body></html>)END";
-
-const char saveconfightml[]  PROGMEM =R"END(
-<html><head><title>Configuration Saved</title>
-<script>function r(){setTimeout(function(){window.location.reload();},15000)}</script>
-</head><body onload=r()>
-Configuration Saved. Wait for restart...
-</body></html>)END";
 
 extern const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned int &size);
 
@@ -293,7 +291,7 @@ class BrewPiWebHandler: public AsyncWebHandler
 				AsyncWebServerResponse * response = request->beginResponse(SPIFFS, pathWithJgz,"application/javascript");
 				response->addHeader("Content-Encoding", "gzip");
 				response->addHeader("Cache-Control","max-age=2592000");
-				response->addHeader("Content-Type","application/javascript");
+//				response->addHeader("Content-Type","application/javascript");
 				request->send(response);
 
 				return;
@@ -301,10 +299,10 @@ class BrewPiWebHandler: public AsyncWebHandler
 		}
 		String pathWithGz = path + ".gz";
 		if(SPIFFS.exists(pathWithGz)){
-			AsyncWebServerResponse * response = request->beginResponse(SPIFFS, pathWithGz,"application/x-gzip");
+			AsyncWebServerResponse * response = request->beginResponse(SPIFFS, pathWithGz,getContentType(path));
 			response->addHeader("Content-Encoding", "gzip");
 			response->addHeader("Cache-Control","max-age=2592000");
-			response->addHeader("Content-Type",getContentType(path));
+//			response->addHeader("Content-Type",getContentType(path));
 			request->send(response);
 			return;
 		}
@@ -328,7 +326,7 @@ class BrewPiWebHandler: public AsyncWebHandler
 			request->send(response);
 			return;
 		}
-		//else
+		//else, embedded html file
 		bool gzip;
 		uint32_t size;
 		const uint8_t* file=getEmbeddedFile(path.c_str(),gzip,size);
@@ -384,34 +382,19 @@ public:
 	 		request->send(200,"application/json",json);
 
 	 	}else if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
-	 	    if(!request->authenticate(username, password))
-	        return request->requestAuthentication();
-
-			AsyncResponseStream *response = request->beginResponseStream("text/html");
-
-		  	int size=strlen_P(confightml);
-  			char *fmt=(char*) malloc(size +1);
-  				if(!fmt){
-  					request->send(500);
-					DBG_PRINTF("!!Alloc error\n");
-  					return;
-  				}
-
-  			strcpy_P(fmt,confightml);
-
-			response->printf(fmt,hostnetworkname,username,password,(passwordLcd? "checked=\"checked\"":""),(stationApMode? "checked=\"checked\"":""));
-			free(fmt);
-			request->send(response);
+			request->redirect(request->url() + ".htm");
 	 	}else if(request->method() == HTTP_POST && request->url() == CONFIG_PATH){
 	 	    if(!request->authenticate(username, password))
 	        return request->requestAuthentication();
 
 			if(request->hasParam("name", true)
 					&& request->hasParam("user", true)
-  					&& request->hasParam("pass", true)){
+					&& request->hasParam("title", true)					
+					&& request->hasParam("pass", true)){
   				AsyncWebParameter* name = request->getParam("name", true);
   				AsyncWebParameter* user = request->getParam("user", true);
-  				AsyncWebParameter* pass = request->getParam("pass", true);
+				AsyncWebParameter* pass = request->getParam("pass", true);
+				AsyncWebParameter* title = request->getParam("title", true);
 
   				File config=SPIFFS.open(CONFIG_FILENAME,"w+");
 
@@ -420,8 +403,8 @@ public:
   					return;
   				}
 
-  				int protect =(request->hasParam("protect", true))? 1:0;
-  				int ap = (request->hasParam("ap", true))? 1:0;
+  				int protect =request->getParam("protect", true)->value().toInt();
+  				int ap = request->getParam("ap", true)->value().toInt();
   				DBG_PRINTF("STA_AP mode? %d\n",ap);
 
   				int size=strlen_P(configFormat);
@@ -435,12 +418,13 @@ public:
 
   				config.printf(fmt,name->value().c_str(),
   											user->value().c_str(),
-  											pass->value().c_str(),
+											  pass->value().c_str(),
+											  title->value().c_str(),
   											protect,ap);
   				free(fmt);
   				config.flush();
   				config.close();
-				sendProgmem(request,saveconfightml); //request->send(200,"text/html",saveconfightml);
+				request->send(200);
 				requestRestart(false);
   			}else{
 	  			request->send(400);
@@ -685,7 +669,7 @@ void onClientConnected(AsyncEventSourceClient *client){
 		client->send(buf);
 	}
 	// RSSI && 
-	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d}",hostnetworkname,BPL_VERSION,WiFi.RSSI());
+	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d}",titlelabel,BPL_VERSION,WiFi.RSSI());
 	client->send(buf);
 }
 
@@ -881,14 +865,15 @@ public:
 		if(request->hasParam("data")){
 		    request->send(SPIFFS,GavityDeviceConfigFilename, "application/json");
 		}else{
-		    // get the HTML
-		    request->send_P(200, "text/html", externalData.html());
+			// get the HTML
+			request->redirect(request->url() + ".htm");
+		    //request->send_P(200, "text/html", externalData.html());
 		}
 	}
 
 	void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
 		if(!index){
-		    //DBG_PRINTF("BodyStart: %u B\n", total);
+		    DBG_PRINTF("BodyStart: %u B\n", total);
 			_dataLength =0;
 			_error=(total >= MAX_DATA_SIZE);
 		}
@@ -900,7 +885,7 @@ public:
 		}
 		if(index + len == total){
 			_data[_dataLength]='\0';
-			//DBG_PRINTF("Body total%u data:%s\n", total,_data);
+			DBG_PRINTF("Body total%u data:%s\n", total,_data);
 		}
 	}
 };
@@ -1099,6 +1084,7 @@ void setup(void){
 
 	// try open configuration
 	char configBuf[MAX_CONFIG_LEN];
+
 	File config=SPIFFS.open(CONFIG_FILENAME,"r+");
 
 	DynamicJsonBuffer jsonBuffer(JSON_BUFFER_SIZE);
@@ -1118,20 +1104,27 @@ void setup(void){
 	{
 		strcpy_P(configBuf,DefaultConfiguration);
 		JsonObject& root = jsonBuffer.parseObject(configBuf);
-  	strcpy(hostnetworkname,root["name"]);
-  	strcpy(username,root["user"]);
-  	strcpy(password,root["pass"]);
-  	passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
-	stationApMode=(root.containsKey("ap"))? (bool)(root["protect"]):false;
+  		strcpy(hostnetworkname,root["name"]);
+  		strcpy(username,root["user"]);
+	  	strcpy(password,root["pass"]);
+	 	strcpy(titlelabel,root["title"]);
+  		passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
+		stationApMode=(root.containsKey("ap"))? (bool)(root["protect"]):false;
 
+		File newconfig=SPIFFS.open(CONFIG_FILENAME,"w+");
+		newconfig.write((const byte*)configBuf,sizeof(DefaultConfiguration));
+		newconfig.close();
+		DBG_PRINTF("Reset config\n");
 	}else{
 		config.close();
-  	strcpy(hostnetworkname,root["name"]);
-  	strcpy(username,root["user"]);
-  	strcpy(password,root["pass"]);
-  	passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
-	stationApMode=(root.containsKey("ap"))? (bool)(root["ap"]):false;
-
+	  	strcpy(hostnetworkname,root["name"]);
+  		strcpy(username,root["user"]);
+		strcpy(password,root["pass"]);
+		if(root.containsKey("title")) strcpy(titlelabel,root["title"]);
+		else  strcpy(titlelabel,root["name"]);
+  		passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
+		stationApMode=(root.containsKey("ap"))? (bool)(root["ap"]):false;
+		DBG_PRINTF("title:%s, name:%s, user:%s, pass:%s\n",titlelabel,hostnetworkname,username,password);
   	}
 	DBG_PRINTF("STA_AP mode? %d\n",stationApMode);
 	#ifdef ENABLE_LOGGING

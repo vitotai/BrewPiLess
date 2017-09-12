@@ -1,56 +1,111 @@
-<html><head><title>Gravity Device</title><meta http-equiv="content-type" content="text/html; charset=utf-8" >
-<script>
-function s_ajax(b){var c=new XMLHttpRequest();c.onreadystatechange=function(){if(c.readyState==4){if(c.status==200){b.success(c.responseText)}else{c.onerror(c.status)}}};c.ontimeout=function(){if(typeof b["timeout"]!="undefined")b.timeout();else c.onerror(-1)},c.onerror=function(a){if(typeof b["fail"]!="undefined")b.fail(a)};c.open(b.m,b.url,true);if(typeof b["data"]!="undefined"){c.setRequestHeader("Content-Type",(typeof b["mime"]!="undefined")?b["mime"]:"application/x-www-form-urlencoded");c.send(b.data)}else c.send()}
-var Q=function(d){return document.querySelector(d);}; 
-function fill(setting)
-{
-    for(var name in setting) {
-        var ele= Q("input[name=" + name + "]");
-        if(ele.type == "checkbox") ele.checked = setting[name];
-        else ele.value = setting[name];
-    }
-}
-function save(){
-    var inputs=document.getElementsByTagName("input");
-    var setting={};
-    for (var i=0;i<inputs.length;i++){
-        var ele=inputs[i];
-        if(ele.type == "checkbox") setting[ele.name] = ele.checked;
-        else if(ele.type == "text") setting[ele.name] = ele.value;
-    }
-    console.log("result="+setting);
-    s_ajax({ url: window.location.href,
-             m: "POST",
-             data:JSON.stringify(setting),
-            success: function(a) {
+<html>
+
+<head>
+    <title>Gravity Device</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <script>
+        var gdcurl = "/gdc";
+
+        function s_ajax(b) {
+            var c = new XMLHttpRequest();
+            c.onreadystatechange = function() {
+                if (c.readyState == 4) {
+                    if (c.status == 200) {
+                        b.success(c.responseText)
+                    } else {
+                        c.onerror(c.status)
+                    }
+                }
+            };
+            c.ontimeout = function() {
+                if (typeof b["timeout"] != "undefined") b.timeout();
+                else c.onerror(-1)
+            }, c.onerror = function(a) {
+                if (typeof b["fail"] != "undefined") b.fail(a)
+            };
+            c.open(b.m, b.url, true);
+            if (typeof b["data"] != "undefined") {
+                c.setRequestHeader("Content-Type", (typeof b["mime"] != "undefined") ? b["mime"] : "application/x-www-form-urlencoded");
+                c.send(b.data)
+            } else c.send()
+        }
+        var Q = function(d) {
+            return document.querySelector(d);
+        };
+
+        function fill(setting) {
+            for (var name in setting) {
+                var ele = Q("input[name=" + name + "]");
+                if (ele.type == "checkbox") ele.checked = setting[name];
+                else ele.value = setting[name];
+            }
+        }
+
+        function save() {
+            var inputs = document.getElementsByTagName("input");
+            var setting = {};
+            for (var i = 0; i < inputs.length; i++) {
+                var ele = inputs[i];
+                if (ele.type == "checkbox") setting[ele.name] = ele.checked;
+                else if (ele.type == "text") setting[ele.name] = ele.value;
+            }
+            console.log("result=" + setting);
+            s_ajax({
+                url: gdcurl,
+                m: "POST",
+                mime: "aplication/json",
+                data: JSON.stringify(setting),
+                success: function(a) {
                     alert("done.");
                 },
                 fail: function(a) {
                     alert("failed updating data:" + a)
                 }
             });
-}
-function init(){
-    s_ajax({ url: window.location.href + "?data",
-             m: "GET",
-            success: function(a) {
-                fill(JSON.parse(a));
+        }
+
+        function init() {
+            s_ajax({
+                url: gdcurl + "?data",
+                m: "GET",
+                success: function(a) {
+                    fill(JSON.parse(a));
                 },
                 fail: function(a) {
                     //alert("failed getting data:" + a)
                 }
             });
-}
-</script>
-</head><body onload=init()>
-<form action="" method="post">
-<table>
-<tr><td>iSpindel</td><td><input type="checkbox" name="ispindel" value="1"></td></tr>
-<tr><td>SG Calibration</td><td><input type="text" name="gc"size=4> point</td></tr>
-<tr><td>Temp. Correction</td><td><input type="checkbox" name="tc" value="1"> @ <input type="text" name="ctemp" size=4>&deg;C </td></tr>
-<tr><td>Coefficients</td><td><input type="text" name="a3"  size=15>*x^3 + <input type="text" name="a2" size=15>*x^2+ <input type="text" name="a1" size=15>*x + <input type="text" name="a0" size=15> </td></tr>
-<tr><td>Save Change</td><td><input type="submit" name="submit" onclick="save();return false;"></input></td></tr>
-</table>
-</form>
-</form>
-</body></html>
+        }
+    </script>
+</head>
+
+<body onload=init()>
+    <form action="" method="post">
+        <table>
+            <tr>
+                <td>iSpindel</td>
+                <td><input type="checkbox" name="ispindel" value="1"></td>
+            </tr>
+            <tr>
+                <td>SG Calibration</td>
+                <td><input type="text" name="gc" size=4> point</td>
+            </tr>
+            <tr>
+                <td>Temp. Correction</td>
+                <td><input type="checkbox" name="tc" value="1"> @ <input type="text" name="ctemp" size=4>&deg;C </td>
+            </tr>
+            <tr>
+                <td>Coefficients</td>
+                <td><input type="text" name="a3" size=15>*x^3 + <input type="text" name="a2" size=15>*x^2+ <input type="text" name="a1" size=15>*x + <input type="text" name="a0" size=15> </td>
+            </tr>
+            <tr>
+                <td>Save Change</td>
+                <td><input type="submit" name="submit" onclick="save();return false;"></input>
+                </td>
+            </tr>
+        </table>
+    </form>
+    </form>
+</body>
+
+</html>
