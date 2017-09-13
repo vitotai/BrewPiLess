@@ -9,7 +9,7 @@
     <script src="http://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined.js"></script>
     <script type="text/javascript" src="bwf.js"></script>
     <script>
-        var JSVERION="2.3.2";
+        var JSVERION = "2.3.2";
         /* chart.js */
         function s_ajax(b) {
             var c = new XMLHttpRequest();
@@ -377,6 +377,10 @@
             color: colorHeatingMinTime,
             text: "Heating Min Time",
             extending: true
+        }, {
+            name: "INVALID",
+            color: colorHeatingMinTime,
+            text: "Invalid State"
         }];
         BrewChart.Mode = {
             b: "Beer Constant",
@@ -439,8 +443,8 @@
         BrewChart.prototype.drawBackground = function(ctx, area, graph) {
             var timeStart = graph.toDataXCoord(area.x);
             var timeEnd = graph.toDataXCoord(area.x + area.w);
-                // the data rows for the range we are interested in. 0-based index. This is deliberately extended out one row
-                // to be sure the range is included
+            // the data rows for the range we are interested in. 0-based index. This is deliberately extended out one row
+            // to be sure the range is included
             var rowStart = Math.max(this.findNearestRow(graph, timeStart) - 1, 0);
             var rowEnd = this.findNearestRow(graph, timeEnd) + 1;
             if (rowStart === null || rowEnd === null) {
@@ -1401,7 +1405,7 @@
             var json = JSON.stringify(r);
             console.log("result=" + json);
 
-            BWF.save(BWF.BrewProfile, encodeURIComponent(json), function() {
+            BWF.save(BWF.BrewProfile, json, function() {
                 profileEditor.markdirty(false);
                 alert("Done.");
             }, function(e) {
@@ -1601,27 +1605,90 @@
             }
         };
 
-        function setLcdText(id, html) {
-            var d = document.getElementById(id);
-            d.innerHTML = html;
+        function parseLcdText(lines) {
+            var status = {};
+            var modePatterns = {
+                b: /Mode\s+Beer\s+Const/i,
+                f: /Mode\s+Fridge\s+Const/i,
+                p: /Mode\s+Beer\s+Profile/i,
+                o: /Mode\s+Off/i
+            };
+            var modes = Object.keys(modePatterns);
+            status.ControlMode = "i";
+            for (var m = 0; m < modes.length; m++) {
+                if (modePatterns[modes[m]].test(lines[0])) {
+                    status.ControlMode = modes[m];
+                    break;
+                }
+            }
+            status.ControlState = i;
+            var tempRE = /\s*([a-zA-Z]+)\s*([-\d\.]+)\s+([-\d\.]+)\s+(\S+[CF])\s*$/i;
+            for (var i = 1; i < 3; i++) {
+                var temps = tempRE.exec(lines[i]);
+                status[temps[1] + "Temp"] = temps[2];
+                status[temps[1] + "Set"] = temps[3];
+                status.format = temps[4];
+            }
+            var i = 0;
+            var statePatterns = [
+                /Idling\s+for\s+(\S+)\s*$/i,
+                /control\s+OFF/i,
+                /Door\s+Open/i,
+                /Heating\s+for\s+(\S+)\s*$/i,
+                /Cooling\s+for\s+(\S+)\s*$/i,
+                /Wait\s+to\s+Cool\s+(\S+)\s*$/i,
+                /Wait\s+to\s+Heat\s+(\S+)\s*$/i,
+                /Wait\s+for\s+Peak/i,
+                /Cool\s+Time\s+left\s+(\S+)\s*$/i,
+                /Heat\s+Time\s+left\s+(\S+)\s*$/i
+            ];
+            status.ControlStateSince = "";
+            for (i = 0; i < statePatterns.length; i++) {
+                var match = statePatterns[i].exec(lines[3]);
+                if (match) {
+                    if (typeof match[1] !== "undefined") status.ControlStateSince = match[1];
+                    break;
+                }
+            }
+            status.ControlState = i;
+            status.StatusLine = lines[3];
+            return status;
+        }
+
+        function processLcdText(lines) {
+            //            Q("#status-pane .error").style.display = "none";
+            var status = parseLcdText(lines);
+            var ModeString = {
+                o: "OFF",
+                b: "Beer Constant",
+                f: "Fridge Const",
+                p: "Beer Profile",
+                i: "Invalid"
+            };
+            Object.keys(status).map(function(key, i) {
+                var div = Q("#lcd" + key);
+                if (div) {
+                    if (key == "ControlMode") div.innerHTML = ModeString[status[key]];
+                    else if (key == "ControlState") div.innerHTML = (status[key] < STATES.length) ? STATES[status[key]].text : "Unknown State";
+                    else div.innerHTML = status[key];
+                }
+            });
+            displayLcdText(lines);
+        }
+
+        function displayLcdText(lines) {
+            for (var i = 0; i < 4; i++) {
+                var d = document.getElementById("lcd-line-" + i);
+                if (d) d.innerHTML = lines[i];
+            }
         }
 
         function communicationError() {
-            setLcdText("lcd-line-0", "Failed to");
-            setLcdText("lcd-line-1", "connect to");
-            setLcdText("lcd-line-2", "Server");
-            setLcdText("lcd-line-3", "");
+            displayLcdText(["Failed to", "connect to", "Server", ""]);
         }
 
         function controllerError() {
-            setLcdText("lcd-line-0", "Controller not");
-            setLcdText("lcd-line-1", "updating data");
-            setLcdText("lcd-line-2", "...");
-            setLcdText("lcd-line-3", "");
-            /*setTimeout(function(){
-            	console.log("reconnect");
-            	BWF.reconnect();
-            },5000);*/
+            displayLcdText(["Controller not", "updating data", "...", ""]);
         }
 
         function gravityDevice(msg) {
@@ -1656,23 +1723,29 @@
                 GravityTracker.setThreshold(msg["stpt"]);
 
         }
-        function displayrssi(x){
-            var strength=[-1000,-90,-80,-70,-67];
-            var bar=4;
-            for(;bar>=0;bar--){
-                if(strength[bar] < x ) break;
+
+        function displayrssi(x) {
+            var strength = [-1000, -90, -80, -70, -67];
+            var bar = 4;
+            for (; bar >= 0; bar--) {
+                if (strength[bar] < x) break;
             }
-            var bars=document.getElementsByClassName("rssi-bar");
-            for(var i=0;i< bars.length;i++){
-                bars[i].style.backgroundColor=(i < bar)? "white":"rgb(82, 146, 194)";
+            var bars = document.getElementsByClassName("rssi-bar");
+            for (var i = 0; i < bars.length; i++) {
+                bars[i].style.backgroundColor = (i < bar) ? "white" : "rgb(82, 146, 194)";
             }
-            Q("#wifisignal").innerHTML=(x>0)? "?":Math.min(Math.max(2 * (x + 100), 0), 100);
+            Q("#wifisignal").innerHTML = (x > 0) ? "?" : Math.min(Math.max(2 * (x + 100), 0), 100);
         }
+
         function init() {
             BChart.init("div_g");
-            var rssi=Q("#rssi");
-            rssi.onmouseover=function(){Q("#wifisignal").style.display="block";};
-            rssi.onmouseout=function(){Q("#wifisignal").style.display="none";};
+            var rssi = Q("#rssi");
+            rssi.onmouseover = function() {
+                Q("#wifisignal").style.display = "block";
+            };
+            rssi.onmouseout = function() {
+                Q("#wifisignal").style.display = "none";
+            };
 
             var gotMsg = true;
             onload(function() {
@@ -1692,21 +1765,21 @@
                     handlers: {
                         L: function(lines) {
                             gotMsg = true;
-                            for (var i = 0; i < 4; i++) setLcdText("lcd-line-" + i, lines[i]);
+                            processLcdText(lines);
                         },
                         V: function(c) {
-                            if(typeof c["rssi"] != "undefined"){
+                            if (typeof c["rssi"] != "undefined") {
                                 displayrssi(c["rssi"]);
                             }
-                            if(typeof c["reload"] != "undefined"){
+                            if (typeof c["reload"] != "undefined") {
                                 console.log("forced reload chart");
                                 BChart.reqnow();
                             }
-                            if(typeof c["nn"]!="undefined"){
+                            if (typeof c["nn"] != "undefined") {
                                 Q("#hostname").innerHTML = c["nn"];
                             }
-                            if(typeof c["ver"]!="undefined"){
-                                if(JSVERION != c["ver"]) alert("Version Mismatched!. Reload the page.");
+                            if (typeof c["ver"] != "undefined") {
+                                if (JSVERION != c["ver"]) alert("Version Mismatched!. Reload the page.");
                                 Q("#verinfo").innerHTML = "v" + c["ver"];
                             }
                         },
@@ -1942,7 +2015,7 @@
             font-size: 18pt;
             float: left;
             color: white;
-/*            font-family: "Comic Sans MS", cursive, sans-serif;*/
+            /*            font-family: "Comic Sans MS", cursive, sans-serif;*/
             margin-top: 20px;
             margin-left: 20px;
         }
@@ -2182,23 +2255,60 @@
             margin: 4px 0 0 0;
             border: 0px;
         }
-        #rssi { float:right; position:relative; margin: 0px 16px 0px 0px; height: 16px; width: 12px; display:inline-block;}
-        #wifisignal{
-            font-size: 12pt;
-            color:black;
-            font-family: Courier New, Courier, monospace;
-            position:absolute;
-            top:2px;
-            left:2px;
-            display:none;
-           
+        
+        #rssi {
+            float: right;
+            position: relative;
+            margin: 0px 16px 0px 0px;
+            height: 16px;
+            width: 12px;
+            display: inline-block;
         }
-        .rssi-bar {position:absolute; bottom:0; float:left; width: 4px; border-radius: 1px; background-color: #FFFFFF;}
-        .rssi-bar1 {height: 4px; left:0px;}
-        .rssi-bar2 {height: 8px; left:6px;}
-        .rssi-bar3 {height: 12px; left:12px;}
-        .rssi-bar4 {height: 16px; left:18px;}
-        #verinfo{ display: inline-block; font-size: 8pt; color: white;}
+        
+        #wifisignal {
+            font-size: 12pt;
+            color: black;
+            font-family: Courier New, Courier, monospace;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            display: none;
+        }
+        
+        .rssi-bar {
+            position: absolute;
+            bottom: 0;
+            float: left;
+            width: 4px;
+            border-radius: 1px;
+            background-color: #FFFFFF;
+        }
+        
+        .rssi-bar1 {
+            height: 4px;
+            left: 0px;
+        }
+        
+        .rssi-bar2 {
+            height: 8px;
+            left: 6px;
+        }
+        
+        .rssi-bar3 {
+            height: 12px;
+            left: 12px;
+        }
+        
+        .rssi-bar4 {
+            height: 16px;
+            left: 18px;
+        }
+        
+        #verinfo {
+            display: inline-block;
+            font-size: 8pt;
+            color: white;
+        }
     </style>
 </head>
 
@@ -2212,17 +2322,19 @@
                 <span class="lcd-line" id="lcd-line-3"></span></p>
                 <p>
             </div>
-            <div id="banner"><div id="hostname">BrewPiLess</div>
+            <div id="banner">
+                <div id="hostname">BrewPiLess</div>
                 <div id="recording"></div>
             </div>
             <div id="menu">
-                <div id="versionsignal"><div id="verinfo">v2</div> 
-                <div id="rssi">
+                <div id="versionsignal">
+                    <div id="verinfo">v2</div>
+                    <div id="rssi">
                         <div class="rssi-bar rssi-bar1"></div>
                         <div class="rssi-bar rssi-bar2"></div>
                         <div class="rssi-bar rssi-bar3"></div>
-                        <div class="rssi-bar rssi-bar4"></div>		
-                        <div id="wifisignal">?</div>                    
+                        <div class="rssi-bar rssi-bar4"></div>
+                        <div id="wifisignal">?</div>
                     </div>
                 </div>
                 <button onclick="window.open('/log')">Data Logging</button>

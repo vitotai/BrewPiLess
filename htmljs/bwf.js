@@ -1,12 +1,3 @@
-/**********************************************************************
- created by Vito Tai
- Copyright (C) 2016 Vito Tai
-
- This soft ware is provided as-is. Use at your own risks.
- You are free to modify and distribute this software without removing
- this statement.
- BrewManiac by Vito Tai is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
-***********************************************************************/
 function invoke(arg)
 {
 	var xhttp = new XMLHttpRequest();
