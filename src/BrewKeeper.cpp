@@ -108,6 +108,7 @@ bool BrewProfile::load(String filename)
 				_timeEnterCurrentStep=0;
 				_currentStepDuration =(time_t)(_steps[0].days * 86400);
 				DBG_PRINTF("New profile:st %ld  _timeEnterCurrentStep:%ld!\n",_startDay,_timeEnterCurrentStep);
+				_saveBrewingStatus();
 			}else{
 				if(_currentStep >= _numberOfSteps){
 					DBG_PRINTF("error step: %d >= %d\n",_currentStep,_numberOfSteps);
@@ -236,7 +237,7 @@ bool BrewProfile::_loadProfile(String filename)
 	    		_steps[i].stableTime =st;
 	    		_steps[i].stablePoint=(entry.containsKey("x"))? entry["x"]:_stableThreshold;
 
-    			DBG_PRINTF(" Stable :%d@%d",_steps[i].stablePoint,_steps[i].stableTime);
+    			DBG_PRINTF("Stable :%d@%d",_steps[i].stablePoint,_steps[i].stableTime);
 			}
 
 			DBG_PRINT(" temp:");
@@ -255,7 +256,7 @@ bool BrewProfile::_loadProfile(String filename)
 	}else
 		_unit = unit;
 
-	DBG_PRINTF("finished, st:%ld, unit:%c, _numberOfSteps:%d\n",_startDay,unit,_numberOfSteps);
+	DBG_PRINTF("Load finished, st:%ld, unit:%c, _numberOfSteps:%d\n",_startDay,unit,_numberOfSteps);
 
 	return true;
 }
