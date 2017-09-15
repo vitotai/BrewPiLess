@@ -55,8 +55,6 @@
   -webkit-transition: left .2s ease;
 }
 
-.detail {}
-
 .profileTable td, th {
   padding: 6px 4px;
   text-align: center;
@@ -119,14 +117,26 @@ table.profileTable {
   position: relative;
 }
 
+#profile-s {
+  @include for-tablet-landscape-down {
+    flex-direction: column;
+  }
+}
+
 #profile-edit {
   margin: 6px;
   width: 510px;
   position: relative;
+  @include for-tablet-landscape-down {
+    width: 100%;
+  }
 }
 
 #tc_chart {
   width: calc(100% - 510px);
-height: 390px;
-margin: 16px 0;
+  height: 390px;
+  margin: 16px 0;
+  @include for-tablet-landscape-down {
+    width: 100%;
+  }
 }
