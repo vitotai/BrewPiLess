@@ -4,12 +4,14 @@ If you just want to test, try or use the new layout, please download the dist/ f
 
 ## Developing
 
-For developing / building the project yourself you need to have nodejs installed on your system.
+For developing / building the project yourself you need to have nodejs and ruby installed on your system.
 
 Clone the repository and enter the htmljs/ folder, run
 
 ```
 npm install
+npm install -g grunt-cli
+gem install sass
 ```
 
 to install the dependencies.
@@ -25,3 +27,10 @@ If you want to build the project run:
 ```
 grunt build
 ```
+
+## ToDo
+
+- add better mobile support
+- To drive consistency, perhaps the Waiting to Cool, Cooling, Heating text, etc on the STATUS could be color coded to match the colors that used to show under the graph.
+- On that point. I miss the heat/cool colors under the graph from the old one.
+- I would like to see all the pages unified with the same header (as the Graph and Control pages behave)
