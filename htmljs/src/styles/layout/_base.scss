@@ -1,121 +1,242 @@
 /** Header **/
 
 .header {
-	height: 64px;
-	background: $primary-color;
-	box-shadow: 0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);
-	padding: 0 16px;
-	z-index: 2;
+    height: 64px;
+    background: $primary-color;
+    box-shadow: 0 0 4px rgba(0, 0, 0, .14), 0 4px 8px rgba(0, 0, 0, .28);
+    padding: 0 16px;
+    z-index: 2;
 }
-
 .header_title {
-	font-size: 32px;
-	line-height: 64px;
-	color: #FFF;
-	margin: 0;
-	padding: 0;
+    font-size: 32px;
+    line-height: 64px;
+    color: #FFF;
+    margin: 0;
+    padding: 0;
 }
-
 .header_version-display {
-	font-size: 14px;
-	color: #FFF;
+    font-size: 14px;
+    color: #FFF;
 }
-
-.options {
-	list-style-type: none;
-	height: 100%;
-	> li {
-		display: inline-block;
-		height: 100%;
-	}
-	a {
-		color: #FFF;
-		text-transform: uppercase;
-		height: 100%;
-		padding: 8px;
-		display: inline-block;
-		line-height: 48px;
-		&.active {
-			border-bottom: 3px solid $accent-color;
-		}
-		&:hover {
-			border-bottom: 3px solid #FFF;
-		}
-	}
+[navigation] {
+    [menuToggle] {
+        @include for-tablet-portrait-down {
+            display: block;
+            position: relative;
+            z-index: 1;
+            top: 3px;
+            user-select: none;
+        }
+    }
+    input {
+        display: none;
+        @include for-tablet-portrait-down {
+            display: block;
+            width: 40px;
+            height: 32px;
+            position: absolute;
+            top: -7px;
+            left: -5px;
+            cursor: pointer;
+            opacity: 0;
+            /* hide this */
+            
+            z-index: 2;
+            /* and place it over the hamburger */
+            
+            -webkit-touch-callout: none;
+            &:checked ~ ul {
+                transform: scale(1.0, 1.0);
+                opacity: 1;
+            }
+            &:checked ~ span {
+                opacity: 1;
+                transform: rotate(45deg) translate(-2px, -1px);
+                background: #232323;
+            }
+            &:checked ~ span:nth-last-child(3) {
+                opacity: 0;
+                transform: rotate(0deg) scale(0.2, 0.2);
+            }
+            &:checked ~ span:nth-last-child(2) {
+                opacity: 1;
+                transform: rotate(-45deg) translate(0, -1px);
+            }
+        }
+    }
+    span {
+        display: none;
+        @include for-tablet-portrait-down {
+            display: block;
+            width: 33px;
+            height: 4px;
+            margin-bottom: 5px;
+            position: relative;
+            background: #FFF;
+            border-radius: 3px;
+            z-index: 1;
+            transform-origin: 4px 0px;
+            transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0), background 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0), opacity 0.55s ease;
+            &:first-child {
+                transform-origin: 0% 0%;
+            }
+            &:nth-last-child(2) {
+                transform-origin: 0% 100%;
+            }
+        }
+    }
+    /*
+	* And let's fade it in from the left
+	*/
+    
+    .options {
+        list-style-type: none;
+        height: 100%;
+        > li {
+            display: inline-block;
+            height: 100%;
+        }
+        a {
+            color: #FFF;
+            text-transform: uppercase;
+            height: 100%;
+            padding: 8px;
+            display: inline-block;
+            line-height: 48px;
+            &.active {
+                border-bottom: 3px solid $accent-color;
+            }
+            &:hover {
+                border-bottom: 3px solid #FFF;
+            }
+        }
+        @include for-tablet-portrait-down {
+			padding-top: 64px;
+            position: fixed;
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            right: -16px;
+            top: 0;
+            background: #ededed;
+            list-style-type: none;
+            -webkit-font-smoothing: antialiased;
+            /* to stop flickering of text in safari */
+            
+            transform-origin: 0% 0%;
+            transform: translate(100%, 0);
+            transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1.0);
+            > li {
+                display: block;
+				height: auto;
+				text-align: center;
+            }
+            a {
+                color: #222;
+                height: auto;
+                width: 100%;
+                display: block;
+                &.active {
+                    color: $accent-color;
+                    border: none;
+                }
+                &:hover {
+                    background: #CCC;
+                    ;
+                    border: none;
+                }
+            }
+        }
+    }
 }
-
 /** Footer **/
 
 .footer {
-	height: 40px;
-	background: #222;
-	color: rgba(255,255,255,0.87);
-	padding: 0 16px;
-	a {
-		color: rgba(255,255,255,0.87);
-		font-weight: bold;
-	}
+    height: 40px;
+    background: #222;
+    color: rgba(255, 255, 255, 0.87);
+    padding: 0 16px;
+    a {
+        color: rgba(255, 255, 255, 0.87);
+        font-weight: bold;
+    }
 }
-
 /** Content **/
 
 [viewport] {
-	height: calc(100% - 104px);
-}
-
-[main] {
-	padding: 16px;
-	overflow-y: auto;
-}
-
-/** Error **/
-.error {
-	position: fixed;
-	left: 20px;
-	bottom: 50px;
-	background-color: #323232;
-	padding: 12px 24px 17px 24px;
-	vertical-align: middle;
-	color: #fff;
-	box-shadow: 0 7px 18px rgba(0,0,0,0.2);
-	&:empty {
-		display: none;
-	}
-}
-
-/** Inputs **/
-input[type="number"], input[type="text"], input[type="datetime-local"] {
-  width: 100%;
-	margin: 16px 0;
-  display: block;
-  border: none;
-  padding: 18px 0 10px;
-  border-bottom: solid 1px $primary-color;
-  transition: all 0.3s cubic-bezier(.64,.09,.08,1);
-  background: linear-gradient(to bottom, rgba(255,255,255,0) 96%, $primary-color 4%);
-  background-position: -100% 0;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  color: darken($primary-color, 20%);
-  &:focus {
-    box-shadow: none;
-    outline: none;
-    background-position: 0 0;
-    &::placeholder {
-      color: $primary-color;
-      font-size: 11px;
-      transform: translateY(-20px);
-      visibility: visible !important;
-			transition: all 0.3s ease-in-out;
+    height: calc(100% - 104px);
+    @include for-tablet-landscape-down {
+        flex-direction: column !important;
+        height: auto;
     }
-  }
-	&:invalid {
-		background: linear-gradient(to bottom, rgba(255,255,255,0) 96%, red 4%);
-	}
 }
+[main] {
+    padding: 16px;
+    overflow-y: auto;
+    @include for-tablet-landscape-down {
+        overflow: initial;
+    }
+    > [layout] {
+        .chart-legend {
+            @include for-phone-only {
+                width: 100%;
+            }
+        }
+        @include for-phone-only {
+            flex-direction: column !important;
+        }
+    }
+}
+/** Error **/
 
+.error {
+    position: fixed;
+    left: 20px;
+    bottom: 50px;
+    background-color: #323232;
+    padding: 12px 24px 17px 24px;
+    vertical-align: middle;
+    color: #fff;
+    box-shadow: 0 7px 18px rgba(0, 0, 0, 0.2);
+    &:empty {
+        display: none;
+    }
+}
+/** Inputs **/
+
+input[type="number"],
+input[type="text"],
+input[type="datetime-local"] {
+    width: 100%;
+    margin: 16px 0;
+    display: block;
+    border: none;
+    padding: 18px 0 10px;
+    border-bottom: solid 1px $primary-color;
+    transition: all 0.3s cubic-bezier(.64, .09, .08, 1);
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 96%, $primary-color 4%);
+    background-position: -100% 0;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    color: darken($primary-color, 20%);
+    &:focus {
+        box-shadow: none;
+        outline: none;
+        background-position: 0 0;
+        &::placeholder {
+            color: $primary-color;
+            font-size: 11px;
+            transform: translateY(-20px);
+            visibility: visible !important;
+            transition: all 0.3s ease-in-out;
+        }
+    }
+    &:invalid {
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 96%, red 4%);
+    }
+}
 /** Utils **/
 
 .hide {
-	display: none!important;
+    display: none!important;
 }

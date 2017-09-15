@@ -1,4 +1,5 @@
 @import 'import/vars';
+@import 'import/mixins';
 @import 'layout/reset';
 @import 'layout/typo';
 @import 'layout/layout';
@@ -14,6 +15,11 @@
 	padding: 16px;
 	overflow-y: auto;
 	background: #EEE;
+
+	@include for-tablet-landscape-down {
+		width: 100%;
+		order: 5;
+	}
 }
 
 .data-pane {
