@@ -1,41 +1,11 @@
 <html>
-
-<head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BrewPiLess reporting for duty!</title>
-  <meta name="apple-mobile-web-app-title" content="BrewPiLess">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <script type="text/javascript" src="js/vendor/dygraph-combined.js"></script>
-  <script type="text/javascript" src="js/vendor/bwf.js"></script>
-  <script type="text/javascript" src="js/vendor/chart.js"></script>
-  <script type="text/javascript" src="js/shared.js"></script>
-  <script type="text/javascript" src="js/script.js"></script>
-  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-</head>
+  <!-- build:include partials/head.html -->
+  <!-- /build -->
 
 <body onload=init()>
 
-  <header layout horizontal main-justified cross-center relative class="header">
-    <h1 class="header_title"><span id="hostname">BrewPiLess</span> <span id="verinfo" class="header_version-display">v2.1</span></h1>
-    <div navigation>
-      <div menuToggle>
-        <input type="checkbox" />
-        <span></span>
-        <span></span>
-        <span></span>
-        <ul class="options">
-          <li><a class="active" href="/">graph</a></li>
-          <li><a href="/control.htm">control</a></li>
-          <li><a href="/log">logs</a></li>
-          <li><a href="/setup.htm">setup</a></li>
-          <li><a href="/config">config</a></li>
-          <li><a href="/gdc">gravity</a></li>
-        </ul>
-      </div>
-    </div>
-  </header>
+  <!-- build:include partials/header.html -->
+  <!-- /build -->
 
   <div viewport layout horizontal>
     <div side>
@@ -140,10 +110,8 @@
     </div>
   </div>
 
-  <footer layout horizontal main-justified cross-center class="footer">
-    <span>BrewPiLess &copy; <a href="https://github.com/vitotai/">vitotai</a></span>
-    <span><a href="https://github.com/vitotai/BrewPiLess/">project on GitHub</a></span>
-  </footer>
+  <!-- build:include partials/footer.html -->
+  <!-- /build -->
 
   <!-- Notification -->
   <div class=error>waiting for update from script ...</div>

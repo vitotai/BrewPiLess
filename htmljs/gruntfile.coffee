@@ -10,6 +10,7 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-postcss'
+  grunt.loadNpmTasks 'grunt-processhtml'
 
   grunt.initConfig
 
@@ -48,8 +49,8 @@ module.exports = (grunt) ->
           minifyJS: false,
           minifyCSS: false
         files: [{
-          'build/index.html': 'src/index.html',
-          'build/control.html': 'src/control.html'
+          'build/index.html': 'build/index.html',
+          'build/control.html': 'build/control.html'
         }]
 
     comboall:
@@ -110,6 +111,13 @@ module.exports = (grunt) ->
           ext: '.htm.gz'
         }]
 
+    processhtml:
+      dist:
+        files: [
+          'build/index.html': ['src/index.html']
+          'build/control.html': ['src/control.html']
+        ]
+
     watch:
       files: [
         'src/**/*'
@@ -119,6 +127,7 @@ module.exports = (grunt) ->
   grunt.registerTask 'build', [
     #'jshint'
     'copy'
+    'processhtml'
     'htmlmin:dev'
     'sass:dev'
     'postcss'
@@ -130,6 +139,7 @@ module.exports = (grunt) ->
   grunt.registerTask 'default', [
     #'jshint'
     'copy'
+    'processhtml'
     'htmlmin:dev'
     'sass:dev'
     'postcss'

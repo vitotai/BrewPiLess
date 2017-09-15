@@ -1,67 +1,66 @@
-var JSVERION="2.3.3";
+var JSVERION = "2.3.3";
 
-var Q=function(d){return document.querySelector(d);};
+var Q = function (d) { return document.querySelector(d); };
 function s_ajax(b) {
   var c = new XMLHttpRequest();
-  c.onreadystatechange = function() {
-      if (c.readyState == 4) {
-          if (c.status == 200) {
-              b.success(c.responseText)
-          } else {
-              c.onerror(c.status)
-          }
+  c.onreadystatechange = function () {
+    if (c.readyState == 4) {
+      if (c.status == 200) {
+        b.success(c.responseText)
+      } else {
+        c.onerror(c.status)
       }
+    }
   };
-  c.ontimeout = function() {
-      if (typeof b["timeout"] != "undefined") b.timeout();
-      else c.onerror(-1)
-  }, c.onerror = function(a) {
-      if (typeof b["fail"] != "undefined") b.fail(a)
+  c.ontimeout = function () {
+    if (typeof b["timeout"] != "undefined") b.timeout();
+    else c.onerror(-1)
+  }, c.onerror = function (a) {
+    if (typeof b["fail"] != "undefined") b.fail(a)
   };
   c.open(b.m, b.url, true);
   if (typeof b["data"] != "undefined") {
-      c.setRequestHeader("Content-Type", (typeof b["mime"] != "undefined") ? b["mime"] : "application/x-www-form-urlencoded");
-      c.send(b.data)
+    c.setRequestHeader("Content-Type", (typeof b["mime"] != "undefined") ? b["mime"] : "application/x-www-form-urlencoded");
+    c.send(b.data)
   } else c.send()
 }
 
-function formatDate(dt)
-{
+function formatDate(dt) {
   //	var y = dt.getFullYear();
   //	var M = dt.getMonth() +1;
   //	var d = dt.getDate();
   var h = dt.getHours();
   var m = dt.getMinutes();
   //    var s = dt.getSeconds();
-  function dd(n){return (n<10)? '0' + n:n;}
+  function dd(n) { return (n < 10) ? '0' + n : n; }
   //	return dd(M) + "/" + dd(d) + "/" + y +" "+ dd(h) +":"+dd(m)+":"+dd(s);
   //	return dd(M) + "/" + dd(d) +" "+ dd(h) +":"+dd(m);
-  return dt.toLocaleDateString() + " "+ dd(h) +":"+dd(m);
+  return dt.toLocaleDateString() + " " + dd(h) + ":" + dd(m);
 }
 
 function formatDateForPicker(date) {
   var h = date.getHours();
   var m = date.getMinutes();
-  function dd(n){return (n<10)? '0' + n:n;}
-  return date.getFullYear() + "-" + dd(date.getMonth() + 1) + "-" + dd(date.getDate()) + "T" + dd(h) +":"+dd(m);
+  function dd(n) { return (n < 10) ? '0' + n : n; }
+  return date.getFullYear() + "-" + dd(date.getMonth() + 1) + "-" + dd(date.getDate()) + "T" + dd(h) + ":" + dd(m);
 }
 
-function C2F(c){return Math.round((c*1.8+32)*10)/10};
-function F2C(f){return Math.round((f-32)/1.8*10)/10};
+function C2F(c) { return Math.round((c * 1.8 + 32) * 10) / 10 };
+function F2C(f) { return Math.round((f - 32) / 1.8 * 10) / 10 };
 
 function updateTempUnit(u) {
-  var Us=document.getElementsByClassName("t_unit");
-  for(var i=0;i< Us.length;i++){
+  var Us = document.getElementsByClassName("t_unit");
+  for (var i = 0; i < Us.length; i++) {
     Us[i].innerHTML = u;
   }
 }
 
 function communicationError() {
-  Q('.error').innerHTML="Failed to connect to server.";
+  Q('.error').innerHTML = "Failed to connect to server.";
 }
 
 function controllerError() {
-  Q('.error').innerHTML="Controller not updating data.";
+  Q('.error').innerHTML = "Controller not updating data.";
 };
 
 function openDlgLoading() {
@@ -73,16 +72,16 @@ function closeDlgLoading() {
 }
 
 var BrewMath = {
-  abv: function(og, fg) {
+  abv: function (og, fg) {
     return ((76.08 * (og - fg) / (1.775 - og)) * (fg / 0.794)).toFixed(1);
   },
-  att: function(og, fg) {
+  att: function (og, fg) {
     return Math.round((og - fg) / (og - 1) * 100);
   },
-  sg2pla: function(sg) {
+  sg2pla: function (sg) {
     return -616.868 + 1111.14 * sg - 630.272 * sg * sg + 135.997 * sg * sg * sg;
   },
-  pla2sg: function(pla) {
+  pla2sg: function (pla) {
     return 1 + (pla / (258.6 - ((pla / 258.2) * 227.1)));
   }
 };
@@ -147,7 +146,7 @@ function processLcdText(lines) {
     p: "Beer Profile",
     i: "Invalid"
   };
-  Object.keys(status).map(function(key, i) {
+  Object.keys(status).map(function (key, i) {
     var div = Q("#lcd" + key);
     if (div) {
       if (key == "ControlMode") div.innerHTML = ModeString[status[key]];
@@ -156,4 +155,10 @@ function processLcdText(lines) {
       else div.innerHTML = status[key];
     }
   });
+}
+
+function getActiveNavItem() {
+  var path = window.location.pathname.split("/").pop();
+  var element = Q('.options>li>a[href="/' + path + '"]');
+  element.className += 'active';
 }
