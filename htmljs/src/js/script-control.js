@@ -772,7 +772,7 @@ function saveprofile() {
     var json = JSON.stringify(r);
     console.log("result=" + json);
 
-    BWF.save(BWF.BrewProfile, encodeURIComponent(json), function() {
+    BWF.save(BWF.BrewProfile, json, function() {
         profileEditor.markdirty(false);
         alert("Done.");
     }, function(e) {
