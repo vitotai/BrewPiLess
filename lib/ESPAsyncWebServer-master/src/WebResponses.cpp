@@ -383,11 +383,13 @@ AsyncFileResponse::AsyncFileResponse(FS &fs, String path, String contentType, bo
   if(download) {
     // set filename and force download
     snprintf(buf, sizeof (buf), "attachment; filename=\"%s\"", filename);
+    addHeader("Content-Disposition", buf);
+
   } else {
     // set filename and force rendering
-    snprintf(buf, sizeof (buf), "inline; filename=\"%s\"", filename);
+   // snprintf(buf, sizeof (buf), "inline; filename=\"%s\"", filename);
   }
-  addHeader("Content-Disposition", buf);
+//  addHeader("Content-Disposition", buf);
 
 }
 
