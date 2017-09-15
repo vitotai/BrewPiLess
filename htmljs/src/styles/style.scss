@@ -49,6 +49,10 @@
 .chart {
 	width: calc(100% - 240px);
 	height:390px;
+
+	@include for-phone-only {
+		width: 100%;
+	}
 }
 
 .chart-legend {
