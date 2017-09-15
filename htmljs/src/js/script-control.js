@@ -844,6 +844,7 @@ function loaded() {
 function init() {
   loaded();
   var gotMsg=true;
+  getActiveNavItem();
 
   BWF.init({
     handlers:{
