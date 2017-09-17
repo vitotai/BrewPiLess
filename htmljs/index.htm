@@ -9,7 +9,7 @@
     <script src="http://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined.js"></script>
     <script type="text/javascript" src="bwf.js"></script>
     <script>
-        var JSVERION = "2.3.2";
+        var JSVERION = "2.3.3";
         /* chart.js */
         function s_ajax(b) {
             var c = new XMLHttpRequest();
@@ -1691,6 +1691,23 @@
             displayLcdText(["Controller not", "updating data", "...", ""]);
         }
 
+        function checkTime(time, tzoff) {
+            var d = new Date();
+            var tmoff = 0 - d.getTimezoneOffset() * 60;
+            var tm = Math.round(d.getTime() / 1000);
+            if (tzoff != tmoff || Math.abs(tm - time) > 10) {
+                // update time & timezone
+                s_ajax({
+                    url: "time",
+                    m: "POST",
+                    mime: "application/x-www-form-urlencoded",
+                    data: "time=" + tm + "&off=" + tmoff,
+                    success: function() {}
+                });
+
+            }
+        }
+
         function gravityDevice(msg) {
             if (typeof msg["name"] == "undefined") return;
             if (msg.name.startsWith("iSpindel")) {
@@ -1781,6 +1798,9 @@
                             if (typeof c["ver"] != "undefined") {
                                 if (JSVERION != c["ver"]) alert("Version Mismatched!. Reload the page.");
                                 Q("#verinfo").innerHTML = "v" + c["ver"];
+                            }
+                            if (typeof c["tm"] != "undefined" && typeof c["off"] != "undefined") {
+                                checkTime(c.tm, c.off);
                             }
                         },
                         G: function(c) {

@@ -431,18 +431,23 @@ public:
   			}
 	 	}else if(request->method() == HTTP_GET &&  request->url() == TIME_PATH){
 			AsyncResponseStream *response = request->beginResponseStream("application/json");
-			response->printf("{\"t\":\"%s\",\"e\":%ld}",TimeKeeper.getDateTimeStr(),TimeKeeper.getTimeSeconds());
+			response->printf("{\"t\":\"%s\",\"e\":%lu,\"o\":%ld}",TimeKeeper.getDateTimeStr(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset());
 			request->send(response);
 		}else if(request->method() == HTTP_POST &&  request->url() == TIME_PATH){
 			if(request->hasParam("time", true)){
-  				AsyncWebParameter* tvalue = request->getParam("time", true);
-  				DBG_PRINTF("Set Time:%ld\n",tvalue->value().toInt());
-	 			TimeKeeper.setCurrentTime(tvalue->value().toInt());
-	 			request->send(200, "text/plain;", "");
-	 		}else{
-	 			request->send(400);
-	 		}
-	 	}else if(request->method() == HTTP_GET &&  request->url() == RESETWIFI_PATH){
+				  AsyncWebParameter* tvalue = request->getParam("time", true);
+				  time_t time=(time_t)tvalue->value().toInt();
+  				DBG_PRINTF("Set Time:%lu from:%s\n",time,tvalue->value().c_str());
+	 			TimeKeeper.setCurrentTime(time);
+			 }
+			 if(request->hasParam("off", true)){
+				AsyncWebParameter* tvalue = request->getParam("off", true);
+				DBG_PRINTF("Set timezone:%ld\n",tvalue->value().toInt());
+			   TimeKeeper.setTimezoneOffset(tvalue->value().toInt());
+		    }		   
+			request->send(200, "text/plain;", "");
+			 
+		}else if(request->method() == HTTP_GET &&  request->url() == RESETWIFI_PATH){
 	 	    if(!request->authenticate(username, password))
 	        return request->requestAuthentication();
 		 	request->send(200,"text/html","Done, restarting..");
@@ -669,7 +674,8 @@ void onClientConnected(AsyncEventSourceClient *client){
 		client->send(buf);
 	}
 	// RSSI && 
-	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d}",titlelabel,BPL_VERSION,WiFi.RSSI());
+	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld}"
+		,titlelabel,BPL_VERSION,WiFi.RSSI(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset());
 	client->send(buf);
 }
 
@@ -1261,7 +1267,7 @@ void loop(void){
 		_displayTime=now;
 
 		struct tm t;
-		makeTime(now,t);
+		makeTime(TimeKeeper.getLocalTimeSeconds(),t);
 		char buf[21];
 		sprintf(buf,"%d/%02d/%02d %02d:%02d:%02d",t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
 		display.printStatus(buf);

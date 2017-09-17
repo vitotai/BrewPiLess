@@ -111,6 +111,7 @@ void TimeKeeperClass::saveTime(time_t t)
 		return;
 	}
 	f.write((unsigned char*)&t,sizeof(time_t));
+	f.write((unsigned char*)&_timezoneOffset,sizeof(_timezoneOffset));
 	f.close();
 }
 
@@ -123,6 +124,9 @@ time_t TimeKeeperClass::loadTime(void)
 		return 0;
 	}
 	f.read((unsigned char*)&t,sizeof(time_t));
+	if(! f.read((unsigned char*)&_timezoneOffset,sizeof(_timezoneOffset)) ){
+		_timezoneOffset=0;
+	}
 	f.close();
 	return t;
 }
