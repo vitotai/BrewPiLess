@@ -513,14 +513,22 @@ For those who don't have access to Microsoft Excel like me, the [calibrationSG.h
 
 * Q: The meaing of WiFi signal.
 
-    A: 
-    | bars  | Signal Strength   | Note       |
-    | ----- |:-------------:| :--------------------|
-    |  4    |  > -67 dBm   | Very good.	|
-    |  3    |  -67 ~ -70 dBm   |good.	|
-    |  2    |  -70 ~ -80 dBm   | minimum for reliable connectivity.	|
-    |  1    |  -80 ~ -90 dBm   | minimum for basic connectivity. unreliable.	|
-    |  0    |  < -90 dBm   | Unstable signal	|
+    A:
+    
+| bars  | Signal Strength   | Note       |
+| ----- |:-------------:| :--------------------|
+|  4    |  > -67 dBm   | Very good.	|
+|  3    |  -67 ~ -70 dBm   |good.	|
+|  2    |  -70 ~ -80 dBm   | minimum for reliable connectivity.	|
+|  1    |  -80 ~ -90 dBm   | minimum for basic connectivity. unreliable.	|
+|  0    |  < -90 dBm   | Unstable signal	|
 
+* Q: The mode(beer constant or fridge constant) is not kept after reset.
+
+     A: Please make sure the EEPROM is "formated", which is done by "Erase Setting".
+     
+* Q: How to recover default settings.
+
+     A: "Erase Setting". The hardware configuration will be gone after erasing. You might need to save the hardware configuration and restore after erashing.
 
 
