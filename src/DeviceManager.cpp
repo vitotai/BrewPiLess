@@ -103,6 +103,7 @@ void DeviceManager::setupUnconfiguredDevices()
  */
 void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 {
+	//vito: create sensor object
 	switch (config.deviceHardware) {
 		case DEVICE_HARDWARE_NONE:
 			break;
@@ -262,7 +263,7 @@ void DeviceManager::installDevice(DeviceConfig& config)
 	void** ppv = deviceTarget(config);
 	if (ppv==NULL || config.hw.deactivate)
 		return;
-
+	//vito: installDevice 
 	BasicTempSensor* s;
 	TempSensor* ts;
 	switch(dt) {
@@ -877,7 +878,7 @@ void DeviceManager::enumerateHardware()
 	if (spec.hardware==-1 || isDigitalPin(DeviceHardware(spec.hardware))) {
 		enumeratePinDevices(spec, OutputEnumeratedDevices, out);
 	}
-
+	//vito: enumerate device
 //	logDebug("Enumerating Hardware Complete");
 }
 
