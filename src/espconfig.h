@@ -31,7 +31,13 @@
 #define MINIMUM_TEMPERATURE_STEP 0.005
 #define MINIMUM_TEMPERATURE_SETTING_PERIOD 60
 #if SONOFF
+
+#ifdef NO_SPIFFS
+#define DEVELOPMENT_OTA true
+#else
 #define DEVELOPMENT_OTA false
+#endif
+
 #define DEVELOPMENT_FILEMANAGER false
 #else
 #define DEVELOPMENT_OTA true

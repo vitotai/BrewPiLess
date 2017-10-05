@@ -1199,6 +1199,7 @@ void setup(void){
 		request->send(200,"","totalBytes:" +String(fs_info.totalBytes) +
 		" usedBytes:" + String(fs_info.usedBytes)+" blockSize:" + String(fs_info.blockSize)
 		+" pageSize:" + String(fs_info.pageSize)
+		+" freesketch:" + String(ESP.getFreeSketchSpace())
 		+" heap:"+String(ESP.getFreeHeap()));
 		//testSPIFFS();
 	});
