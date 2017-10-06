@@ -152,7 +152,7 @@ void AsyncWebServerRequest::_onData(void *buf, size_t len){
       }
     }
 
-    if(_parsedLength == _contentLength){
+    if(_parsedLength >= _contentLength){ //vito:workaround 
       _parseState = PARSE_REQ_END;
       //check if authenticated before calling handleRequest and request auth instead
       if(_handler) _handler->handleRequest(this);

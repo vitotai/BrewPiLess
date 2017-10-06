@@ -692,7 +692,7 @@ public:
 				char buf[36];
 				brewLogger.getFilePath(buf,index);
 				if(SPIFFS.exists(buf)){
-					request->send(SPIFFS,buf,"application/octet-stream");
+					request->send(SPIFFS,buf,"application/octet-stream",true);
 				}else{
 					request->send(404);
 				}
@@ -832,6 +832,7 @@ public:
 	}
 
 	bool canHandle(AsyncWebServerRequest *request){
+		DBG_PRINTF("req: %s\n", request->url().c_str());
 	 	if(request->url() == GRAVITY_PATH	) return true;
 	 	if(request->url() == GravityDeviceConfigPath) return true;
 
@@ -879,7 +880,7 @@ public:
 
 	void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
 		if(!index){
-		    DBG_PRINTF("BodyStart: %u B\n", total);
+		    DBG_PRINTF("BodyStart-len:%d total: %u\n",len, total);
 			_dataLength =0;
 			_error=(total >= MAX_DATA_SIZE);
 		}
@@ -889,7 +890,7 @@ public:
 			//Serial.write(data[i]);
 			_data[_dataLength ++] = data[i];
 		}
-		if(index + len == total){
+		if(index + len >= total){
 			_data[_dataLength]='\0';
 			DBG_PRINTF("Body total%u data:%s\n", total,_data);
 		}
