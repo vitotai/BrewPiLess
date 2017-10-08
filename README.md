@@ -87,10 +87,11 @@ The difference bewteen v1.2.7 and v.20 is
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
- * v2.3.3 (Working)
+ * v2.3.3
     * All HTML files can be replaced by files on SPIFFS. Gzip support.
     * updated HTML/JS
     * Add "Title" to be displayed at banner in config page.
+    * Workaround for accepting HTTP Post body length not equal to Content-Length.( for iSpindel v5.2+)
 
  * v2.3.2
     * Beer Profile scheculde bug fix
