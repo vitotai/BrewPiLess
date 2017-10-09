@@ -52,3 +52,7 @@
 // don't change this.
 #define MAX_PROFILE_LEN 1024
 #endif
+
+#ifndef BREW_AND_CALIBRATION 
+#define BREW_AND_CALIBRATION false
+#endif
