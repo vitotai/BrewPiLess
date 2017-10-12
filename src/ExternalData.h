@@ -61,6 +61,7 @@ protected:
     float _ispindelCalibrationBaseTemp;
     float _ispindelCoefficients[4];
     char *_ispindelName;
+	float _ispindelTilt;
 
     bool _calculateGravity;
 	uint8_t _stableThreshold;
@@ -74,7 +75,7 @@ public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),_deviceVoltage(INVALID_VOLTAGE),_lastUpdate(0)
 	,_ispindelEnable(false),_ispindelName(NULL),_calculateGravity(false),_stableThreshold(1)
 	#if BREW_AND_CALIBRATION	
-	 _calibrating(false)
+	 ,_calibrating(false)
 	#endif	
 	{}
 
@@ -100,10 +101,18 @@ public:
 		len=sprintFloat(slowpassfilter,filter.beta(),2);
 		slowpassfilter[len]='\0';
 
+		char strtilt[8];
+		len=sprintFloat(strtilt,_ispindelTilt,2);
+		strtilt[len]='\0';
+
+
 		const char *spname=(_ispindelName)? _ispindelName:"Unknown";
-
-		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d}",spname, strbattery,strgravity,_lastUpdate,slowpassfilter,_stableThreshold);
-
+		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d}",
+					spname, 
+					strbattery,
+					strgravity,
+					strtilt,
+					_lastUpdate,slowpassfilter,_stableThreshold);
     }
     void config(char* configdata)
     {
@@ -169,16 +178,18 @@ public:
 #endif
 
 	}
-
+/*
 	void setPlato(float plato, time_t now){
 		float sg=1 + (plato / (258.6 -((plato/258.2)*227.1)));
 		setGravity(sg,now);
-	}
+	}*/
 
 	void setTilt(float tilt,float temp,time_t now){
+		_lastUpdate=now;
+		_ispindelTilt=tilt;
 
 		#if BREW_AND_CALIBRATION	
-		if(_calibrating){
+		if(brewLogger.calibrating()){
 			brewLogger.addTiltAngle(tilt);
 			return;
 		}

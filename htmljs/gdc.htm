@@ -33,11 +33,23 @@
             return document.querySelector(d);
         };
 
+        function toFixed() {
+            var texts = document.querySelectorAll("input[type=text]");
+            for (var i = 0; i < texts.length; i++) {
+                texts[i].onchange = function() {
+                    if (this.value.match(/[\-\d\.]+e[\+\-][\d]+/))
+                        this.value = Number(this.value).toFixed(9);
+                };
+            }
+        }
+
         function fill(setting) {
             for (var name in setting) {
                 var ele = Q("input[name=" + name + "]");
                 if (ele.type == "checkbox") ele.checked = setting[name];
-                else ele.value = setting[name];
+                else {
+                    ele.value = setting[name];
+                }
             }
         }
 
@@ -65,8 +77,9 @@
         }
 
         function init() {
+            toFixed();
             s_ajax({
-                url: gdcurl + "?data=1",
+                url: gdcurl + "?data",
                 m: "GET",
                 success: function(a) {
                     fill(JSON.parse(a));
@@ -87,8 +100,8 @@
                 <td><input type="checkbox" name="ispindel" value="1"></td>
             </tr>
             <tr>
-                <td>Calculated by BPL</td>
-                <td><input type="checkbox" name="cbpl" value="1"> </td>
+                <td>Calibrate iSpindel</td>
+                <td><input type="checkbox" name="cal" value="1"> Tilt in Water:<input type="text" name="tiltw" size="5"></td>
             </tr>
             <tr>
                 <td>SG Calibration</td>
@@ -103,19 +116,12 @@
                 <td><input type="text" name="a3" size=15>*x^3 + <input type="text" name="a2" size=15>*x^2+ <input type="text" name="a1" size=15>*x + <input type="text" name="a0" size=15> </td>
             </tr>
             <tr>
-                <td>LowPass Filter Coefficient</td>
-                <td><input type="text" name="lpc" size=4> </td>
-            </tr>
-            <tr>
-                <td>Gravity Stability Threshold</td>
-                <td><input type="text" name="stpt" size=4> point</td>
-            </tr>
-            <tr>
                 <td>Save Change</td>
                 <td><input type="submit" name="submit" onclick="save();return false;"></input>
                 </td>
             </tr>
         </table>
+    </form>
     </form>
 </body>
 

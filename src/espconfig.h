@@ -54,5 +54,5 @@
 #endif
 
 #ifndef BREW_AND_CALIBRATION 
-#define BREW_AND_CALIBRATION false
+#define BREW_AND_CALIBRATION true
 #endif

@@ -79,6 +79,9 @@ public:
 		_fsspace=0;
 		_tempLogPeriod=60000;
 		resetTempData();
+		#if BREW_AND_CALIBRATION
+		_calibrating=false;
+		#endif
 	}
 
 	
@@ -211,7 +214,17 @@ public:
 					size_t tdiff= (mask <<16) + (d1 << 8) + d0;
 			    	_resumeLastLogTime = _fileInfo.starttime + tdiff;
 				}
-	    	}
+			}else if(tag == CalibrationPointTag){
+				if((2 + idx) > size){
+		            // not enough data for this record!
+		            // rewind and return
+		            return idx - 2;
+				}else{
+					idx += 2;
+				}
+			}else if(tag == StartLogTag){
+				_calibrating = (mask & 0x20) ^ 0x20;
+			}
         } // while data available
         return idx;
     }
@@ -316,6 +329,8 @@ public:
 
 		#if BREW_AND_CALIBRATION
 		startLog(unit == 'F',calibrating);
+		_calibrating = calibrating;
+		
 		#else
 		startLog(unit == 'F');		
 		#endif
@@ -619,17 +634,20 @@ public:
 	{
 		_extTileAngle = TiltEncode(tilt);
 	}
-	void addTiltInWater(float tilt))
+	void addTiltInWater(float tilt)
 	{
 		if(!_recording) return;
 		int idx = allocByte(4);
 		if(idx < 0) return;
-		unit16_t angle=TiltEncode(tilt);		
+		uint16_t angle=TiltEncode(tilt);		
 		writeBuffer(idx,CalibrationPointTag);
 		writeBuffer(idx+1,0);
 		writeBuffer(idx+2,HighOctect(angle));
 		writeBuffer(idx+3,LowOctect(angle));
 		commitData(idx,4);		
+	}
+	bool calibrating(void){
+		return _calibrating;
 	}
 	#endif
 private:
@@ -639,6 +657,7 @@ private:
     uint32_t _resumeLastLogTime;
 
 	bool _recording;
+	bool _calibrating;
 
 	size_t _logIndex;
 	size_t _savedLength;
@@ -741,14 +760,15 @@ private:
 		// Start system time 4bytes
 		uint8_t headerTag=5;
 		*ptr++ = StartLogTag;
+
+		headerTag = headerTag | (fahrenheit? 0xF0:0xE0) ;
+
 		#if BREW_AND_CALIBRATION
-		if(fahrenheit) headerTag = headerTag | 0x10 ;
-		if(calibrating) headerTag = headerTag | 0x20 ;
-		*ptr++ = headerTag;
-		#else
-		*ptr++ = headerTag | (fahrenheit? 0xF0:0xE0) ;
+		if(calibrating) headerTag = headerTag ^ 0x20 ;
 		#endif
 
+		*ptr++ = headerTag;
+		
 		int period = _tempLogPeriod/1000;
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
@@ -808,7 +828,7 @@ private:
 
 			if(tag == PeriodTag) break;
 
-			if(tag == OriginGravityTag){
+			if(tag == OriginGravityTag || tag == CalibrationPointTag){
     			idx += 2;
 	    		dataDrop +=2;
 			}
