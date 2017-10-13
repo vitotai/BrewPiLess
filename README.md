@@ -21,7 +21,8 @@
  * Gravity-based temperature schedule.
  * Save and resuse of beer profiles.
  * Static IP setting.
- * Export saved datat to csv format by offline log viewer.(**new!**)
+ * Export saved datat to csv format by offline log viewer.
+ * Brew and Calibrate iSpindel. **new!**
 # Contents
 ---
 * [Introduction](#introduction)
@@ -33,18 +34,19 @@
   * [Soft AP mode](#soft-ap-mode)
   * [Service Pages](#service-pages)
   * [Gravity logging](#gravity-logging)
-  * [iSpindel Support](#ispindel-support) **Updated!**
+  * [iSpindel Support](#ispindel-support) 
   * [Local logging](#local-logging)
     * [Viewing Chart under AP mode](#viewing-chart-under-ap-mode)
   * [Remote logging](#remote-logging) 
   * [Saved Beer Profiles](#saved-beer-profiles)
-  * [Beer Profile](#beer-profile) **New!**
-  * [Glycol](#glycol) **New!**
+  * [Beer Profile](#beer-profile) 
+  * [Glycol](#glycol) 
+  * [Brew and Calibrate iSpindel](#brew-and-calibrate-ispindel) **New!**
 * [Hardware Setup](#hardware-setup)
   * [Support of Rotary Encoder](#support-of-rotary-encoder)
   * [Wake-up button](#wake-up-button)
 * [Extra](#extra)
-  * [Offline Log Viewer](#offline-log-viewer) **Updated!**
+  * [Offline Log Viewer](#offline-log-viewer) 
   * [Logging Data to Google Sheets](#logging-data-to-google-sheets) 
   * [Upload HTML/Javascript to ESP8266](#upload-htmljavascript-to-esp8266)
   * [Development tools](#development-tools)
@@ -87,7 +89,10 @@ The difference bewteen v1.2.7 and v.20 is
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
- * v2.3.3
+ * v2.4 (Working)
+    * Brew and calibrate iSPindel.
+
+ * v2.3.3 (2017/10/08)
     * All HTML files can be replaced by files on SPIFFS. Gzip support.
     * updated HTML/JS
     * Add "Title" to be displayed at banner in config page.
@@ -329,6 +334,19 @@ BrewPi(Less) is designed to control fermenting temperature in a fridge or freeze
 
 *Special Note:*
 You might notice that temperatures of beer and fridge from the same sensor are different. The reason is the values are filtered and and they have different filtering parameters. Those parameters also can be changed by the JSON commands. `fridgeFastFilt`, `fridgeSlowFilt`, `firdgeSlopeFilt`, `beerFastFilt`, `beerSlowFilt`, and `beerSlopeFilt`.
+
+## Brew and Calibrate iSpindel
+If this feature is enabled, BPL will record the TILT angles from iSpindel, expect the gravity data from user, and derive formula to calculate the gravity automatically. The procedure to use "Brew and Calibrate" is
+ * Setup iSpindel to make it report to BPL.
+ * Get the Tilt value in water(SG:1.0) before dropping it into the fermenter.
+ * Measure the Original Gravity.
+ * Enable "Calibrate iSpindel" and enter the **Tilt value in water** at the Gravity Device pages. *This must be done before startting logging.*
+ * Start local logging.
+ * Input SG, which is the value of Original Gravity.
+ * Measure SG as usual or more frequently. Input the measured SG.
+
+BPL will derive the formula by the Tilt values and gravity data input. If the number of data pairs is less than 4, then 2 order polynomial(x^2) will be derived. If 4 or more gravity readings are available, 3 order polynomial will be derived. At the beginning, there should be two readings, 1.0 and OG. Even though you can't expect precise and correct gravity readings from the chart from the beginning, the change of gravity can be deduced by the change of Tilt values.
+Note: in *Brew and Calibrate* mode, the gravity values displayed on the chart is calculated by the browser, or by Javascript. That gravity data can't be used in Beer Profile. The Beer Profile will use the data that users input.
 
 ---
 # Hardware Setup
