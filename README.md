@@ -504,6 +504,14 @@ You can set multiple parameters in one command. The command after `j` is in form
 | hs                | rotaryHalfSteps                |   |
 | heatEst           | heatEstimator                  |   |
 | coolEst           | coolEstimator                  |   |
+| minCoolTime       | Minimum cooling time           |*1   |
+| minCoolIdleTime   | Minimum idle time before cooling  |*1   |
+| minHeatTime       | Minimum heating time            |*1   |
+| minHeatIdleTime   | Minimum idle time before heating |*1   |
+| mutexDeadTime     | Minimum idle time between switch of heating and cooling.    |*1   |
+
+
+*1: Available if SettableMinimumCoolTime option is set to true, or EnableGlycol is set to true.
 
 ## Sensor Calibration
  The command to set sensor calibration is
