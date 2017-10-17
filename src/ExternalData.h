@@ -5,6 +5,10 @@
 #include "BrewLogger.h"
 #include "mystrlib.h"
 
+#if BREWPI_EXTERNAL_SENSOR
+#include "TempSensorWireless.h"
+#endif
+
 #define INVALID_VOLTAGE -1
 #define INVALID_GRAVITY -1
 #ifdef INVALID_TEMP
@@ -256,6 +260,12 @@ public:
 			_auxTemp= temp * 1.8 +32 ;
 		}
 		brewLogger.addAuxTemp(_auxTemp);
+
+		#if BREWPI_EXTERNAL_SENSOR
+		if(WirelessTempSensor::theWirelessTempSensor){
+			WirelessTempSensor::theWirelessTempSensor->setTemp(_auxTemp);
+		}
+		#endif
 	}
 
 

@@ -72,6 +72,16 @@
 
 //////////////////////////////////////////////////////////////////////////
 //
+// Enable External temperature Sensor
+//
+// #ifndef BREWPI_EXTERNAL_SENSOR
+ #define BREWPI_EXTERNAL_SENSOR true
+// #endif
+//
+//////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////
+//
 // This flag virtualizes as much of the hardware as possible, so the code can be run in the AvrStudio simulator, which
 // only emulates the microcontroller, not any attached peripherals.
 //
@@ -335,9 +345,9 @@
 #define EARLY_DISPLAY 1
 
 #ifdef EnableGlycolSupport
-#define SettableMinimumCoolTime true
 #define FridgeSensorFallBack true
 #endif
 
+#define SettableMinimumCoolTime true
 #define EMIWorkaround 1
-#define BPL_VERSION "2.3.3"
+#define BPL_VERSION "2.4"
