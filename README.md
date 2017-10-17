@@ -42,6 +42,7 @@
   * [Beer Profile](#beer-profile) 
   * [Glycol](#glycol) 
   * [Brew and Calibrate iSpindel](#brew-and-calibrate-ispindel) **New!**
+  * [Using iSpindel as Beer Temperature Sensor](#using-ispindel-as-beer-temperature-sensor)
 * [Hardware Setup](#hardware-setup)
   * [Support of Rotary Encoder](#support-of-rotary-encoder)
   * [Wake-up button](#wake-up-button)
@@ -54,7 +55,6 @@
   * [Sensor Calibrartion](#sensor-calibration)
   * [Reset WiFi](#reset-wifi)
   * [iSpindel Calibration](#ispindel-calibration) 
-  * [Using iSpindel as Beer Temperature Sensor](#using-ispindel-as-beer-temperature-sensor)
 * [FAQ](#faq)
    
 ---
