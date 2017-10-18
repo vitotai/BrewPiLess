@@ -2187,8 +2187,8 @@
                 for (var i = 0; i < this.points.length; i++) {
                     var y = poly.points[i][1];
                     var t = this.points[i][1];
-                    errors.push(t - y);
-                    values.push(t);
+                    errors.push(y - t);
+                    values.push(y);
                 }
                 this.errors = errors;
                 this.values = values;
