@@ -276,6 +276,7 @@ public:
 	time_t lastUpdate(void){return _lastUpdate;}
 	void setDeviceVoltage(float vol){ _deviceVoltage = vol; }
 	float deviceVoltage(void){return _deviceVoltage;}
+	float tiltValue(void){return _ispindelTilt;}
 	void invalidateDeviceVoltage(void) { _deviceVoltage= INVALID_VOLTAGE; }
 
 	float temperatureCorrection(float sg, float t, float c){
