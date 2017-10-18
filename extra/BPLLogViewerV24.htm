@@ -1,0 +1,1393 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>BrewPiLess Log Viewer v2.4</title>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined.js"></script>
+
+    <script>
+        /* Regression.JS */
+        /* the librar is embedded for your convenience .*/
+        /**
+         * @license
+         *
+         * Regression.JS - Regression functions for javascript
+         * http://tom-alexander.github.com/regression-js/
+         *
+         * copyright(c) 2013 Tom Alexander
+         * Licensed under the MIT license.
+         *
+         * @module regression - Least-squares regression functions for JavaScript
+         **/
+        ! function(a, b) {
+            var c;
+            return c = "function" == typeof define && define.amd ? define("regression", b) : "undefined" != typeof module ? module.exports = b() : a.regression = b()
+        }(this, function() {
+            "use strict";
+
+            function a(a, b) {
+                var c = a.reduce(function(a, b) {
+                        return a + b[1]
+                    }, 0),
+                    d = c / a.length,
+                    e = a.reduce(function(a, b) {
+                        var c = b[1] - d;
+                        return a + c * c
+                    }, 0),
+                    f = a.reduce(function(a, c, d) {
+                        var e = b[d],
+                            f = c[1] - e[1];
+                        return a + f * f
+                    }, 0);
+                return 1 - f / e
+            }
+
+            function b(a, b) {
+                var c = 0,
+                    d = 0,
+                    e = 0,
+                    f = 0,
+                    g = 0,
+                    h = a.length - 1,
+                    i = new Array(b);
+                for (c = 0; h > c; c++) {
+                    for (f = c, d = c + 1; h > d; d++) Math.abs(a[c][d]) > Math.abs(a[c][f]) && (f = d);
+                    for (e = c; h + 1 > e; e++) g = a[e][c], a[e][c] = a[e][f], a[e][f] = g;
+                    for (d = c + 1; h > d; d++)
+                        for (e = h; e >= c; e--) a[e][d] -= a[e][c] * a[c][d] / a[c][c]
+                }
+                for (d = h - 1; d >= 0; d--) {
+                    for (g = 0, e = d + 1; h > e; e++) g += a[e][d] * i[e];
+                    i[d] = (a[h][d] - g) / a[d][d]
+                }
+                return i
+            }
+
+            function c(a, b) {
+                var c = Math.pow(10, b);
+                return Math.round(a * c) / c
+            }
+            var d, e = 2,
+                f = {
+                    linear: function(b, d, e) {
+                        for (var f, g, h, i = [0, 0, 0, 0, 0], j = b.length, k = 0; j > k; k++) null !== b[k][1] && (i[0] += b[k][0], i[1] += b[k][1], i[2] += b[k][0] * b[k][0], i[3] += b[k][0] * b[k][1], i[4] += b[k][1] * b[k][1]);
+                        return g = (j * i[3] - i[0] * i[1]) / (j * i[2] - i[0] * i[0]), h = i[1] / j - g * i[0] / j, f = b.map(function(a) {
+                            var b = a[0];
+                            return [b, g * b + h]
+                        }), {
+                            r2: a(b, f),
+                            equation: [g, h],
+                            points: f,
+                            string: "y = " + c(g, e.precision) + "x + " + c(h, e.precision)
+                        }
+                    },
+                    linearthroughorigin: function(b, d, e) {
+                        for (var f, g, h = [0, 0], i = 0; i < b.length; i++) null !== b[i][1] && (h[0] += b[i][0] * b[i][0], h[1] += b[i][0] * b[i][1]);
+                        return f = h[1] / h[0], g = b.map(function(a) {
+                            var b = a[0];
+                            return [b, f * b]
+                        }), {
+                            r2: a(b, g),
+                            equation: [f],
+                            points: g,
+                            string: "y = " + c(f, e.precision) + "x"
+                        }
+                    },
+                    exponential: function(b, d, e) {
+                        for (var f, g, h, i, j = [0, 0, 0, 0, 0, 0], k = 0; k < b.length; k++) null !== b[k][1] && (j[0] += b[k][0], j[1] += b[k][1], j[2] += b[k][0] * b[k][0] * b[k][1], j[3] += b[k][1] * Math.log(b[k][1]), j[4] += b[k][0] * b[k][1] * Math.log(b[k][1]), j[5] += b[k][0] * b[k][1]);
+                        return f = j[1] * j[2] - j[5] * j[5], g = Math.exp((j[2] * j[3] - j[5] * j[4]) / f), h = (j[1] * j[4] - j[5] * j[3]) / f, i = b.map(function(a) {
+                            var b = a[0];
+                            return [b, g * Math.exp(h * b)]
+                        }), {
+                            r2: a(b, i),
+                            equation: [g, h],
+                            points: i,
+                            string: "y = " + c(g, e.precision) + "e^(" + c(h, e.precision) + "x)"
+                        }
+                    },
+                    logarithmic: function(b, d, e) {
+                        for (var f, g, h, i = [0, 0, 0, 0], j = b.length, k = 0; j > k; k++) null !== b[k][1] && (i[0] += Math.log(b[k][0]), i[1] += b[k][1] * Math.log(b[k][0]), i[2] += b[k][1], i[3] += Math.pow(Math.log(b[k][0]), 2));
+                        return g = (j * i[1] - i[2] * i[0]) / (j * i[3] - i[0] * i[0]), f = (i[2] - g * i[0]) / j, h = b.map(function(a) {
+                            var b = a[0];
+                            return [b, f + g * Math.log(b)]
+                        }), {
+                            r2: a(b, h),
+                            equation: [f, g],
+                            points: h,
+                            string: "y = " + c(f, e.precision) + " + " + c(g, e.precision) + " ln(x)"
+                        }
+                    },
+                    power: function(b, d, e) {
+                        for (var f, g, h, i = [0, 0, 0, 0], j = b.length, k = 0; j > k; k++) null !== b[k][1] && (i[0] += Math.log(b[k][0]), i[1] += Math.log(b[k][1]) * Math.log(b[k][0]), i[2] += Math.log(b[k][1]), i[3] += Math.pow(Math.log(b[k][0]), 2));
+                        return g = (j * i[1] - i[2] * i[0]) / (j * i[3] - i[0] * i[0]), f = Math.exp((i[2] - g * i[0]) / j), h = b.map(function(a) {
+                            var b = a[0];
+                            return [b, f * Math.pow(b, g)]
+                        }), {
+                            r2: a(b, h),
+                            equation: [f, g],
+                            points: h,
+                            string: "y = " + c(f, e.precision) + "x^" + c(g, e.precision)
+                        }
+                    },
+                    polynomial: function(d, e, f) {
+                        var g, h, i, j, k, l, m, n, o = [],
+                            p = [],
+                            q = 0,
+                            r = 0,
+                            s = d.length;
+                        for (h = "undefined" == typeof e ? 3 : e + 1, i = 0; h > i; i++) {
+                            for (k = 0; s > k; k++) null !== d[k][1] && (q += Math.pow(d[k][0], i) * d[k][1]);
+                            for (o.push(q), q = 0, g = [], j = 0; h > j; j++) {
+                                for (k = 0; s > k; k++) null !== d[k][1] && (r += Math.pow(d[k][0], i + j));
+                                g.push(r), r = 0
+                            }
+                            p.push(g)
+                        }
+                        for (p.push(o), m = b(p, h), l = d.map(function(a) {
+                                var b = a[0],
+                                    c = m.reduce(function(a, c, d) {
+                                        return a + c * Math.pow(b, d)
+                                    }, 0);
+                                return [b, c]
+                            }), n = "y = ", i = m.length - 1; i >= 0; i--) n += i > 1 ? c(m[i], f.precision) + "x^" + i + " + " : 1 === i ? c(m[i], f.precision) + "x + " : c(m[i], f.precision);
+                        return {
+                            r2: a(d, l),
+                            equation: m,
+                            points: l,
+                            string: n
+                        }
+                    },
+                    lastvalue: function(b, d, e) {
+                        for (var f = [], g = null, h = 0; h < b.length; h++) null !== b[h][1] && isFinite(b[h][1]) ? (g = b[h][1], f.push([b[h][0], b[h][1]])) : f.push([b[h][0], g]);
+                        return {
+                            r2: a(b, f),
+                            equation: [g],
+                            points: f,
+                            string: "" + c(g, e.precision)
+                        }
+                    }
+                };
+            return d = function(a, b, c, d) {
+                var g = "object" == typeof c && "undefined" == typeof d ? c : d || {};
+                return g.precision || (g.precision = e), "string" == typeof a ? f[a.toLowerCase()](b, c, g) : null
+            }
+        });
+        /*** end of Regression.JS **/
+
+        /* chart.js */
+        function s_ajax(b) {
+            var c = new XMLHttpRequest();
+            c.onreadystatechange = function() {
+                if (c.readyState == 4) {
+                    if (c.status == 200) {
+                        b.success(c.responseText)
+                    } else {
+                        c.onerror(c.status)
+                    }
+                }
+            };
+            c.ontimeout = function() {
+                if (typeof b["timeout"] != "undefined") b.timeout();
+                else c.onerror(-1)
+            }, c.onerror = function(a) {
+                if (typeof b["fail"] != "undefined") b.fail(a)
+            };
+            c.open(b.m, b.url, true);
+            if (typeof b["data"] != "undefined") {
+                c.setRequestHeader("Content-Type", (typeof b["mime"] != "undefined") ? b["mime"] : "application/x-www-form-urlencoded");
+                c.send(b.data)
+            } else c.send()
+        }
+
+        var Q = function(d) {
+            return document.querySelector(d);
+        };
+        // gravity tracking
+        var GravityFilter = {
+            b: 0.1,
+            y: 0,
+            reset: function() {
+                this.y = 0;
+            },
+            add: function(gravity) {
+                if (this.y == 0) this.y = gravity;
+                else this.y = this.y + this.b * (gravity - this.y);
+                return Math.round(this.y * 10000) / 10000;
+            },
+            setBeta: function(beta) {
+                this.b = beta;
+            }
+        };
+        var GravityTracker = {
+            NumberOfSlots: 48,
+            InvalidValue: 0xFF,
+            ridx: 0,
+            record: [],
+            threshold: 1,
+            setThreshold: function(t) {
+                this.threshold = t;
+            },
+            addRecord: function(v) {
+                this.record[this.ridx++] = v;
+                if (this.ridx >= this.NumberOfSlots) this.ridx = 0;
+            },
+            stable: function(duration, to) {
+                to = (typeof to == "undefined") ? this.threshold : to;
+                var current = this.ridx - 1;
+                if (current < 0) current = this.NumberOfSlots - 1;
+                var previous = this.NumberOfSlots + this.ridx - duration;
+                while (previous >= this.NumberOfSlots) previous -= this.NumberOfSlots;
+                return (this.record[previous] - this.record[current]) <= to;
+            },
+            Period: 60 * 60,
+            init: function() {
+                this.curerntStart = 0;
+                this.lastValue = 0;
+            },
+            add: function(fgravity, time) {
+                gravity = Math.round(fgravity * 1000, 1);
+                var timediff = time - this.curerntStart;
+
+                if (timediff > this.Period) {
+                    this.addRecord(gravity);
+                    if (this.lastValue != 0) {
+                        timediff -= this.Period;
+                        while (timediff > this.Period) {
+                            timediff -= this.Period;
+                            this.addRecord(this.lastValue);
+                        }
+                    }
+                    this.curerntStart = time;
+                    this.lastValue = gravity;
+                }
+            }
+        };
+
+
+        function fgstate(duration) {
+            var Color = {
+                0: "red",
+                12: "orange",
+                24: "yellow",
+                48: "green"
+            };
+            Q("#fgstate").style.backgroundColor = Color[duration];
+        }
+
+        function checkfgstate() {
+            if (GravityTracker.stable(12)) {
+                if (GravityTracker.stable(24)) {
+                    if (GravityTracker.stable(48)) fgstate(48);
+                    else fgstate(24); // 24
+                } else fgstate(12); // 
+            } else fgstate(0);
+        }
+        // gravity tracking
+        var GravityIndex = 6;
+        var TiltAngleIndex = 7;
+        var RoomTemperatureIndex = 4;
+
+        var BrewChart = function(div) {
+            this.cid = div;
+            this.ctime = 0;
+            this.interval = 60;
+            this.numLine = 7;
+            this.numData = 8;
+            this.calculateSG = false;
+            this.calibrating = false;
+
+            this.lidx = 0;
+            this.celius = true;
+            this.clearData();
+        };
+
+        BrewChart.prototype.clearData = function() {
+            this.laststat = [NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN];
+            this.sg = NaN;
+            this.og = NaN;
+        };
+
+        BrewChart.prototype.setCelius = function(c) {
+            this.celius = c;
+            this.ylabel(STR.ChartLabel + '(' + (c ? "°C" : "°F") + ')');
+        };
+
+        BrewChart.prototype.incTime = function() {
+            // format time, use hour and minute only.
+            this.ctime += this.interval;
+            //	console.log("incTime:"+ this.ctime/this.interval);
+        };
+
+        BrewChart.prototype.formatDate = function(d) {
+            var HH = d.getHours();
+            var MM = d.getMinutes();
+            var SS = d.getSeconds();
+
+            function T(x) {
+                return (x > 9) ? x : ("0" + x);
+            }
+            return d.toLocaleDateString() + " " + T(HH) + ":" + T(MM) + ":" + T(SS);
+        };
+
+        BrewChart.prototype.showLegend = function(date, row) {
+            var d = new Date(date);
+            Q(".beer-chart-legend-time").innerHTML = this.formatDate(d);
+            Q(".chart-legend-row.beerTemp .legend-value").innerHTML = this.tempFormat(this.chart.getValue(row, 2));
+            Q(".chart-legend-row.beerSet .legend-value").innerHTML = this.tempFormat(this.chart.getValue(row, 1));
+            Q(".chart-legend-row.fridgeTemp .legend-value").innerHTML = this.tempFormat(this.chart.getValue(row, 3));
+            Q(".chart-legend-row.fridgeSet .legend-value").innerHTML = this.tempFormat(this.chart.getValue(row, 4));
+            Q(".chart-legend-row.roomTemp .legend-value").innerHTML = this.tempFormat(this.chart.getValue(row, 5));
+
+            Q(".chart-legend-row.auxTemp .legend-value").innerHTML = this.tempFormat(this.chart.getValue(row, 6));
+
+            var g = this.chart.getValue(row, 7);
+            Q(".chart-legend-row.gravity .legend-value").innerHTML = (!g || isNaN(g)) ? "--" : g.toFixed(4);
+            var filteredG = this.chart.getValue(row, 8);
+            Q(".chart-legend-row.filtersg .legend-value").innerHTML = (!filteredG || isNaN(filteredG)) ? "--" : filteredG.toFixed(4);
+
+            var state = parseInt(this.state[row]);
+            if (!isNaN(state)) {
+                Q('.chart-legend-row.state .legend-label').innerHTML = STATES[state].text;
+            }
+        };
+
+        BrewChart.prototype.hideLegend = function() {
+            var v = document.querySelectorAll(".legend-value");
+            v.forEach(function(val) {
+                val.innerHTML = "--";
+            });
+            Q(".beer-chart-legend-time").innerHTML = this.dateLabel; //"Date/Time";
+            Q('.chart-legend-row.state .legend-label').innerHTML = "state";
+        };
+
+        BrewChart.prototype.tempFormat = function(y) {
+            var v = parseFloat(y);
+            if (isNaN(v)) return "--";
+            var DEG = this.celius ? "°C" : "°F";
+            return parseFloat(v).toFixed(2) + DEG;
+        };
+        BrewChart.prototype.initLegend = function() {
+            // init color
+            Q(".chart-legend-row.beerTemp").style.color = BrewChart.Colors[1];
+            Q(".beerTemp .toggle").style.backgroundColor = BrewChart.Colors[1];
+
+            Q(".chart-legend-row.beerSet").style.color = BrewChart.Colors[0];
+            Q(".beerSet .toggle").style.backgroundColor = BrewChart.Colors[0];
+
+            Q(".chart-legend-row.fridgeTemp").style.color = BrewChart.Colors[2];
+            Q(".fridgeTemp .toggle").style.backgroundColor = BrewChart.Colors[2];
+
+            Q(".chart-legend-row.fridgeSet").style.color = BrewChart.Colors[3];
+            Q(".fridgeSet .toggle").style.backgroundColor = BrewChart.Colors[3];
+
+            Q(".chart-legend-row.roomTemp").style.color = BrewChart.Colors[4];
+            Q(".roomTemp .toggle").style.backgroundColor = BrewChart.Colors[4];
+
+            Q(".chart-legend-row.gravity").style.color = BrewChart.Colors[6];
+            Q(".gravity .toggle").style.backgroundColor = BrewChart.Colors[6];
+
+            Q(".chart-legend-row.auxTemp").style.color = BrewChart.Colors[5];
+            Q(".auxTemp .toggle").style.backgroundColor = BrewChart.Colors[5];
+
+            Q(".chart-legend-row.filtersg").style.color = BrewChart.Colors[7];
+            Q(".filtersg .toggle").style.backgroundColor = BrewChart.Colors[7];
+
+
+            this.dateLabel = Q(".beer-chart-legend-time").innerHTML;
+        };
+        BrewChart.prototype.toggleLine = function(line) {
+            this.shownlist[line] = !this.shownlist[line];
+            if (this.shownlist[line]) {
+                Q("." + line + " .toggle").style.backgroundColor = Q(".chart-legend-row." + line).style.color;
+                this.chart.setVisibility(this.chart.getPropertiesForSeries(line).column - 1, true);
+            } else {
+                Q("." + line + " .toggle").style.backgroundColor = "transparent";
+                this.chart.setVisibility(this.chart.getPropertiesForSeries(line).column - 1, false);
+            }
+        };
+
+        BrewChart.prototype.createChart = function() {
+            var t = this;
+            t.initLegend();
+            t.shownlist = {
+                beerTemp: true,
+                beerSet: true,
+                fridgeSet: true,
+                fridgeTemp: true,
+                roomTemp: true,
+                gravity: true,
+                auxTemp: true,
+                filtersg: true
+            };
+
+            var ldiv = document.createElement("div");
+            ldiv.className = "hide";
+            document.body.appendChild(ldiv);
+            var opt = {
+                labels: BrewChart.Labels,
+                colors: BrewChart.Colors,
+                connectSeparatedPoints: true,
+                ylabel: 'Temperature',
+                y2label: 'Gravity',
+                series: {
+                    'gravity': {
+                        axis: 'y2',
+                        drawPoints: true,
+                        pointSize: 2,
+                        highlightCircleSize: 4
+                    },
+                    'filtersg': {
+                        axis: 'y2',
+                    }
+                },
+                axisLabelFontSize: 12,
+                animatedZooms: true,
+                gridLineColor: '#ccc',
+                gridLineWidth: '0.1px',
+                labelsDiv: ldiv,
+                labelsDivStyles: {
+                    'display': 'none'
+                },
+                displayAnnotations: true,
+                //showRangeSelector: true,
+                strokeWidth: 1,
+                axes: {
+                    y: {
+                        valueFormatter: function(y) {
+                            return t.tempFormat(y);
+                        }
+                    },
+                    y2: {
+                        valueFormatter: function(y) {
+                            return y.toFixed(3);
+                        },
+                        axisLabelFormatter: function(y) {
+                            return y.toFixed(3).substring(1);
+                        }
+                    }
+                },
+                highlightCircleSize: 2,
+                highlightSeriesOpts: {
+                    strokeWidth: 1.5,
+                    strokeBorderWidth: 1,
+                    highlightCircleSize: 5
+                },
+                highlightCallback: function(e, x, pts, row) {
+                    t.showLegend(x, row);
+                },
+                unhighlightCallback: function(e) {
+                    t.hideLegend();
+                },
+                underlayCallback: function(ctx, area, graph) {
+                        ctx.save();
+                        try {
+                            t.drawBackground(ctx, area, graph);
+                        } finally {
+                            ctx.restore();
+                        }
+                    }
+                    /*                drawCallback: function(beerChart, is_initial) {
+                                        if (is_initial) {
+                                            if (t.anno.length > 0) {
+                                                t.chart.setAnnotations(t.anno);
+                                            }
+                                        }
+                                    }*/
+            };
+            t.chart = new Dygraph(document.getElementById(t.cid), t.data, opt);
+        };
+        var colorIdle = "white";
+        var colorCool = "rgba(0, 0, 255, 0.4)";
+        var colorHeat = "rgba(255, 0, 0, 0.4)";
+        var colorWaitingHeat = "rgba(255, 0, 0, 0.2)";
+        var colorWaitingCool = "rgba(0, 0, 255, 0.2)";
+        var colorHeatingMinTime = "rgba(255, 0, 0, 0.6)";
+        var colorCoolingMinTime = "rgba(0, 0, 255, 0.6)";
+        var colorWaitingPeakDetect = "rgba(0, 0, 0, 0.2)";
+        var STATE_LINE_WIDTH = 15;
+        var STATES = [{
+            name: "IDLE",
+            color: colorIdle,
+            text: "Idle"
+        }, {
+            name: "STATE_OFF",
+            color: colorIdle,
+            text: "Off"
+        }, {
+            name: "DOOR_OPEN",
+            color: "#eee",
+            text: "Door Open",
+            doorOpen: true
+        }, {
+            name: "HEATING",
+            color: colorHeat,
+            text: "Heating"
+        }, {
+            name: "COOLING",
+            color: colorCool,
+            text: "Cooling"
+        }, {
+            name: "WAITING_TO_COOL",
+            color: colorWaitingCool,
+            text: "Waiting to Cool",
+            waiting: true
+        }, {
+            name: "WAITING_TO_HEAT",
+            color: colorWaitingHeat,
+            text: "Waiting to Heat",
+            waiting: true
+        }, {
+            name: "WAITING_FOR_PEAK_DETECT",
+            color: colorWaitingPeakDetect,
+            text: "Waiting for Peak",
+            waiting: true
+        }, {
+            name: "COOLING_MIN_TIME",
+            color: colorCoolingMinTime,
+            text: "Cooling Min Time",
+            extending: true
+        }, {
+            name: "HEATING_MIN_TIME",
+            color: colorHeatingMinTime,
+            text: "Heating Min Time",
+            extending: true
+        }, {
+            name: "INVALID",
+            color: colorHeatingMinTime,
+            text: "Invalid State"
+        }];
+        BrewChart.Mode = {
+            b: "Beer Constant",
+            f: "Fridge Constant",
+            o: "Off",
+            p: "Profile"
+        };
+        BrewChart.Colors = ["rgb(240, 100, 100)", "rgb(41,170,41)", "rgb(89, 184, 255)", "rgb(255, 161, 76)", "#AAAAAA", "#f5e127", "rgb(153,0,153)", "#000abb"];
+        BrewChart.Labels = ['Time', 'beerSet', 'beerTemp', 'fridgeTemp', 'fridgeSet', 'roomTemp', 'auxTemp', 'gravity', 'filtersg'];
+
+        BrewChart.prototype.findNearestRow = function(g, time) {
+            "use strict";
+            var low = 0,
+                high = g.numRows() - 1;
+            var mid, comparison;
+
+            while (low < high) {
+                mid = Math.floor((low + high) / 2);
+                comparison = g.getValue(mid, 0) - time;
+                if (comparison < 0) {
+                    low = mid + 1;
+                    continue;
+                }
+                if (comparison > 0) {
+                    high = mid - 1;
+                    continue;
+                }
+                return mid;
+            }
+            return low;
+        };
+        BrewChart.prototype.findStateBlocks = function(g, start, end) {
+            "use strict";
+            var result = [];
+            var state = this.state[start]; //getState(g, start);             // current state
+            var newState;
+            for (var i = start; i < end; i++) { // find the next change
+                newState = this.state[i]; //getState(g, i);
+                if (newState !== state) {
+                    result.push({
+                        row: i,
+                        state: state
+                    });
+                    state = newState;
+                }
+            }
+            result.push({
+                row: end,
+                state: state
+            });
+            return result;
+        };
+        BrewChart.prototype.getTime = function(g, row) {
+            "use strict";
+            if (row >= g.numRows()) {
+                row = g.numRows() - 1;
+            }
+            return g.getValue(row, 0);
+        };
+        BrewChart.prototype.drawBackground = function(ctx, area, graph) {
+            var timeStart = graph.toDataXCoord(area.x);
+            var timeEnd = graph.toDataXCoord(area.x + area.w);
+            // the data rows for the range we are interested in. 0-based index. This is deliberately extended out one row
+            // to be sure the range is included
+            var rowStart = Math.max(this.findNearestRow(graph, timeStart) - 1, 0);
+            var rowEnd = this.findNearestRow(graph, timeEnd) + 1;
+            if (rowStart === null || rowEnd === null) {
+                return;
+            }
+            var blocks = this.findStateBlocks(graph, rowStart, rowEnd); // rowEnd is exclusive
+
+            var startX = 0; // start drawing from 0 - the far left
+            for (var i = 0; i < blocks.length; i++) {
+                var block = blocks[i];
+                var row = block.row; // where this state run ends
+                var t = this.getTime(graph, row); // convert to time. Using time ensures the display matches the plotted resolution
+                // of the graph.
+                var r = (t - timeStart) / (timeEnd - timeStart); // as a fraction of the entire display
+                var endX = Math.floor(area.x + (area.w * r));
+
+                var state = STATES[parseInt(block.state, 10)];
+                if (state === undefined) {
+                    state = STATES[0];
+                }
+                //var borderColor = (state.waiting || state.extending) ? setAlphaFactor(state.color, 0.5) : undefined;
+                //var bgColor = (state.waiting) ? bgColor = colorIdle : state.color;
+                ctx.fillStyle = state.color;
+                ctx.fillRect(startX, area.h - STATE_LINE_WIDTH, endX - startX, area.h);
+                startX = endX;
+            }
+        };
+        BrewChart.prototype.addMode = function(m) {
+            var s = String.fromCharCode(m);
+            this.anno.push({
+                series: "beerTemp",
+                x: this.ctime * 1000,
+                shortText: s.toUpperCase(),
+                text: BrewChart.Mode[s],
+                attachAtBottom: true
+            });
+        };
+
+        BrewChart.testData = function(data) {
+            if (data[0] != 0xFF) return false;
+            var s = data[1] & 0x07;
+            if (s != 5) return false;
+
+            return {
+                sensor: s,
+                f: data[1] & 0x10
+            };
+        };
+
+        BrewChart.prototype.addResume = function(delta) {
+            this.anno.push({
+                series: "beerTemp",
+                x: this.ctime * 1000,
+                shortText: 'R',
+                text: 'Resume',
+                attachAtBottom: true
+            });
+        };
+
+        BrewChart.prototype.getTiltAround = function(idx) {
+            var left = -1;
+            var right = -1;
+
+            if (this.angles[idx] != null) return this.angles[idx];
+
+            for (var i = idx - 1; i >= 0; i--) {
+                if (this.angles[i] != null) {
+                    left = i;
+                    break;
+                }
+            }
+            for (var i = idx + 1; i < this.angles.length > 0; i++) {
+                if (this.angles[i] != null) {
+                    right = i;
+                    break;
+                }
+            }
+            if (left < 0 && right < 0) return NaN;
+            if (left < 0) return this.angles[right];
+            if (right < 0) return this.angles[left];
+            return this.angles[left] + (this.angles[right] - this.angles[left]) / (right - left) * (idx - left);
+        };
+
+        BrewChart.prototype.getCalibration = function() {
+            var pairs = [];
+            for (var i = 0; i < this.data.length; i++) {
+                if (this.data[i][7]) {
+                    var tilt = this.getTiltAround(i);
+                    if (!isNaN(tilt)) pairs.push([tilt, this.data[i][7]]);
+                }
+            }
+            pairs.push([this.tiltInWater, 1.0]);
+            return pairs;
+        };
+
+        BrewChart.prototype.getFormula = function() {
+            var points = this.getCalibration();
+            if (points.length < 2) return;
+            var poly = regression('polynomial', points, (points.length > 3) ? 3 : 2, {
+                precision: 9
+            });
+            this.calibrationPoints = points;
+            //this.equation = poly.equation;
+            this.calculateSG = true;
+
+            this.sgByTilt = (points.length > 3) ?
+                function(x) {
+                    return poly.equation[0] +
+                        poly.equation[1] * x +
+                        poly.equation[2] * x * x +
+                        poly.equation[3] * x * x * x;
+                } : function(x) {
+                    return poly.equation[0] +
+                        poly.equation[1] * x +
+                        poly.equation[2] * x * x;
+                };
+        };
+        /*
+                BrewChart.prototype.sgByTilt = function(x) {
+                    var ret = this.equation[0] +
+                        this.equation[1] * x +
+                        this.equation[2] * x * x +
+                        this.equation[3] * x * x * x;
+                    return ret;
+                };
+        */
+        BrewChart.prototype.process = function(data) {
+            var newchart = false;
+            var sgPoint = false;
+            var t = this;
+            t.filterSg = null;
+            for (var i = 0; i < data.length;) {
+                var d0 = data[i++];
+                var d1 = data[i++];
+                if (d0 == 0xFF) { // header. 
+                    if ((d1 & 0xF) != 5) {
+                        alert("log version mismatched!");
+                        return;
+                    }
+                    //console.log(""+t.ctime/t.interval +" header");
+                    t.celius = (d1 & 0x10) ? false : true;
+                    t.calibrating = (d1 & 0x20) ? false : true;
+
+                    var p = data[i++];
+                    p = p * 256 + data[i++];
+                    t.interval = p;
+                    // 
+                    t.starttime = (data[i] << 24) + (data[i + 1] << 16) + (data[i + 2] << 8) + data[i + 3];
+                    t.ctime = t.starttime;
+                    i += 4;
+                    t.data = [];
+                    t.anno = [];
+                    t.state = [];
+                    t.angles = [];
+                    t.cstate = 0;
+                    this.clearData();
+                    newchart = true;
+                    // gravity tracking
+                    GravityFilter.reset();
+                    GravityTracker.init();
+                    // gravity tracking
+
+                } else if (d0 == 0xF4) { // mode
+                    //console.log(""+t.ctime/t.interval +" Stage:"+d1);
+                    t.addMode(d1);
+                } else if (d0 == 0xF1) { // state
+                    t.cstate = d1;
+                } else if (d0 == 0xFE) { // resume
+                    if (t.lidx) {
+                        var idx;
+                        for (idx = t.lidx; idx < t.numLine; idx++) t.dataset.push(NaN);
+                        t.data.push(t.dataset);
+                    }
+                    t.lidx = 0;
+                    var d2 = data[i++];
+                    var d3 = data[i++];
+                    var tdiff = d3 + (d2 << 8) + (d1 << 16);
+                    this.ctime = t.starttime + tdiff;
+                    t.addResume(d1);
+                } else if (d0 == 0xF8) { //OG
+                    var hh = data[i++];
+                    var ll = data[i++];
+                    var v = (hh & 0x7F) * 256 + ll;
+                    t.og = v / 10000;
+                } else if (d0 == 0xF9) { //Tilt in water
+                    var hh = data[i++];
+                    var ll = data[i++];
+                    var v = (hh & 0x7F) * 256 + ll;
+                    t.tiltInWater = v / 100;
+                } else if (d0 == 0xF0) { // record
+                    t.changes = d1;
+                    t.lidx = 0;
+                    var d = new Date(this.ctime * 1000);
+                    t.incTime(); // add one time interval
+                    t.dataset = [d];
+                    t.processRecord();
+                } else if (d0 < 128) { // temp. or gravity
+                    var tp = d0 * 256 + d1;
+                    if (t.lidx == GravityIndex) {
+                        tp = (tp == 0x7FFF) ? NaN : ((tp > 8000) ? tp / 10000 : tp / 1000);
+                        sgPoint = true;
+                        // gravity tracking
+                    } else if (t.lidx == TiltAngleIndex) {
+                        tp = (tp == 0x7FFF) ? NaN : (tp / 100);
+                    } else {
+                        tp = (tp == 0x7FFF) ? NaN : tp / 100;
+                        if (tp >= 225) tp = 225 - tp;
+                    }
+
+                    if (t.lidx < t.numData) {
+                        if (typeof t.dataset != "undefined") {
+                            t.dataset.push(tp);
+                            t.laststat[t.lidx] = tp;
+                            t.lidx++;
+                            t.processRecord();
+                        } else {
+                            console.log("Error: missing tag.");
+                        }
+                    } else {
+                        console.log("Error: data overlap?");
+                    }
+                }
+            }
+            return {
+                nc: newchart,
+                sg: sgPoint
+            };
+        };
+        BrewChart.prototype.updateChart = function() {
+            var t = this;
+            if (typeof t.chart == "undefined") t.createChart();
+            else t.chart.updateOptions({
+                'file': t.data
+            });
+            t.chart.setAnnotations(t.anno);
+        };
+        BrewChart.prototype.processRecord = function() {
+            var t = this;
+            while ((((1 << t.lidx) & t.changes) == 0) && t.lidx < t.numData) {
+                t.dataset.push((t.lidx > RoomTemperatureIndex) ? null : t.laststat[t.lidx]);
+                t.lidx++;
+            }
+            if (t.lidx >= t.numData) {
+                var dataset = t.dataset.slice(0, 8);
+
+                // gravity tracking
+                var sg = NaN;
+                if (!t.calculateSG && t.dataset[7] != null) {
+                    sg = t.dataset[7];
+                } else if (t.calculateSG) {
+                    if (t.dataset[8] == null) dataset[7] = null;
+                    else {
+                        sg = t.sgByTilt(t.dataset[8]);
+                        dataset[7] = sg;
+                    }
+                }
+                if (!isNaN(sg)) {
+                    t.sg = sg;
+                    t.filterSg = GravityFilter.add(sg);
+                    GravityTracker.add(t.filterSg, t.ctime);
+                }
+
+                if (!isNaN(t.sg)) dataset.push(t.filterSg);
+                else dataset.push(null);
+
+                t.data.push(dataset);
+                t.state.push(t.cstate);
+                t.angles.push(t.dataset[8]);
+            }
+        };
+        /* end of chart.js */
+
+        /* ispindel calibration */
+        var PolyRegression = {
+            points: [],
+            clear: function() {
+                var tbody = document.getElementById("pointlist").getElementsByTagName("tbody")[0];
+                var rl = tbody.getElementsByTagName("tr");
+                var count = rl.length;
+                for (var i = rl.length - 1; i > 0; i--) {
+                    var tr = rl[i];
+                    tr.parentNode.removeChild(tr);
+                }
+                return tbody;
+            },
+            newrow: function(i) {
+                var tr = document.createElement("tr");
+                var td2 = document.createElement("td");
+                td2.className = "pl_tilt";
+                td2.innerHTML = this.points[i][0].toFixed(2);
+
+                var td4 = document.createElement("td");
+                td4.className = "pl_sg";
+                td4.innerHTML = this.points[i][1]; // BrewMath.brix2sg(this.points[i][1]).toFixed(3);
+
+                var td6i = document.createElement("td");
+                if (typeof this.values != "undefined")
+                    td6i.innerHTML = this.values[i].toFixed(4);
+
+
+                var td6 = document.createElement("td");
+                if (typeof this.errors != "undefined")
+                    td6.innerHTML = (this.errors[i] * 1000).toFixed(1);
+
+                tr.appendChild(td2);
+                tr.appendChild(td4);
+                tr.appendChild(td6i);
+                tr.appendChild(td6);
+                return tr;
+            },
+            show: function() {
+                this.getFormula();
+                var tbody = this.clear();
+                for (var i = 0; i < this.points.length; i++) {
+                    tbody.appendChild(this.newrow(i));
+                }
+                this.chart();
+            },
+            getFormula: function() {
+                if (this.points.length < 2) return;
+
+                var poly = regression('polynomial', this.points, (this.points.length > 3) ? 3 : 2, {
+                    precision: 9
+                });
+                Q("#polynormial").innerHTML = poly.string;
+                // caluate errors
+                var errors = [];
+                var values = [];
+                var thirdcoe = poly.equation;
+                for (var i = 0; i < this.points.length; i++) {
+                    var y = poly.points[i][1];
+                    var t = this.points[i][1];
+                    errors.push(y - t);
+                    values.push(y);
+                }
+                this.errors = errors;
+                this.values = values;
+                this.regression = poly;
+            },
+            chart: function() {
+                var data = [];
+                for (var i = 0; i < this.points.length; i++) {
+                    data.push([this.points[i][0], this.points[i][1], this.regression.points[i][1]]);
+                }
+                if (typeof this.graph == "undefined") {
+                    this.graph = new Dygraph(
+                        document.getElementById("graph"), data, {
+                            labels: ["Tilt", "SG", "Interpolated"],
+                            colors: ["rgb(240, 100, 100)", "rgb(89, 184, 255)"],
+                            series: {
+                                'SG': {
+                                    drawPoints: true,
+                                    pointSize: 4,
+                                    strokeWidth: 0
+                                }
+                            },
+                            axisLabelFontSize: 12,
+                            gridLineColor: '#ccc',
+                            gridLineWidth: '0.1px',
+                            strokeWidth: 1,
+                            xRangePad: 10,
+                            axes: {
+                                y: {
+                                    axisLabelWidth: 40,
+                                    axisLabelFormatter: function(y) {
+                                        return y.toFixed(3);
+                                    },
+                                    valueFormatter: function(y) {
+                                        return y.toFixed(3);
+                                    }
+                                },
+                                x: {
+                                    pixelsPerLabel: 30,
+                                    axisLabelWidth: 40
+                                }
+                            }
+                        }
+                    );
+                } else {
+                    this.graph.updateOptions({
+                        'file': data
+                    });
+                    this.graph.resize();
+                }
+            }
+        };
+
+        function openpolynomialpane() {
+            Q("#polynomialpane").style.display = "block";
+            PolyRegression.points = BChart.chart.calibrationPoints;
+            PolyRegression.show();
+        }
+
+        function closepolynomialpane() {
+            Q("#polynomialpane").style.display = "none";
+        }
+        /* end of calibration */
+
+
+       var BChart={
+toggle:function(type){
+	this.chart.toggleLine(type);
+},
+init:function(id){
+	this.chart=new BrewChart(id);
+}
+};
+        function loaded() {
+            function openfile(f) {
+                if (f) {
+                    var r = new FileReader();
+                    r.onload = function(e) {
+                        window.file = f;
+                        //chart.clear();
+                        var data = new Uint8Array(e.target.result);
+                        if (BrewChart.testData(data) !== false) {
+
+                            BChart.chart.process(data);
+                            if (BChart.chart.calibrating) {
+                                BChart.chart.getFormula();
+                                //  do it again
+                                BChart.chart.process(data);
+                                if (BChart.chart.calculateSG) Q("#formula-btn").style.display = "block";
+                           }
+                            BChart.chart.updateChart();
+                            var date = new Date(BChart.chart.starttime * 1000);
+                            Q("#viewlogname").innerHTML = date.toLocaleString();
+                        } else {
+                            alert("Invalid log!");
+                        }
+                    };
+                    r.readAsArrayBuffer(f);
+                } else {
+                    alert("Failed to load file");
+                }
+            }
+
+            BChart.init("div_g");
+
+
+            Q('#dropfile').ondragover = function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+            };
+
+            Q('#dropfile').ondrop = function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                var f = e.dataTransfer.files[0];
+                openfile(f);
+            };
+
+            Q('#fileinput').onchange = function(evt) {
+                //Retrieve the first (and only!) File from the FileList object
+                var f = evt.target.files[0];
+                openfile(f);
+                BChart.chart.dataset
+            };
+
+        }
+
+        function exportcsv() {
+            if (typeof window.file == "undefined") return;
+            var link = document.createElement("a");
+
+            if (link.download === undefined) { // feature detection
+                alert("unsupported");
+                return;
+            }
+            // generate data
+            var csv = "Time, Unix Time";
+            for (var i = 1; i < BrewChart.Labels.length; i++) {
+                csv = csv + ((i == 0) ? "" : ",") + BrewChart.Labels[i];
+            }
+            csv = csv + ",Tilt,state\n";
+
+            for (var row = 0; row < BChart.chart.data.length; row++) {
+                for (var i = 0; i < BrewChart.Labels.length; i++) {
+                    var v = BChart.chart.chart.getValue(row, i);
+                    if (v === null) v = "null";
+                    else if (isNaN(v)) v = "";
+                    if (i == 0) {
+                        var d = new Date(v);
+                        csv = csv + d.toISOString() + "," + (v / 1000);
+                    } else csv = csv + "," + v;
+                }
+                csv  = csv + "," +BChart.chart.angles[row];
+                
+                var state = parseInt(BChart.chart.state[row]);
+                var st = (!isNaN(state)) ? STATES[state].text : "";
+                csv = csv + "," + st + "\n";
+            }
+            var blob = new Blob([csv], {
+                type: 'text/csv;'
+            });
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", window.file.name + ".csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+    <style>
+        .chart-legend-row .toggle {
+            width: 8px;
+            height: 8px;
+            border-radius: 5px;
+            float: left;
+            margin: 2px 0 0 0;
+            cursor: pointer;
+            border: 1px solid;
+        }
+        
+        .chart-legend {
+            font-family: Lucida Grande, Lucida Sans, Arial, sans-serif;
+            font-size: 11px;
+            margin: 10px 0 0 0;
+            border: solid 1px #777;
+            border-radius: 5px;
+            float: right;
+            width: 155px;
+        }
+        
+        .chart-legend-row {
+            padding: 8px 5px 8px 5px;
+        }
+        
+        .legend-label {
+            float: left;
+            padding: 0 5px 0 5px;
+            cursor: pointer;
+        }
+        
+        .legend-value {
+            float: right;
+        }
+        
+        .chart-legend-row.time {
+            background-color: #ddeeff;
+        }
+        
+        #div_lb {
+            display: none;
+        }
+        
+        #div_g {
+            float: left;
+            width: 800px;
+            height: 390px;
+        }
+        
+        #chart-container {
+            width: 975px;
+            height: 410px;
+            border-radius: 5px;
+            margin: 5px 5px 5px 5px;
+            border: solid 1px #304d75;
+            padding: 5px 5px 5px 5px;
+        }
+        
+        .hide {
+            display: none;
+        }
+        
+        #dropfile {
+            border: 2px dashed #bbb;
+            -moz-border-radius: 5px;
+            -webkit-border-radius: 5px;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+            color: #bbb;
+        }
+        
+        #fileinputgrp {
+            margin: 6px;
+            width: 975px;
+        }
+        
+        #fileinputgrp button {
+            float: right;
+        }
+        /* iSpindel calibration */
+        
+        #pointlist th,
+        #pointlist td,
+        #pointlist tr,
+        #pointlist {
+            border: 1px solid;
+            border-collapse: collapse;
+        }
+        
+        #pointlist th {
+            width: 52px;
+            background-color: #ffff27;
+        }
+        
+        #pointlist td {
+            text-align: right;
+        }
+        
+        #graph {
+            width: 500px;
+            height: 500px;
+        }
+        
+        #formula-btn {
+            font-style: italic;
+            float: right;
+            display: none;
+        }
+        
+        #polynomialpane .modal-content {
+            width: 800px;
+            height: 600px;
+            position: relative;
+        }
+        
+        #xclose {
+            position: absolute;
+            color: red;
+            background-color: lightgray;
+            width: 20px;
+            height: 20px;
+            right: 0;
+            text-align: center;
+            cursor: pointer;
+        }
+           .modal {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            /* Stay in place */
+            z-index: 100;
+            /* Sit on top */
+            padding-top: 100px;
+            /* Location of the box */
+            left: 0;
+            top: 0;
+            width: 100%;
+            /* Full width */
+            height: 100%;
+            /* Full height */
+            overflow: auto;
+            /* Enable scroll if needed */
+            background-color: rgb(0, 0, 0);
+            /* Fallback color */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Black w/ opacity */
+        }
+        /* Modal Content */
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 10px;
+            border: 1px solid #888;
+            width: 340px;
+            height: 220px;
+            border-radius: 8px;
+        }      
+    </style>
+
+    <body onload="loaded();">
+
+        <div id="fileinputgrp">
+            <input type="file" id="fileinput" /> or <span id="dropfile">Drop File Here.</span>
+            <button onclick="exportcsv()">Export</button>
+        </div>
+        <hr>
+        <div id="vchart" style="width:960px">
+            Start Time:<span id="viewlogname"></span>
+
+            <div id="chart-container">
+                <div id="div_g"></div>
+                <div id="chart-legend" class="chart-legend">
+                    <div class="chart-legend-row time">
+                        <div class="beer-chart-legend-time">Date/Time</div>
+                    </div>
+                    <div class="chart-legend-row beerTemp">
+                        <div class="toggle beerTemp" onclick="BChart.toggle('beerTemp')"></div>
+                        <div class="legend-label" onclick="BChart.toggle('beerTemp')">Beer Temp</div>
+                        <div class="legend-value">--</div>
+                        <br>
+                    </div>
+                    <div class="chart-legend-row beerSet">
+                        <div class="toggle beerSet" onclick="BChart.toggle('beerSet')"></div>
+                        <div class="legend-label" onclick="BChart.toggle('beerSet')">Beer Set</div>
+                        <div class="legend-value">--</div>
+                        <br>
+                    </div>
+                    <div class="chart-legend-row fridgeTemp">
+                        <div class="toggle beerSet" onclick="BChart.toggle('fridgeTemp')"></div>
+                        <div class="legend-label" onclick="BChart.toggle('fridgeTemp')">Fridge Temp</div>
+                        <div class="legend-value">--</div>
+                        <br>
+                    </div>
+                    <div class="chart-legend-row fridgeSet">
+                        <div class="toggle beerSet" onclick="BChart.toggle('fridgeSet')"></div>
+                        <div class="legend-label" onclick="BChart.toggle('fridgeSet')">Fridge Set</div>
+                        <div class="legend-value">--</div>
+                        <br>
+                    </div>
+                    <div class="chart-legend-row roomTemp">
+                        <div class="toggle beerSet" onclick="BChart.toggle('roomTemp')"></div>
+                        <div class="legend-label" onclick="BChart.toggle('roomTemp')">Room Temp</div>
+                        <div class="legend-value">--</div>
+                        <br>
+                    </div>
+                    <div class="chart-legend-row auxTemp">
+                        <div class="toggle gravity" onclick="BChart.toggle('auxTemp')"></div>
+                        <div class="legend-label" onclick="BChart.toggle('auxTemp')">Aux Temp</div>
+                        <div class="legend-value">--</div>
+                        <br>
+                    </div>
+                    <div class="chart-legend-row gravity">
+                        <div class="toggle gravity" onclick="BChart.toggle('gravity')"></div>
+                        <div class="legend-label" onclick="BChart.toggle('gravity')">Gravity</div>
+                        <div class="legend-value">--</div>
+                        <br>
+                    </div>
+                    <div class="chart-legend-row filtersg">
+                        <div class="toggle gravity" onclick="BChart.toggle('filtersg')"></div>
+                        <div class="legend-label" onclick="BChart.toggle('filtersg')">FilteredSG</div>
+                        <div class="legend-value">--</div>
+                        <br>
+                    </div>
+
+                    <div class="chart-legend-row state">
+                        <div class="legend-label">state</div>
+                        <br>
+                    </div>
+                <div class="chart-legend-row" id="formula-btn" onclick="openpolynomialpane()">
+                    <div class="legend-label">f</div>
+                    <br>
+                </div>
+
+                </div>
+            </div>
+        </div>
+
+
+ <div id="polynomialpane" class="modal">
+        <div class="modal-content">
+            <div id="xclose" onclick="closepolynomialpane()">X</div>
+            <table>
+                <tr>
+                    <td>
+                        <table id="pointlist">
+                            <tr>
+                                <th>Tilt</th>
+                                <th>SG</th>
+                                <th>Interpolated</th>
+                                <th>Error</th>
+                            </tr>
+                        </table>
+                    </td>
+                    <td>
+                        <div id="graph"></div>
+                        <span id="polynormial"></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    </body>
+
+</html>
