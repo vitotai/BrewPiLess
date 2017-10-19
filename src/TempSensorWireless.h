@@ -23,7 +23,7 @@ public:
         _expiryTime = period  * 1000;
     }
 
-	void setTemp(float temp){
+	void setTemp(double temp){
 		this->_connected = true;
         setValue(doubleToTemp(temp));
         _updateTime = millis();

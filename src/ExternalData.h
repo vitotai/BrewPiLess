@@ -263,7 +263,7 @@ public:
 
 		#if BREWPI_EXTERNAL_SENSOR
 		if(WirelessTempSensor::theWirelessTempSensor){
-			WirelessTempSensor::theWirelessTempSensor->setTemp(_auxTemp);
+			WirelessTempSensor::theWirelessTempSensor->setTemp(temp);
 		}
 		#endif
 	}
