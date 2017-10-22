@@ -2086,17 +2086,25 @@
             var gotMsg = true;
             onload(function() {
                 BWF.init({
+                    reconnect: false,
                     onconnect: function() {
                         BWF.send("l");
-                        setInterval(function() {
-                            if (!gotMsg) controllerError();
-                            BWF.send("l");
+                        if (window.lcdTimer) clearInterval(window.lcdTimer);
+                        window.lcdTimer = setInterval(function() {
+                            if (!gotMsg) {
+                                controllerError();
+                                BWF.reconnect();
+                            }
                             gotMsg = false;
+                            BWF.send("l");
                         }, 5000);
                     },
                     error: function(e) {
                         //console.log("error");
                         communicationError();
+                        setTimeout(function() {
+                            BWF.reconnect();
+                        }, 12000);
                     },
                     handlers: {
                         L: function(lines) {
