@@ -344,10 +344,10 @@
 
 #define EARLY_DISPLAY 1
 
-#ifdef EnableGlycolSupport
+//#ifdef EnableGlycolSupport
 #define FridgeSensorFallBack true
-#endif
-
 #define SettableMinimumCoolTime true
+//#endif
+
 #define EMIWorkaround 1
 #define BPL_VERSION "2.4"

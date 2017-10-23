@@ -13,14 +13,14 @@ Those images are prebuilt:
  * No rotary encoder. No LCD
  * OTA update **NOT** supported.
  * 512K SPIFFS for logging.
+ * **Not compatible to NEW SONOFF of ESP8285**
 
 ## sonoffota
 * Same as sonsoff, but
  * 64K SPIFFS for configurations
  * OTA update supported
+ * **Nt compatible with NEW SONOFF of ESP8285**
 
-## glycol
-* Standard options with GlycolSupport on.
 
 ## oled
 * Standard options

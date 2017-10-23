@@ -60,7 +60,7 @@
 ---
 # Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
-![Main Screen](img/brewpiless20.jpg)
+![Main Screen](img/bplmain.jpg)
 BrewPi is the greatest, if not the ultimate, fermentation temperature controller. The original design uses a RPI to log temperatures and maintain a temperature schedule. The RPI also hosts a web server as the front-end of internet web access. 
 Using a RPI or a PC allows the maximum power of BrewPi to be used but with the additional of a RPI or PC. 
 
@@ -94,6 +94,8 @@ The difference bewteen v1.2.7 and v.20 is
     * Brew and calibrate iSpindel.
     * Use iSpindel temperature reading as Beer Sensor.
     * Display tilt value of iSpindel.
+    * Enhance SSE re-establishment
+    * Default configurable minimum cooling/heating time.
 
  * v2.3.3 (2017/10/08)
     * All HTML files can be replaced by files on SPIFFS. Gzip support.
