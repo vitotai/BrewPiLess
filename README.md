@@ -68,16 +68,7 @@ ESP8266 is cheap and powerful WiFi-enabling IOT solution.
 Although it can't be as powerful as a RPI, it's a good solution to maximize the functionality and minimize the cost. Using a single ESP8266 as the temperature controller(replacing Arduino), web server and schedule maintainer(replacing RPI) also reduces the work in building a brewpi system.
 
 ## !!Special Note
-Uploading files to ESP8266 is no longer needed because the "files" are now embedded in the code. However, you can still upload files to the File System by using the Data Upload tool or web based file manager. **The file in File System takes higher priority.** That is, if you have an "index.htm" in the file system, you will get this file instead of the server page embedded within the code when you visit "http://brewpiless.local". **If you have ever uploaded the data folder using the upload tool, please delete this when you update to new version, or you will not get updated files.** Please also note that you might need to hit "refresh" button on your browser to force it to get new files.
-
-The difference bewteen v1.2.7 and v.20 is
- * v2.0 uses gravity-based beer profile while v1.2.7 uses BrewPi style beer profile. 
- * v2.0 supports profile re-use.
- 
- To build v1.2.7 from source. Open `espconfig.h`, and change line 29
- `
- #define EnableGravitySchedule false
- `
+You will need to run the hardware setup procedure after upgrading to v2.4 from prior version other than Glycol option enabled. Note the configuration or save the options before you update the firmware so that you can recover the settings quickly.
  
 ## Known issues
 * ESP8266 won't restart after saving system configuratoin.
