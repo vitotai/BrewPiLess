@@ -1,0 +1,168 @@
+<html>
+  <!-- build:include partials/head.html -->
+  <!-- /build -->
+
+<body onload=init()>
+
+  <!-- build:include partials/header.html -->
+  <!-- /build -->
+
+  <div viewport layout horizontal>
+    <div side>
+      <div id="status" class="status-display">
+        <ul id="status-pane" class="data-pane status-pane">
+          <li class="heading" layout horizontal main-justified><strong>Status:</strong>
+            <div style="display: inline-block"><strong id="lcdControlState"></strong> <span class="for">for</span> <span id="lcdControlStateSince"></span></div>
+          </li>
+          <li layout horizontal main-justified><span class="descriptor">Mode:</span><span id="lcdControlMode"></span></li>
+        </ul>
+        <ul class="data-pane">
+          <li class="heading"><strong>temperature data:</strong></li>
+          <li layout horizontal main-justified><span class="descriptor">Beer Temp:</span><span id="lcdBeerTemp"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">Beer Set:</span><span id="lcdBeerSet"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">Fridge Temp:</span><span id="lcdFridgeTemp"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">Fridge Set:</span><span id="lcdFridgeSet"></span></li>
+          <li layout horizontal main-justified><span class="descriptor">Room Temp:</span><span id="lcdRoomTemp"></span></li>
+        </ul>
+      </div>
+
+      <ul id="gravity-pane" class="data-pane gravity-pane">
+        <li class="heading"><strong>gravity data:</strong></li>
+        <li layout horizontal main-justified><span class="descriptor">Original Gravity:</span> <span id="gravity-og" onclick="inputOG()">--</span></li>
+        <li layout horizontal main-justified><span class="descriptor">Specific Gravity:</span> <span id="gravity-sg" onclick="inputSG()">--</span></li>
+        <li layout horizontal main-justified><span class="descriptor">Final Gravity State:</span>
+          <div id="fgstate"></div>
+        </li>
+        <li layout horizontal main-justified><span class="descriptor">ATT:</span> <span id="gravity-att"> --%</span></li>
+        <li layout horizontal main-justified><span class="descriptor">ABV:</span> <span id="gravity-abv"> --%</span></li>
+        <li layout horizontal main-justified id="formula-btn" onclick=openpolynomialpane()><span class=descriptor></span><span>Formula</span></li>
+
+      </ul>
+      <ul class="data-pane spindle-pine">
+        <li class="heading"><strong>spindel data:</strong></li>
+        <li layout horizontal main-justified><span class="descriptor">Battery:</span> <span id="iSpindel-battery">--</span></li>
+        <li layout horizontal main-justified><span class="descriptor">Last Update:</span> <span id="iSpindel-last">--</span></li>
+      </ul>
+      <ul class="data-pane">
+        <li class="heading"><strong>system:</strong></li>
+        <li layout horizontal main-justified><span class="descriptor">Writing Log:</span><span id="recording"></span></li>
+        <li layout horizontal main-justified>
+          <span class="descriptor">Wifi:</span>
+          <div id="rssi">
+            <div class="rssi-bar rssi-bar1"></div>
+            <div class="rssi-bar rssi-bar2"></div>
+            <div class="rssi-bar rssi-bar3"></div>
+            <div class="rssi-bar rssi-bar4"></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div main flex>
+      <h4>Chart</h4>
+      <div layout horizontal>
+        <div id="div_g" class="chart"></div>
+        <ul flex class="chart-legend">
+          <li layout horizontal main-justified class="chart-legend-row time">
+            <span class="beer-chart-legend-time">Date/Time</span>
+            <span class="beer-chart-state">state</span>
+          </li>
+          <li layout horizontal main-justified class="chart-legend-row beer-temp">
+            <input type="checkbox" id="beer-temp" name="set-name" class="switch-input" checked>
+            <label onclick="BChart.toggle(BeerTempLine)" for="beer-temp" class="switch-label">Beer Temp:</label>
+            <div class="legend-value">--</div>
+          </li>
+          <li layout horizontal main-justified class="chart-legend-row beer-set">
+            <input type="checkbox" id="beer-set" name="set-name" class="switch-input" checked>
+            <label onclick="BChart.toggle(BeerSetLine)" for="beer-set" class="switch-label">Beer Set:</label>
+            <div class="legend-value">--</div>
+          </li>
+          <li layout horizontal main-justified class="chart-legend-row fridge-temp">
+            <input type="checkbox" id="fridge-temp" name="set-name" class="switch-input" checked>
+            <label onclick="BChart.toggle(FridgeTempLine)" for="fridge-temp" class="switch-label">Fridge Temp:</label>
+            <div class="legend-value">--</div>
+          </li>
+          <li layout horizontal main-justified class="chart-legend-row fridge-set">
+            <input type="checkbox" id="fridge-set" name="set-name" class="switch-input" checked>
+            <label onclick="BChart.toggle(FridgeSetLine)" for="fridge-set" class="switch-label">Fridge Set:</label>
+            <div class="legend-value">--</div>
+          </li>
+          <li layout horizontal main-justified class="chart-legend-row room-temp">
+            <input type="checkbox" id="room-temp" name="set-name" class="switch-input" checked>
+            <label onclick="BChart.toggle(RoomTempLine)" for="room-temp" class="switch-label">Room Temp:</label>
+            <div class="legend-value">--</div>
+          </li>
+          <li layout horizontal main-justified class="chart-legend-row aux-temp">
+            <input type="checkbox" id="aux-temp" name="set-name" class="switch-input" checked>
+            <label onclick="BChart.toggle(AuxTempLine)" for="aux-temp" class="switch-label">Aux Temp:</label>
+            <div class="legend-value">--</div>
+          </li>
+          <li layout horizontal main-justified class="chart-legend-row gravity">
+            <input type="checkbox" id="gravity" name="set-name" class="switch-input" checked>
+            <label onclick="BChart.toggle(GravityLine)" for="gravity" class="switch-label">Gravity:</label>
+            <div class="legend-value">--</div>
+          </li>
+          <li layout horizontal main-justified class="chart-legend-row filtersg">
+            <input type="checkbox" id="filtersg" name="set-name" class="switch-input" checked>
+            <label onclick="BChart.toggle(FilteredSgLine)" for="filtersg" class="switch-label">Filter SG:</label>
+            <div class="legend-value">--</div>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- build:include partials/footer.html -->
+  <!-- /build -->
+
+  <!-- Notification -->
+  <div class=error>waiting for update from script ...</div>
+
+  <!-- Modals -->
+  <div id="dlg_loading" class="modal">
+    <div class="modal-content">
+      <p>Communicating with BrewPiLess controller..</p>
+    </div>
+  </div>
+
+  <div id="dlg_addgravity" class="modal">
+    <div class="modal-content">
+      <h2 class="message"></h2>
+      <p>
+        Please enter a value between 0.8 and 1.25.
+      </p>
+      <input type="number" size="6" placeholder="Gravity" min="0.8" max="1.25" step="any">
+      <div class="dialog-buttons">
+        <input class="btn btn--primary btn--ok" onclick="inputgravity()" type="button" value="OK">
+        <input class="btn" onclick="dismissgravity()" type="button" value="Cancel">
+      </div>
+    </div>
+  </div>
+
+    <div id="polynomialpane" class="modal">
+        <div class="modal-content">
+            <div id="xclose" onclick="closepolynomialpane()">X</div>
+            <table>
+                <tr>
+                    <td>
+                        <table id="pointlist">
+                            <tr>
+                                <th>Tilt</th>
+                                <th>SG</th>
+                                <th>Interpolated</th>
+                                <th>Error</th>
+                            </tr>
+                        </table>
+                    </td>
+                    <td>
+                        <div id="graph"></div>
+                        <span id="polynormial"></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+</body>
+
+</html>
