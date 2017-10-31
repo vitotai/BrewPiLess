@@ -562,6 +562,8 @@
                         var idx;
                         for (idx = t.lidx; idx < t.numLine; idx++) t.dataset.push(NaN);
                         t.data.push(t.dataset);
+                        t.state.push(null);
+                        t.angles.push(null);
                     }
                     t.lidx = 0;
                     var d2 = data[i++];

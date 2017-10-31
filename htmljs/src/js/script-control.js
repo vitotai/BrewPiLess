@@ -751,7 +751,7 @@ var modekeeper = {
             document.getElementById('dlg_beerprofilereminder').querySelector("button.ok").onclick = function() {
                 document.getElementById('dlg_beerprofilereminder').style.display = "none";
                 var gravity = parseFloat(Q("#dlg_beerprofilereminder input").value);
-                //updateOriginGravity(gravity);
+                if (typeof updateOriginGravity == "function") updateOriginGravity(gravity);
                 var data = {
                     name: "webjs",
                     og: 1,

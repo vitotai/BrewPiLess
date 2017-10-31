@@ -90,7 +90,7 @@ var BWF = {
         this.es.close();
         // this might triger onerror, and result in "reconnect" call again.
         this.connect();
-        b.reconnecting = false;
+        this.reconnecting = false;
     },
     init: function(arg) {
         var b = this;
