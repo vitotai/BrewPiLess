@@ -705,7 +705,13 @@ public:
 			}else if(request->hasParam("start")){
 				String filename=request->getParam("start")->value();
 				DBG_PRINTF("start logging:%s\n",filename.c_str());
+				#if BREW_AND_CALIBRATION
+				bool cal=externalData.isCalibrating();
+				if(brewLogger.startSession(filename.c_str(),cal)){
+					if(cal) brewLogger.addTiltInWater(externalData.titltInWater());
+				#else
 				if(brewLogger.startSession(filename.c_str())){
+				#endif
 					request->send(200);
 					notifyLogStatus();
 				}else

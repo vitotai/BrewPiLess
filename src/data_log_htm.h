@@ -109,6 +109,10 @@ Free Space: <span id="fsfree">0</span> Bytes, Used Space: <span id="fsused">0</s
 <td>device voltage</td>
 </tr>
 <tr>
+<th>%t</th>
+<td>Tilt Value</td>
+</tr>
+<tr>
 <th>%u</th>
 <td>Unix timestamp of last gravity update</td>
 </tr>

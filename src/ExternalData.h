@@ -5,6 +5,10 @@
 #include "BrewLogger.h"
 #include "mystrlib.h"
 
+#if BREWPI_EXTERNAL_SENSOR
+#include "TempSensorWireless.h"
+#endif
+
 #define INVALID_VOLTAGE -1
 #define INVALID_GRAVITY -1
 #ifdef INVALID_TEMP
@@ -61,17 +65,30 @@ protected:
     float _ispindelCalibrationBaseTemp;
     float _ispindelCoefficients[4];
     char *_ispindelName;
+	float _ispindelTilt;
 
     bool _calculateGravity;
-    uint8_t _stableThreshold;
+	uint8_t _stableThreshold;
+	
+	#if BREW_AND_CALIBRATION	
+	float _tiltInWater;
+	bool  _calibrating;
+	#endif
 
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),_deviceVoltage(INVALID_VOLTAGE),_lastUpdate(0)
-	,_ispindelEnable(false),_ispindelName(NULL),_calculateGravity(false),_stableThreshold(1){}
+	,_ispindelEnable(false),_ispindelName(NULL),_calculateGravity(false),_stableThreshold(1)
+	#if BREW_AND_CALIBRATION	
+	 ,_calibrating(false)
+	#endif	
+	{}
 
     bool iSpindelEnabled(void){return _ispindelEnable;}
 
-    //const char * html(void) { return gravityconfig_html;}
+	#if BREW_AND_CALIBRATION	
+	bool isCalibrating(void){return _calibrating;}
+	float titltInWater(void){ return _tiltInWater;}
+	#endif
 
     void sseNotify(char *buf){
 
@@ -88,10 +105,18 @@ public:
 		len=sprintFloat(slowpassfilter,filter.beta(),2);
 		slowpassfilter[len]='\0';
 
+		char strtilt[8];
+		len=sprintFloat(strtilt,_ispindelTilt,2);
+		strtilt[len]='\0';
+
+
 		const char *spname=(_ispindelName)? _ispindelName:"Unknown";
-
-		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d}",spname, strbattery,strgravity,_lastUpdate,slowpassfilter,_stableThreshold);
-
+		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d}",
+					spname, 
+					strbattery,
+					strgravity,
+					strtilt,
+					_lastUpdate,slowpassfilter,_stableThreshold);
     }
     void config(char* configdata)
     {
@@ -110,6 +135,15 @@ public:
   			DBG_PRINTF("Invalid JSON config\n");
   			return;
 		}
+
+		#if BREW_AND_CALIBRATION	
+		if(root.containsKey("cal") 
+			&& root.containsKey("tiltw")){
+			_calibrating = root["cal"];
+			_tiltInWater = root["tiltw"];
+		}
+		#endif
+
 		_ispindelEnable=root["ispindel"];
 		_ispindelCalibration =root["gc"];
 		_ispindelCalibration = _ispindelCalibration / 1000.0;
@@ -148,14 +182,24 @@ public:
 #endif
 
 	}
-
+/*
 	void setPlato(float plato, time_t now){
 		float sg=1 + (plato / (258.6 -((plato/258.2)*227.1)));
 		setGravity(sg,now);
-	}
+	}*/
 
 	void setTilt(float tilt,float temp,time_t now){
-	    // calculate plato
+		_lastUpdate=now;
+		_ispindelTilt=tilt;
+
+		#if BREW_AND_CALIBRATION	
+		if(brewLogger.calibrating()){
+			brewLogger.addTiltAngle(tilt);
+			return;
+		}
+		#endif
+
+		// calculate plato
 	    float sg = _ispindelCoefficients[0]
                     +  _ispindelCoefficients[1] * tilt
                     +  _ispindelCoefficients[2] * tilt * tilt
@@ -216,6 +260,12 @@ public:
 			_auxTemp= temp * 1.8 +32 ;
 		}
 		brewLogger.addAuxTemp(_auxTemp);
+
+		#if BREWPI_EXTERNAL_SENSOR
+		if(WirelessTempSensor::theWirelessTempSensor){
+			WirelessTempSensor::theWirelessTempSensor->setTemp(temp);
+		}
+		#endif
 	}
 
 
@@ -226,6 +276,7 @@ public:
 	time_t lastUpdate(void){return _lastUpdate;}
 	void setDeviceVoltage(float vol){ _deviceVoltage = vol; }
 	float deviceVoltage(void){return _deviceVoltage;}
+	float tiltValue(void){return _ispindelTilt;}
 	void invalidateDeviceVoltage(void) { _deviceVoltage= INVALID_VOLTAGE; }
 
 	float temperatureCorrection(float sg, float t, float c){
@@ -292,8 +343,14 @@ public:
             if(root.containsKey("battery"))
     		    setDeviceVoltage(root["battery"]);
 
-			//setPlato(root["gravityP"],TimeKeeper.getTimeSeconds());
-			if(!_calculateGravity && root.containsKey("gravity"))
+
+
+				//setPlato(root["gravityP"],TimeKeeper.getTimeSeconds());
+			if(
+				#if BREW_AND_CALIBRATION	
+				! _calibrating &&
+				#endif
+				!_calculateGravity && root.containsKey("gravity"))
             	setGravity(root["gravity"], TimeKeeper.getTimeSeconds());
 			else{
 		    	if(! root.containsKey("angle")){

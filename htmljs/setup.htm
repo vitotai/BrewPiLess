@@ -119,6 +119,9 @@
                 g = window.sensorContainer.cloneNode(true);
                 g.querySelector("span.device-address").innerHTML = f.a;
                 g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : f.v
+            } else if (f.h == 5) {
+                g = window.extsensorContainer.cloneNode(true);
+                g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : f.v;
             } else {
                 g = window.pinContainer.cloneNode(true);
                 g.querySelector("select.device-pintype").value = f.x;
@@ -139,7 +142,7 @@
                 16: "D0",
                 17: "A0"
             };
-            g.querySelector("span.device-pin").innerHTML = c[f.p];
+            g.querySelector("span.device-pin").innerHTML = (f.p > 0) ? c[f.p] : "NA";
             g.querySelector("select.device-function").value = f.f;
             g.querySelector("div.device-title").innerHTML = "Device " + a;
             g.querySelector("button").onclick = function() {
@@ -177,7 +180,7 @@
         c.p = a.p;
         if (c.h == 2) {
             c.a = a.a
-        } else {
+        } else if (c.h == 1) {
             c.x = d.querySelector("select.device-pintype").value
         }
         return c
@@ -282,6 +285,8 @@
     function init() {
         window.sensorContainer = detachNode(".device-container.sensor-device");
         window.pinContainer = detachNode(".device-container.pin-device");
+        window.extsensorContainer = detachNode(".device-container.extsensor-device");
+
         BWF.init({
             error: function(a) {
                 //                alert("error communication between server")
@@ -323,6 +328,35 @@
         <div id="detected-list">
         </div>
     </div>
+    <div class='device-container extsensor-device'>
+        <table>
+            <tr>
+                <td ROWSPAN=2>
+                    <div class='device-title'></div><br><button>apply</button></td>
+                <td>
+                    <div class='device-setting-container'><span class='setting-name'>Device slot</span> <select class='slot-select'><option value='-1'>Unassigned</option><option value='0'>0</option><option value='1'>1</option><option value='2'>2</option><option value='3'>3</option><option value='4'>4</option><option value='5'>5</option><option value='6'>6</option><option value='7'>7</option><option value='8'>8</option><option value='9'>9</option><option value='10'>10</option><option value='11'>11</option><option value='12'>12</option><option value='13'>13</option><option value='14'>14</option><option value='15'>15</option>	</select></div>
+                </td>
+                <td>
+                    <div class='device-setting-container'> <span class='setting-name'>Hardware Type</span> <span class='setting-value device-type'>External Sensor</span> </div>
+                </td>
+                <td>
+                    <div class='device-setting-container device-address-container'> <span class='setting-name'></span> <span class='setting-value device-address'></span> </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class='device-setting-container'> <span class='setting-name'>Controller PIN</span> <span class='setting-value device-pin'></span> </div>
+                </td>
+                <td>
+                    <div class='device-setting-container'> <span class='setting-name'>Value</span> <span class='setting-value device-value'>--</span> </div>
+                </td>
+                <td>
+                    <div class='device-setting-container'> <span class='setting-name'>Function</span> <select class='setting-value device-function'><option value=0>None</option><option value=5>Chamber Temp</option><option value=6>Room Temp</option><option value=9>Beer Temp</option></select>                        </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
     <div class='device-container sensor-device'>
         <table>
             <tr>

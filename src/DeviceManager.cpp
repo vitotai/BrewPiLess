@@ -41,6 +41,10 @@
 #include "SensorArduinoPin.h"
 #endif
 
+#if BREWPI_EXTERNAL_SENSOR
+#include "TempSensorWireless.h"
+WirelessTempSensor* WirelessTempSensor::theWirelessTempSensor=NULL;
+#endif
 
 /*
  * Defaults for sensors, actuators and temperature sensors when not defined in the eeprom.
@@ -103,7 +107,7 @@ void DeviceManager::setupUnconfiguredDevices()
  */
 void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 {
-	//vito: create sensor object
+	
 	switch (config.deviceHardware) {
 		case DEVICE_HARDWARE_NONE:
 			break;
@@ -127,6 +131,10 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 		#else
 			return new OneWireTempSensor(oneWireBus(config.hw.pinNr), config.hw.address, config.hw.calibration);
 		#endif
+#if BREWPI_EXTERNAL_SENSOR //vito: create sensor object
+		case DEVICE_HARDWARE_EXTERNAL_SENSOR:
+			return new WirelessTempSensor(false);// initially disconnected, so init doesn't populate the filters with the default value of 0.0
+#endif
 
 #if BREWPI_DS2413
 		case DEVICE_HARDWARE_ONEWIRE_2413:
@@ -263,7 +271,6 @@ void DeviceManager::installDevice(DeviceConfig& config)
 	void** ppv = deviceTarget(config);
 	if (ppv==NULL || config.hw.deactivate)
 		return;
-	//vito: installDevice 
 	BasicTempSensor* s;
 	TempSensor* ts;
 	switch(dt) {
@@ -713,7 +720,13 @@ device_slot_t findHardwareDevice(DeviceConfig& find)
 					// fall through
 				case DEVICE_HARDWARE_PIN:
 					match &= find.hw.pinNr==config.hw.pinNr;
-				default:	// this should not happen - if it does the device will be returned as matching.
+			#if BREWPI_EXTERNAL_SENSOR
+				case DEVICE_HARDWARE_EXTERNAL_SENSOR:
+					match &= true;
+					break;
+			#endif
+	
+					default:	// this should not happen - if it does the device will be returned as matching.
 					break;
 			}
 			if (match)
@@ -856,6 +869,17 @@ void DeviceManager::enumerateOneWireDevices(EnumerateHardware& h, EnumDevicesCal
 #endif
 }
 
+#if BREWPI_EXTERNAL_SENSOR //vito: enumerate device
+void DeviceManager::enumerateExternalDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output){
+	DeviceConfig config;
+	clear((uint8_t*)&config, sizeof(config));
+	config.deviceHardware = DEVICE_HARDWARE_EXTERNAL_SENSOR;
+	config.chamber = 1; // chamber 1 is default
+	config.hw.pinNr = -1;
+	handleEnumeratedDevice(config, h, callback, output);
+}
+#endif
+
 void DeviceManager::enumerateHardware()
 {
 	EnumerateHardware spec;
@@ -878,7 +902,11 @@ void DeviceManager::enumerateHardware()
 	if (spec.hardware==-1 || isDigitalPin(DeviceHardware(spec.hardware))) {
 		enumeratePinDevices(spec, OutputEnumeratedDevices, out);
 	}
-	//vito: enumerate device
+	#if BREWPI_EXTERNAL_SENSOR //vito: enumerate device
+	if (spec.hardware==-1 || isExternalSensor(DeviceHardware(spec.hardware))) {
+		enumerateExternalDevices(spec, OutputEnumeratedDevices, out);
+	}
+	#endif
 //	logDebug("Enumerating Hardware Complete");
 }
 

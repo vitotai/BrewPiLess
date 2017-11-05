@@ -21,7 +21,8 @@
  * Gravity-based temperature schedule.
  * Save and resuse of beer profiles.
  * Static IP setting.
- * Export saved datat to csv format by offline log viewer.(**new!**)
+ * Export saved datat to csv format by offline log viewer.
+ * Brew and Calibrate iSpindel. **new!**
 # Contents
 ---
 * [Introduction](#introduction)
@@ -33,18 +34,20 @@
   * [Soft AP mode](#soft-ap-mode)
   * [Service Pages](#service-pages)
   * [Gravity logging](#gravity-logging)
-  * [iSpindel Support](#ispindel-support) **Updated!**
+  * [iSpindel Support](#ispindel-support) 
   * [Local logging](#local-logging)
     * [Viewing Chart under AP mode](#viewing-chart-under-ap-mode)
   * [Remote logging](#remote-logging) 
   * [Saved Beer Profiles](#saved-beer-profiles)
-  * [Beer Profile](#beer-profile) **New!**
-  * [Glycol](#glycol) **New!**
+  * [Beer Profile](#beer-profile) 
+  * [Glycol](#glycol) 
+  * [Brew and Calibrate iSpindel](#brew-and-calibrate-ispindel) **New!**
+  * [Using iSpindel as Beer Temperature Sensor](#using-ispindel-as-beer-temperature-sensor)
 * [Hardware Setup](#hardware-setup)
   * [Support of Rotary Encoder](#support-of-rotary-encoder)
   * [Wake-up button](#wake-up-button)
 * [Extra](#extra)
-  * [Offline Log Viewer](#offline-log-viewer) **Updated!**
+  * [Offline Log Viewer](#offline-log-viewer) 
   * [Logging Data to Google Sheets](#logging-data-to-google-sheets) 
   * [Upload HTML/Javascript to ESP8266](#upload-htmljavascript-to-esp8266)
   * [Development tools](#development-tools)
@@ -57,7 +60,7 @@
 ---
 # Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
-![Main Screen](img/brewpiless20.jpg)
+![Main Screen](img/bplmain.jpg)
 BrewPi is the greatest, if not the ultimate, fermentation temperature controller. The original design uses a RPI to log temperatures and maintain a temperature schedule. The RPI also hosts a web server as the front-end of internet web access. 
 Using a RPI or a PC allows the maximum power of BrewPi to be used but with the additional of a RPI or PC. 
 
@@ -65,16 +68,7 @@ ESP8266 is cheap and powerful WiFi-enabling IOT solution.
 Although it can't be as powerful as a RPI, it's a good solution to maximize the functionality and minimize the cost. Using a single ESP8266 as the temperature controller(replacing Arduino), web server and schedule maintainer(replacing RPI) also reduces the work in building a brewpi system.
 
 ## !!Special Note
-Uploading files to ESP8266 is no longer needed because the "files" are now embedded in the code. However, you can still upload files to the File System by using the Data Upload tool or web based file manager. **The file in File System takes higher priority.** That is, if you have an "index.htm" in the file system, you will get this file instead of the server page embedded within the code when you visit "http://brewpiless.local". **If you have ever uploaded the data folder using the upload tool, please delete this when you update to new version, or you will not get updated files.** Please also note that you might need to hit "refresh" button on your browser to force it to get new files.
-
-The difference bewteen v1.2.7 and v.20 is
- * v2.0 uses gravity-based beer profile while v1.2.7 uses BrewPi style beer profile. 
- * v2.0 supports profile re-use.
- 
- To build v1.2.7 from source. Open `espconfig.h`, and change line 29
- `
- #define EnableGravitySchedule false
- `
+You will need to run the hardware setup procedure after upgrading to v2.4 from prior version other than Glycol option enabled. Note the configuration or save the options before you update the firmware so that you can recover the settings quickly.
  
 ## Known issues
 * ESP8266 won't restart after saving system configuratoin.
@@ -87,7 +81,14 @@ The difference bewteen v1.2.7 and v.20 is
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
- * v2.3.3
+ * v2.4 (Working)
+    * Brew and calibrate iSpindel.
+    * Use iSpindel temperature reading as Beer Sensor.
+    * Display tilt value of iSpindel.
+    * Enhance SSE re-establishment
+    * Default configurable minimum cooling/heating time.
+
+ * v2.3.3 (2017/10/08)
     * All HTML files can be replaced by files on SPIFFS. Gzip support.
     * updated HTML/JS
     * Add "Title" to be displayed at banner in config page.
@@ -188,11 +189,13 @@ To enter OG, click the **OG value**. Once OG is availble, the Attenuation and AB
 BrewPiLess supports iSpindel by accepting data from iSpindel and acting an **AP** for iSpindel to connect to, BrewPiLess and iSpindel can connect to the same router. 
 To support **softAP**, set the correct settings in `System configuration`. Please note that the password(passphrase) should be at least **8** characters. The same password(pass phrase) is used for setting and for connection certification. Default value is `brewpiless`.
 
-![Gravity Sensor](img/gdsettingv21.jpg)
+![Gravity Sensor](img/gdsetting.jpg)
 
 | Setting   | Description       |
 | -------------- |:---------------------------------|
 | iSpindel         | To enable iSpindel support.   	   |
+| Calibrarte iSpindel | To start iSpindel calibration while fermenting.  |
+| Tilt in Water | The TILT value of iSpindel in water of gravity 1.0.  |
 | Calculated by BPL | Do the conversion from tilt angle to gravity by BrewPiLess. If this option is OFF, all the following options are not used. |
 | SG Calibration   |  Offset of gravity reading. This value will be applied(add) to the calcuated SG if SG is calculated by BrewPiLess. |
 | Temp. Correction | Apply temperature correction to the calculated gravity reading. Celsius only. Usually it is 20&deg;C(68&deg;F) or 15&deg;C(59&deg;F). | 
@@ -200,6 +203,8 @@ To support **softAP**, set the correct settings in `System configuration`. Pleas
 | LowPass Filter Coefficient | 0~1. See following description|
 | Gravity Stability Threshold | Integer value. 1 point = 0.001.  |
 
+`Calibrarte iSpindel` shoudl be set before STARTING log. The `Tilt in Water` value shoue be set at the same time. When this setting is set, BPL will not 
+calculate the gravity, nor does BPL accept the gravity value from iSpindel.
 
 About low Pass Filter:
 ![Low Pass Filter](img/lowpassfilter.jpg)
@@ -307,10 +312,10 @@ The computation is done when the profile is "loaded". Changing the OG after "app
 ## Glycol
 BrewPi(Less) is designed to control fermenting temperature in a fridge or freezer. To control glycol cooling, some hacks are necessary:
 
-1. build with GlycolSupport option enabled
-    It's simple by adding `-DGlycolSupport=true` to build flag in platformio.ini
+1. build with EnableGlycolSupport option enabled
+    It's simple by adding `-DEnableGlycolSupport=true` to build flag in platformio.ini
 
-    `build_flags = -Wl,-Tesp8266.flash.4m.ld -DGlycolSupport=true`
+    `build_flags = -Wl,-Tesp8266.flash.4m.ld -DEnableGlycolSupport=true`
 
 2. Set minimum cooling/heating on/off time
     open the page `http://brewpiless.local/testcmd.htm`
@@ -329,6 +334,33 @@ BrewPi(Less) is designed to control fermenting temperature in a fridge or freeze
 
 *Special Note:*
 You might notice that temperatures of beer and fridge from the same sensor are different. The reason is the values are filtered and and they have different filtering parameters. Those parameters also can be changed by the JSON commands. `fridgeFastFilt`, `fridgeSlowFilt`, `firdgeSlopeFilt`, `beerFastFilt`, `beerSlowFilt`, and `beerSlopeFilt`.
+
+## Brew and Calibrate iSpindel
+If this feature is enabled, BPL will record the TILT angles from iSpindel, expect the gravity data from user, and derive formula to calculate the gravity automatically. The procedure to use "Brew and Calibrate" is
+ * Setup iSpindel to make it report to BPL.
+ * Get the Tilt value in water(SG:1.0) before dropping it into the fermenter.
+ * Measure the Original Gravity.
+ * Enable "Calibrate iSpindel" and enter the **Tilt value in water** at the Gravity Device pages. *This must be done before startting logging.*
+ * Start local logging.
+ * Input SG, which is the value of Original Gravity.
+ * Measure SG as usual or more frequently. Input the measured SG.
+
+BPL will derive the formula by the Tilt values and gravity data input. If the number of data pairs is less than 4, then 2 order polynomial(x^2) will be derived. If 4 or more gravity readings are available, 3 order polynomial will be derived. At the beginning, there should be two readings, 1.0 and OG. Even though you can't expect precise and correct gravity readings from the chart from the beginning, the change of gravity can be deduced by the change of Tilt values.
+
+Note: in *Brew and Calibrate* mode, the gravity values displayed on the chart is calculated by the browser, or by Javascript. That gravity data can't be used in Beer Profile. The Beer Profile will use the data that users input.
+
+![Calibrating](img/ispindel_calibrating.jpg)
+
+If BPL is in calibrating mode, there will be a lower case "f" at the bottom of the legend block. Click the "f" will bring out the calibration points and formula used.
+
+![Formula](img/ispindel_formula.jpg)
+
+## Using iSpindel as Beer Temperature Sensor
+To use the temperature reading of iSpindel as Beer sensor, run `Device Setup`, and assign the *External Sensor* as "Beer Temp".
+![ispindel as beer sensor](img/ispindel_sensor.jpg)
+
+The report period of iSpindel should be from 1-3 minutes.(**To be tested.**) If no report from iSpindel for over 5 minutes, the 
+sensor is treated as disconnected.
 
 ---
 # Hardware Setup
@@ -486,6 +518,14 @@ You can set multiple parameters in one command. The command after `j` is in form
 | hs                | rotaryHalfSteps                |   |
 | heatEst           | heatEstimator                  |   |
 | coolEst           | coolEstimator                  |   |
+| minCoolTime       | Minimum cooling time           |*1   |
+| minCoolIdleTime   | Minimum idle time before cooling  |*1   |
+| minHeatTime       | Minimum heating time            |*1   |
+| minHeatIdleTime   | Minimum idle time before heating |*1   |
+| mutexDeadTime     | Minimum idle time between switch of heating and cooling.    |*1   |
+
+
+*1: Available if SettableMinimumCoolTime option is set to true, or EnableGlycol is set to true.
 
 ## Sensor Calibration
  The command to set sensor calibration is

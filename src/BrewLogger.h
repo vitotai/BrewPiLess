@@ -17,13 +17,16 @@
 #define StartLogTag 0xFF
 #define ResumeBrewTag 0xFE
 #define PeriodTag 0xF0
-#define StageTag 0xF1
+#define StateTag 0xF1
 #define EventTag 0xF2
 //#define SetPointTag 0xF3
 #define ModeTag 0xF4
 //#define BeerSetPointTag 0xF7
 #define OriginGravityTag 0xF8
-//#define AuxTempTag 0xF9
+
+#if BREW_AND_CALIBRATION
+#define CalibrationPointTag 0xF9
+#endif
 
 #define INVALID_TEMP_INT 0x7FFF
 #define INVALID_GRAVITY_INT 0x7FFF
@@ -38,8 +41,21 @@
 #define OrderExtTemp 5
 #define OrderGravity 6
 
+#define NumberDataBitMask 7
+
+#if BREW_AND_CALIBRATION
+#undef NumberDataBitMask
+#define NumberDataBitMask 8
+
+#define OrderTiltAngle 7
+#define TiltEncode(g) (uint16_t)(100.0 * (g) + 0.5)
+#define INVALID_TILT_ANGLE 0x7FFF
+#endif
+
 #define GravityEncode(g) (uint16_t)(10000.0 * (g) + 0.5)
 #define GravityDecode(a) (float)(a)/10000.0
+#define HighOctect(a) (uint8_t)((a)>>8) 
+#define LowOctect(a) (uint8_t)((a)&0xFF)
 
 typedef struct _FileIndexEntry{
 	char name[24];
@@ -63,7 +79,12 @@ public:
 		_fsspace=0;
 		_tempLogPeriod=60000;
 		resetTempData();
+		#if BREW_AND_CALIBRATION
+		_calibrating=false;
+		#endif
 	}
+
+	
 	void begin(void)
 	{
     	bool resumeSuccess=false;
@@ -155,7 +176,7 @@ public:
 		        _resumeLastLogTime += _tempLogPeriod/1000;
 		        int numberInRecord=0;
 
-		        for(int i=0;i<7;i++) if(mask & (1<<i)) numberInRecord +=2;
+		        for(int i=0;i<NumberDataBitMask;i++) if(mask & (1<<i)) numberInRecord +=2;
 
 		        if((numberInRecord + idx) > size){
 		            // not enough data for this record!
@@ -164,7 +185,7 @@ public:
 		        }else{
 		            if(mask & (1<<OrderGravity)){
 		                size_t ridx = idx;
-        		        for(int i=0;i<7;i++){
+        		        for(int i=0;i<NumberDataBitMask;i++){
 	        		        if(mask & (1<<i)){
 		        		        if( i == OrderGravity){
 			        	    	    byte d0=_logBuffer[ridx];
@@ -193,7 +214,17 @@ public:
 					size_t tdiff= (mask <<16) + (d1 << 8) + d0;
 			    	_resumeLastLogTime = _fileInfo.starttime + tdiff;
 				}
-	    	}
+			}else if(tag == CalibrationPointTag){
+				if((2 + idx) > size){
+		            // not enough data for this record!
+		            // rewind and return
+		            return idx - 2;
+				}else{
+					idx += 2;
+				}
+			}else if(tag == StartLogTag){
+				_calibrating = (mask & 0x20) ^ 0x20;
+			}
         } // while data available
         return idx;
     }
@@ -264,8 +295,11 @@ public:
 	}
 
 	bool isLogging(void){ return _recording; }
-
+	#if BREW_AND_CALIBRATION
+	bool startSession(const char *filename,bool calibrating){		
+	#else
 	bool startSession(const char *filename){
+	#endif
 		if(_recording) return false; // alread start
 
 		if(_fsspace < 100){
@@ -292,8 +326,15 @@ public:
 
 		char unit;
 		brewPi.getLogInfo(&unit,&_mode,&_state);
-		startLog(unit == 'F');
 
+		#if BREW_AND_CALIBRATION
+		startLog(unit == 'F',calibrating);
+		_calibrating = calibrating;
+		
+		#else
+		startLog(unit == 'F');		
+		#endif
+		
 		resetTempData();
 		loop(); // get once
 		addMode(_mode);
@@ -368,6 +409,13 @@ public:
 				changeMask |= (1 << OrderGravity);
 				changeNum ++;
 		}
+		
+		#if BREW_AND_CALIBRATION
+		if( _extTileAngle != INVALID_TILT_ANGLE){
+			changeMask |= (1 << OrderTiltAngle);
+			changeNum ++;
+		}
+		#endif
 
 		int startIdx = allocByte(2+ changeNum * 2);
 		if(startIdx < 0) return;
@@ -396,6 +444,14 @@ public:
 			//DBG_PRINTF("gravity %d: %d %d\n",_extGravity,(_extGravity >>8) & 0x7F,_extGravity & 0xFF);
 			_extGravity = INVALID_GRAVITY_INT;
 		}
+
+		#if BREW_AND_CALIBRATION
+		if( _extTileAngle != INVALID_TILT_ANGLE){
+			writeBuffer(idx++,(_extTileAngle >>8) & 0x7F);
+			writeBuffer(idx++,_extTileAngle & 0xFF);
+			_extTileAngle = INVALID_TILT_ANGLE;
+		}
+		#endif
 
 		commitData(startIdx,2+ changeNum * 2);
 
@@ -573,7 +629,27 @@ public:
 		_extTemp = convertTemperature(temp);
 		DBG_PRINTF("AuxTemp:%d\n",_extTemp);
 	}
-
+	#if BREW_AND_CALIBRATION
+	void addTiltAngle(float tilt)
+	{
+		_extTileAngle = TiltEncode(tilt);
+	}
+	void addTiltInWater(float tilt)
+	{
+		if(!_recording) return;
+		int idx = allocByte(4);
+		if(idx < 0) return;
+		uint16_t angle=TiltEncode(tilt);		
+		writeBuffer(idx,CalibrationPointTag);
+		writeBuffer(idx+1,0);
+		writeBuffer(idx+2,HighOctect(angle));
+		writeBuffer(idx+3,LowOctect(angle));
+		commitData(idx,4);		
+	}
+	bool calibrating(void){
+		return _calibrating;
+	}
+	#endif
 private:
 	size_t _fsspace;
 	uint32_t  _tempLogPeriod;
@@ -581,6 +657,7 @@ private:
     uint32_t _resumeLastLogTime;
 
 	bool _recording;
+	bool _calibrating;
 
 	size_t _logIndex;
 	size_t _savedLength;
@@ -599,6 +676,9 @@ private:
 	uint16_t  _extTemp;
 	uint16_t  _extGravity;
 	uint16_t  _extOriginGravity;
+#if BREW_AND_CALIBRATION
+	uint16_t  _extTileAngle;
+#endif
 
 	// for circular buffer
 	int _logHead;
@@ -606,7 +686,9 @@ private:
 	uint32_t _startOffset;
 	bool _sendHeader;
 	uint32_t _sendOffset;
-	uint16_t  _headData[7];
+	
+	#define VolatileDataHeaderSize 7
+	uint16_t  _headData[VolatileDataHeaderSize];
 
 	void resetTempData(void)
 	{
@@ -614,6 +696,9 @@ private:
 		_extTemp=INVALID_TEMP_INT;
 		_extGravity=INVALID_GRAVITY_INT;
 		_extOriginGravity=INVALID_GRAVITY_INT;
+		#if BREW_AND_CALIBRATION
+		_extTileAngle = INVALID_TILT_ANGLE;
+		#endif
 	}
 
 	void checkspace(void)
@@ -653,7 +738,7 @@ private:
 		// a record full of all data = 2 + 7 * 2= 16
 		*ptr++ = (char) PeriodTag;
 		*ptr++ = (char) 0x7F;
-		for(int i=0;i<7;i++){
+		for(int i=0;i<VolatileDataHeaderSize;i++){
 			*ptr++ = _headData[i] >> 8;
 			*ptr++ = _headData[i] & 0xFF;
 		}
@@ -661,18 +746,29 @@ private:
 		*ptr++ = ModeTag;
 		*ptr++ = mode;
 		// state: 2
-		*ptr++ = StageTag;
+		*ptr++ = StateTag;
 		*ptr++ = state;
 	}
-
-	void startLog(bool fahrenheit)
+	#if BREW_AND_CALIBRATION
+	void startLog(bool fahrenheit,bool calibrating)
+	#else
+	void startLog(bool fahrenheit)	
+	#endif
 	{
 		char *ptr=_logBuffer;
 		// F0FF  peroid   4 bytes
 		// Start system time 4bytes
 		uint8_t headerTag=5;
 		*ptr++ = StartLogTag;
-		*ptr++ = headerTag | (fahrenheit? 0xF0:0xE0) ;
+
+		headerTag = headerTag | (fahrenheit? 0xF0:0xE0) ;
+
+		#if BREW_AND_CALIBRATION
+		if(calibrating) headerTag = headerTag ^ 0x20 ;
+		#endif
+
+		*ptr++ = headerTag;
+		
 		int period = _tempLogPeriod/1000;
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
@@ -732,7 +828,7 @@ private:
 
 			if(tag == PeriodTag) break;
 
-			if(tag == OriginGravityTag){
+			if(tag == OriginGravityTag || tag == CalibrationPointTag){
     			idx += 2;
 	    		dataDrop +=2;
 			}
@@ -742,7 +838,7 @@ private:
 		DBG_PRINTF("before tag %d, mask=%x\n",dataDrop,mask);
 
 
-		for(int i=0;i<7;i++){
+		for(int i=0;i<NumberDataBitMask;i++){
 			if(mask & (1<<i)){
 				if(idx >= LogBufferSize) idx -= LogBufferSize;
 				byte d0=_logBuffer[idx++];
@@ -874,7 +970,7 @@ private:
 	void addState(char state){
 		int idx = allocByte(2);
 		if(idx <0) return;
-		writeBuffer(idx,StageTag); //*ptr = StageTag;
+		writeBuffer(idx,StateTag); //*ptr = StateTag;
 		writeBuffer(idx+1,state); //*(ptr+1) = state;
 		commitData(idx,2);
 	}

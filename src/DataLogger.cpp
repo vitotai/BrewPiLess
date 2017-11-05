@@ -63,6 +63,9 @@ int DataLogger::dataSprintf(char *buffer,const char *format)
 			}else if(ch == 'a'){
 				float at=externalData.auxTemp();
 				d += printFloat(buffer+d,at,1,IS_FLOAT_TEMP_VALID(at));
+			}else if(ch == 't'){
+				float tilt=externalData.tiltValue();
+				d += printFloat(buffer+d,tilt,2,true);
 			}else if(ch == 'u'){
 				d += sprintInt(buffer+d, externalData.lastUpdate());
 			}else{
