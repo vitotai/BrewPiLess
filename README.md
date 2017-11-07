@@ -1,9 +1,6 @@
 # BrewPiLess
- *Remember to clear browser cache to get new interface!*
- *Note: New log format after V1.2.7&v2.0!*
- *Note: default username/password/hostname changes to `brewpiless` after v1.2.7*
- **Note: The code is now built in PlatformIO.**
-  
+ **Note: re-SETUP is necessary after upgrading to v2.4**
+
 ## Features
  * I2C LCD support
  * Rotary Encoder support (* not supported by default)
@@ -86,7 +83,8 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
     * Use iSpindel temperature reading as Beer Sensor.
     * Display tilt value of iSpindel.
     * Enhance SSE re-establishment
-    * Default configurable minimum cooling/heating time.
+    * Default configurable minimum cooling/heating time & back-up sensor. (That is, Glycol supported.)
+    * HTTP Port settings.
 
  * v2.3.3 (2017/10/08)
     * All HTML files can be replaced by files on SPIFFS. Gzip support.
@@ -345,7 +343,7 @@ If this feature is enabled, BPL will record the TILT angles from iSpindel, expec
  * Input SG, which is the value of Original Gravity.
  * Measure SG as usual or more frequently. Input the measured SG.
 
-BPL will derive the formula by the Tilt values and gravity data input. If the number of data pairs is less than 4, then 2 order polynomial(x^2) will be derived. If 4 or more gravity readings are available, 3 order polynomial will be derived. At the beginning, there should be two readings, 1.0 and OG. Even though you can't expect precise and correct gravity readings from the chart from the beginning, the change of gravity can be deduced by the change of Tilt values.
+BPL will derive the formula by the Tilt values and gravity data input. If the number of data pairs is less than 3, then linear(x) formula is used. Second order polynomial(x^2) will be derived if the number of pairs is equal to 3. If 4 or more gravity readings are available, 3 order polynomial will be derived. At the beginning, there should be two readings, 1.0 and OG. Even though you can't expect precise and correct gravity readings from the chart from the beginning, the change of gravity can be deduced by the change of Tilt values.
 
 Note: in *Brew and Calibrate* mode, the gravity values displayed on the chart is calculated by the browser, or by Javascript. That gravity data can't be used in Beer Profile. The Beer Profile will use the data that users input.
 
@@ -359,7 +357,7 @@ If BPL is in calibrating mode, there will be a lower case "f" at the bottom of t
 To use the temperature reading of iSpindel as Beer sensor, run `Device Setup`, and assign the *External Sensor* as "Beer Temp".
 ![ispindel as beer sensor](img/ispindel_sensor.jpg)
 
-The report period of iSpindel should be from 1-3 minutes.(**To be tested.**) If no report from iSpindel for over 5 minutes, the 
+The report period of iSpindel should be less than 1-3 minutes.(**To be tested.**) If no report from iSpindel for over 5 minutes, the 
 sensor is treated as disconnected.
 
 ---

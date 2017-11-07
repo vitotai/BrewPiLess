@@ -1,69 +1,71 @@
 <html>
+
 <head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8" >
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BrewPiLess reporting for duty!</title>
-  <meta name="apple-mobile-web-app-title" content="BrewPiLess">
-  <meta name="apple-mobile-web-app-capable" content="yes" >
-  <script type="text/javascript" src="js/vendor/dygraph-combined.js"></script>
-  <script type="text/javascript" src="js/vendor/bwf.js"></script>
-  <script type="text/javascript" src="js/shared.js"></script>
-  <script type="text/javascript" src="js/script-control.js"></script>
-  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-  <link rel="stylesheet" href="style-control.css">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrewPiLess reporting for duty!</title>
+    <meta name="apple-mobile-web-app-title" content="BrewPiLess">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script type="text/javascript" src="js/vendor/dygraph-combined.js"></script>
+    <script type="text/javascript" src="js/vendor/bwf.js"></script>
+    <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/script-control.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="style-control.css">
 </head>
+
 <body onload="init()">
 
-  <!-- build:include partials/header.html -->
-  This will be replaced by the content of header.html
-  <!-- /build -->
+    <!-- build:include partials/header.html -->
+    This will be replaced by the content of header.html
+    <!-- /build -->
 
-  <div viewport layout vertical>
-    <div main>
+    <div viewport layout vertical>
+        <div main>
 
-      <div class="navbar" horizontal layout main-justified cross-center>
-        <div class="navitems">
-          <a class="navitem" id="profile-m" href="#profile-s">Beer profile</a>
-          <a class="navitem" id="beer-m" href="#beer-s">Beer Const.</a>
-          <a class="navitem" id="fridge-m" href="#fridge-s">Fridge Const.</a>
-          <a class="navitem" id="off-m" href="#off-s">Off</a>
-        </div>
-        <button id="modekeeper-apply" class="btn btn--raised" style="max-width: 200px;" onclick="modekeeper.apply()">Apply</button>
-      </div>
-
-      <div id="profile-s" layout horizontal>
-        <div id="profile-edit">
-          <div layout horizontal main-justified cross-center>
-            <div layout horizontal cross-center>
-              <span class="start-date">Start Date:</span>
-              <input type="datetime-local" style="max-width: 200px;margin: 8px 0 16px;" id="startdate" onchange="profileEditor.startDayChange();">
+            <div class="navbar" horizontal layout main-justified cross-center>
+                <div class="navitems">
+                    <a class="navitem" id="profile-m" href="#profile-s">Beer profile</a>
+                    <a class="navitem" id="beer-m" href="#beer-s">Beer Const.</a>
+                    <a class="navitem" id="fridge-m" href="#fridge-s">Fridge Const.</a>
+                    <a class="navitem" id="off-m" href="#off-s">Off</a>
+                </div>
+                <button id="modekeeper-apply" class="btn btn--raised" style="max-width: 200px;" onclick="modekeeper.apply()">Apply</button>
             </div>
-          </div>
-          <div layout horizontal main-justified cross-center class="spacing">
-            <button id="addbutton" onclick="profileEditor.addRow();" class="btn btn--raised">Add</button>
-            <div layout horizontal>
-              <button id="delbtn" class="btn" onclick="profileEditor.delRow();">Delete Last Item</button>
-              <button id="clearbtn" class="btn" onclick="profileEditor.clear()">Clear All</button>
-            </div>
-          </div>
-          <table class="profileTable" id="profile_t">
-            <thead>
-              <tr>
-                <th>T(&deg;<span class="t_unit">C</span>)</th>
-                <th>Condition</th>
-                <th>Days</th>
-                <th>SG</th>
-                <th>Stable</th>
-                <th>Start Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="stage-temp">19</td>
-                <td>
-                  <div class="for-time">Ramp</div>
-                  <div class="condition-con">
-                    <select class="condition md">
+
+            <div id="profile-s" layout horizontal>
+                <div id="profile-edit">
+                    <div layout horizontal main-justified cross-center>
+                        <div layout horizontal cross-center>
+                            <span class="start-date">Start Date:</span>
+                            <input type="datetime-local" style="max-width: 200px;margin: 8px 0 16px;" id="startdate" onchange="profileEditor.startDayChange();">
+                        </div>
+                    </div>
+                    <div layout horizontal main-justified cross-center class="spacing">
+                        <button id="addbutton" onclick="profileEditor.addRow();" class="btn btn--raised">Add</button>
+                        <div layout horizontal>
+                            <button id="delbtn" class="btn" onclick="profileEditor.delRow();">Delete Last Item</button>
+                            <button id="clearbtn" class="btn" onclick="profileEditor.clear()">Clear All</button>
+                        </div>
+                    </div>
+                    <table class="profileTable" id="profile_t">
+                        <thead>
+                            <tr>
+                                <th>T(&deg;<span class="t_unit">C</span>)</th>
+                                <th>Condition</th>
+                                <th>Days</th>
+                                <th>SG</th>
+                                <th>Stable</th>
+                                <th>Start Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="stage-temp">19</td>
+                                <td>
+                                    <div class="for-time">Ramp</div>
+                                    <div class="condition-con">
+                                        <select class="condition md">
                       <option value="t">Time</option>
                       <option value="g">SG</option>
                       <option value="s">Stable</option>
@@ -76,96 +78,97 @@
                       <option value="w">ALL</option>
                       <option value="e">Either</option>
                     </select>
-                  </div>
-                </td>
-                <td class="stage-time">7</td>
-                <td class="stage-sg">1.01</td>
-                <td class="stage-stabletime"></td>
-                <td class="diaplay-time"></td>
-              </tr>
-            </tbody>
-          </table>
-          <div layout horizontal main-justified cross-center class="spacing">
-            <div layout horizontal>
-              <button id="savebtn" class="btn btn--raised" onclick="saveprofile()">Save</button>
-              <button id="saveasbtn" class="btn" onclick="PL.saveas()">Save As</button>
+                                    </div>
+                                </td>
+                                <td class="stage-time">7</td>
+                                <td class="stage-sg">1.01</td>
+                                <td class="stage-stabletime"></td>
+                                <td class="diaplay-time"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div layout horizontal main-justified cross-center class="spacing">
+                        <div layout horizontal>
+                            <button id="savebtn" class="btn btn--raised" onclick="saveprofile()">Save</button>
+                            <button id="saveasbtn" class="btn" onclick="PL.saveas()">Save As</button>
+                        </div>
+                        <button id="loadbtn" class="btn" onclick="PL.toggle()">Load</button>
+                    </div>
+                </div>
+                <div id="tc_chart"></div>
             </div>
-            <button id="loadbtn"  class="btn" onclick="PL.toggle()">Load</button>
-          </div>
+
+            <div id="beer-s" class="detail" style="margin: 16px 0;" layout horizontal cross-center>
+                <span>Set beer temperature:</span>
+                <input type="number" size="6" id="beer-t" style="max-width: 200px"></input>&deg;<span class="t_unit">C</span>
+            </div>
+
+            <div id="fridge-s" class="detail" style="margin: 16px 0;" layout horizontal cross-center>
+                <span>Set fridge temperature:</span>
+                <input type="number" size="6" id="fridge-t" style="max-width: 200px"></input>&deg;<span class="t_unit">C</span>
+            </div>
+
+            <div id="off-s" class="detail">
+                <span style="margin: 16px 0;">Turning temperature controll <strong>off</strong>.</span>
+            </div>
+
         </div>
-        <div id="tc_chart"></div>
-      </div>
-
-      <div id="beer-s" class="detail" style="margin: 16px 0;" layout horizontal cross-center>
-        <span>Set beer temperature:</span>
-        <input type="number" size="6" id="beer-t" style="max-width: 200px"></input>&deg;<span class="t_unit">C</span>
-      </div>
-
-      <div id="fridge-s" class="detail"  style="margin: 16px 0;" layout horizontal cross-center>
-        <span>Set fridge temperature:</span>
-        <input type="number" size="6" id="fridge-t" style="max-width: 200px"></input>&deg;<span class="t_unit">C</span>
-      </div>
-
-      <div id="off-s" class="detail">
-        <span style="margin: 16px 0;">Turning temperature controll <strong>off</strong>.</span>
-      </div>
-
     </div>
-  </div>
 
-  <footer layout horizontal main-justified cross-center class="footer">
-    <span>BrewPiLess by <a href="https://github.com/vitotai/">vitotai</a></span>
-    <span><a href="https://github.com/vitotai/BrewPiLess/">project on GitHub</a></span>
-  </footer>
+    <footer layout horizontal main-justified cross-center class="footer">
+        <span>BrewPiLess by <a href="https://github.com/vitotai/">vitotai</a></span>
+        <span><a href="https://github.com/vitotai/BrewPiLess/">project on GitHub</a></span>
+    </footer>
 
-  <!-- Notification -->
-  <div class=error></div>
+    <!-- Notification -->
+    <div class=error></div>
 
-  <!-- Modals -->
-  <div id="dlg_loading" class="modal">
-    <div class="modal-content">
-      <p>Communicating with BrewPiLess controller..</p>
+    <!-- Modals -->
+    <div id="dlg_loading" class="modal">
+        <div class="modal-content">
+            <p>Communicating with BrewPiLess controller..</p>
+        </div>
     </div>
-  </div>
 
-  <div id="profile-list-pane" class="modal">
-    <div class="modal-content">
-      <h2 class="profile-load-heading">Load Profile</h2>
-      <ul class="profile-list" style="margin: 16px 0;">
-        <li layout horizontal main-justified cross-center style="margin: 8px 0;">
-          <a href="#" class="profile-name"></a>
-          <span class="btn--delete rmbutton"></span>
-        </li>
-      </ul>
-      <button class="btn" onclick="PL.toggle()">Cancel</button>
+    <div id="profile-list-pane" class="modal">
+        <div class="modal-content">
+            <h2 class="profile-load-heading">Load Profile</h2>
+            <ul class="profile-list" style="margin: 16px 0;">
+                <li layout horizontal main-justified cross-center style="margin: 8px 0;">
+                    <a href="#" class="profile-name"></a>
+                    <span class="btn--delete rmbutton"></span>
+                </li>
+            </ul>
+            <button class="btn" onclick="PL.toggle()">Cancel</button>
+        </div>
     </div>
-  </div>
 
-  <div id="dlg_beerprofilereminder" class="modal">
-    <div class="modal-content">
-      <span class="msg"></span>Note: For Beer Profoile to work properly,
-      <ol>
-        <li>Original Gravity Must be specified if SG is specified as percentage(%)</li>
-        <li>Local data log must be activated if stability of gravity reading is used.</li>
-      </ol>
-      Original Gravity:<input type="text" size="6" value="1.0">
-      <div class="dialog-buttons">
-        <button class="oknog">OK, OG already set</button>
-        <button class="ok">OK, Set OG</button>
-        <button class="cancel">Cancel</button>
-      </div>
+    <div id="dlg_beerprofilereminder" class="modal">
+        <div class="modal-content">
+            <span class="msg"></span>Note: For Beer Profile to work properly,
+            <ol>
+                <li>Original Gravity Must be specified if SG is specified as percentage(%)</li>
+                <li>Local data log must be activated if stability of gravity reading is used.</li>
+            </ol>
+            Original Gravity:<input type="text" size="6" value="1.0">
+            <div class="dialog-buttons">
+                <button class="oknog">OK, OG already set</button>
+                <button class="ok">OK, Set OG</button>
+                <button class="cancel">Cancel</button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div id="dlg_saveas" class="modal">
-    <div class="modal-content">
-      <span class="msg">Save Profile As</span>
-      <br><input type="text" size="32">
-      <br>*No special letters and space allowed.
-      <button onclick="PL.cancelSave()">Cancel</button>
-      <button onclick="PL.doSave()">OK</button>
+    <div id="dlg_saveas" class="modal">
+        <div class="modal-content">
+            <span class="msg">Save Profile As</span>
+            <br><input type="text" size="32">
+            <br>*No special letters and space allowed.
+            <button onclick="PL.cancelSave()">Cancel</button>
+            <button onclick="PL.doSave()">OK</button>
+        </div>
     </div>
-  </div>
 
 </body>
+
 </html>
