@@ -497,7 +497,7 @@
         BrewChart.prototype.getFormula = function() {
             var points = this.getCalibration();
             if (points.length < 2) return;
-            var poly = regression('polynomial', points, (points.length > 3) ? 3 : 2, {
+            var poly = regression('polynomial', points, (points.length > 3) ? 3 : ((points.length > 2) ? 2 : 1), {
                 precision: 9
             });
             this.calibrationPoints = points;
@@ -510,11 +510,14 @@
                         poly.equation[1] * x +
                         poly.equation[2] * x * x +
                         poly.equation[3] * x * x * x;
-                } : function(x) {
+                } : ((points.length > 2) ? function(x) {
                     return poly.equation[0] +
                         poly.equation[1] * x +
                         poly.equation[2] * x * x;
-                };
+                } : function(x) {
+                    return poly.equation[0] +
+                        poly.equation[1] * x;
+                });
         };
         BrewChart.prototype.process = function(data) {
             var newchart = false;
