@@ -19,6 +19,10 @@ const char config_html[]  PROGMEM =R"END(
 <td><input name="name" type="text" size="12" maxlength="16"></td>
 </tr>
 <tr>
+<td>HTTP Port</td>
+<td><input name="port" type="text" size="5" maxlength="5"></td>
+</tr>
+<tr>
 <td>User Name</td>
 <td><input name="user" type="text" size="12" maxlength="16"></td>
 </tr>
