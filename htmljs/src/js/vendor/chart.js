@@ -519,6 +519,11 @@
                         poly.equation[1] * x;
                 });
         };
+        BrewChart.prototype.tempCorrected = function(Reading, T) {
+            var F = (this.celius) ? C2F(T) : T;
+            return Reading + 0.001 * (1.313454 - (0.132674 * F) + (0.002057793 * F * F) - (0.000002627634 * F * F * F));
+        };
+
         BrewChart.prototype.process = function(data) {
             var newchart = false;
             var sgPoint = false;
@@ -647,7 +652,7 @@
                 } else if (t.calculateSG) {
                     if (t.dataset[8] == null) dataset[7] = null;
                     else {
-                        sg = t.sgByTilt(t.dataset[8]);
+                        sg = t.tempCorrected(t.sgByTilt(t.dataset[8]), dataset[AuxTempLine]);
                         dataset[7] = sg;
                     }
                 }
