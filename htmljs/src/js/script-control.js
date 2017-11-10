@@ -1,8 +1,30 @@
+function formatDate(dt) {
+    //	var y = dt.getFullYear();
+    //	var M = dt.getMonth() +1;
+    //	var d = dt.getDate();
+    var h = dt.getHours();
+    var m = dt.getMinutes();
+    //    var s = dt.getSeconds();
+    function dd(n) {
+        return (n < 10) ? '0' + n : n;
+    }
+    //	return dd(M) + "/" + dd(d) + "/" + y +" "+ dd(h) +":"+dd(m)+":"+dd(s);
+    //	return dd(M) + "/" + dd(d) +" "+ dd(h) +":"+dd(m);
+    return dt.toLocaleDateString() + " " + dd(h) + ":" + dd(m);
+}
+
+function formatDateForPicker(date) {
+    var h = date.getHours();
+    var m = date.getMinutes();
+
+    function dd(n) { return (n < 10) ? '0' + n : n; }
+    return date.getFullYear() + "-" + dd(date.getMonth() + 1) + "-" + dd(date.getDate()) + "T" + dd(h) + ":" + dd(m);
+}
 /* profile.js */
 var profileEditor = {
     dirty: false,
     tempUnit: 'C',
-    C_startday_Id: "startdate",
+    C_startday_Id: "#startdate",
     C_savebtn_Id: "savebtn",
     markdirty: function(d) {
         this.dirty = d;
@@ -11,12 +33,16 @@ var profileEditor = {
     getStartDate: function() {
         return this.sd;
     },
-    setStartDate: function(d) {},
+    setStartDate: function(d) {
+        this.sd = d;
+        var date_in = Q(this.C_startday_Id);
+        date_in.value = (date_in.type == "datetime-local") ? formatDateForPicker(d) : formatDate(d);
+    },
     startDayChange: function() {
-        var nd = new Date(document.getElementById(this.C_startday_Id).value);
+        var nd = new Date(Q(this.C_startday_Id).value);
         if (isNaN(nd.getTime())) {
             // console.log("invalid date");
-            document.getElementById(this.C_startday_Id).value = formatDateForPicker(this.sd);
+            this.setStartDate(this.sd);
         } else {
             // console.log(nd);
             this.sd = nd;
@@ -26,8 +52,7 @@ var profileEditor = {
     },
     startnow: function() {
         var d = new Date();
-        document.getElementById(this.C_startday_Id).value = formatDateForPicker(d);
-        this.sd = d;
+        this.setStartDate(d);
         this.reorg();
         this.markdirty(true);
     },
@@ -314,8 +339,7 @@ var profileEditor = {
     },
 
     initable: function(c, e) {
-        this.sd = e;
-        document.getElementById(this.C_startday_Id).value = formatDateForPicker(e);
+        this.setStartDate(e);
         var b = document.getElementById("profile_t").getElementsByTagName("tbody")[0];
         this.row = b.getElementsByTagName("tr")[0];
         b.removeChild(this.row);
@@ -483,7 +507,7 @@ var PL = {
         var a = this;
         var h = Q(a.div).querySelector(".profile-list");
         var e;
-        while (e = h.querySelector("li:nth-of-type(1)")) {
+        while (e = h.querySelector("li:nth-of-type(0)")) {
             h.removeChild(e)
         }
         var b = a.row;
@@ -493,8 +517,7 @@ var PL = {
             c.querySelector(".profile-name").onclick = function(j) {
                 j.preventDefault();
                 a.load(g);
-                closeProfileListModal();
-                return false;
+                return false
             };
             c.querySelector(".rmbutton").onclick = function() {
                 a.rm(g)
@@ -512,7 +535,7 @@ var PL = {
     init: function() {
         var a = this;
         a.initialized = true;
-        a.row = Q(a.div).querySelector("li:nth-of-type(1)");
+        a.row = Q(a.div).querySelector("li");
         a.row.parentNode.removeChild(a.row);
         s_ajax({
             url: a.url_list,
@@ -539,13 +562,13 @@ var PL = {
         }
         this.shown = !this.shown;
         if (this.shown) {
-            Q(this.div).style.display = "flex"
+            Q(this.div).style.display = "block";
         } else {
-            Q(this.div).style.display = "none"
+            Q(this.div).style.display = "none";
         }
     },
     saveas: function() {
-        Q("#dlg_saveas").style.display = "flex"
+        Q("#dlg_saveas").style.display = "block"
     },
     cancelSave: function() {
         Q("#dlg_saveas").style.display = "none"
@@ -580,18 +603,14 @@ var PL = {
         })
     }
 };
-
-function closeProfileListModal() {
-  Q('#profile-list-pane').style.display = "none";
-}
 /* end of PL*/
-
 var BrewPiSetting = {
     valid: false,
     maxDegree: 30,
     minDegree: 0,
     tempUnit: 'C'
 };
+
 
 var ControlChart = {
     unit: "C",
@@ -602,7 +621,7 @@ var ControlChart = {
 
         var dateFormatter = function(v) {
             d = new Date(v);
-            return formatDate(d);
+            return d.shortLocalizedString();
         };
         var shortDateFormatter = function(v) {
             d = new Date(v);
@@ -681,7 +700,7 @@ var modekeeper = {
     },
     select: function(m) {
         document.getElementById(m + "-m").className += ' nav-selected';
-        document.getElementById(m + "-s").style.display = "flex";
+        document.getElementById(m + "-s").style.display = "block";
     },
     init: function() {
         var me = this;
@@ -732,7 +751,7 @@ var modekeeper = {
             document.getElementById('dlg_beerprofilereminder').querySelector("button.ok").onclick = function() {
                 document.getElementById('dlg_beerprofilereminder').style.display = "none";
                 var gravity = parseFloat(Q("#dlg_beerprofilereminder input").value);
-                updateOriginGravity(gravity);
+                if (typeof updateOriginGravity == "function") updateOriginGravity(gravity);
                 var data = {
                     name: "webjs",
                     og: 1,
@@ -780,7 +799,15 @@ function saveprofile() {
     });
 }
 
-function loaded() {
+function updateTempUnit(u) {
+    var Us = document.getElementsByClassName("t_unit");
+    for (var i = 0; i < Us.length; i++) {
+        Us[i].innerHTML = u;
+    }
+}
+
+
+function onloadCtrl(next) {
     modekeeper.init();
 
     openDlgLoading();
@@ -792,6 +819,7 @@ function loaded() {
             if (!initial) return;
             initial = false;
             closeDlgLoading();
+            next();
         }
         invoke({
             url: "/tcc",
@@ -818,10 +846,8 @@ function loaded() {
             }
         });
     }
-
     //get current profile
     BWF.load(BWF.BrewProfile, function(d) {
-      console.log('load')
         try {
             var p = JSON.parse(d);
             updateTempUnit(p.u); // using profile temp before we get from controller
@@ -841,24 +867,6 @@ function loaded() {
     });
 }
 
-function init() {
-  loaded();
-  var gotMsg=true;
-  getActiveNavItem();
-
-  BWF.init({
-    handlers:{
-      V:function(c){
-        if(typeof c["nn"]!="undefined"){
-          Q("#hostname").innerHTML = c["nn"];
-        }
-        if(typeof c["ver"]!="undefined"){
-          if(JSVERION != c["ver"]) {
-            alert("Version Mismatched!. Reload the page.");
-          }
-          Q("#verinfo").innerHTML = "v" + c["ver"];
-        }
-      }
-    }
-  });
-};
+function initctrl() {
+    onloadCtrl(function() {});
+}

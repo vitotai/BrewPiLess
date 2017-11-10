@@ -59,13 +59,10 @@ var BWF = {
             mime: "application/x-www-form-urlencoded",
             data: "data=" + encodeURI(data),
             success: function() { if (typeof opt.success !== "undefined") opt.success(); },
-            fail: function(a) {
-                if (typeof opt.fail !== "undefined") opt.fail(a);
-                else b.error(a);
-            }
+            fail: function(a) { if (typeof opt.fail !== "undefined") opt.fail(a);
+                else b.error(a); }
         });
     },
-    reconnecting: false,
     connect: function() {
         var b = this;
         var es = new EventSource("/getline");
@@ -73,24 +70,19 @@ var BWF = {
             b.process(e.data);
         };
         es.onerror = function() {
-            if (b.reconnecting) return;
             b.error(-2);
             if (b.auto) setTimeout(function() { b.reconnect(); }, 5000);
         };
         es.onopen = function() {
             b.onconnect();
         };
-        b.es = es;
+        this.es = es;
     },
     reconnect: function() {
-        if (!this.sse) return;
-
-        if (this.reconnecting) return;
-        this.reconnecting = true;
-        this.es.close();
-        // this might triger onerror, and result in "reconnect" call again.
+        if (this.sse) {
+            this.es.close();
+        }
         this.connect();
-        this.reconnecting = false;
     },
     init: function(arg) {
         var b = this;
