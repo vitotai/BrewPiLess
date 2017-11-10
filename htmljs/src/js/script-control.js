@@ -867,6 +867,35 @@ function onloadCtrl(next) {
     });
 }
 
+function communicationError() {
+    var div = Q('.error');
+    if (div) {
+        div.innerHTML = "Failed to connect to server.";
+        div.style.display = "block";
+    }
+}
+
 function initctrl() {
-    onloadCtrl(function() {});
+    onloadCtrl(function() {
+        BWF.init({
+            error: function(e) {
+                //console.log("error");
+                communicationError();
+            },
+            handlers: {
+                V: function(c) {
+                    if (typeof c["rssi"] != "undefined") {
+                        displayrssi(c["rssi"]);
+                    }
+                    if (typeof c["nn"] != "undefined") {
+                        Q("#hostname").innerHTML = c["nn"];
+                    }
+                    if (typeof c["ver"] != "undefined") {
+                        if (JSVERION != c["ver"]) alert("Version Mismatched!. Reload the page.");
+                        Q("#verinfo").innerHTML = "v" + c["ver"];
+                    }
+                },
+            }
+        });
+    });
 }

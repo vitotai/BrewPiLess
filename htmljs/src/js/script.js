@@ -179,7 +179,7 @@
     }
 
     function processLcdText(lines) {
-        var div = Q("#status-pane .error");
+        var div = Q(".error");
         if (div) div.style.display = "none";
 
         var status = parseLcdText(lines);
@@ -209,7 +209,7 @@
     }
 
     function communicationError() {
-        var div = Q('#status-pane  .error');
+        var div = Q('.error');
         if (div) {
             div.innerHTML = "Failed to connect to server.";
             div.style.display = "block";
@@ -217,7 +217,7 @@
     }
 
     function controllerError() {
-        var div = Q('#status-pane  .error');
+        var div = Q('.error');
         if (div) {
             div.innerHTML = "Controller not updating data.";
             div.style.display = "block";
