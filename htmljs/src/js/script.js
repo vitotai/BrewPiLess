@@ -449,5 +449,5 @@
         var gotMsg = true;
         connBWF();
         BChart.start();
-
+        getActiveNavItem();
     }

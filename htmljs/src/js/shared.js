@@ -70,3 +70,9 @@ Date.prototype.shortLocalizedString = function() {
     }
     return ds + " " + T(HH) + ":" + T(MM);
 };
+
+function getActiveNavItem() { 
+    var path = window.location.pathname.split("/").pop(); 
+    var element = Q('.options>li>a[href="/' + path + '"]'); 
+    element.className += 'active'; 
+} 
