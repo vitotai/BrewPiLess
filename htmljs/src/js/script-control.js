@@ -885,9 +885,6 @@ function initctrl() {
             },
             handlers: {
                 V: function(c) {
-                    if (typeof c["rssi"] != "undefined") {
-                        displayrssi(c["rssi"]);
-                    }
                     if (typeof c["nn"] != "undefined") {
                         Q("#hostname").innerHTML = c["nn"];
                     }
