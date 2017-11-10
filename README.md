@@ -78,7 +78,7 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
- * v2.4 (Working)
+ * v2.4 (2017/11/09)
     * Brew and calibrate iSpindel.
     * Use iSpindel temperature reading as Beer Sensor.
     * Display tilt value of iSpindel.
@@ -345,7 +345,9 @@ If this feature is enabled, BPL will record the TILT angles from iSpindel, expec
 
 BPL will derive the formula by the Tilt values and gravity data input. If the number of data pairs is less than 3, then linear(x) formula is used. Second order polynomial(x^2) will be derived if the number of pairs is equal to 3. If 4 or more gravity readings are available, 3 order polynomial will be derived. At the beginning, there should be two readings, 1.0 and OG. Even though you can't expect precise and correct gravity readings from the chart from the beginning, the change of gravity can be deduced by the change of Tilt values.
 
-Note: in *Brew and Calibrate* mode, the gravity values displayed on the chart is calculated by the browser, or by Javascript. That gravity data can't be used in Beer Profile. The Beer Profile will use the data that users input.
+**The gravity reading to input shoud be NON temperature-corrected. The wort used to measure gravity shoud be at the same temperature as the fermenting wort. The data used to calibrate iSpindel is from the iSpindle in the fermenting wort and the gravity input. The derived formula will be used to calculate the gravity value. Temperature correction is applied on the calculated values.**
+
+Note: in *Brew and Calibrate* mode, the gravity values displayed on the chart is calculated by the browser, or by Javascript to be exact. That gravity data can't be used in Beer Profile. The Beer Profile will use the data that users input.
 
 ![Calibrating](img/ispindel_calibrating.jpg)
 
