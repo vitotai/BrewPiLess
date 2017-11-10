@@ -1,0 +1,99 @@
+@import 'import/vars';
+@import 'import/mixins';
+@import 'layout/reset';
+@import 'layout/typo';
+@import 'layout/layout';
+@import 'layout/base';
+@import 'ui-elements/buttons';
+@import 'ui-elements/modal';
+@import 'ui-elements/select';
+
+.corner-top {
+    border-top-right-radius: 5px;
+    border-top-left-radius: 5px
+}
+
+.corner-bottom {
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px
+}
+
+.navbar {
+    margin: 0;
+    padding: .2em .2em 0;
+    border: 1px solid #4297d7;
+    background: #5c9ccc;
+    color: #fff;
+    height: 2em;
+    display: block;
+    position: relative
+}
+
+.bar-title {
+    margin-right: 160px;
+    font-weight: bold
+}
+
+.device-container {
+    border: 1px solid;
+    padding: 5px
+}
+
+.device-setting-container {
+    padding: 5px;
+    width: 150px;
+    float: left;
+    color: #555
+}
+
+.device-titleNapply {
+    float: left;
+    padding: 5px
+}
+
+.setting-name {
+    font-weight: bold;
+    display: block
+}
+
+.device-detail {
+    float: left
+}
+
+.device-title {
+    display: block;
+    white-space: nowrap;
+    float: left;
+    clear: both;
+    font-size: 1.2em;
+    color: #306fa9
+}
+
+#installed-device,
+#detected-device {
+    font-weight: bold;
+    font-size: 18px;
+    padding: .5em
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    padding-top: 100px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: #000;
+    background-color: rgba(0, 0, 0, 0.4)
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%
+}

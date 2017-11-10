@@ -1,0 +1,23 @@
+.mdl-data-table  {
+    th {
+        padding: 8px;
+        white-space: nowrap;
+        color: rgba(0, 0, 0, 0.541176);
+        font-weight: bold;
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 17px;
+        text-align: left;
+    }
+
+    tr {
+        height: auto;
+    
+        &:nth-child(even) {
+            background-color: #eee;
+        }
+    }
+
+    td {
+        padding: 8px;
+    }
+}

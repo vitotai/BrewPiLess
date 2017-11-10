@@ -30,13 +30,16 @@ module.exports = (grunt) ->
           collapseWhitespace: true,
           collapseBooleanAttributes: true,
           removeAttributeQuotes: true,
-          removeRedundantAttributes: true,
+          removeRedundantAttributes: false,
           removeEmptyAttributes: true,
           minifyJS: true,
           minifyCSS: true
         files: [{
           'dist/index.htm': 'dist/index.htm',
-          'dist/control.htm': 'dist/control.htm'
+          'dist/control.htm': 'dist/control.htm',
+          'dist/setup.htm': 'dist/setup.htm',
+          'dist/gravity.htm': 'dist/gravity.htm',
+          'dist/logging.htm': 'dist/logging.htm'
         }]
       dev:
         options:
@@ -50,14 +53,20 @@ module.exports = (grunt) ->
           minifyCSS: false
         files: [{
           'build/index.html': 'build/index.html',
-          'build/control.html': 'build/control.html'
+          'build/control.html': 'build/control.html',
+          'build/setup.html': 'build/setup.html',
+          'build/gravity.html': 'build/gravity.html',
+          'build/logging.html': 'build/logging.html'
         }]
 
     comboall:
       main:
         files: [
             { 'dist/index.htm': ['build/index.html'] },
-            { 'dist/control.htm': ['build/control.html'] }
+            { 'dist/control.htm': ['build/control.html'] },
+            { 'dist/setup.htm': ['build/setup.html'] },
+            { 'dist/gravity.htm': ['build/gravity.html'] },
+            { 'dist/logging.htm': ['build/logging.html'] }
         ]
 
     jshint:
@@ -116,6 +125,9 @@ module.exports = (grunt) ->
         files: [
           'build/index.html': ['src/index.html']
           'build/control.html': ['src/control.html']
+          'build/setup.html': ['src/setup.html']
+          'build/gravity.html': ['src/gravity.html']
+          'build/logging.html': ['src/logging.html']
         ]
 
     watch:

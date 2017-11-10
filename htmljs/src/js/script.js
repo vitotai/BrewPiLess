@@ -416,7 +416,7 @@
                         Q("#hostname").innerHTML = c["nn"];
                     }
                     if (typeof c["ver"] != "undefined") {
-                        if (JSVERION != c["ver"]) alert("Version Mismatched!. Reload the page.");
+                        if (JSVERSION != c["ver"]) alert("Version Mismatched!. Reload the page.");
                         Q("#verinfo").innerHTML = "v" + c["ver"];
                     }
                     if (typeof c["tm"] != "undefined" && typeof c["off"] != "undefined") {

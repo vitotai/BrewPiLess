@@ -164,10 +164,10 @@
 /** Content **/
 
 [viewport] {
-    height: calc(100% - 104px);
+    min-height: calc(100% - 104px);
     @include for-tablet-landscape-down {
         flex-direction: column !important;
-        height: auto;
+        min-height: 0;
     }
 }
 [main] {

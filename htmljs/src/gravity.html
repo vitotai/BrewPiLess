@@ -1,0 +1,80 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrewPiLess gravity-center!</title>
+    <meta name="apple-mobile-web-app-title" content="BrewPiLess">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/script-gravity.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="style-gravity.css">
+</head>
+
+<body onload=init()>
+
+    <!-- build:include partials/header.html -->
+    <!-- /build -->
+
+    <div viewport layout vertical>
+        <form action="" method="post">
+            <table>
+                <tr>
+                    <td>iSpindel</td>
+                    <td>
+                        <input type="checkbox" name="ispindel" value="1">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Calibrate iSpindel</td>
+                    <td>
+                        <input type="checkbox" name="cal" value="1"> Tilt in Water:
+                        <input type="text" name="tiltw" size="5">
+                    </td>
+                </tr>
+                <tr>
+                    <td>SG Calibration</td>
+                    <td>
+                        <input type="text" name="gc" size=4> point</td>
+                </tr>
+                <tr>
+                    <td>Temp. Correction</td>
+                    <td>
+                        <input type="checkbox" name="tc" value="1"> @
+                        <input type="text" name="ctemp" size=4>&deg;C </td>
+                </tr>
+                <tr>
+                    <td>Coefficients</td>
+                    <td>
+                        <input type="text" name="a3" size=15>*x^3 +
+                        <input type="text" name="a2" size=15>*x^2+
+                        <input type="text" name="a1" size=15>*x +
+                        <input type="text" name="a0" size=15> </td>
+                </tr>
+                <tr>
+                    <td>LowPass Filter Coefficient</td>
+                    <td>
+                        <input type="text" name="lpc" size=4> </td>
+                </tr>
+                <tr>
+                    <td>Gravity Stability Threshold</td>
+                    <td>
+                        <input type="text" name="stpt" size=4> point</td>
+                </tr>
+                <tr>
+                    <td>Save Change</td>
+                    <td>
+                        <input type="submit" name="submit" onclick="save();return false;"></input>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+
+    <!-- build:include partials/footer.html -->
+    <!-- /build -->
+
+</body>
+
+</html>

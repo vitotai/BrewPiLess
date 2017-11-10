@@ -120,10 +120,10 @@ html [flex] {
 html [layout][cross-center], html [layout][center-center] {
   align-items: center;
 }
-//
-// html [layout][cross-end] {
-//   align-items: flex-end;
-// }
+
+html [layout][cross-end] {
+   align-items: flex-end;
+}
 
 /* alignment in main axis */
 

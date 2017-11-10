@@ -1,4 +1,4 @@
-var JSVERION = "2.4";
+var JSVERSION = "2.4";
 
 function s_ajax(b) {
     var c = new XMLHttpRequest();
@@ -23,6 +23,10 @@ function s_ajax(b) {
         c.send(b.data)
     } else c.send()
 }
+
+var EI = function (i) {
+    return document.getElementById(i);
+};
 
 var Q = function(d) {
     return document.querySelector(d);
