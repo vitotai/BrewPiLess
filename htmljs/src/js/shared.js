@@ -1,3 +1,5 @@
+var JSVERION = "2.4";
+
 function s_ajax(b) {
     var c = new XMLHttpRequest();
     c.onreadystatechange = function() {

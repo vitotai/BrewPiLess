@@ -1,5 +1,3 @@
-    var JSVERION = "2.4";
-
     var BChart = {
         offset: 0,
         url: 'chart.php',
