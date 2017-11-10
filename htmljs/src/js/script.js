@@ -179,7 +179,9 @@
     }
 
     function processLcdText(lines) {
-        //            Q("#status-pane .error").style.display = "none";
+        var div = Q("#status-pane .error");
+        if (div) div.style.display = "none";
+
         var status = parseLcdText(lines);
         var ModeString = {
             o: "OFF",
@@ -207,15 +209,19 @@
     }
 
     function communicationError() {
-        var div = Q('.error');
-        if (div) div.innerHTML = "Failed to connect to server.";
-        else displayLcdText(["Failed to", "connect to", "Server", ""]);
+        var div = Q('#status-pane  .error');
+        if (div) {
+            div.innerHTML = "Failed to connect to server.";
+            div.style.display = "block";
+        } else displayLcdText(["Failed to", "connect to", "Server", ""]);
     }
 
     function controllerError() {
-        var div = Q('.error');
-        if (div) div.innerHTML = "Controller not updating data.";
-        else displayLcdText(["Controller not", "updating data", "...", ""]);
+        var div = Q('#status-pane  .error');
+        if (div) {
+            div.innerHTML = "Controller not updating data.";
+            div.style.display = "block";
+        } else displayLcdText(["Controller not", "updating data", "...", ""]);
     }
 
     function checkTime(time, tzoff) {
