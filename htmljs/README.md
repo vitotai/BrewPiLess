@@ -21,6 +21,7 @@ We use grunt to automate development and building tasks. If you want to test you
 ```
 grunt
 ```
+This will automatically recompile the code, you will just need to refresh the browser when it is finished.
 
 ### Build
 If you want to build the project run:
@@ -34,3 +35,4 @@ grunt build
 - unified header for all pages
 - ~~add better mobile support~~
 - ~~missing the heat/cool colors under the graph from the old one~~
+- ~~legend jumps for long states~~
