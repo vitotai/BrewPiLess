@@ -89,6 +89,10 @@
 	}
 }
 
+#formula-btn {
+	visibility: hidden;
+}
+
 /** WIFI **/
 
 #rssi {position:relative; height: 16px; width: 24px; display:inline-block;}
