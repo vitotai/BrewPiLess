@@ -104,6 +104,12 @@
 #define BREWPI_DS2413 0
 #endif
 
+// Enable External temperature Sensor
+//
+#ifndef BREWPI_EXTERNAL_SENSOR
+#define BREWPI_EXTERNAL_SENSOR 0
+#endif
+
 /**
  * Enable the LCD menu.
  */

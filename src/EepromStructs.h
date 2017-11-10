@@ -89,6 +89,9 @@ enum DeviceHardware {
 #if BREWPI_DS2413
 	DEVICE_HARDWARE_ONEWIRE_2413 = 3	// a onewire 2-channel PIO input or output.
 #endif
+#if BREWPI_EXTERNAL_SENSOR
+	DEVICE_HARDWARE_EXTERNAL_SENSOR = 5
+#endif
 };
 
 

@@ -31,7 +31,13 @@
 #define MINIMUM_TEMPERATURE_STEP 0.005
 #define MINIMUM_TEMPERATURE_SETTING_PERIOD 60
 #if SONOFF
+
+#ifdef NO_SPIFFS
+#define DEVELOPMENT_OTA true
+#else
 #define DEVELOPMENT_OTA false
+#endif
+
 #define DEVELOPMENT_FILEMANAGER false
 #else
 #define DEVELOPMENT_OTA true
@@ -45,4 +51,8 @@
 
 // don't change this.
 #define MAX_PROFILE_LEN 1024
+#endif
+
+#ifndef BREW_AND_CALIBRATION 
+#define BREW_AND_CALIBRATION true
 #endif

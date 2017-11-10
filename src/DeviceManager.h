@@ -81,6 +81,9 @@ inline bool isAssignable(DeviceType type, DeviceHardware hardware)
 #if BREWPI_DS2413
 	|| (hardware==DEVICE_HARDWARE_ONEWIRE_2413 && (type==DEVICETYPE_SWITCH_ACTUATOR || (DS2413_SUPPORT_SENSE && type==DEVICETYPE_SWITCH_SENSOR)))
 #endif
+#if BREWPI_EXTERNAL_SENSOR
+	|| (hardware==DEVICE_HARDWARE_EXTERNAL_SENSOR && type==DEVICETYPE_TEMP_SENSOR)
+#endif
 	|| (hardware==DEVICE_HARDWARE_ONEWIRE_TEMP && type==DEVICETYPE_TEMP_SENSOR)
 	|| (hardware==DEVICE_HARDWARE_NONE && type==DEVICETYPE_NONE);
 }
@@ -99,6 +102,11 @@ inline bool isDigitalPin(DeviceHardware hardware) {
 
 extern DeviceType deviceType(DeviceFunction id);
 
+#if BREWPI_EXTERNAL_SENSOR
+inline bool isExternalSensor(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_EXTERNAL_SENSOR;
+}
+#endif
 
 /**
  * Determines where this devices belongs.
@@ -252,7 +260,9 @@ public:
 	static void listDevices();
 
 private:
-
+	#if BREWPI_EXTERNAL_SENSOR //vito: enumerate device
+	static void enumerateExternalDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
+	#endif
 	static void enumerateOneWireDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
 	static void enumeratePinDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
 	static void OutputEnumeratedDevices(DeviceConfig* config, void* pv);

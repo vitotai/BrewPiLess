@@ -72,7 +72,8 @@ R"END(
 "pass":"brewpiless",
 "title":"brewpiless",
 "protect":0,
-"ap":0
+"ap":0,
+"port":80
 }
 )END";
 
@@ -83,7 +84,8 @@ R"END(
 "pass":"%s",
 "title":"%s",
 "protect":%d,
-"ap":%d
+"ap":%d,
+"port":%d
 }
 )END";
 
@@ -148,7 +150,9 @@ char password[32];
 char hostnetworkname[32];
 char titlelabel[32];
 
-AsyncWebServer server(80);
+//AsyncWebServer server(80);
+AsyncWebServer *webServer;
+
 BrewPiProxy brewPi;
 BrewKeeper brewKeeper([](const char* str){ brewPi.putLine(str);});
 #ifdef ENABLE_LOGGING
@@ -160,19 +164,6 @@ BrewLogger brewLogger;
 #if UseServerSideEvent == true
 AsyncEventSource sse(SSE_PATH);
 #endif
-
-// use in sprintf, put into PROGMEM complicates it.
-const char confightml[] PROGMEM =R"END(
-<html><head><title>Configuration</title></head><body>
-<form action="" method="post">
-<table>
-<tr><td>Host/Network Name</td><td><input name="name" type="text" size="12" maxlength="16" value="%s"></td></tr>
-<tr><td>User Name</td><td><input name="user" type="text" size="12" maxlength="16" value="%s"></td></tr>
-<tr><td>Password</td><td><input name="pass" type="password" size="12" maxlength="16" value="%s"></td></tr>
-<tr><td>Always need password</td><td><input type="checkbox" name="protect" value="yes" %s></td></tr>
-<tr><td>Always softAP</td><td><input type="checkbox" name="ap" value="yes" %s></td></tr>
-<tr><td>Save Change</td><td><input type="submit" name="submit"></input></td></tr>
-</table></form></body></html>)END";
 
 extern const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned int &size);
 
@@ -395,6 +386,12 @@ public:
   				AsyncWebParameter* user = request->getParam("user", true);
 				AsyncWebParameter* pass = request->getParam("pass", true);
 				AsyncWebParameter* title = request->getParam("title", true);
+				uint16_t port=80;
+
+				if(request->hasParam("port", true)){
+					port=(uint16_t)request->getParam("port", true)->value().toInt();
+					if(!port) port = 80;
+				}
 
   				File config=SPIFFS.open(CONFIG_FILENAME,"w+");
 
@@ -420,7 +417,7 @@ public:
   											user->value().c_str(),
 											  pass->value().c_str(),
 											  title->value().c_str(),
-  											protect,ap);
+  											protect,ap, port);
   				free(fmt);
   				config.flush();
   				config.close();
@@ -431,18 +428,23 @@ public:
   			}
 	 	}else if(request->method() == HTTP_GET &&  request->url() == TIME_PATH){
 			AsyncResponseStream *response = request->beginResponseStream("application/json");
-			response->printf("{\"t\":\"%s\",\"e\":%ld}",TimeKeeper.getDateTimeStr(),TimeKeeper.getTimeSeconds());
+			response->printf("{\"t\":\"%s\",\"e\":%lu,\"o\":%ld}",TimeKeeper.getDateTimeStr(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset());
 			request->send(response);
 		}else if(request->method() == HTTP_POST &&  request->url() == TIME_PATH){
 			if(request->hasParam("time", true)){
-  				AsyncWebParameter* tvalue = request->getParam("time", true);
-  				DBG_PRINTF("Set Time:%ld\n",tvalue->value().toInt());
-	 			TimeKeeper.setCurrentTime(tvalue->value().toInt());
-	 			request->send(200, "text/plain;", "");
-	 		}else{
-	 			request->send(400);
-	 		}
-	 	}else if(request->method() == HTTP_GET &&  request->url() == RESETWIFI_PATH){
+				  AsyncWebParameter* tvalue = request->getParam("time", true);
+				  time_t time=(time_t)tvalue->value().toInt();
+  				DBG_PRINTF("Set Time:%lu from:%s\n",time,tvalue->value().c_str());
+	 			TimeKeeper.setCurrentTime(time);
+			 }
+			 if(request->hasParam("off", true)){
+				AsyncWebParameter* tvalue = request->getParam("off", true);
+				DBG_PRINTF("Set timezone:%ld\n",tvalue->value().toInt());
+			   TimeKeeper.setTimezoneOffset(tvalue->value().toInt());
+		    }		   
+			request->send(200, "text/plain;", "");
+			 
+		}else if(request->method() == HTTP_GET &&  request->url() == RESETWIFI_PATH){
 	 	    if(!request->authenticate(username, password))
 	        return request->requestAuthentication();
 		 	request->send(200,"text/html","Done, restarting..");
@@ -669,7 +671,8 @@ void onClientConnected(AsyncEventSourceClient *client){
 		client->send(buf);
 	}
 	// RSSI && 
-	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d}",titlelabel,BPL_VERSION,WiFi.RSSI());
+	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld}"
+		,titlelabel,BPL_VERSION,WiFi.RSSI(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset());
 	client->send(buf);
 }
 
@@ -686,7 +689,7 @@ public:
 				char buf[36];
 				brewLogger.getFilePath(buf,index);
 				if(SPIFFS.exists(buf)){
-					request->send(SPIFFS,buf,"application/octet-stream");
+					request->send(SPIFFS,buf,"application/octet-stream",true);
 				}else{
 					request->send(404);
 				}
@@ -699,7 +702,13 @@ public:
 			}else if(request->hasParam("start")){
 				String filename=request->getParam("start")->value();
 				DBG_PRINTF("start logging:%s\n",filename.c_str());
+				#if BREW_AND_CALIBRATION
+				bool cal=externalData.isCalibrating();
+				if(brewLogger.startSession(filename.c_str(),cal)){
+					if(cal) brewLogger.addTiltInWater(externalData.titltInWater());
+				#else
 				if(brewLogger.startSession(filename.c_str())){
+				#endif
 					request->send(200);
 					notifyLogStatus();
 				}else
@@ -826,6 +835,7 @@ public:
 	}
 
 	bool canHandle(AsyncWebServerRequest *request){
+		DBG_PRINTF("req: %s\n", request->url().c_str());
 	 	if(request->url() == GRAVITY_PATH	) return true;
 	 	if(request->url() == GravityDeviceConfigPath) return true;
 
@@ -873,7 +883,7 @@ public:
 
 	void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
 		if(!index){
-		    DBG_PRINTF("BodyStart: %u B\n", total);
+		    DBG_PRINTF("BodyStart-len:%d total: %u\n",len, total);
 			_dataLength =0;
 			_error=(total >= MAX_DATA_SIZE);
 		}
@@ -883,7 +893,7 @@ public:
 			//Serial.write(data[i]);
 			_data[_dataLength ++] = data[i];
 		}
-		if(index + len == total){
+		if(index + len >= total){
 			_data[_dataLength]='\0';
 			DBG_PRINTF("Body total%u data:%s\n", total,_data);
 		}
@@ -1093,6 +1103,7 @@ void setup(void){
 		size_t len=config.readBytes(configBuf,MAX_CONFIG_LEN);
 		configBuf[len]='\0';
 	}
+	uint16_t port=80;
 
 	JsonObject& root = jsonBuffer.parseObject(configBuf);
 	//const char* host;
@@ -1124,9 +1135,14 @@ void setup(void){
 		else  strcpy(titlelabel,root["name"]);
   		passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
 		stationApMode=(root.containsKey("ap"))? (bool)(root["ap"]):false;
+		port = (root.containsKey("port"))? (uint16_t)(root["port"]):80;
+		if(port ==0) port = 80;
+
 		DBG_PRINTF("title:%s, name:%s, user:%s, pass:%s\n",titlelabel,hostnetworkname,username,password);
   	}
-	DBG_PRINTF("STA_AP mode? %d\n",stationApMode);
+
+
+	  DBG_PRINTF("STA_AP mode? %d\n",stationApMode);
 	#ifdef ENABLE_LOGGING
   	dataLogger.loadConfig();
   	#endif
@@ -1153,7 +1169,7 @@ void setup(void){
 
 
 	//3. setup Web Server
-
+	webServer=new AsyncWebServer(port);
 	// start WEB update pages.
 #if (DEVELOPMENT_OTA == true) || (DEVELOPMENT_FILEMANAGER == true)
 	ESPUpdateServer_setup(username,password);
@@ -1163,48 +1179,49 @@ void setup(void){
 	//3.1.1 status report through SSE
 
 #if ResponseAppleCNA == true
-	server.addHandler(&appleCNAHandler);
+	webServer->addHandler(&appleCNAHandler);
 #endif
 
 #if UseWebSocket == true
 	ws.onEvent(onWsEvent);
-  	server.addHandler(&ws);
+	webServer->addHandler(&ws);
 #endif
 
 #if UseServerSideEvent == true
 	sse.onConnect(onClientConnected);
-	server.addHandler(&sse);
+	webServer->addHandler(&sse);
 #endif
 
-	server.addHandler(&brewPiWebHandler);
+	webServer->addHandler(&brewPiWebHandler);
 
-	server.addHandler(&logHandler);
+	webServer->addHandler(&logHandler);
 
 	externalDataHandler.loadConfig();
-	server.addHandler(&externalDataHandler);
+	webServer->addHandler(&externalDataHandler);
 
 	//3.1.2 SPIFFS is part of the serving pages
 	//server.serveStatic("/", SPIFFS, "/","public, max-age=259200"); // 3 days
 
 
-	server.on("/fs",[](AsyncWebServerRequest *request){
+	webServer->on("/fs",[](AsyncWebServerRequest *request){
 		FSInfo fs_info;
 		SPIFFS.info(fs_info);
 		request->send(200,"","totalBytes:" +String(fs_info.totalBytes) +
 		" usedBytes:" + String(fs_info.usedBytes)+" blockSize:" + String(fs_info.blockSize)
 		+" pageSize:" + String(fs_info.pageSize)
+		+" freesketch:" + String(ESP.getFreeSketchSpace())
 		+" heap:"+String(ESP.getFreeHeap()));
 		//testSPIFFS();
 	});
 
 	// 404 NOT found.
   	//called when the url is not defined here
-	server.onNotFound([](AsyncWebServerRequest *request){
+	webServer->onNotFound([](AsyncWebServerRequest *request){
 		request->send(404);
 	});
 
 	//4. start Web server
-	server.begin();
+	webServer->begin();
 	DBG_PRINTF("HTTP server started\n");
 
 
@@ -1261,7 +1278,7 @@ void loop(void){
 		_displayTime=now;
 
 		struct tm t;
-		makeTime(now,t);
+		makeTime(TimeKeeper.getLocalTimeSeconds(),t);
 		char buf[21];
 		sprintf(buf,"%d/%02d/%02d %02d:%02d:%02d",t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
 		display.printStatus(buf);
