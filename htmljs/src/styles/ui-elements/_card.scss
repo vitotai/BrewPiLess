@@ -11,3 +11,21 @@
 .card:hover {
     box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
 }
+
+.card-footer {
+    padding: 16px 0 0;
+    margin: 8px 0 0;
+    border-top: 1px solid #CCC;
+    text-align: right;
+}
+
+.inline-header {
+    width: 140px;
+    min-width: 140px;
+    font-weight: bold;
+}
+
+.small-heading {
+    font-size: 20px;
+    padding: 16px 0 8px;
+}

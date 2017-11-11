@@ -18,58 +18,72 @@
     <!-- /build -->
 
     <div viewport layout vertical>
-        <form action="" method="post">
-            <table>
-                <tr>
-                    <td>iSpindel</td>
-                    <td>
-                        <input type="checkbox" name="ispindel" value="1">
-                    </td>
-                </tr>
-                <tr>
-                    <td>Calibrate iSpindel</td>
-                    <td>
-                        <input type="checkbox" name="cal" value="1"> Tilt in Water:
-                        <input type="text" name="tiltw" size="5">
-                    </td>
-                </tr>
-                <tr>
-                    <td>SG Calibration</td>
-                    <td>
-                        <input type="text" name="gc" size=4> point</td>
-                </tr>
-                <tr>
-                    <td>Temp. Correction</td>
-                    <td>
-                        <input type="checkbox" name="tc" value="1"> @
-                        <input type="text" name="ctemp" size=4>&deg;C </td>
-                </tr>
-                <tr>
-                    <td>Coefficients</td>
-                    <td>
-                        <input type="text" name="a3" size=15>*x^3 +
-                        <input type="text" name="a2" size=15>*x^2+
-                        <input type="text" name="a1" size=15>*x +
-                        <input type="text" name="a0" size=15> </td>
-                </tr>
-                <tr>
-                    <td>LowPass Filter Coefficient</td>
-                    <td>
-                        <input type="text" name="lpc" size=4> </td>
-                </tr>
-                <tr>
-                    <td>Gravity Stability Threshold</td>
-                    <td>
-                        <input type="text" name="stpt" size=4> point</td>
-                </tr>
-                <tr>
-                    <td>Save Change</td>
-                    <td>
-                        <input type="submit" name="submit" onclick="save();return false;"></input>
-                    </td>
-                </tr>
-            </table>
-        </form>
+        <div main>
+            <div class="card">
+                <form action="" method="post">
+                    <div layout horizontal main-justified cross-center>
+                        <h5>iSpindel</h5>
+                        <div>
+                            <input type="checkbox" id="ispindel" name="ispindel" class="switch-input" checked>
+                            <label for="ispindel" class="switch-label" style="min-width: 0;"></label>
+                        </div>
+                    </div>
+                    <h5 class="small-heading">Calibrate iSpindel:</h5>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">Tilt in Water:</h6>
+                        <div layout horizontal main-justified cross-center flex>
+                            <input type="text" name="tiltw" size="5">
+                            <div>
+                                <input type="checkbox" id="cal" name="cal" class="switch-input" checked>
+                                <label for="cal" class="switch-label" style="min-width: 0;"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">SG Calibration:</h6>
+                        <input type="text" name="gc" size=4>
+                    </div>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">Temp. Correction:</h6>
+                        <div layout horizontal main-justified cross-center flex>
+                            <div layout horizontal cross-center>
+                                <input type="text" name="ctemp" size=4>
+                                <span>&deg;C</span>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="tc" name="tc" class="switch-input" checked>
+                                <label for="tc" class="switch-label" style="min-width: 0;"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">Coefficients:</h6>
+                        <input type="text" name="a3" size=15 placeholder="x ^ 3">&nbsp;+&nbsp;&nbsp;
+                        <input type="text" name="a2" size=15 placeholder="x ^ 2">&nbsp;+&nbsp;&nbsp;
+                        <input type="text" name="a1" size=15 placeholder="x ^ 1">&nbsp;+&nbsp;&nbsp;
+                        <input type="text" name="a0" size=15 placeholder="x ^ 0">
+                    </div>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">LowPass Filter Coefficient:</h6>
+                        <input type="text" name="lpc" size=4>
+                    </div>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">Gravity Stability Threshold:</h6>
+                        <input type="text" name="stpt" size=4> point
+                    </div>
+
+                    <div class="card-footer">
+                        <input type="submit" name="submit" class="btn" onclick="save();return false;"></input>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- build:include partials/footer.html -->
