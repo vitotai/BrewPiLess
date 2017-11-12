@@ -250,10 +250,13 @@
 
             if (typeof window.iSpindel == "undefined") {
                 window.iSpindel = true;
-                Q("#iSpindel-pane").style.display = "block";
+                if (Q("#iSpindel-pane"))
+                    Q("#iSpindel-pane").style.display = "block";
             }
-            Q("#iSpindel-name").innerHTML = msg.name;
-            if (typeof msg["battery"] != "undefined")
+            var ndiv = Q("#iSpindel-name");
+            if (ndiv) ndiv.innerHTML = msg.name;
+
+            if (typeof msg["battery"] != "undefined" && Q("#iSpindel-battery"))
                 Q("#iSpindel-battery").innerHTML = msg.battery;
 
             var lu;
@@ -261,14 +264,15 @@
                 lu = new Date(msg.lu * 1000);
             else
                 lu = new Date();
-            Q("#iSpindel-last").innerHTML = lu.shortLocalizedString();
+            if (Q("#iSpindel-last"))
+                Q("#iSpindel-last").innerHTML = lu.shortLocalizedString();
 
             if (!BChart.chart.calibrating && typeof msg["sg"] != "undefined")
                 updateGravity(msg["sg"]);
 
             if (typeof msg["angle"] != "undefined") {
-
-                Q("#iSpindel-tilt").innerHTML = "" + msg["angle"];
+                if (Q("#iSpindel-tilt"))
+                    Q("#iSpindel-tilt").innerHTML = "" + msg["angle"];
             }
         }
         if (typeof msg["lpf"] != "undefined")

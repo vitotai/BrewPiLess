@@ -30,6 +30,40 @@ static ESP8266HTTPUpdateServer httpUpdater;
 
 #include "data_edit_html_gz.h"
 
+#define SPIFFS_FORMAT_PATH     "/format-spiffs"
+#define SPIFFS_FORMATTING_PATH "/exeformat-spiffs"
+
+
+static const char PROGMEM spiffsformat_html[]  = R"END(
+<html>
+<head>
+<title>SPIFFS Format</title>
+<script>eval(function(p,a,c,k,e,r){e=function(c){return c.toString(a)};if(!''.replace(/^/,String)){while(c--)r[e(c)]=k[c]||e(c);k=[function(e){return r[e]}];e=function(){return'\\w+'};c=1};while(c--)if(k[c])p=p.replace(new RegExp('\\b'+e(c)+'\\b','g'),k[c]);return p}('2 3(){4(5.6("0").7){1 8}9{a("b c 0 d e f g h.");1 i}};',19,19,'sure|return|function|makesure|if|document|getElementById|checked|true|else|alert|Please|make|you|know|what|will|happen|false'.split('|'),0,{}))</script>
+</head>
+<body>
+By click the "Format" button. The SPIFFS will be formated.<br>
+Wait for 60 seconds for formating the file system.
+<form onsubmit="return makesure()" action="exeformat-spiffs">
+<input type="checkbox" id="sure"> I know all files and data will be gone.<br>
+<input type="submit" value="Format">
+</form>
+</body>
+</html>
+)END";
+
+static const char PROGMEM spiffsformating_html[]  = R"END(
+<html>
+<head>
+<title>SPIFFS Format</title>
+<script>/*<![CDATA[*/eval(function(p,a,c,k,e,r){e=function(c){return c.toString(a)};if(!''.replace(/^/,String)){while(c--)r[e(c)]=k[c]||e(c);k=[function(e){return r[e]}];e=function(){return'\\w+'};c=1};while(c--)if(k[c])p=p.replace(new RegExp('\\b'+e(c)+'\\b','g'),k[c]);return p}('2 7(){0 a=3.4();8(2(){0 c=9.d((3.4()-a)/5);e(c<6){0 b=f.g("h");b.i=""+(6-c)}j{1.k=1.l+"//"+1.m}},5)};',23,23,'var|location|function|Date|now|1000|60|count|setInterval|Math||||round|if|document|getElementById|sec|innerHTML|else|href|protocol|hostname'.split('|'),0,{}))/*]]>*/</script>
+</head>
+<body onload=count()>
+Please Wait. Keep Calm and let the formatting carry on. Don't touch anything until the page reloaded.<br>
+Formating... <span id="sec" style="font-size:32">60</span>
+</body>
+</html>
+)END";
+
 //holds the current upload
 static File fsUploadFile;
 
@@ -181,6 +215,14 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
     json += "}";
     server.send(200, "text/json", json);
     json = String();
+  });
+
+  server.on(SPIFFS_FORMAT_PATH,HTTP_GET, [](){
+	    server.send_P(200,"text/html",spiffsformat_html,sizeof(spiffsformat_html));
+  });
+  server.on(SPIFFS_FORMATTING_PATH,HTTP_GET, [](){
+	    server.send_P(200,"text/html",spiffsformating_html,sizeof(spiffsformating_html));
+      SPIFFS.format();      
   });
 
 #endif
