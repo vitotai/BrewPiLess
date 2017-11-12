@@ -47,7 +47,7 @@
 /** Chart **/
 
 .chart {
-	width: calc(100% - 240px);
+	width: calc(100% - 280px);
 	height:390px;
 
 	@include for-phone-only {
@@ -58,7 +58,7 @@
 
 .chart-legend {
 	list-style-type: none;
-	width: 240px;
+	width: 280px;
 }
 .chart-legend-row {
 	padding:  8px 16px 0 16px;
@@ -87,6 +87,10 @@
 	&:hover {
 		cursor:pointer;
 	}
+}
+
+#formula-btn {
+	visibility: hidden;
 }
 
 /** WIFI **/

@@ -1,3 +1,5 @@
+var JSVERION = "2.4";
+
 function s_ajax(b) {
     var c = new XMLHttpRequest();
     c.onreadystatechange = function() {
@@ -70,3 +72,9 @@ Date.prototype.shortLocalizedString = function() {
     }
     return ds + " " + T(HH) + ":" + T(MM);
 };
+
+function getActiveNavItem() { 
+    var path = window.location.pathname.split("/").pop(); 
+    var element = Q('.options>li>a[href="/' + path + '"]'); 
+    element.className += 'active'; 
+} 

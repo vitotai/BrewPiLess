@@ -4,3 +4,6 @@
 .gcc-flags.json
 .vscode
 .vscode/c_cpp_properties.json
+htmljs/.sass-cache/
+htmljs/build/
+htmljs/node_modules/

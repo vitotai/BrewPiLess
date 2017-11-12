@@ -876,6 +876,7 @@ function communicationError() {
 }
 
 function initctrl() {
+    getActiveNavItem();
     onloadCtrl(function() {
         BWF.init({
             error: function(e) {
