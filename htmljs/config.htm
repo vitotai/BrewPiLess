@@ -1,0 +1,137 @@
+<html>
+
+<head>
+    <title>Configuration</title>
+    <script>
+        function s_ajax(b) {
+            var c = new XMLHttpRequest();
+            c.onreadystatechange = function() {
+                if (c.readyState == 4) {
+                    if (c.status == 200) {
+                        b.success(c.responseText)
+                    } else {
+                        c.onerror(c.status)
+                    }
+                }
+            };
+            c.ontimeout = function() {
+                if (typeof b["timeout"] != "undefined") b.timeout();
+                else c.onerror(-1)
+            }, c.onerror = function(a) {
+                if (typeof b["fail"] != "undefined") b.fail(a)
+            };
+            c.open(b.m, b.url, true);
+            if (typeof b["data"] != "undefined") {
+                c.setRequestHeader("Content-Type", (typeof b["mime"] != "undefined") ? b["mime"] : "application/x-www-form-urlencoded");
+                c.send(b.data)
+            } else c.send()
+        }
+        var Q = function(d) {
+            return document.querySelector(d);
+        };
+
+        function loadSetting() {
+            s_ajax({
+                url: "brewpi.cfg",
+                m: "GET",
+                success: function(data) {
+                    var j = JSON.parse(data);
+                    Object.keys(j).map(function(key) {
+                        var div = Q("input[name=" + key + "]");
+                        if (div) {
+                            if (div.type == "checkbox") div.checked = (j[key] != 0);
+                            else div.value = j[key];
+                        }
+                    });
+                },
+                fail: function(d) {
+                    alert("error getting data:" + d);
+                }
+            });
+        }
+
+        function waitrestart() {
+            Q("#waitprompt").style.display = "block";
+            Q("#inputform").style.display = "none";
+            setTimeout(function() {
+                window.location.reload();
+            }, 15000);
+        }
+
+        function save() {
+            var ins = document.querySelectorAll("input");
+            var data = "";
+            Object.keys(ins).map(function(key, i) {
+                if (ins[i].type != "submit") {
+                    var val = (ins[i].type == "checkbox") ? (ins[i].checked ? 1 : 0) : encodeURIComponent(ins[i].value.trim());
+                    data = ((data == "") ? "" : (data + "&")) + ins[i].name + "=" + val;
+                }
+            });
+            s_ajax({
+                url: "config",
+                data: data,
+                m: "POST",
+                success: function(data) {
+                    waitrestart();
+                },
+                fail: function(d) {
+                    alert("error saving data:" + d);
+                }
+            });
+        }
+
+        function load() {
+            loadSetting();
+        }
+    </script>
+    <style>
+        #waitprompt {
+            display: none;
+        }
+    </style>
+</head>
+
+<body onload="load();">
+    <div id="waitprompt">Congfiuration saved. Wait for restart.. (note: if the hostname is changed, the page won't be reloaded.)</div>
+    <div id="inputform">
+        <form action="/setconfig" action="post">
+            <table>
+                <tr>
+                    <td>Title</td>
+                    <td><input name="title" type="text" size="12" maxlength="24"></td>
+                </tr>
+                <tr>
+                    <td>Host/Network Name</td>
+                    <td><input name="name" type="text" size="12" maxlength="16"></td>
+                </tr>
+                <tr>
+                    <td>HTTP Port</td>
+                    <td><input name="port" type="text" size="5" maxlength="5"></td>
+                </tr>
+                <tr>
+                    <td>User Name</td>
+                    <td><input name="user" type="text" size="12" maxlength="16"></td>
+                </tr>
+                <tr>
+                    <td>Password</td>
+                    <td><input name="pass" type="password" size="12" maxlength="16"></td>
+                </tr>
+                <tr>
+                    <td>Always need password</td>
+                    <td><input type="checkbox" name="protect"></td>
+                </tr>
+                <tr>
+                    <td>Always softAP</td>
+                    <td><input type="checkbox" name="ap"></td>
+                </tr>
+                <tr>
+                    <td>Save Change</td>
+                    <td><input type="submit" name="submit" onclick="save();return false;"></input>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</body>
+
+</html>
