@@ -78,6 +78,8 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * v2.4.1 (working)
+    * Format File System
  * v2.4 (2017/11/09)
     * Brew and calibrate iSpindel.
     * Use iSpindel temperature reading as Beer Sensor.
@@ -168,6 +170,10 @@ BrewPiLess implements mDNS, so you can use "brewpiless.local" instead of the IP 
 * OTA update - `http://brewpiless.local:8008/systemupdate`
     
     The menu from the main page doesn't include this page.
+
+* Format File System - `http://brewpiless.local:8008/format-spiffs`
+
+    The file system sometimes gets corrupt. Unfortunately, there is no utitlity like FSCK. This page provide a way to format the file system. Please Note, **ALL data and settings will be gone** after formating.  
 
 ## Gravity logging
 To add gravity reading record, click the **SG reading**. The number entered with the time when it is entered will be saved as a SG reading record.
