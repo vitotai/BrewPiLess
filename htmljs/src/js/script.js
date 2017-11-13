@@ -146,9 +146,9 @@
         var tempRE = /\s*([a-zA-Z]+)\s*([-\d\.]+)\s+([-\d\.]+)\s+(\S+[CF])\s*$/i;
         for (var i = 1; i < 3; i++) {
             var temps = tempRE.exec(lines[i]);
-            status[temps[1] + "Temp"] = temps[2];
-            status[temps[1] + "Set"] = temps[3];
             status.format = temps[4];
+            status[temps[1] + "Temp"] = isNaN(Number(temps[2])) ? temps[2] : temps[2] + temps[4];
+            status[temps[1] + "Set"] = isNaN(Number(temps[3])) ? temps[3] : temps[3] + temps[4];
         }
         var i = 0;
         var statePatterns = [
