@@ -63,8 +63,10 @@
             var data = "";
             Object.keys(ins).map(function(key, i) {
                 if (ins[i].type != "submit") {
-                    var val = (ins[i].type == "checkbox") ? (ins[i].checked ? 1 : 0) : encodeURIComponent(ins[i].value.trim());
-                    data = ((data == "") ? "" : (data + "&")) + ins[i].name + "=" + val;
+                    if (ins[i].name && ins[i].name != "") {
+                        var val = (ins[i].type == "checkbox") ? (ins[i].checked ? 1 : 0) : encodeURIComponent(ins[i].value.trim());
+                        data = ((data == "") ? "" : (data + "&")) + ins[i].name + "=" + val;
+                    }
                 }
             });
             s_ajax({

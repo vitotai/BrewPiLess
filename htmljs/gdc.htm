@@ -58,8 +58,10 @@
             var setting = {};
             for (var i = 0; i < inputs.length; i++) {
                 var ele = inputs[i];
-                if (ele.type == "checkbox") setting[ele.name] = ele.checked;
-                else if (ele.type == "text") setting[ele.name] = ele.value;
+                if (ele.name && ele.name != "") {
+                    if (ele.type == "checkbox") setting[ele.name] = ele.checked;
+                    else if (ele.type == "text") setting[ele.name] = ele.value;
+                }
             }
             console.log("result=" + setting);
             s_ajax({
