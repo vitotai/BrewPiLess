@@ -9,3 +9,27 @@
 @import 'ui-elements/modal';
 @import 'ui-elements/select';
 @import 'ui-elements/switch';
+
+.coefficient {
+    min-width: 64px;
+    padding: 0 8px;
+}
+
+.tilt-field {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.tilt-header {
+    padding-left: 8px;
+}
+
+#cal {
+    &:checked {
+        ~ .tilt-field {
+            opacity: 1;
+        }
+    }
+}
+
+
