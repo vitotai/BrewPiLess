@@ -1,0 +1,77 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrewPiLess Configuration!</title>
+    <meta name="apple-mobile-web-app-title" content="BrewPiLess">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/script-config.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="style-config.css">
+</head>
+</head>
+
+<body onload="load();">
+
+    <!-- build:include partials/header.html -->
+    <!-- /build -->
+
+    <div viewport layout vertical>
+        <div main>
+
+            <div id="inputform" class="card">
+                <form action="/setconfig" action="post">
+                    <h5>BrewPiLess config</h5>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">Title:</h6>
+                        <input name="title" type="text" size="12" maxlength="24">
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">Host/Network Name:</h6>
+                        <input name="name" type="text" size="12" maxlength="16">
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">HTTP Port:</h6>
+                        <input name="port" type="text" size="5" maxlength="5">
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">User Name:</h6>
+                        <input name="user" type="text" size="12" maxlength="16">
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">Password:</h6>
+                        <input name="pass" type="password" size="12" maxlength="16">
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">Always ask for password:</h6>
+                        <input type="checkbox" id="protect" name="protect" class="switch-input" checked>
+                        <label for="protect" class="switch-label" style="min-width: 0;"></label>
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">Always softAP:</h6>
+                        <input type="checkbox" id="ap" name="ap" class="switch-input" checked>
+                        <label for="ap" class="switch-label" style="min-width: 0;"></label>
+                    </div>
+
+                    <div class="card-footer">
+                        <input type="submit" name="submit" class="btn" onclick="save();return false;"></input>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- build:include partials/footer.html -->
+    <!-- /build -->
+
+    <div id="waitprompt" class="modal">
+        <div class="modal-content">
+            Congfiuration saved. Wait for restart.. (note: if the hostname is changed, the page won't be reloaded.)
+        </div>
+    </div>
+
+</body>
+
+</html>

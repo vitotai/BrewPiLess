@@ -41,7 +41,7 @@ function F2C(f) {
 }
 
 function openDlgLoading() {
-    document.getElementById('dlg_loading').style.display = "block";
+    document.getElementById('dlg_loading').style.display = "flex";
 }
 
 function closeDlgLoading() {

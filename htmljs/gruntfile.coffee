@@ -39,7 +39,8 @@ module.exports = (grunt) ->
           'dist/control.htm': 'dist/control.htm',
           'dist/setup.htm': 'dist/setup.htm',
           'dist/gravity.htm': 'dist/gravity.htm',
-          'dist/logging.htm': 'dist/logging.htm'
+          'dist/logging.htm': 'dist/logging.htm',
+          'dist/config.htm': 'dist/config.htm'
         }]
       dev:
         options:
@@ -56,7 +57,8 @@ module.exports = (grunt) ->
           'build/control.html': 'build/control.html',
           'build/setup.html': 'build/setup.html',
           'build/gravity.html': 'build/gravity.html',
-          'build/logging.html': 'build/logging.html'
+          'build/logging.html': 'build/logging.html',
+          'build/config.html': 'build/config.html'
         }]
 
     comboall:
@@ -66,7 +68,8 @@ module.exports = (grunt) ->
             { 'dist/control.htm': ['build/control.html'] },
             { 'dist/setup.htm': ['build/setup.html'] },
             { 'dist/gravity.htm': ['build/gravity.html'] },
-            { 'dist/logging.htm': ['build/logging.html'] }
+            { 'dist/logging.htm': ['build/logging.html'] },
+            { 'dist/config.htm': ['build/config.html'] }
         ]
 
     jshint:
@@ -128,6 +131,7 @@ module.exports = (grunt) ->
           'build/setup.html': ['src/setup.html']
           'build/gravity.html': ['src/gravity.html']
           'build/logging.html': ['src/logging.html']
+          'build/config.html': ['src/config.html']
         ]
 
     watch:
