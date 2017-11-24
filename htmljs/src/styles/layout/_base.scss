@@ -103,6 +103,7 @@
             padding: 8px;
             display: inline-block;
             line-height: 48px;
+            border-bottom: 3px solid transparent;
             &.active {
                 border-bottom: 3px solid $accent-color;
             }
