@@ -19,7 +19,7 @@ Those images are prebuilt:
 * Same as sonsoff, but
  * 64K SPIFFS for configurations
  * OTA update supported
- * **Nt compatible with NEW SONOFF of ESP8285**
+ * **Not compatible with NEW SONOFF of ESP8285**
 
 
 ## oled

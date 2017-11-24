@@ -146,9 +146,9 @@
         var tempRE = /\s*([a-zA-Z]+)\s*([-\d\.]+)\s+([-\d\.]+)\s+(\S+[CF])\s*$/i;
         for (var i = 1; i < 3; i++) {
             var temps = tempRE.exec(lines[i]);
-            status[temps[1] + "Temp"] = temps[2];
-            status[temps[1] + "Set"] = temps[3];
             status.format = temps[4];
+            status[temps[1] + "Temp"] = isNaN(Number(temps[2])) ? temps[2] : temps[2] + temps[4];
+            status[temps[1] + "Set"] = isNaN(Number(temps[3])) ? temps[3] : temps[3] + temps[4];
         }
         var i = 0;
         var statePatterns = [
@@ -250,10 +250,13 @@
 
             if (typeof window.iSpindel == "undefined") {
                 window.iSpindel = true;
-                Q("#iSpindel-pane").style.display = "block";
+                if (Q("#iSpindel-pane"))
+                    Q("#iSpindel-pane").style.display = "block";
             }
-            Q("#iSpindel-name").innerHTML = msg.name;
-            if (typeof msg["battery"] != "undefined")
+            var ndiv = Q("#iSpindel-name");
+            if (ndiv) ndiv.innerHTML = msg.name;
+
+            if (typeof msg["battery"] != "undefined" && Q("#iSpindel-battery"))
                 Q("#iSpindel-battery").innerHTML = msg.battery;
 
             var lu;
@@ -261,14 +264,15 @@
                 lu = new Date(msg.lu * 1000);
             else
                 lu = new Date();
-            Q("#iSpindel-last").innerHTML = lu.shortLocalizedString();
+            if (Q("#iSpindel-last"))
+                Q("#iSpindel-last").innerHTML = lu.shortLocalizedString();
 
             if (!BChart.chart.calibrating && typeof msg["sg"] != "undefined")
                 updateGravity(msg["sg"]);
 
             if (typeof msg["angle"] != "undefined") {
-
-                Q("#iSpindel-tilt").innerHTML = "" + msg["angle"];
+                if (Q("#iSpindel-tilt"))
+                    Q("#iSpindel-tilt").innerHTML = "" + msg["angle"];
             }
         }
         if (typeof msg["lpf"] != "undefined")
