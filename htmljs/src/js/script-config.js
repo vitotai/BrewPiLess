@@ -50,5 +50,6 @@ function save() {
 }
 
 function load() {
+    getActiveNavItem();
     loadSetting();
 }
