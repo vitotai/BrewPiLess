@@ -15,9 +15,6 @@
             //	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             //	xhr.setRequestHeader("Content-length", PD.length);
             xhr.timeout = 5000;
-            xhr.ontimeout = function(e) {
-                console.error("Timeout!!")
-            };
             xhr.responseType = 'arraybuffer';
             xhr.onload = function(e) {
                 if (this.status == 404) {
@@ -74,6 +71,12 @@
                     checkfgstate();
                 }
                 if (t.timer == null) t.settimer();
+            };
+            xhr.ontimeout = function(e) {
+                console.error("Timeout!!");
+                setTimeout(function() {
+                    t.reqdata();
+                }, 10000);
             };
             xhr.onerror = function() {
                 console.log("error getting data.");
@@ -159,7 +162,7 @@
             /Cooling\s+for\s+(\S+)\s*$/i,
             /Wait\s+to\s+Cool\s+(\S+)\s*$/i,
             /Wait\s+to\s+Heat\s+(\S+)\s*$/i,
-            /Wait\s+for\s+Peak/i,
+            /Waiting\s+for\s+Peak/i,
             /Cool\s+Time\s+left\s+(\S+)\s*$/i,
             /Heat\s+Time\s+left\s+(\S+)\s*$/i
         ];
