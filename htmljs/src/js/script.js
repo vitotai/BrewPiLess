@@ -391,11 +391,11 @@
                 BWF.send("l");
                 if (window.lcdTimer) clearInterval(window.lcdTimer);
                 window.lcdTimer = setInterval(function() {
-                    if (!gotMsg) {
+                    if (!BWF.gotMsg) {
                         controllerError();
                         BWF.reconnect();
                     }
-                    gotMsg = false;
+                    BWF.gotMsg = false;
                     BWF.send("l");
                 }, 5000);
             },
@@ -408,7 +408,7 @@
             },
             handlers: {
                 L: function(lines) {
-                    gotMsg = true;
+                    BWF.gotMsg = true;
                     processLcdText(lines);
                 },
                 V: function(c) {
@@ -440,7 +440,7 @@
     function init_classic() {
         BChart.init("div_g");
         initRssi();
-        var gotMsg = true;
+        BWF.gotMsg = true;
         onloadCtrl(function() {
             connBWF();
             BChart.start();
@@ -451,7 +451,7 @@
     function init() {
         BChart.init("div_g");
         initRssi();
-        var gotMsg = true;
+        BWF.gotMsg = true;
         connBWF();
         BChart.start();
         getActiveNavItem();
