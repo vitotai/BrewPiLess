@@ -17,6 +17,10 @@ const char gravityconfig_html[]  PROGMEM =R"END(
     <td><input type="checkbox" name="cal" value="1"> Tilt in Water:<input type="text" name="tiltw" size="5"></td>
     </tr>
     <tr>
+    <tr>
+    <td>Calculated by BPL</td>
+    <td><input type="checkbox" name="cbpl" value="1"> </td>
+    </tr>
     <td>SG Calibration</td>
     <td><input type="text" name="gc" size=4> point</td>
     </tr>

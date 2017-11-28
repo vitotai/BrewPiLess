@@ -1,5 +1,7 @@
 # Prebuilt Image
 
+NOTE: If you are upgrading from version prior to v2.3 without glycol option, you will need to run "Device Setup" again. Erase the EEPROM, setup the sensors, and the PINs.
+
 Those images are prebuilt:
 ## Simple Configuration
  * The Pins are defined as the main page.

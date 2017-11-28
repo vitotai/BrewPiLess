@@ -78,8 +78,10 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
- * v2.4.1 (working)
-    * Format File System
+ * v2.4.1 (2017/11/28)
+    * URL to Format File System 
+    * missing "Calculated by BPL" in v2.4
+ 
  * v2.4 (2017/11/09)
     * Brew and calibrate iSpindel.
     * Use iSpindel temperature reading as Beer Sensor.
