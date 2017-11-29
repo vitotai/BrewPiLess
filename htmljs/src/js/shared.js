@@ -1,4 +1,4 @@
-var JSVERION = "2.4";
+var JSVERSION = "2.4";
 
 function s_ajax(b) {
     var c = new XMLHttpRequest();
@@ -24,6 +24,10 @@ function s_ajax(b) {
     } else c.send()
 }
 
+var EI = function (i) {
+    return document.getElementById(i);
+};
+
 var Q = function(d) {
     return document.querySelector(d);
 };
@@ -37,7 +41,7 @@ function F2C(f) {
 }
 
 function openDlgLoading() {
-    document.getElementById('dlg_loading').style.display = "block";
+    document.getElementById('dlg_loading').style.display = "flex";
 }
 
 function closeDlgLoading() {

@@ -364,7 +364,7 @@
         }
         var bars = document.getElementsByClassName("rssi-bar");
         for (var i = 0; i < bars.length; i++) {
-            bars[i].style.backgroundColor = (i < bar) ? window.rssiBarColor : "rgba(255,255,255,0.05)";
+            bars[i].style.backgroundColor = (i < bar) ? window.rssiBarColor : "#DDD";
         }
         Q("#rssi").title = (x > 0) ? "?" : Math.min(Math.max(2 * (x + 100), 0), 100);
         if (Q("#wifisignal"))
@@ -423,7 +423,7 @@
                         Q("#hostname").innerHTML = c["nn"];
                     }
                     if (typeof c["ver"] != "undefined") {
-                        if (JSVERION != c["ver"]) alert("Version Mismatched!. Reload the page.");
+                        if (JSVERSION != c["ver"]) alert("Version Mismatched!. Reload the page.");
                         Q("#verinfo").innerHTML = "v" + c["ver"];
                     }
                     if (typeof c["tm"] != "undefined" && typeof c["off"] != "undefined") {
