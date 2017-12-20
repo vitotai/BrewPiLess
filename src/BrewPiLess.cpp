@@ -56,6 +56,9 @@ extern "C" {
 
 #include "ExternalData.h"
 
+#if EanbleParasiteTempControl
+#include "ParasiteTempController.h"
+#endif
 //WebSocket seems to be unstable, at least on iPhone.
 //Go back to ServerSide Event.
 #define UseWebSocket false
@@ -127,6 +130,10 @@ R"END(
 #define GETSTATUS_PATH "/getstatus"
 
 #define DEFAULT_INDEX_FILE     "index.htm"
+
+#if EanbleParasiteTempControl
+#define ParasiteTempControlPath "/ptc"
+#endif
 
 const char *public_list[]={
 "/bwf.js",
@@ -487,6 +494,22 @@ public:
 	 			dataLogger.getSettings(request);
 	 		}
 	 	#endif
+		#if EanbleParasiteTempControl
+		}else if(request->url() == ParasiteTempControlPath){
+			if(request->method() == HTTP_POST){
+				if(request->hasParam("c", true)){
+		    		String content=request->getParam("c", true)->value();
+					if(parasiteTempControl.updateSettings(content))
+			            request->send(200,"application/json","{}");
+					else 
+						request->send(400);	
+        		} else
+          			request->send(404);
+	 		}else{
+				String status=parasiteTempControl.getSettings();
+				request->send(200,"application/json",status);
+	 		}
+		#endif
 	 	}else if(request->method() == HTTP_GET){
 
 			String path=request->url();
@@ -523,6 +546,9 @@ public:
 	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
 	 		#endif
+			 #if EanbleParasiteTempControl
+			 || request->url() == ParasiteTempControlPath
+			 #endif
 	 		){
 	 			return true;
 			}else{
@@ -542,6 +568,10 @@ public:
 	 			#ifdef ENABLE_LOGGING
 	 			|| request->url() == LOGGING_PATH
 	 			#endif
+			 #if EanbleParasiteTempControl
+			 || request->url() == ParasiteTempControlPath
+			 #endif
+
 	 			)
 	 			return true;
 		}
@@ -1237,6 +1267,11 @@ void setup(void){
 #endif
 
 
+#if EanbleParasiteTempControl
+	parasiteTempController.init();
+#endif
+
+
 #ifdef STATUS_LINE
 	// brewpi_setup will "clear" the screen.
 	IPAddress ip =(WiFiSetup.isApMode())? WiFi.softAPIP():WiFi.localIP();
@@ -1261,6 +1296,10 @@ void loop(void){
 	brewpiLoop();
 #endif
 //}brewpi
+#if EanbleParasiteTempControl
+	parasiteTempController.run();
+#endif
+
 #if (DEVELOPMENT_OTA == true) || (DEVELOPMENT_FILEMANAGER == true)
 	ESPUpdateServer_loop();
 #endif
