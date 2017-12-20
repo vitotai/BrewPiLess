@@ -193,8 +193,10 @@ public:
 		_ispindelTilt=tilt;
 
 		#if BREW_AND_CALIBRATION	
+		// add tilt anyway
+		brewLogger.addTiltAngle(tilt);
+
 		if(brewLogger.calibrating()){
-			brewLogger.addTiltAngle(tilt);
 			return;
 		}
 		#endif

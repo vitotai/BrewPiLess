@@ -1,13 +1,13 @@
 
 #pragma once
 
-#include "TempController.h"
+#include "TempControl.h"
 
 
 class ParasiteTempController
 {
 public:
-    ParasiteTempController:_enabled(false)(){}
+    ParasiteTempController(){}
     void run();
     void init();
 
@@ -30,7 +30,9 @@ protected:
 
     void _setCooling(bool cool);
     bool _parseJson(const char* json);
-    bool _checkPinAvailable(uint8_t pin);
+    bool _checkPinAvailable();
+    void _markPinNotAvailable(uint8_t pinNr);
+    bool _validPin(uint8_t pinNr);
 };
 
 extern ParasiteTempController parasiteTempController;

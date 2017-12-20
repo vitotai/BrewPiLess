@@ -499,14 +499,14 @@ public:
 			if(request->method() == HTTP_POST){
 				if(request->hasParam("c", true)){
 		    		String content=request->getParam("c", true)->value();
-					if(parasiteTempControl.updateSettings(content))
+					if(parasiteTempController.updateSettings(content))
 			            request->send(200,"application/json","{}");
 					else 
 						request->send(400);	
         		} else
           			request->send(404);
 	 		}else{
-				String status=parasiteTempControl.getSettings();
+				String status=parasiteTempController.getSettings();
 				request->send(200,"application/json",status);
 	 		}
 		#endif
