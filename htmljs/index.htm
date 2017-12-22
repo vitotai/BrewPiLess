@@ -19,7 +19,7 @@
     <script type="text/javascript" src="js/script-control.js"></script>
 
     <script type="text/javascript" src="js/script.js"></script>
-    <script>
+    <script type="text/javascript">
     </script>
     <style>
         /* LCD display styling */
@@ -346,18 +346,17 @@
             margin: 6px;
         }
         
-        #gravity-pane table,
-        #iSpindel-pane table {
-            width: 100px;
+        .info-pane table {
+            width: 92px;
             float: right;
             border: 1px solid white;
             border-radius: 5px;
-            margin-right: 10px;
+            margin-right: 4px;
             color: cyan;
             font-size: 12px;
         }
         
-        #iSpindel-pane {
+        .hidden-pane {
             display: none;
         }
         
@@ -387,13 +386,16 @@
             text-decoration: none;
         }
         
-        #fgstate {
+        .small-led {
             width: 10px;
             height: 10px;
             border-radius: 6px;
-            float: right;
-            margin: 4px 0 0 0;
             border: 0px;
+        }
+        
+        #fgstate {
+            margin: 4px 0 0 0;
+            float: right;
         }
         
         #rssi {
@@ -531,34 +533,34 @@
                 <br>
                 <button onclick="window.open('/gdc')">Gravity Sensor</button>
             </div>
-            <div id="gravity-pane">
+            <div id="gravity-pane" class="info-pane">
                 <table>
                     <tr>
                         <th>OG:</th>
                         <td> <span id="gravity-og" onclick="inputOG()">--</span>
-                            <td>
+                        </td>
                     </tr>
                     <tr>
                         <th>SG:</th>
                         <td> <span id="gravity-sg" onclick="inputSG()">--</span>
-                            <div id="fgstate"></div>
-                            <td>
+                            <div id="fgstate" class="small-led"></div>
+                        </td>
                     </tr>
                     <tr>
                         <th>ATT:</th>
                         <td> <span id="gravity-att"> --</span>%
-                            <td>
+                        </td>
                     </tr>
                     <tr>
                         <th>ABV:</th>
                         <td> <span id="gravity-abv"> --</span>%
-                            <td>
+                        </td>
                     </tr>
 
                 </table>
             </div>
 
-            <div id="iSpindel-pane">
+            <div id="iSpindel-pane" class="info-pane hidden-pane">
                 <table>
                     <tr>
                         <th colspan="2"><span id="iSpindel-name"></span></th>
@@ -566,7 +568,7 @@
                     <tr>
                         <th>Battery</th>
                         <td> <span id="iSpindel-battery">--</span>
-                            <td>
+                        </td>
                     </tr>
                     <tr>
                         <th>Tilt</th>
@@ -574,7 +576,32 @@
                     </tr>
                     <tr>
                         <td colspan="2" align="center">@<span id="iSpindel-last">--</span>
-                            <td>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div id="ptc-pane" class="info-pane hidden-pane">
+                <table>
+                    <tr>
+                        <th>PTC</th>
+                        <td>
+                            <div id="ptc-state" class="small-led"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>TEMP</th>
+                        <td>
+                            <div id="ptc-temp">11 &deg;C</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan=2 align="center">
+                            <span id="ptc-set"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" align="center"><span id="ptc-time">100H59M32S</span></td>
                     </tr>
                 </table>
             </div>
@@ -730,7 +757,7 @@
 
         <div id="dlg_beerprofilereminder" class="modal">
             <div class="modal-content">
-                <p><span class="message"></span>Note: For Beer Profile to work properly,
+                <p><span class="message"></span>Note: For Beer Profoile to work properly,
                     <ol>
                         <li>Original Gravity Must be specified if SG is specified as percentage(%)</li>
                         <li>Local data log must be activated if stability of gravity reading is used.</li>

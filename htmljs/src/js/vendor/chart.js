@@ -324,7 +324,11 @@
                             return y.toFixed(3);
                         },
                         axisLabelFormatter: function(y) {
-                            return y.toFixed(3).substring(1);
+                            var range = this.yAxisRange(1);
+                            if (range[1] - range[0] > 0.002)
+                                return y.toFixed(3).substring(1);
+                            else
+                                return y.toFixed(4).substring(2);
                         }
                     }
                 },
@@ -657,6 +661,14 @@
                 nc: newchart,
                 sg: sgPoint
             };
+        };
+        BrewChart.prototype.getXRange = function() {
+            if (typeof this.chart == "undefined") return [0, 0];
+            return this.chart.xAxisRange();
+        };
+        BrewChart.prototype.setXRange = function(range) {
+            if (typeof this.chart == "undefined") return;
+            this.chart.updateOptions({ dateWindow: range });
         };
         BrewChart.prototype.updateChart = function() {
             var t = this;

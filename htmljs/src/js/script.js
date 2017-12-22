@@ -384,6 +384,39 @@
         }
     }
 
+    function ptcshow(msg) {
+        if (typeof msg["ptc"] == "undefined" || typeof msg["pt"] == "undefined") return;
+        var mode = msg.ptc;
+        var time = msg.pt;
+
+        function fortime(t) {
+            var hour = Math.floor(t / 3600);
+            var min = Math.floor((t - hour * 3600) / 60);
+            var sec = t - hour * 3600 - min * 60;
+            return ((hour) ? (hour + "H") : "") + ((hour + min) ? (min + "M") : "") + sec + "S";
+        }
+        var pane = Q("#ptc-pane");
+        if (pane) {
+            if (mode == "o") pane.style.display = "none";
+            else {
+                pane.style.display = "block";
+            }
+        }
+        var state = Q("#ptc-state");
+        if (state) state.style.backgroundColor = (mode == "c") ? "lightgreen" : "gray";
+        var tinfo = Q("#ptc-time");
+        if (tinfo) tinfo.innerHTML = fortime(time);
+        if (typeof msg["ptctp"] != "undefined") {
+            var temp = Q("#ptc-temp");
+
+            if (temp) temp.innerHTML = (msg.ptctp < -100) ? "NA" : ((msg.ptctp / 100) + "&deg;C");
+        }
+        if (typeof msg["ptclo"] != "undefined" && typeof msg["ptcup"] != "undefined") {
+            var ts = Q("#ptc-set");
+            if (ts) ts.innerHTML = (msg.ptclo / 100) + " ~ " + (msg.ptcup / 100) + "&deg;C";
+        }
+    }
+
     function connBWF() {
         BWF.init({
             reconnect: false,
@@ -429,6 +462,7 @@
                     if (typeof c["tm"] != "undefined" && typeof c["off"] != "undefined") {
                         checkTime(c.tm, c.off);
                     }
+                    ptcshow(c);
                 },
                 G: function(c) {
                     gravityDevice(c);
