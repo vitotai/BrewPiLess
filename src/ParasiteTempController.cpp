@@ -7,6 +7,7 @@
 #define MIN_TEM_DIFF 0.5
 #define MIN_COOL_TIME 180 //seconds
 #define MIN_IDLE_TIME 180 //seconds
+#define SensorDisconnectToleranceTime 10000
 
 #define MAX_CONFIG_LEN 200
 #define CONFIG_FILENAME "/paratc.cfg"
@@ -29,6 +30,17 @@ void ParasiteTempController::_setCooling(bool cool){
     _lastSwitchedTime = millis();
     _cooling=cool;
     DBG_PRINTF("Turn cooling %d!\n",cool);
+}
+
+char ParasiteTempController::getMode(){
+    if(!_enabled) return 'o';
+    if(_cooling) return 'c';
+    else return 'i';
+}
+
+uint32_t ParasiteTempController::getTimeElapsed(){
+    if(!_enabled) return 0;
+    return (millis() - _lastSwitchedTime)/1000;
 }
 
 void ParasiteTempController::init(){
@@ -66,18 +78,29 @@ void ParasiteTempController::run(){
     uint32_t now=millis();
     // read temperature.
     temperature rawTemp= tempControl.getRoomTemp();
-    float temp =temperatureFloatValue(rawTemp);
+
+    bool disconnect=false;
+
+    if(rawTemp == INVALID_TEMP ){
+        if(now - _lastSensorValidTime >= SensorDisconnectToleranceTime){
+            disconnect =true;
+            //moving the disconnect time in case the time roundup
+            _lastSensorValidTime = now - SensorDisconnectToleranceTime;
+        }
+    }else _lastSensorValidTime = now;
+
+    _currentTemp =temperatureFloatValue(rawTemp);
 
     if(_cooling){
-        if(temp <= _setTemp || temp == INVALID_TEMP_FLOAT){
+        if(disconnect || ( rawTemp != INVALID_TEMP &&  _currentTemp <= _setTemp)){
             if(now - _lastSwitchedTime > _minCoolingTime){
                 _setCooling(false);
             }
         }
     }else{
-        if(temp == INVALID_TEMP_FLOAT) return; // do nothing if temperature unable
+        if(disconnect) return; // do nothing if temperature unable
 
-        if(temp > _maxIdleTemp){
+        if(rawTemp != INVALID_TEMP && _currentTemp > _maxIdleTemp){
             if(now - _lastSwitchedTime > _minIdleTime){
                 _setCooling(true);
             }

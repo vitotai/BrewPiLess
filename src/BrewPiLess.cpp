@@ -687,9 +687,24 @@ void notifyLogStatus(void)
 
 void reportRssi(void)
 {
+#if EanbleParasiteTempControl
+	char buf[128];
+	char mode=parasiteTempController.getMode();
+	
+	if(mode == 'o')
+		sprintf(buf,"V:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%ld}",WiFi.RSSI(),mode,parasiteTempController.getTimeElapsed());
+	else{
+		sprintf(buf,"V:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%ld,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d}",
+			WiFi.RSSI(),mode,parasiteTempController.getTimeElapsed(),
+			parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound());
+	}
+
+	stringAvailable(buf);
+#else
 	char buf[32];
 	sprintf(buf,"V:{\"rssi\":%d}",WiFi.RSSI());
 	stringAvailable(buf);
+#endif
 }
 
 void onClientConnected(AsyncEventSourceClient *client){
