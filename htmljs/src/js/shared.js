@@ -1,4 +1,4 @@
-var JSVERION = "2.4";
+var JSVERION = "2.4.2";
 
 function s_ajax(b) {
     var c = new XMLHttpRequest();
@@ -73,8 +73,8 @@ Date.prototype.shortLocalizedString = function() {
     return ds + " " + T(HH) + ":" + T(MM);
 };
 
-function getActiveNavItem() { 
-    var path = window.location.pathname.split("/").pop(); 
-    var element = Q('.options>li>a[href="/' + path + '"]'); 
-    element.className += 'active'; 
-} 
+function getActiveNavItem() {
+    var path = window.location.pathname.split("/").pop();
+    var element = Q('.options>li>a[href="/' + path + '"]');
+    element.className += 'active';
+}
