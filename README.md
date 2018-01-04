@@ -584,3 +584,5 @@ For those who don't have access to Microsoft Excel like me, the [calibrationSG.h
      A: "Erase Setting". The hardware configuration will be gone after erasing. You might need to save the hardware configuration and restore after erashing.
 
 
+* Q: What is "Parasite Temperature Control"?
+    A: http://vito.tw/?p=836
