@@ -26,10 +26,12 @@
 #include <time.h>
 
 class AsyncStaticWebHandler: public AsyncWebHandler {
+   using File = fs::File;
+   using FS = fs::FS;
   private:
     bool _getFile(AsyncWebServerRequest *request);
-    bool _fileExists(AsyncWebServerRequest *request, const String path);
-    uint8_t _countBits(const uint8_t value);
+    bool _fileExists(AsyncWebServerRequest *request, const String& path);
+    uint8_t _countBits(const uint8_t value) const;
   protected:
     FS _fs;
     String _uri;
@@ -37,13 +39,14 @@ class AsyncStaticWebHandler: public AsyncWebHandler {
     String _default_file;
     String _cache_control;
     String _last_modified;
+    AwsTemplateProcessor _callback;
     bool _isDir;
     bool _gzipFirst;
     uint8_t _gzipStats;
   public:
     AsyncStaticWebHandler(const char* uri, FS& fs, const char* path, const char* cache_control);
-    bool canHandle(AsyncWebServerRequest *request);
-    void handleRequest(AsyncWebServerRequest *request);
+    virtual bool canHandle(AsyncWebServerRequest *request) override final;
+    virtual void handleRequest(AsyncWebServerRequest *request) override final;
     AsyncStaticWebHandler& setIsDir(bool isDir);
     AsyncStaticWebHandler& setDefaultFile(const char* filename);
     AsyncStaticWebHandler& setCacheControl(const char* cache_control);
@@ -53,29 +56,31 @@ class AsyncStaticWebHandler: public AsyncWebHandler {
     AsyncStaticWebHandler& setLastModified(time_t last_modified);
     AsyncStaticWebHandler& setLastModified(); //sets to current time. Make sure sntp is runing and time is updated
   #endif
+    AsyncStaticWebHandler& setTemplateProcessor(AwsTemplateProcessor newCallback) {_callback = newCallback; return *this;}
 };
 
 class AsyncCallbackWebHandler: public AsyncWebHandler {
   private:
   protected:
     String _uri;
-    WebRequestMethod _method;
+    WebRequestMethodComposite _method;
     ArRequestHandlerFunction _onRequest;
     ArUploadHandlerFunction _onUpload;
     ArBodyHandlerFunction _onBody;
   public:
     AsyncCallbackWebHandler() : _uri(), _method(HTTP_ANY), _onRequest(NULL), _onUpload(NULL), _onBody(NULL){}
-    void setUri(String uri){ _uri = uri; }
-    void setMethod(WebRequestMethod method){ _method = method; }
+    void setUri(const String& uri){ _uri = uri; }
+    void setMethod(WebRequestMethodComposite method){ _method = method; }
     void onRequest(ArRequestHandlerFunction fn){ _onRequest = fn; }
     void onUpload(ArUploadHandlerFunction fn){ _onUpload = fn; }
     void onBody(ArBodyHandlerFunction fn){ _onBody = fn; }
 
-    bool canHandle(AsyncWebServerRequest *request){
+    virtual bool canHandle(AsyncWebServerRequest *request) override final{
+
       if(!_onRequest)
         return false;
 
-      if(_method != HTTP_ANY && request->method() != _method)
+      if(!(_method & request->method()))
         return false;
 
       if(_uri.length() && (_uri != request->url() && !request->url().startsWith(_uri+"/")))
@@ -84,20 +89,22 @@ class AsyncCallbackWebHandler: public AsyncWebHandler {
       request->addInterestingHeader("ANY");
       return true;
     }
-    void handleRequest(AsyncWebServerRequest *request){
+  
+    virtual void handleRequest(AsyncWebServerRequest *request) override final {
       if(_onRequest)
         _onRequest(request);
       else
         request->send(500);
     }
-    void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+    virtual void handleUpload(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) override final {
       if(_onUpload)
         _onUpload(request, filename, index, data, len, final);
     }
-    void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+    virtual void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) override final {
       if(_onBody)
         _onBody(request, data, len, index, total);
     }
+    virtual bool isRequestHandlerTrivial() override final {return _onRequest ? false : true;}
 };
 
 #endif /* ASYNCWEBSERVERHANDLERIMPL_H_ */

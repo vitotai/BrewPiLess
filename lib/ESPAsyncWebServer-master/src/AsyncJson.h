@@ -65,12 +65,14 @@ class AsyncJsonResponse: public AsyncAbstractResponse {
     }
     ~AsyncJsonResponse() {}
     JsonVariant & getRoot() { return _root; }
-    bool _sourceValid() { return _isValid; }
+    bool _sourceValid() const { return _isValid; }
     size_t setLength() {
       _contentLength = _root.measureLength();
       if (_contentLength) { _isValid = true; }
-      return _contentLength; 
+      return _contentLength;
     }
+
+   size_t getSize() { return _jsonBuffer.size(); }
 
     size_t _fillBuffer(uint8_t *data, size_t len){
       ChunkPrint dest(data, _sentLength, len);

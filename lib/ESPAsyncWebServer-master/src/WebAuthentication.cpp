@@ -20,7 +20,12 @@
 */
 #include "WebAuthentication.h"
 #include <libb64/cencode.h>
+#ifdef ESP32
+#include "mbedtls/md5.h"
+#else
 #include "md5.h"
+#endif
+
 
 // Basic Auth hash = base64("username:password")
 
@@ -54,15 +59,26 @@ bool checkBasicAuthentication(const char * hash, const char * username, const ch
 }
 
 static bool getMD5(uint8_t * data, uint16_t len, char * output){//33 bytes or more
-  md5_context_t _ctx;
+#ifdef ESP32
+    mbedtls_md5_context _ctx;
+#else
+    md5_context_t _ctx;
+#endif
   uint8_t i;
   uint8_t * _buf = (uint8_t*)malloc(16);
   if(_buf == NULL)
     return false;
   memset(_buf, 0x00, 16);
+#ifdef ESP32
+  mbedtls_md5_init(&_ctx);
+  mbedtls_md5_starts(&_ctx);
+  mbedtls_md5_update(&_ctx, data, len);
+  mbedtls_md5_finish(&_ctx, _buf);
+#else
   MD5Init(&_ctx);
   MD5Update(&_ctx, data, len);
   MD5Final(_buf, &_ctx);
+#endif
   for(i = 0; i < 16; i++) {
     sprintf(output + (i * 2), "%02x", _buf[i]);
   }
@@ -84,7 +100,7 @@ static String genRandomMD5(){
   return res;
 }
 
-static String stringMD5(String in){
+static String stringMD5(const String& in){
   char * out = (char*)malloc(33);
   if(out == NULL || !getMD5((uint8_t*)(in.c_str()), in.length(), out))
     return "";
@@ -132,7 +148,7 @@ bool checkDigestAuthentication(const char * header, const char * method, const c
   }
 
   String myHeader = String(header);
-  int nextBreak = myHeader.indexOf(", ");
+  int nextBreak = myHeader.indexOf(",");
   if(nextBreak < 0){
     //os_printf("AUTH FAIL: no variables\n");
     return false;
@@ -150,8 +166,9 @@ bool checkDigestAuthentication(const char * header, const char * method, const c
   myHeader += ", ";
   do {
     String avLine = myHeader.substring(0, nextBreak);
-    myHeader = myHeader.substring(nextBreak+2);
-    nextBreak = myHeader.indexOf(", ");
+    avLine.trim();
+    myHeader = myHeader.substring(nextBreak+1);
+    nextBreak = myHeader.indexOf(",");
 
     int eqSign = avLine.indexOf("=");
     if(eqSign < 0){
@@ -204,9 +221,9 @@ bool checkDigestAuthentication(const char * header, const char * method, const c
     }
   } while(nextBreak > 0);
 
-  String ha1 = (passwordIsHash) ? String(password) : myUsername + ":" + myRealm + ":" + String(password);
+  String ha1 = (passwordIsHash) ? String(password) : stringMD5(myUsername + ":" + myRealm + ":" + String(password));
   String ha2 = String(method) + ":" + myUri;
-  String response = stringMD5(ha1) + ":" + myNonce + ":" + myNc + ":" + myCnonce + ":" + myQop + ":" + stringMD5(ha2);
+  String response = ha1 + ":" + myNonce + ":" + myNc + ":" + myCnonce + ":" + myQop + ":" + stringMD5(ha2);
 
   if(myResponse.equals(stringMD5(response))){
     //os_printf("AUTH SUCCESS\n");

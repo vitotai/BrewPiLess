@@ -61,8 +61,8 @@ extern "C" {
 #endif
 //WebSocket seems to be unstable, at least on iPhone.
 //Go back to ServerSide Event.
-#define UseWebSocket false
-#define UseServerSideEvent true
+#define UseWebSocket true
+#define UseServerSideEvent false
 #define ResponseAppleCNA true
 #define CaptivePortalTimeout 180
 /**************************************************************************************/
@@ -101,7 +101,7 @@ R"END(
 #define PROFILE_FILENAME "/brewing.json"
 #define CONFIG_FILENAME "/brewpi.cfg"
 
-#define WS_PATH 		"/websocket"
+#define WS_PATH 		"/ws"
 #define SSE_PATH 		"/getline"
 
 #define POLLING_PATH 	"/getline_p"
@@ -289,7 +289,6 @@ class BrewPiWebHandler: public AsyncWebHandler
 				AsyncWebServerResponse * response = request->beginResponse(SPIFFS, pathWithJgz,"application/javascript");
 				response->addHeader("Content-Encoding", "gzip");
 				response->addHeader("Cache-Control","max-age=2592000");
-//				response->addHeader("Content-Type","application/javascript");
 				request->send(response);
 
 				return;
@@ -297,10 +296,19 @@ class BrewPiWebHandler: public AsyncWebHandler
 		}
 		String pathWithGz = path + ".gz";
 		if(SPIFFS.exists(pathWithGz)){
+#if 0
 			AsyncWebServerResponse * response = request->beginResponse(SPIFFS, pathWithGz,getContentType(path));
-			response->addHeader("Content-Encoding", "gzip");
+			// AsyncFileResonse will add "content-disposion" header, result in "download" of Safari, instead of "render" 
+#else
+			File file=SPIFFS.open(pathWithGz,"r");
+			if(!file){
+				request->send(500);
+				return;
+			}
+			AsyncWebServerResponse * response = request->beginResponse(file, path,getContentType(path));
+#endif
+//			response->addHeader("Content-Encoding", "gzip");
 			response->addHeader("Cache-Control","max-age=2592000");
-//			response->addHeader("Content-Type",getContentType(path));
 			request->send(response);
 			return;
 		}
@@ -355,6 +363,8 @@ class BrewPiWebHandler: public AsyncWebHandler
 	  
 public:
 	BrewPiWebHandler(void){}
+
+	virtual bool isRequestHandlerTrivial() override final {return false;}
 
 	void handleRequest(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET && request->url() == POLLING_PATH) {
@@ -612,14 +622,57 @@ public:
 AppleCNAHandler appleCNAHandler;
 #endif //#if ResponseAppleCNA == true
 
+void greeting(std::function<void(const char*)> sendFunc)
+{
+	char buf[128];
+	// gravity related info.
+	if(externalData.iSpindelEnabled()){
+		externalData.sseNotify(buf);
+		sendFunc(buf);
+	}
+	// RSSI && 
+	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld}"
+		,titlelabel,BPL_VERSION,WiFi.RSSI(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset());
+	sendFunc(buf);
+}
+
+#define GreetingInMainLoop 1
+
+
+
 #if UseWebSocket == true
+
 AsyncWebSocket ws(WS_PATH);
+
+
+#if GreetingInMainLoop
+AsyncWebSocketClient * _lastWSclient=NULL;
+void sayHelloWS()
+{
+	if(! _lastWSclient) return;
+	
+	greeting([=](const char* msg){
+			_lastWSclient->text(msg);
+	});
+	
+	_lastWSclient = NULL;
+}
+
+#endif
+
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
 {
 	if(type == WS_EVT_CONNECT){
     	DBG_PRINTF("ws[%s][%u] connect\n", server->url(), client->id());
     	//client->printf("Hello Client %u :)", client->id());
     	client->ping();
+		#if GreetingInMainLoop
+		_lastWSclient = client;
+		#else
+		greeting([=](const char* msg){
+			client->text(msg);
+		});
+		#endif
   	} else if(type == WS_EVT_DISCONNECT){
     	DBG_PRINTF("ws[%s][%u] disconnect: %u\n", server->url(), client->id());
   	} else if(type == WS_EVT_ERROR){
@@ -707,19 +760,50 @@ void reportRssi(void)
 #endif
 }
 
+
+#if UseServerSideEvent
+#if GreetingInMainLoop 
+
+AsyncEventSourceClient *_lastClient=NULL;
+
+void sayHelloSSE()
+{
+	if(! _lastClient) return;
+
+	DBG_PRINTF("SSE Connect\n");
+	greeting([=](const char* msg){
+		_lastClient->send(msg);
+	});
+	_lastClient = NULL;
+}
+
+void onClientConnected(AsyncEventSourceClient *client)
+{
+	_lastClient = client;
+}
+
+#else
 void onClientConnected(AsyncEventSourceClient *client){
 	DBG_PRINTF("SSE Connect\n");
-	char buf[128];
-	// gravity related info.
-	if(externalData.iSpindelEnabled()){
-		externalData.sseNotify(buf);
-		client->send(buf);
-	}
-	// RSSI && 
-	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld}"
-		,titlelabel,BPL_VERSION,WiFi.RSSI(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset());
-	client->send(buf);
+	greeting([=](const char* msg){
+		client->send(msg);
+	});
 }
+#endif
+#endif
+
+#if GreetingInMainLoop 
+void sayHello()
+{
+#if UseServerSideEvent
+	sayHelloSSE();
+#endif 
+
+#if UseWebSocket == true
+	sayHelloWS();
+#endif
+}
+#endif 
 
 #define MAX_DATA_SIZE 256
 
@@ -943,6 +1027,9 @@ public:
 			DBG_PRINTF("Body total%u data:%s\n", total,_data);
 		}
 	}
+	
+	virtual bool isRequestHandlerTrivial() override final {return false;}
+
 };
 ExternalDataHandler externalDataHandler;
 
@@ -1353,6 +1440,10 @@ void loop(void){
 
  	dataLogger.loop(now);
  	#endif
+	
+	#if GreetingInMainLoop
+	sayHello();
+	#endif
 
 	if(!IS_RESTARTING){
 		WiFiSetup.stayConnected();

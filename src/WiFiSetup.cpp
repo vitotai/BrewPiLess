@@ -25,9 +25,11 @@ void WiFiSetupClass::enterApMode(void)
 {
 
 	WiFi.disconnect();
+	WiFi.mode(WIFI_OFF); // fixes D1 mini not entering initial AP mode without hard reset
 	DBG_PRINTF("AP Mode\n");
     _apMode=true;
-
+	
+	WiFi.mode(WIFI_AP);	// fixes Error setting mDNS responder
 	dnsServer.reset(new DNSServer());
 	dnsServer->setErrorReplyCode(DNSReplyCode::NoError);
 	dnsServer->start(DNS_PORT, "*", WiFi.softAPIP());

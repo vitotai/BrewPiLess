@@ -23,6 +23,7 @@
 #define SYNCCLIENT_H_
 
 #include "Client.h"
+#include <async_config.h>
 class cbuf;
 class AsyncClient;
 
@@ -38,6 +39,8 @@ class SyncClient: public Client {
     void _onConnect(AsyncClient *c);
     void _onDisconnect();
     void _attachCallbacks();
+    void _attachCallbacks_Disconnect();
+    void _attachCallbacks_AfterConnected();
 
   public:
     SyncClient(size_t txBufLen = 1460);
@@ -47,8 +50,19 @@ class SyncClient: public Client {
     operator bool(){ return connected(); }
     SyncClient & operator=(const SyncClient &other);
 
+#if ASYNC_TCP_SSL_ENABLED
+    int connect(IPAddress ip, uint16_t port, bool secure);
+    int connect(const char *host, uint16_t port, bool secure);
+    int connect(IPAddress ip, uint16_t port){
+      return connect(ip, port, false);
+    }
+    int connect(const char *host, uint16_t port){
+      return connect(host, port, false);
+    }
+#else
     int connect(IPAddress ip, uint16_t port);
     int connect(const char *host, uint16_t port);
+#endif
     void setTimeout(uint32_t seconds);
 
     uint8_t status();

@@ -22,18 +22,20 @@
 #ifndef ASYNCTCP_H_
 #define ASYNCTCP_H_
 
-
-
+#include <async_config.h>
 #include "IPAddress.h"
 #include <functional>
 
-#define USE_ASYNC_BUFFER 0
-#define SERVER_KEEP_CLIENTS 0
-#define CLIENT_SYNC_API 0
+extern "C" {
+    #include "lwip/init.h"
+    #include "lwip/err.h"
+};
 
 class AsyncClient;
 
 #define ASYNC_MAX_ACK_TIME 5000
+#define ASYNC_WRITE_FLAG_COPY 0x01 //will allocate new buffer to hold the data while sending (else will hold reference to the data given)
+#define ASYNC_WRITE_FLAG_MORE 0x02 //will not send PSH flag, meaning that there should be more data to be sent before the application should react.
 
 typedef std::function<void(void*, AsyncClient*)> AcConnectHandler;
 typedef std::function<void(void*, AsyncClient*, size_t len, uint32_t time)> AcAckHandler;
@@ -43,6 +45,13 @@ typedef std::function<void(void*, AsyncClient*, uint32_t time)> AcTimeoutHandler
 
 struct tcp_pcb;
 struct pbuf;
+struct ip_addr;
+#if ASYNC_TCP_SSL_ENABLED
+struct SSL_;
+typedef struct SSL_ SSL;
+struct SSL_CTX_;
+typedef struct SSL_CTX_ SSL_CTX;
+#endif
 
 class AsyncClient {
   protected:
@@ -62,32 +71,61 @@ class AsyncClient {
     void* _timeout_cb_arg;
     AcConnectHandler _poll_cb;
     void* _poll_cb_arg;
-    int _refcnt;
     bool _pcb_busy;
+#if ASYNC_TCP_SSL_ENABLED
+    bool _pcb_secure;
+    bool _handshake_done;
+#endif
     uint32_t _pcb_sent_at;
     bool _close_pcb;
     bool _ack_pcb;
+    uint32_t _tx_unacked_len;
+    uint32_t _tx_acked_len;
+    uint32_t _tx_unsent_len;
     uint32_t _rx_ack_len;
     uint32_t _rx_last_packet;
     uint32_t _rx_since_timeout;
+    uint32_t _ack_timeout;
+    uint16_t _connect_port;
 
     int8_t _close();
-    int8_t _connected(void* pcb, int8_t err);
-    void _error(int8_t err);
-    int8_t _poll(tcp_pcb* pcb);
-    int8_t _sent(tcp_pcb* pcb, uint16_t len);
-    int8_t _recv(tcp_pcb* pcb, pbuf* pb, int8_t err);
-    static int8_t _s_poll(void *arg, struct tcp_pcb *tpcb);
-    static int8_t _s_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *pb, int8_t err);
-    static void _s_error(void *arg, int8_t err);
-    static int8_t _s_sent(void *arg, struct tcp_pcb *tpcb, uint16_t len);
-    static int8_t _s_connected(void* arg, void* tpcb, int8_t err);
+    err_t _connected(void* pcb, err_t err);
+    void _error(err_t err);
+#if ASYNC_TCP_SSL_ENABLED
+    void _ssl_error(int8_t err);
+#endif
+    err_t _poll(tcp_pcb* pcb);
+    err_t _sent(tcp_pcb* pcb, uint16_t len);
+#if LWIP_VERSION_MAJOR == 1
+    void _dns_found(struct ip_addr *ipaddr);
+#else
+    void _dns_found(const ip_addr *ipaddr);
+#endif
+    static err_t _s_poll(void *arg, struct tcp_pcb *tpcb);
+    static err_t _s_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *pb, err_t err);
+    static void _s_error(void *arg, err_t err);
+    static err_t _s_sent(void *arg, struct tcp_pcb *tpcb, uint16_t len);
+    static err_t _s_connected(void* arg, void* tpcb, err_t err);
+#if LWIP_VERSION_MAJOR == 1
+    static void _s_dns_found(const char *name, struct ip_addr *ipaddr, void *arg);
+#else
+    static void _s_dns_found(const char *name, const ip_addr *ipaddr, void *arg);
+#endif
+#if ASYNC_TCP_SSL_ENABLED
+    static void _s_data(void *arg, struct tcp_pcb *tcp, uint8_t * data, size_t len);
+    static void _s_handshake(void *arg, struct tcp_pcb *tcp, SSL *ssl);
+    static void _s_ssl_error(void *arg, struct tcp_pcb *tcp, int8_t err);
+#endif
 
   public:
     AsyncClient* prev;
     AsyncClient* next;
 
+#if ASYNC_TCP_SSL_ENABLED
+    AsyncClient(tcp_pcb* pcb = 0, SSL_CTX * ssl_ctx = NULL);
+#else
     AsyncClient(tcp_pcb* pcb = 0);
+#endif
     ~AsyncClient();
 
     AsyncClient & operator=(const AsyncClient &other);
@@ -98,9 +136,13 @@ class AsyncClient {
     bool operator!=(const AsyncClient &other) {
       return !(*this == other);
     }
-
+#if ASYNC_TCP_SSL_ENABLED
+    bool connect(IPAddress ip, uint16_t port, bool secure=false);
+    bool connect(const char* host, uint16_t port, bool secure=false);
+#else
     bool connect(IPAddress ip, uint16_t port);
     bool connect(const char* host, uint16_t port);
+#endif
     void close(bool now = false);
     void stop();
     int8_t abort();
@@ -108,14 +150,17 @@ class AsyncClient {
 
     bool canSend();//ack is not pending
     size_t space();
-    size_t add(const char* data, size_t size);//add for sending
+    size_t add(const char* data, size_t size, uint8_t apiflags=0);//add for sending
     bool send();//send all data added with the method above
     size_t ack(size_t len); //ack data that you have not acked using the method below
     void ackLater(){ _ack_pcb = false; } //will not ack the current packet. Call from onData
 
+#if ASYNC_TCP_SSL_ENABLED
+    SSL *getSSL();
+#endif
 
     size_t write(const char* data);
-    size_t write(const char* data, size_t size); //only when canSend() == true
+    size_t write(const char* data, size_t size, uint8_t apiflags=0); //only when canSend() == true
 
     uint8_t state();
     bool connecting();
@@ -124,8 +169,11 @@ class AsyncClient {
     bool disconnected();
     bool freeable();//disconnected or disconnecting
 
+    uint16_t getMss();
     uint32_t getRxTimeout();
     void setRxTimeout(uint32_t timeout);//no RX data timeout for the connection in seconds
+    uint32_t getAckTimeout();
+    void setAckTimeout(uint32_t timeout);//no ACK timeout for the last sent packet in milliseconds
     void setNoDelay(bool nodelay);
     bool getNoDelay();
     uint32_t getRemoteAddress();
@@ -148,7 +196,14 @@ class AsyncClient {
 
     const char * errorToString(int8_t error);
     const char * stateToString();
+
+    err_t _recv(tcp_pcb* pcb, pbuf* pb, err_t err);
 };
+
+#if ASYNC_TCP_SSL_ENABLED
+typedef std::function<int(void* arg, const char *filename, uint8_t **buf)> AcSSlFileHandler;
+struct pending_pcb;
+#endif
 
 class AsyncServer {
   protected:
@@ -158,12 +213,23 @@ class AsyncServer {
     tcp_pcb* _pcb;
     AcConnectHandler _connect_cb;
     void* _connect_cb_arg;
+#if ASYNC_TCP_SSL_ENABLED
+    struct pending_pcb * _pending;
+    SSL_CTX * _ssl_ctx;
+    AcSSlFileHandler _file_cb;
+    void* _file_cb_arg;
+#endif
 
   public:
+
     AsyncServer(IPAddress addr, uint16_t port);
     AsyncServer(uint16_t port);
     ~AsyncServer();
     void onClient(AcConnectHandler cb, void* arg);
+#if ASYNC_TCP_SSL_ENABLED
+    void onSslFileRequest(AcSSlFileHandler cb, void* arg);
+    void beginSecure(const char *cert, const char *private_key_file, const char *password);
+#endif
     void begin();
     void end();
     void setNoDelay(bool nodelay);
@@ -171,8 +237,16 @@ class AsyncServer {
     uint8_t status();
 
   protected:
-    int8_t _accept(tcp_pcb* newpcb, int8_t err);
-    static int8_t _s_accept(void *arg, tcp_pcb* newpcb, int8_t err);
+    err_t _accept(tcp_pcb* newpcb, err_t err);
+    static err_t _s_accept(void *arg, tcp_pcb* newpcb, err_t err);
+#if ASYNC_TCP_SSL_ENABLED
+    int _cert(const char *filename, uint8_t **buf);
+    err_t _poll(tcp_pcb* pcb);
+    err_t _recv(tcp_pcb *pcb, struct pbuf *pb, err_t err);
+    static int _s_cert(void *arg, const char *filename, uint8_t **buf);
+    static err_t _s_poll(void *arg, struct tcp_pcb *tpcb);
+    static err_t _s_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *pb, err_t err);
+#endif
 };
 
 
