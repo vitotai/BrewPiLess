@@ -36,7 +36,7 @@
                 if (res.nc) {
                     t.offset = data.length;
                     t.startOff = xhr.getResponseHeader("LogOffset");
-                    t.getLogName();
+                    //t.getLogName();
                     //console.log("new chart, offset="+t.startOff);
                     if (t.chart.calibrating) {
                         t.chart.getFormula();
@@ -105,28 +105,30 @@
             this.reqdata();
         },
         reqnow: function() {
-            var t = this;
-            if (t.timer) clearInterval(t.timer);
-            t.timer = null;
-            t.reqdata();
-        },
-        getLogName: function() {
-            s_ajax({
-                url: "loglist.php",
-                m: "GET",
-                success: function(d) {
-                    var r = JSON.parse(d);
-                    if (r.rec) {
-                        Q("#recording").innerHTML = r.log;
-                    } else {
-                        Q("#recording").innerHTML = "";
+                var t = this;
+                if (t.timer) clearInterval(t.timer);
+                t.timer = null;
+                t.reqdata();
+            }
+            /*
+            , 
+            getLogName: function() {
+                s_ajax({
+                    url: "loglist.php",
+                    m: "GET",
+                    success: function(d) {
+                        var r = JSON.parse(d);
+                        if (r.rec) {
+                            Q("#recording").innerHTML = r.log;
+                        } else {
+                            Q("#recording").innerHTML = "";
+                        }
+                    },
+                    fail: function(d) {
+                        console.log("get logname fail");
                     }
-                },
-                fail: function(d) {
-                    alert("failed:" + d);
-                }
-            });
-        }
+                });
+            }*/
     };
     /* LCD information */
     function parseLcdText(lines) {
@@ -419,14 +421,20 @@
 
     function connBWF() {
         BWF.init({
-            reconnect: false,
+            //            reconnect: false,
             onconnect: function() {
                 BWF.send("l");
                 if (window.lcdTimer) clearInterval(window.lcdTimer);
                 window.lcdTimer = setInterval(function() {
                     if (!BWF.gotMsg) {
+                        if (window.rcTimeout) return;
+                        // once connected.
+                        //  no data for 5 seconds
                         controllerError();
-                        BWF.reconnect();
+                        window.rcTimeout = setTimeout(function() {
+                            window.rcTimeout = null;
+                            if (!BWF.gotMsg) BWF.reconnect(true);
+                        }, 10000);
                     }
                     BWF.gotMsg = false;
                     BWF.send("l");
@@ -434,10 +442,13 @@
             },
             error: function(e) {
                 //console.log("error");
+                // when connection establishment fails 
+                // or connection broken
                 communicationError();
-                setTimeout(function() {
-                    BWF.reconnect();
-                }, 12000);
+                // do nothing, let BWF do the resconnection.
+                //              setTimeout(function() {
+                //                   if (!BWF.gotMsg) BWF.reconnect();
+                //              }, 12000);
             },
             handlers: {
                 L: function(lines) {
@@ -462,6 +473,9 @@
                     if (typeof c["tm"] != "undefined" && typeof c["off"] != "undefined") {
                         checkTime(c.tm, c.off);
                     }
+                    if (typeof c["log"] != "undefined")
+                        Q("#recording").innerHTML = c.log;
+
                     ptcshow(c);
                 },
                 G: function(c) {

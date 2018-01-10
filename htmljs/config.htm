@@ -30,6 +30,35 @@
             return document.querySelector(d);
         };
 
+        function formatIP(ip) {
+            var ipint = parseInt(ip);
+            if (ipint == 0) return "";
+            return "" + ((ipint >> 24) & 0xFF) + "." + ((ipint >> 16) & 0xFF) + "." + ((ipint >> 8) & 0xFF) + "." + (ipint & 0xFF);
+        }
+
+        function verifyIP(t) {
+            var digits = this.value.split(".");
+            var valid = true;
+            var val = 0;
+            if (digits.length == 4) {
+                for (var i = 0; i < 4; i++) {
+                    var di = parseInt(digits[i]);
+                    if (di > 255) {
+                        valid = false;
+                        break;
+                    }
+                    val = (val << 8) + di;
+                }
+            } else valid = false;
+            if (valid) {
+                this.saved = val;
+                this.value = formatIP(val);
+            } else {
+                this.value = formatIP(this.saved);
+            }
+
+        }
+
         function loadSetting() {
             s_ajax({
                 url: "brewpi.cfg",
@@ -39,8 +68,15 @@
                     Object.keys(j).map(function(key) {
                         var div = Q("input[name=" + key + "]");
                         if (div) {
-                            if (div.type == "checkbox") div.checked = (j[key] != 0);
+                            if (div.classList.contains("iptype")) {
+                                div.value = formatIP(j[key]);
+                                div.saved = j[key];
+                                div.onchange = verifyIP;
+                            } else if (div.type == "checkbox") div.checked = (j[key] != 0);
                             else div.value = j[key];
+                        } else {
+                            div = Q("select[name=" + key + "]");
+                            if (div) div.value = j[key];
                         }
                     });
                 },
@@ -61,17 +97,26 @@
         function save() {
             var ins = document.querySelectorAll("input");
             var data = "";
+            //(new Uint32Array([-1]))[0]
+            var json = {};
             Object.keys(ins).map(function(key, i) {
                 if (ins[i].type != "submit") {
                     if (ins[i].name && ins[i].name != "") {
-                        var val = (ins[i].type == "checkbox") ? (ins[i].checked ? 1 : 0) : encodeURIComponent(ins[i].value.trim());
-                        data = ((data == "") ? "" : (data + "&")) + ins[i].name + "=" + val;
+                        var val;
+                        if (ins[i].classList.contains("iptype")) val = ins[i].saved;
+                        else if (ins[i].type == "checkbox") val = (ins[i].checked ? 1 : 0)
+                        else val = ins[i].value.trim();
+                        json[ins[i].name] = val;
                     }
                 }
             });
+            var div = Q("select[name=wifi]");
+            json["wifi"] = div.value;
+            console.log(JSON.stringify(json));
+
             s_ajax({
                 url: "config",
-                data: data,
+                data: "data=" + encodeURIComponent(JSON.stringify(json)),
                 m: "POST",
                 success: function(data) {
                     waitrestart();
@@ -123,8 +168,24 @@
                     <td><input type="checkbox" name="protect"></td>
                 </tr>
                 <tr>
-                    <td>Always softAP</td>
-                    <td><input type="checkbox" name="ap"></td>
+                    <td>Network</td>
+                    <td><select name="wifi">
+                        <option value="1">Station</option>
+                        <option value="2">AP</option>
+                        <option value="3">Station + AP</option>
+                    </select></td>
+                </tr>
+                <tr>
+                    <td>Fixed IP</td>
+                    <td><input type="text" name="ip" size="16" class="iptype"></td>
+                </tr>
+                <tr>
+                    <td>Gateway</td>
+                    <td><input type="text" name="gw" size="16" class="iptype"></td>
+                </tr>
+                <tr>
+                    <td>Netmask</td>
+                    <td><input type="text" name="mask" size="16" class="iptype"></td>
                 </tr>
                 <tr>
                     <td>Save Change</td>

@@ -1,4 +1,4 @@
-var JSVERION = "2.4.2";
+var JSVERION = "2.5";
 
 function s_ajax(b) {
     var c = new XMLHttpRequest();
