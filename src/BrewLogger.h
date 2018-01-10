@@ -112,6 +112,13 @@ public:
 			+"}";
 		return ret;
 	}
+	
+	const char* currentLog(void)
+	{
+		if(_fileInfo.logname[0] != 0)
+			return _fileInfo.logname;
+		else return NULL;
+	}
 
 	String loggingStatus(void)
 	{

@@ -75,11 +75,13 @@ R"END(
 "pass":"brewpiless",
 "title":"brewpiless",
 "protect":0,
-"ap":0,
-"port":80
-}
+"wifi":1,
+"ip":0,
+"gw":0,
+"mask":0,
+"port":80}
 )END";
-
+/*
 static const char configFormat[] PROGMEM =
 R"END(
 {"name":"%s",
@@ -87,11 +89,14 @@ R"END(
 "pass":"%s",
 "title":"%s",
 "protect":%d,
-"ap":%d,
-"port":%d
+"port":%d,
+"wifi":%d,
+"ip":%lu,
+"gw":%lu,
+"mask":%lu
 }
 )END";
-
+*/
 
 #define MAX_CONFIG_LEN 1024
 #define JSON_BUFFER_SIZE 1024
@@ -151,7 +156,8 @@ ExternalData externalData;
 GravityTracker gravityTracker;
 
 bool passwordLcd;
-bool stationApMode;
+WiFiMode wifiMode;
+
 char username[32];
 char password[32];
 char hostnetworkname[32];
@@ -395,47 +401,16 @@ public:
 	 	    if(!request->authenticate(username, password))
 	        return request->requestAuthentication();
 
-			if(request->hasParam("name", true)
-					&& request->hasParam("user", true)
-					&& request->hasParam("title", true)					
-					&& request->hasParam("pass", true)){
-  				AsyncWebParameter* name = request->getParam("name", true);
-  				AsyncWebParameter* user = request->getParam("user", true);
-				AsyncWebParameter* pass = request->getParam("pass", true);
-				AsyncWebParameter* title = request->getParam("title", true);
-				uint16_t port=80;
-
-				if(request->hasParam("port", true)){
-					port=(uint16_t)request->getParam("port", true)->value().toInt();
-					if(!port) port = 80;
-				}
+			if(request->hasParam("data", true)){
 
   				File config=SPIFFS.open(CONFIG_FILENAME,"w+");
-
   				if(!config){
   					request->send(500);
   					return;
   				}
+  				AsyncWebParameter* data = request->getParam("data", true);
 
-  				int protect =request->getParam("protect", true)->value().toInt();
-  				int ap = request->getParam("ap", true)->value().toInt();
-  				DBG_PRINTF("STA_AP mode? %d\n",ap);
-
-  				int size=strlen_P(configFormat);
-  				char *fmt=(char*) malloc(size +1);
-  				if(!fmt){
-  					request->send(500);
-					DBG_PRINTF("!!Alloc error\n");
-  					return;
-  				}
-  				strcpy_P(fmt,configFormat);
-
-  				config.printf(fmt,name->value().c_str(),
-  											user->value().c_str(),
-											  pass->value().c_str(),
-											  title->value().c_str(),
-  											protect,ap, port);
-  				free(fmt);
+  				config.print(data->value());
   				config.flush();
   				config.close();
 				request->send(200);
@@ -631,8 +606,11 @@ void greeting(std::function<void(const char*)> sendFunc)
 		sendFunc(buf);
 	}
 	// RSSI && 
-	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld}"
-		,titlelabel,BPL_VERSION,WiFi.RSSI(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset());
+	const char *logname= brewLogger.currentLog();
+	if(logname == NULL) logname="";
+
+	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld, \"log\":\"%s\"}"
+		,titlelabel,BPL_VERSION,WiFi.RSSI(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset(),logname);
 	sendFunc(buf);
 }
 
@@ -684,7 +662,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     	String msg = "";
     	if(info->final && info->index == 0 && info->len == len){
       		//the whole message is in a single frame and we got all of it's data
-      		DBG_PRINTF("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
+      		DBG_PRINTF("ws[%s][%u] %s-message[%llu]:\n", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
 
 	        for(size_t i=0; i < info->len; i++) {
         	  //msg += (char) data[i];
@@ -735,7 +713,10 @@ void stringAvailable(const char *str)
 
 void notifyLogStatus(void)
 {
-	stringAvailable("V:{\"reload\":\"chart\"}");
+	const char *logname= brewLogger.currentLog();
+	String logstr=(logname)? String(logname):String("");
+	String status=String("V:{\"reload\":\"chart\", \"log\":\"") +  logstr + String("\"}");
+	stringAvailable(status.c_str());
 }
 
 void reportRssi(void)
@@ -1213,7 +1194,6 @@ void setup(void){
   		DBG_PRINTF("SPIFFS.being() Success.\n");
   	}
 
-    WiFiSetup.preInit();
 
 #ifdef EARLY_DISPLAY
 	DBG_PRINTF("Init LCD...\n");
@@ -1228,53 +1208,72 @@ void setup(void){
 	char configBuf[MAX_CONFIG_LEN];
 
 	File config=SPIFFS.open(CONFIG_FILENAME,"r+");
-
-	DynamicJsonBuffer jsonBuffer(JSON_BUFFER_SIZE);
-
+	bool noconfig=true;
 	if(config){
 		size_t len=config.readBytes(configBuf,MAX_CONFIG_LEN);
 		configBuf[len]='\0';
+		config.close();
+		noconfig = false;
+		//DBG_PRINTF("readconfig:%s\n",configBuf);
 	}
 	uint16_t port=80;
 
+	DynamicJsonBuffer jsonBuffer(JSON_OBJECT_SIZE(15));
 	JsonObject& root = jsonBuffer.parseObject(configBuf);
+	JsonObject *cfgJson;
 	//const char* host;
-	if(!config
+	if(noconfig
 			|| !root.success()
 			|| !root.containsKey("name")
 			|| !root.containsKey("user")
 			|| !root.containsKey("pass"))
 	{
-		strcpy_P(configBuf,DefaultConfiguration);
-		JsonObject& root = jsonBuffer.parseObject(configBuf);
-  		strcpy(hostnetworkname,root["name"]);
-  		strcpy(username,root["user"]);
-	  	strcpy(password,root["pass"]);
-	 	strcpy(titlelabel,root["title"]);
-  		passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
-		stationApMode=(root.containsKey("ap"))? (bool)(root["protect"]):false;
 
+		//DBG_PRINTF("success:%d, name:%d, user:%d, pass:%d\n",root.success(),root.containsKey("name"),root.containsKey("user"),root.containsKey("pass"));
+		strcpy_P(configBuf,DefaultConfiguration);
+		// save before "parse"
 		File newconfig=SPIFFS.open(CONFIG_FILENAME,"w+");
-		newconfig.write((const byte*)configBuf,sizeof(DefaultConfiguration));
+		newconfig.write((const uint8_t*)configBuf,strlen(configBuf));
 		newconfig.close();
 		DBG_PRINTF("Reset config\n");
+		// arduinoJson will modify the data in buffer.
+		JsonObject& nroot = jsonBuffer.parseObject(configBuf);
+		cfgJson = &nroot;
+	}
+	else
+		cfgJson = &root;
+
+
+	strcpy(hostnetworkname,cfgJson->get<const char*>("name"));
+  	strcpy(username,cfgJson->get<const char*>("user"));
+	strcpy(password,cfgJson->get<const char*>("pass"));
+
+	if(cfgJson->containsKey("title")) strcpy(titlelabel,cfgJson->get<const char*>("title"));
+	else  strcpy(titlelabel,hostnetworkname);
+
+  	passwordLcd=(cfgJson->containsKey("protect"))? (cfgJson->get<bool>("protect")):false;
+	port = (cfgJson->containsKey("port"))? cfgJson->get<uint16_t>("port"):80;
+	if(port ==0) port = 80;
+	if(cfgJson->containsKey("wifi")){
+		int mode=cfgJson->get<int>("wifi");
+		wifiMode=(mode)? (WiFiMode)mode:WIFI_STA;
 	}else{
-		config.close();
-	  	strcpy(hostnetworkname,root["name"]);
-  		strcpy(username,root["user"]);
-		strcpy(password,root["pass"]);
-		if(root.containsKey("title")) strcpy(titlelabel,root["title"]);
-		else  strcpy(titlelabel,root["name"]);
-  		passwordLcd=(root.containsKey("protect"))? (bool)(root["protect"]):false;
-		stationApMode=(root.containsKey("ap"))? (bool)(root["ap"]):false;
-		port = (root.containsKey("port"))? (uint16_t)(root["port"]):80;
-		if(port ==0) port = 80;
+		// backward compatible
+		if(cfgJson->containsKey("ap")) wifiMode = (cfgJson->get<int>("ap"))? WIFI_AP_STA: WIFI_STA;
+	}
 
-		DBG_PRINTF("title:%s, name:%s, user:%s, pass:%s\n",titlelabel,hostnetworkname,username,password);
-  	}
+	IPAddress hostIP(0,0,0,0);
+	if(cfgJson->containsKey("ip")) hostIP =cfgJson->get<uint32_t>("ip");
 
+	IPAddress gatewayIP(0,0,0,0);
+	if(cfgJson->containsKey("gw")) gatewayIP =cfgJson->get<uint32_t>("gw");
 
-	  DBG_PRINTF("STA_AP mode? %d\n",stationApMode);
+	IPAddress netmask(0,0,0,0);
+	if(cfgJson->containsKey("mask")) netmask =cfgJson->get<uint32_t>("mask");
+
+	DBG_PRINTF("title:%s, name:%s, user:%s, pass:%s\n",titlelabel,hostnetworkname,username,password);
+  	DBG_PRINTF("Wifi mode? %d\n",wifiMode);
+	
 	#ifdef ENABLE_LOGGING
   	dataLogger.loadConfig();
   	#endif
@@ -1282,7 +1281,24 @@ void setup(void){
 
 	//1. Start WiFi
 	DBG_PRINTF("Starting WiFi...\n");
-	WiFiSetup.setApStation(stationApMode);
+	WiFiSetup.setNetwork(wifiMode,hostIP,gatewayIP,netmask);
+	WiFiSetup.settingChanged([&](bool apmode,IPAddress ip, IPAddress gw, IPAddress mask){
+		if(apmode){
+			if(wifiMode == WIFI_AP) return;
+			DBG_PRINTF("AP mode selected\n");
+			cfgJson->set("wifi",(int) WIFI_AP);
+		}else{
+			// change IP address
+			DBG_PRINTF("ip:%lu, gw:%lu, mask:%lu\n",(uint32_t)ip,(uint32_t)gw,(uint32_t)mask);
+			cfgJson->set("ip",(uint32_t)ip);
+			cfgJson->set("gw",(uint32_t)gw);
+			cfgJson->set("mask",(uint32_t)mask);
+			//cfgJson->printTo(Serial);
+		}
+		File newconfig=SPIFFS.open(CONFIG_FILENAME,"w+");
+		if(newconfig) cfgJson->printTo(newconfig);
+		newconfig.close();
+	});
 	WiFiSetup.setTimeout(CaptivePortalTimeout);
 	WiFiSetup.begin(hostnetworkname,password);
 

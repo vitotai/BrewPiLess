@@ -114,6 +114,7 @@ class WiFiManager
     //called to check if break in the loop of portal page
 	void          setBreakCallback( bool (*func)(WiFiManager*) );
 
+    boolean     softAPModeSelected(){ return _softAPSelected;}
   private:
     std::unique_ptr<DNSServer>        dnsServer;
     std::unique_ptr<ESP8266WebServer> server;
@@ -178,6 +179,7 @@ class WiFiManager
 
     boolean       connect;
     boolean       _debug = true;
+    boolean       _softAPSelected=false;
 
     void (*_apcallback)(WiFiManager*) = NULL;
     void (*_savecallback)(void) = NULL;

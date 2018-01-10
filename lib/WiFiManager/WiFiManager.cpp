@@ -212,7 +212,9 @@ boolean  WiFiManager::startConfigPortal(char const *apName, char const *apPasswo
     }
     yield();
   }
-
+  server->client().stopAll();
+  server->stop(); // close the server
+  DEBUG_WM(F("Stop WM server..."));
   server.reset();
   dnsServer.reset();
 
@@ -386,6 +388,7 @@ void WiFiManager::handleRoot() {
 void  WiFiManager::handleApMode(){
 	DEBUG_WM(F("AP Mode"));
 	server->send(200,"text/html","done");
+  _softAPSelected = true;
 	// force to exit the loop
 	_configPortalTimeout=1;
 }

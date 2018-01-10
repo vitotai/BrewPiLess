@@ -832,7 +832,7 @@ void AsyncServer::begin(){
   ip_addr_t local_addr;
   local_addr.addr = (uint32_t) _addr;
   err = tcp_bind(pcb, &local_addr, _port);
-
+//Serial.printf("***tcp_bind:%d\n",err);
   if (err != ERR_OK) {
     tcp_close(pcb);
     return;
