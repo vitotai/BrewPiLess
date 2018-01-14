@@ -1,8 +1,15 @@
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#endif
 #include <ArduinoOTA.h>
 #include <FS.h>
-#include <Hash.h>
+
+//#include <Hash.h>
+
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
@@ -150,6 +157,23 @@ const char *nocache_list[]={
 "/brewpi.cfg"
 };
 //*******************************************
+
+	String getContentType(String filename){
+		if(filename.endsWith(".htm")) return "text/html";
+		else if(filename.endsWith(".html")) return "text/html";
+		else if(filename.endsWith(".css")) return "text/css";
+		else if(filename.endsWith(".js")) return "application/javascript";
+		else if(filename.endsWith(".png")) return "image/png";
+		else if(filename.endsWith(".gif")) return "image/gif";
+		else if(filename.endsWith(".jpg")) return "image/jpeg";
+		else if(filename.endsWith(".ico")) return "image/x-icon";
+		else if(filename.endsWith(".xml")) return "text/xml";
+		else if(filename.endsWith(".pdf")) return "application/x-pdf";
+		else if(filename.endsWith(".zip")) return "application/x-zip";
+		else if(filename.endsWith(".gz")) return "application/x-gzip";
+		return "text/plain";
+	  }
+
 
 ExternalData externalData;
 
@@ -350,23 +374,7 @@ class BrewPiWebHandler: public AsyncWebHandler
                 request->send(response);
 			}else sendProgmem(request,(const char*)file);
 		}
-	}
-	String getContentType(String filename){
-		if(filename.endsWith(".htm")) return "text/html";
-		else if(filename.endsWith(".html")) return "text/html";
-		else if(filename.endsWith(".css")) return "text/css";
-		else if(filename.endsWith(".js")) return "application/javascript";
-		else if(filename.endsWith(".png")) return "image/png";
-		else if(filename.endsWith(".gif")) return "image/gif";
-		else if(filename.endsWith(".jpg")) return "image/jpeg";
-		else if(filename.endsWith(".ico")) return "image/x-icon";
-		else if(filename.endsWith(".xml")) return "text/xml";
-		else if(filename.endsWith(".pdf")) return "application/x-pdf";
-		else if(filename.endsWith(".zip")) return "application/x-zip";
-		else if(filename.endsWith(".gz")) return "application/x-gzip";
-		return "text/plain";
-	  }
-	  
+	}	  
 public:
 	BrewPiWebHandler(void){}
 
@@ -377,7 +385,9 @@ public:
 	 		char *line=brewPi.getLastLine();
 	 		if(line[0]!=0) request->send(200, "text/plain", line);
 	 		else request->send(200, "text/plain;", "");
-	 	}else if(request->method() == HTTP_POST && request->url() == PUTLINE_PATH){
+	 	}
+		#if UseServerSideEvent == true
+		 else if(request->method() == HTTP_POST && request->url() == PUTLINE_PATH){
 	 		String data=request->getParam("data", true, false)->value();
 	 		//DBG_PRINTF("putline:%s\n",data.c_str());
 
@@ -386,7 +396,9 @@ public:
 
 	 		brewPi.putLine(data.c_str());
 	 		request->send(200);
-	 	}else if(request->method() == HTTP_GET && request->url() == CONTROL_CC_PATH){
+	 	}
+		#endif
+		 else if(request->method() == HTTP_GET && request->url() == CONTROL_CC_PATH){
 	 		char unit;
 	 		float minTemp,maxTemp;
 	 		brewPi.getTemperatureSetting(&unit,&minTemp,&maxTemp);
@@ -547,7 +559,11 @@ public:
 	 	}else if(request->method() == HTTP_DELETE && request->url() == DELETE_PATH){
 				return true;
 	 	}else if(request->method() == HTTP_POST){
-	 		if(request->url() == PUTLINE_PATH || request->url() == CONFIG_PATH
+	 		if(
+				#if UseServerSideEvent == true
+				 request->url() == PUTLINE_PATH || 
+				#endif
+			 request->url() == CONFIG_PATH
 	 			|| request->url() ==  FPUTS_PATH || request->url() == FLIST_PATH
 	 			|| request->url() == TIME_PATH
 	 			#ifdef ENABLE_LOGGING

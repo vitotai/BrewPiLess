@@ -39,14 +39,14 @@ const char file_gravitydevice [] PROGMEM="/gdc.htm";
 const char file_config [] PROGMEM="/config.htm";
 
 EmbeddedFileMapEntry fileMaps[]={
-{file_bwf_js,data_bwf_min_js_gz,data_bwf_min_js_gz_len,true},
-{file_index_htm,data_nindex_htm_gz,data_nindex_htm_gz_len,true},
-{file_lcd,data_lcd_min_htm_gz,data_lcd_min_htm_gz_len,true},
-{file_setup_htm,data_setup_min_htm_gz,data_setup_min_htm_gz_len,true},
+{file_bwf_js,data_bwf_min_js_gz,sizeof(data_bwf_min_js_gz),true},
+{file_index_htm,data_nindex_htm_gz,sizeof(data_nindex_htm_gz),true},
+{file_lcd,data_lcd_min_htm_gz,sizeof(data_lcd_min_htm_gz),true},
+{file_setup_htm,data_setup_min_htm_gz,sizeof(data_setup_min_htm_gz),true},
 {file_testcmd_htm,(const uint8_t *)data_testcmd_htm,0,false},
-{file_logconfig,(const uint8_t *)LogConfigHtml,0,false},
+{file_logconfig,log_min_htm_gz,sizeof(log_min_htm_gz),true},
 {file_gravitydevice,(const uint8_t *)gravityconfig_html,0,false},
-{file_config,(const uint8_t *)config_html,0,false}
+{file_config,config_htm_gz,sizeof(config_htm_gz),true}
 };
 
 const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned int &size)
