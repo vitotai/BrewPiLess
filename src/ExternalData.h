@@ -332,6 +332,7 @@ public:
 			    _ispindelName=(char*) malloc(name.length()+1);
 			    if(_ispindelName) strcpy(_ispindelName,name.c_str());
 			}
+
 			if(! root.containsKey("temperature")){
 			    DBG_PRINTF("iSpindel report no temperature!\n");
 			    return false;
@@ -342,24 +343,23 @@ public:
 			//Serial.print("temperature:");
 			//Serial.println(itemp);
 
+
+		    if(!root.containsKey("angle")){
+        		DBG_PRINTF("iSpindel report no angle!\n");
+				return false;
+			}
+    		setTilt(root["angle"],itemp,TimeKeeper.getTimeSeconds());
+
             if(root.containsKey("battery"))
     		    setDeviceVoltage(root["battery"]);
 
-
-
-				//setPlato(root["gravityP"],TimeKeeper.getTimeSeconds());
-			if(
+			//setPlato(root["gravityP"],TimeKeeper.getTimeSeconds());
+			if(!_calculateGravity && root.containsKey("gravity")
 				#if BREW_AND_CALIBRATION	
-				! _calibrating &&
+				&& ! _calibrating 
 				#endif
-				!_calculateGravity && root.containsKey("gravity"))
+				){
             	setGravity(root["gravity"], TimeKeeper.getTimeSeconds());
-			else{
-		    	if(! root.containsKey("angle")){
-        		    DBG_PRINTF("iSpindel report no angle!\n");
-			        return false;
-			    }
-    			setTilt(root["angle"],itemp,TimeKeeper.getTimeSeconds());
             }
 		}else{
 		    error = ErrorUnknownSource;
