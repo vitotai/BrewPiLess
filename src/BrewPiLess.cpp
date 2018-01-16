@@ -675,26 +675,25 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     	DBG_PRINTF("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len)?(char*)data:"");
   	} else if(type == WS_EVT_DATA){
     	AwsFrameInfo * info = (AwsFrameInfo*)arg;
-    	String msg = "";
+//    	String msg = "";
     	if(info->final && info->index == 0 && info->len == len){
       		//the whole message is in a single frame and we got all of it's data
-      		DBG_PRINTF("ws[%s][%u] %s-message[%llu]:\n", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
+//      		DBG_PRINTF("ws[%u] message[%lu]:", client->id(), info->len);
 
 	        for(size_t i=0; i < info->len; i++) {
         	  //msg += (char) data[i];
         	  brewPi.write(data[i]);
         	}
-		    //DBG_PRINTF("%s\n",msg.c_str());
+//		    DBG_PRINTF("%s\n",msg.c_str());
 
 		} else {
       		//message is comprised of multiple frames or the frame is split into multiple packets
       		if(info->index == 0){
         		if(info->num == 0)
-          		DBG_PRINTF("ws[%s][%u] %s-message start\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
-        		DBG_PRINTF("ws[%s][%u] frame[%u] start[%llu]\n", server->url(), client->id(), info->num, info->len);
+        		DBG_PRINTF("ws[%u] frame[%u] start[%lu]\n", client->id(), info->num, info->len);
       		}
 
-      		DBG_PRINTF("ws[%s][%u] frame[%u] %s[%llu - %llu]: ", server->url(), client->id(), info->num, (info->message_opcode == WS_TEXT)?"text":"binary", info->index, info->index + len);
+      		DBG_PRINTF("ws[%u] frame [%lu - %lu]: ", client->id(), info->num, info->index, info->index + len);
 
 	        for(size_t i=0; i < info->len; i++) {
     	    	//msg += (char) data[i];
@@ -704,10 +703,10 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
       		//DBG_PRINTF("%s\n",msg.c_str());
 
 			if((info->index + len) == info->len){
-				DBG_PRINTF("ws[%s][%u] frame[%u] end[%llu]\n", server->url(), client->id(), info->num, info->len);
-        		if(info->final){
-        			DBG_PRINTF("ws[%s][%u] %s-message end\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
-        		}
+				DBG_PRINTF("ws[%u] frame[%u] end[%lu]\n", client->id(), info->num, info->len);
+//        		if(info->final){
+//        			DBG_PRINTF("ws[%s][%u] %s-message end\n",  client->id());
+//        		}
       		}
       	}
     }
