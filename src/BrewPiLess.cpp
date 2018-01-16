@@ -118,7 +118,7 @@ R"END(
 
 #define POLLING_PATH 	"/getline_p"
 #define PUTLINE_PATH	"/putline"
-#define CONTROL_CC_PATH	"/tcc"
+//#define CONTROL_CC_PATH	"/tcc"
 
 #ifdef ENABLE_LOGGING
 #define LOGGING_PATH	"/log"
@@ -398,7 +398,7 @@ public:
 	 		request->send(200);
 	 	}
 		#endif
-		 else if(request->method() == HTTP_GET && request->url() == CONTROL_CC_PATH){
+		 /*else if(request->method() == HTTP_GET && request->url() == CONTROL_CC_PATH){
 	 		char unit;
 	 		float minTemp,maxTemp;
 	 		brewPi.getTemperatureSetting(&unit,&minTemp,&maxTemp);
@@ -407,7 +407,8 @@ public:
 	 			+ String(",\"tempFormat\":\"") + String(unit)  +String("\"}");
 	 		request->send(200,"application/json",json);
 
-	 	}else if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
+	 	}*/
+		 else if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
 			request->redirect(request->url() + ".htm");
 	 	}else if(request->method() == HTTP_POST && request->url() == CONFIG_PATH){
 	 	    if(!request->authenticate(username, password))
@@ -538,7 +539,7 @@ public:
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET){
 	 		if(request->url() == POLLING_PATH || request->url() == CONFIG_PATH || request->url() == TIME_PATH
-			 || request->url() == RESETWIFI_PATH || request->url() == CONTROL_CC_PATH
+			 || request->url() == RESETWIFI_PATH  /*|| request->url() == CONTROL_CC_PATH*/
 			 || request->url() == GETSTATUS_PATH
 	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
