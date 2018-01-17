@@ -7,6 +7,14 @@
 #endif
 
 
+#if NoEmbeddedFile == true
+
+const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned int &size){
+	return NULL;
+}
+
+#else
+
 typedef struct _EmbeddedFileMapEntry{
 	const char *filename;
 	const uint8_t *content;
@@ -61,3 +69,4 @@ const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned int &si
 	}
 	return NULL;
 }
+#endif

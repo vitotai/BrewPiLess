@@ -68,10 +68,14 @@ extern "C" {
 #endif
 //WebSocket seems to be unstable, at least on iPhone.
 //Go back to ServerSide Event.
-#define UseWebSocket true
-#define UseServerSideEvent false
+#define UseWebSocket false
+#define UseServerSideEvent true
 #define ResponseAppleCNA true
 #define CaptivePortalTimeout 180
+
+#ifndef LegacyEspAsyncLibraries
+#define LegacyEspAsyncLibraries false
+#endif
 /**************************************************************************************/
 /* Start of Configuration 															  */
 /**************************************************************************************/
@@ -378,7 +382,9 @@ class BrewPiWebHandler: public AsyncWebHandler
 public:
 	BrewPiWebHandler(void){}
 
+#if LegacyEspAsyncLibraries != true
 	virtual bool isRequestHandlerTrivial() override final {return false;}
+#endif
 
 	void handleRequest(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET && request->url() == POLLING_PATH) {
@@ -1024,9 +1030,9 @@ public:
 			DBG_PRINTF("Body total%u data:%s\n", total,_data);
 		}
 	}
-	
+#if LegacyEspAsyncLibraries != true	
 	virtual bool isRequestHandlerTrivial() override final {return false;}
-
+#endif
 };
 ExternalDataHandler externalDataHandler;
 
