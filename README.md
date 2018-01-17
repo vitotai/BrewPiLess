@@ -46,9 +46,9 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
 
 ## Version History
  * v2.5
-    * update ESPAsyncTcp & ESPAsyncWebServer
-    * use WebSocket instead of ServerSideEvent
+    * option: Latest ESP8266/Arduino framework w/ ESPAsyncTcp & ESPAsyncWebServer
     * revise network configuration and system config
+    * fix redundant data requests.
 
  * v2.4.2x (2017/01/15)
     * Fix TILT zero display
@@ -114,9 +114,12 @@ You will need the ESP8266/Arduino environment, as well as the following librarie
   * [Example#1](https://github.com/vitotai/BrewPiLess/wiki/Hardware-Setup-example)
   * [SONOFF](https://github.com/vitotai/BrewPiLess/wiki/SONOFF)
   * [Thorrax’s Board](https://github.com/thorrak/brewpi-esp8266)
+* [Software Installation](https://github.com/vitotai/BrewPiLess/wiki/Software-Installation)
+  * [Software Configuration](https://github.com/vitotai/BrewPiLess/wiki/Software-Configuration)
 * [Initial WiFi Setup](https://github.com/vitotai/BrewPiLess/wiki/Initial-WiFi-Setup)
 * [System Setup](https://github.com/vitotai/BrewPiLess/wiki/System-Setup)
   * [SoftAP mode](https://github.com/vitotai/BrewPiLess/wiki/SoftAP-mode)
+* [Device Setup](https://github.com/vitotai/BrewPiLess/wiki/BrewPi-Device-Setup)
 * [Temperature Logging](https://github.com/vitotai/BrewPiLess/wiki/Temperature-logging,-locally)
 * [Cloud Logging](https://github.com/vitotai/BrewPiLess/wiki/Log-data-to-clouds)
   * [Log to Google Spreadsheet](https://github.com/vitotai/BrewPiLess/wiki/Log-data-to-Google-Spreadsheet)
