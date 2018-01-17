@@ -73,14 +73,14 @@
                 if (t.timer == null) t.settimer();
             };
             xhr.ontimeout = function(e) {
-                console.error("Timeout!!");
-                setTimeout(function() {
+                console.error("Timeout!" + (new Date()));
+                if (t.timer == null) setTimeout(function() {
                     t.reqdata();
                 }, 10000);
             };
             xhr.onerror = function() {
                 console.log("error getting data.");
-                setTimeout(function() {
+                if (t.timer == null) setTimeout(function() {
                     t.reqdata();
                 }, 10000);
             };
@@ -423,7 +423,7 @@
         BWF.init({
             //            reconnect: false,
             onconnect: function() {
-                BWF.send("l");
+                BWF.send("cl");
                 if (window.lcdTimer) clearInterval(window.lcdTimer);
                 window.lcdTimer = setInterval(function() {
                     if (!BWF.gotMsg) {
@@ -480,7 +480,8 @@
                 },
                 G: function(c) {
                     gravityDevice(c);
-                }
+                },
+                C: function(c) { if (typeof ccparameter != "undefined") ccparameter(c); }
             }
         });
     }
@@ -492,7 +493,6 @@
         onloadCtrl(function() {
             connBWF();
             BChart.start();
-
         });
     }
 

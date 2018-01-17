@@ -806,6 +806,19 @@ function updateTempUnit(u) {
     }
 }
 
+function ccparameter(s) {
+    var setting = {
+        valid: true,
+        minDegree: s.tempSetMin,
+        maxDegree: s.tempSetMax,
+        tempUnit: s.tempFormat
+    };
+    if (setting.tempUnit != BrewPiSetting.tempUnit) {
+        updateTempUnit(setting.tempUnit);
+        profileEditor.setTempUnit(setting.tempUnit);
+    }
+    BrewPiSetting = setting;
+}
 
 function onloadCtrl(next) {
     modekeeper.init();
@@ -813,38 +826,8 @@ function onloadCtrl(next) {
     openDlgLoading();
 
     function complete() {
-        var initial = true;
-
-        function initComp() {
-            if (!initial) return;
-            initial = false;
-            closeDlgLoading();
-            next();
-        }
-        invoke({
-            url: "/tcc",
-            m: "GET",
-            fail: function(a) {
-                console.log("error connect to BrwePiLess!");
-                initComp();
-            },
-            success: function(d) {
-                var s = JSON.parse(d);
-                var setting = {
-                    valid: true,
-                    minDegree: s.tempSetMin,
-                    maxDegree: s.tempSetMax,
-                    tempUnit: s.tempFormat
-                };
-                if (setting.tempUnit != BrewPiSetting.tempUnit) {
-                    updateTempUnit(setting.tempUnit);
-                    profileEditor.setTempUnit(setting.tempUnit);
-                }
-                BrewPiSetting = setting;
-                initComp();
-
-            }
-        });
+        closeDlgLoading();
+        next();
     }
     //get current profile
     BWF.load(BWF.BrewProfile, function(d) {
@@ -879,6 +862,9 @@ function initctrl() {
     getActiveNavItem();
     onloadCtrl(function() {
         BWF.init({
+            onconnect: function() {
+                BWF.send("c");
+            },
             error: function(e) {
                 //console.log("error");
                 communicationError();
@@ -893,6 +879,7 @@ function initctrl() {
                         Q("#verinfo").innerHTML = "v" + c["ver"];
                     }
                 },
+                C: function(c) { ccparameter(c); }
             }
         });
     });
