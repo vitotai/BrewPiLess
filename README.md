@@ -50,6 +50,9 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
     * use WebSocket instead of ServerSideEvent
     * revise network configuration and system config
 
+ * v2.4.2x (2017/01/15)
+    * Fix TILT zero display
+
  * v2.4.2 (2017/12/27)
     * bug fixed for resume display
     
