@@ -111,6 +111,7 @@ void WiFiSetupClass::startWiFiManager(bool portal)
 	    // try to connect
 		if(_staticIP != IPADDR_ANY){
 			WiFi.config(_staticIP,_staticGateway,_staticMask);
+			delay(100);
 		}
 
 		WiFi.mode(_desiredWiFiMode);
