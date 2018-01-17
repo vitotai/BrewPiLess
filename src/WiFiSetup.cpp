@@ -69,9 +69,9 @@ bool WiFiSetupClass::startSetupPortal(void)
     if(_apTimeout !=0) wifiManager.setTimeout(_apTimeout);
     //set custom ip for portal
     //and goes into a blocking loop awaiting configuration
-    WiFiManagerParameter ipAddress("staticip", "Static IP", "", 16);
-    WiFiManagerParameter gateway("gateway", "Gateway",  "", 16);
-    WiFiManagerParameter netmask("netmask", "Net Mask", "255.255.255.0", 16);
+    WiFiManagerParameter ipAddress("staticip", "Static IP", _staticIP.toString().c_str(), 16);
+    WiFiManagerParameter gateway("gateway", "Gateway", _staticGateway.toString().c_str(), 16);
+    WiFiManagerParameter netmask("netmask", "Net Mask", _staticMask.toString().c_str(), 16);
 
     wifiManager.addParameter(&ipAddress);
     wifiManager.addParameter(&gateway);
@@ -110,6 +110,7 @@ void WiFiSetupClass::startWiFiManager(bool portal)
     }else if(_desiredWiFiMode == WIFI_AP_STA || _desiredWiFiMode == WIFI_STA) {
 	    // try to connect
 		if(_staticIP != IPADDR_ANY){
+			DBG_PRINTF("Fixed IP:%s, gw:%s, mask:%s\n",_staticIP.toString().c_str(),_staticGateway.toString().c_str(),_staticMask.toString().c_str());
 			WiFi.config(_staticIP,_staticGateway,_staticMask);
 			delay(100);
 		}

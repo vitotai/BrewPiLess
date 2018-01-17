@@ -87,9 +87,9 @@ R"END(
 "title":"brewpiless",
 "protect":0,
 "wifi":1,
-"ip":0,
-"gw":0,
-"mask":0,
+"ip":"0.0.0.0",
+"gw":"0.0.0.0",
+"mask":"255.255.255.0",
 "port":80}
 )END";
 /*
@@ -1199,6 +1199,8 @@ uint32_t _lcdReinitTime;
 #define LCDReInitPeriod (10*60*1000)
 #endif
 
+extern IPAddress scanIP(const char *str);
+
 void setup(void){
 
 	#if SerialDebug == true
@@ -1285,17 +1287,26 @@ void setup(void){
 	}
 
 	IPAddress hostIP(0,0,0,0);
-	if(cfgJson->containsKey("ip")) hostIP =cfgJson->get<uint32_t>("ip");
-
+	if(cfgJson->containsKey("ip")){
+//		DBG_PRINTF("saved ip:%s\n",cfgJson->get<const char*>("ip"));
+		hostIP =scanIP(cfgJson->get<const char*>("ip"));
+	}
 	IPAddress gatewayIP(0,0,0,0);
-	if(cfgJson->containsKey("gw")) gatewayIP =cfgJson->get<uint32_t>("gw");
+	if(cfgJson->containsKey("gw")) gatewayIP =scanIP(cfgJson->get<const char*>("gw"));
 
 	IPAddress netmask(0,0,0,0);
-	if(cfgJson->containsKey("mask")) netmask =cfgJson->get<uint32_t>("mask");
-
+	if(cfgJson->containsKey("mask")) netmask =scanIP(cfgJson->get<const char*>("mask"));
+	uint32_t maskcheck = (netmask[0] << 24) | (netmask[1] << 16)  | (netmask[2] << 8)  | netmask[3];
+	maskcheck = ~ maskcheck;
+	uint32_t nmask=(uint32_t)netmask;
+	if( (nmask == 0) ||  ( (maskcheck & (maskcheck+1)) != 0  ) ||
+		(( nmask & (uint32_t)hostIP) != ( nmask & (uint32_t)gatewayIP))){
+			DBG_PRINTF("Invalid fixed IP setting:ip:%s, gw:%s, mask:%s\n",hostIP.toString().c_str(),gatewayIP.toString().c_str(),netmask.toString().c_str());
+			hostIP=IPAddress(0,0,0,0);
+	}
 	DBG_PRINTF("title:%s, name:%s, user:%s, pass:%s\n",titlelabel,hostnetworkname,username,password);
   	DBG_PRINTF("Wifi mode? %d\n",wifiMode);
-	
+
 	#ifdef ENABLE_LOGGING
   	dataLogger.loadConfig();
   	#endif
@@ -1311,10 +1322,10 @@ void setup(void){
 			cfgJson->set("wifi",(int) WIFI_AP);
 		}else{
 			// change IP address
-			DBG_PRINTF("ip:%lu, gw:%lu, mask:%lu\n",(uint32_t)ip,(uint32_t)gw,(uint32_t)mask);
-			cfgJson->set("ip",(uint32_t)ip);
-			cfgJson->set("gw",(uint32_t)gw);
-			cfgJson->set("mask",(uint32_t)mask);
+			DBG_PRINTF("ip:%s, gw:%s, mask:%s\n",ip.toString().c_str(),gw.toString().c_str(),mask.toString().c_str());
+			cfgJson->set("ip",ip.toString());
+			cfgJson->set("gw",gw.toString());
+			cfgJson->set("mask",mask.toString());
 			//cfgJson->printTo(Serial);
 		}
 		File newconfig=SPIFFS.open(CONFIG_FILENAME,"w+");

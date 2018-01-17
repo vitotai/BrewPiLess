@@ -31,9 +31,8 @@
         };
 
         function formatIP(ip) {
-            var ipint = parseInt(ip);
-            if (ipint == 0) return "";
-            return "" + ((ipint >> 24) & 0xFF) + "." + ((ipint >> 16) & 0xFF) + "." + ((ipint >> 8) & 0xFF) + "." + (ipint & 0xFF);
+            if (ip == "0.0.0.0") return "";
+            return ip;
         }
 
         function verifyIP(t) {
@@ -47,12 +46,12 @@
                         valid = false;
                         break;
                     }
-                    val = (val << 8) + di;
                 }
-            } else valid = false;
+            } else if (this.value == "") valid = true;
+            else valid = false;
             if (valid) {
-                this.saved = val;
-                this.value = formatIP(val);
+                this.saved = this.value;
+                this.value = formatIP(this.value);
             } else {
                 this.value = formatIP(this.saved);
             }
@@ -104,7 +103,7 @@
                     if (ins[i].name && ins[i].name != "") {
                         var val;
                         if (ins[i].classList.contains("iptype")) val = ins[i].saved;
-                        else if (ins[i].type == "checkbox") val = (ins[i].checked ? 1 : 0)
+                        else if (ins[i].type == "checkbox") val = (ins[i].checked ? 1 : 0);
                         else val = ins[i].value.trim();
                         json[ins[i].name] = val;
                     }
