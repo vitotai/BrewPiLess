@@ -45,12 +45,13 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
- * v2.5
-    * option: Latest ESP8266/Arduino framework w/ ESPAsyncTcp & ESPAsyncWebServer
+ * v2.5 (2018/01/18)
+    * Optional: Latest ESP8266/Arduino framework w/ ESPAsyncTcp & ESPAsyncWebServer
     * revise network configuration and system config
     * fix redundant data requests.
+    * revise log resumption
 
- * v2.4.2x (2017/01/15)
+ * v2.4.2x (2018/01/15)
     * Fix TILT zero display
 
  * v2.4.2 (2017/12/27)
