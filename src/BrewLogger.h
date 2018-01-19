@@ -166,78 +166,10 @@ public:
 		saveIdxFile();
 	}
 
-    void initProcessSavedData(void){
-        _resumeLastLogTime = _fileInfo.starttime;
-    }
-    size_t processSavedData(char *buffer,size_t size)
-    {
-        size_t idx=0;
-        uint8_t tag,mask;
-
-        while(idx < size)
-        {
-            // read tag
-			tag =_logBuffer[idx++];
-		    mask=_logBuffer[idx++];
-			if(tag == PeriodTag){
-		        _resumeLastLogTime += _tempLogPeriod/1000;
-		        int numberInRecord=0;
-
-		        for(int i=0;i<NumberDataBitMask;i++) if(mask & (1<<i)) numberInRecord +=2;
-
-		        if((numberInRecord + idx) > size){
-		            // not enough data for this record!
-		            // rewind and return
-		            return idx - 2;
-		        }else{
-		            if(mask & (1<<OrderGravity)){
-		                size_t ridx = idx;
-        		        for(int i=0;i<NumberDataBitMask;i++){
-	        		        if(mask & (1<<i)){
-		        		        if( i == OrderGravity){
-			        	    	    byte d0=_logBuffer[ridx];
-    			        	        byte d1=_logBuffer[ridx+1];
-    				                int gravityInt = (d0 << 8) | d1;
-                                    DBG_PRINTF("resume@%ld, SG:%d\n",_resumeLastLogTime,gravityInt);
-                                    // dont trust the data
-                                    if(gravityInt > 8000 && gravityInt < 12500)
-                                        gravityTracker.add(GravityDecode(gravityInt),_resumeLastLogTime);
-				                } // if this is Gravity data
-				                ridx+=2;
-			                } // if the field exists
-			            } // for each bit
-		            } // if gravity data exists
-
-		            idx += numberInRecord;
-			    } // else, of data not enough
-		    }else if(tag == ResumeBrewTag){
-				if((2 + idx) > size){
-		            // not enough data for this record!
-		            // rewind and return
-		            return idx - 2;
-				}else{
-					size_t d1 =_logBuffer[idx++];
-		    		size_t d0 =_logBuffer[idx++];
-					size_t tdiff= (mask <<16) + (d1 << 8) + d0;
-			    	_resumeLastLogTime = _fileInfo.starttime + tdiff;
-				}
-			}else if(tag == CalibrationPointTag){
-				if((2 + idx) > size){
-		            // not enough data for this record!
-		            // rewind and return
-		            return idx - 2;
-				}else{
-					idx += 2;
-				}
-			}else if(tag == StartLogTag){
-				_calibrating = (mask & 0x20) ^ 0x20;
-			}
-        } // while data available
-        return idx;
-    }
 	bool resumeSession()
 	{
-    	initProcessSavedData();
+    	_resumeLastLogTime = _fileInfo.starttime;
+
 		char buff[36];
 		sprintf(buff,"%s/%s",LOG_PATH,_fileInfo.logname);
 
@@ -246,46 +178,80 @@ public:
             DBG_PRINTF("resume failed\n");
             return false;
 		}
-		size_t fsize= _logFile.size();
- 		
-		 DBG_PRINTF("resume file:%s size:%d\n",buff,fsize);
+		size_t fsize= _logFile.size(); 	
+		DBG_PRINTF("resume file:%s size:%d\n",buff,fsize);
 
-		size_t totalRead=0;
-		size_t byteRead;
-		size_t processed;
-		size_t byteToRead=LogBufferSize;
-		size_t left=0;
-		char *readPtr=_logBuffer;
-
-		while(totalRead < fsize){
-		    byteRead =_logFile.readBytes(readPtr,byteToRead);
-		    //process the data
-            processed=processSavedData(_logBuffer,byteRead+left);
-
-            if(processed != (byteRead+left)){
-                // some data left , copy them to head,
-                // don't use memcpy, because it's the same buffer
-                // memcpy(_logBuffer, _logBuffer + processed, byteRead- processed);
-                char *src=_logBuffer + processed;
-                char *dst=_logBuffer;
-                left =  (byteRead+left)- processed;
-                for(int i=0;i<left;i++) *dst++ = *src++;
-
-	        	byteToRead=LogBufferSize - left;
-    		    readPtr=dst;
-            }else{
-	        	byteToRead=LogBufferSize;
-    		    readPtr=_logBuffer;
-    		    left=0;
-            }
-             DBG_PRINTF("Move %d bytes, read:%d, process:%d \n",left,byteRead,processed);
-		    //
-		    totalRead += byteRead;
+		if(fsize < 8){
+            DBG_PRINTF("resume failed\n");
+			_logFile.close();
+			return false;
 		}
+
+		size_t dataAvail;
+		int tag, mask;
+		while((dataAvail=_logFile.available())){
+			
+			if (dataAvail<2 ) break;
+
+			tag= _logFile.read();
+			mask = _logFile.read();
+	
+			if(tag == PeriodTag){
+				// advance one tick
+		        _resumeLastLogTime += _tempLogPeriod/1000;
+
+				//TODO: check available data?
+		       	// int numberInRecord=0;
+		        // for(int i=0;i<NumberDataBitMask;i++) if(mask & (1<<i)) numberInRecord +=2;
+				int recordSize;
+				recordSize =2; // include the tag
+        		for(int i=0;i<NumberDataBitMask;i++){
+	        		if(mask & (1<<i)){
+						recordSize += 2;
+						if (dataAvail< recordSize ) break;
+			        	
+						int d0=_logFile.read();
+    			        int d1=_logFile.read();
+						// get gravity data that we need
+		        		if( i == OrderGravity){        
+							int gravityInt = (d0 << 8) | d1;
+                            DBG_PRINTF("resume@%ld, SG:%d\n",_resumeLastLogTime,gravityInt);
+                                    // dont trust the data
+                            if(gravityInt > 8000 && gravityInt < 12500)
+                                    gravityTracker.add(GravityDecode(gravityInt),_resumeLastLogTime);
+				        } // if this is Gravity data
+			        } // if the field exists
+			    } // for each bit
+
+		    }else if(tag == ResumeBrewTag){
+					if (dataAvail<4 ) break;
+					size_t d1 =(size_t)_logFile.read();
+		    		size_t d0 =(size_t)_logFile.read();
+					size_t tdiff= (mask <<16) + (d1 << 8) + d0;
+			    	_resumeLastLogTime = _fileInfo.starttime + tdiff;
+			}else if(tag == CalibrationPointTag || tag == OriginGravityTag){
+				if (dataAvail<4 ) break;
+				_logFile.read();
+				_logFile.read();
+			}else if(tag == StartLogTag){
+				_calibrating = (mask & 0x20) ^ 0x20;
+				for(int v=0;v<6;v++) _logFile.read();
+			}else if(tag == StateTag || tag == ModeTag){
+				// DO nothing.
+			}else{
+				DBG_PRINTF("Unknown tag %d,%d @%ld\n",tag,mask,dataAvail);
+			}
+		}//while(_logFile.available()){
+
 		// log a "new start" log
-		_logFile.seek(0,SeekEnd);
+		if(dataAvail) {
+			DBG_PRINTF("Incomplete record:%d\n",dataAvail);
+		}
+		// seek for SeekEnd might has a bug. use 
+		//_logFile.seek(dataAvail,SeekEnd);
+		_logFile.seek(fsize - dataAvail,SeekSet);
 		_logIndex =0;
-		_savedLength = fsize;
+		_savedLength = fsize - dataAvail;
 		DBG_PRINTF("resume, total _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
 
 		_lastTempLog=0;
