@@ -64,9 +64,9 @@ void IIClcd::scanForAddress(void)
 
     	if (error == 0)
     	{
-      		Serial.print("I2C device found at address 0x");
-      		Serial.print(address,HEX);
-      		Serial.println("  !");
+      		//Serial.print("I2C device found at address 0x");
+      		//Serial.print(address,HEX);
+      		//Serial.println("  !");
       		_Addr= address;
       		break;
     	}
