@@ -1,0 +1,29 @@
+@import 'import/vars';
+@import 'import/mixins';
+@import 'layout/reset';
+@import 'layout/typo';
+@import 'layout/layout';
+@import 'layout/base';
+@import 'ui-elements/buttons';
+@import 'ui-elements/card';
+@import 'ui-elements/modal';
+@import 'ui-elements/radio';
+@import 'ui-elements/switch';
+@import 'ui-elements/table';
+@import 'ui-elements/textarea';
+
+.hint {
+    padding-left: 140px;
+    margin-top: 0;
+    padding-top: 0;
+    font-style: italic;
+    color: $secondary-text-color;
+    font-size: 12px;
+}
+
+#formatlist {
+    display: none;
+    position: absolute;
+    border: 1px solid white;
+    background: lightgray;
+}

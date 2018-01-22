@@ -103,6 +103,7 @@
             padding: 8px;
             display: inline-block;
             line-height: 48px;
+            border-bottom: 3px solid transparent;
             &.active {
                 border-bottom: 3px solid $accent-color;
             }
@@ -164,10 +165,10 @@
 /** Content **/
 
 [viewport] {
-    height: calc(100% - 104px);
+    min-height: calc(100% - 104px);
     @include for-tablet-landscape-down {
         flex-direction: column !important;
-        height: auto;
+        min-height: 0;
     }
 }
 [main] {
@@ -206,8 +207,10 @@
 
 input[type="number"],
 input[type="text"],
+input[type="password"],
 input[type="datetime-local"] {
     width: 100%;
+    max-width: 280px;
     margin: 16px 0;
     display: block;
     border: none;

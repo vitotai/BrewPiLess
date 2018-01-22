@@ -1,4 +1,4 @@
-var JSVERION = "2.5";
+var JSVERSION = "2.5";
 
 function s_ajax(b) {
     var c = new XMLHttpRequest();
@@ -75,6 +75,7 @@ Date.prototype.shortLocalizedString = function() {
 
 function getActiveNavItem() {
     var path = window.location.pathname.split("/").pop();
+    if (path == "") path = "index.htm";
     var element = Q('.options>li>a[href="/' + path + '"]');
     element.className += 'active';
 }

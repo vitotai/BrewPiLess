@@ -203,23 +203,9 @@
             return d.toLocaleDateString() + " " + T(HH) + ":" + T(MM) + ":" + T(SS);
         };
 
-        BrewChart.prototype.formatDuration = function(elapsed) {
-            var str = "";
-            var days = Math.floor(elapsed / 86400);
-            if (days > 0) {
-                str = days + "d";
-                elapsed -= days * 86400;
-            }
-            var hours = elapsed / 3600;
-            str = str + hours.toFixed(1) + "h";
-            return str;
-        };
-
         BrewChart.prototype.showLegend = function(date, row) {
             var d = new Date(date);
             Q(".beer-chart-legend-time").innerHTML = this.formatDate(d);
-            if (Q(".beer-chart-legend-elapse")) Q(".beer-chart-legend-elapse").innerHTML = this.formatDuration(d.getTime() / 1000 - this.starttime);
-
             Q(".chart-legend-row.beer-temp .legend-value").innerHTML = this.tempFormat(this.chart.getValue(row, BeerTempLine));
             Q(".chart-legend-row.beer-set .legend-value").innerHTML = this.tempFormat(this.chart.getValue(row, BeerSetLine));
             Q(".chart-legend-row.fridge-temp .legend-value").innerHTML = this.tempFormat(this.chart.getValue(row, FridgeTempLine));
@@ -324,11 +310,7 @@
                             return y.toFixed(3);
                         },
                         axisLabelFormatter: function(y) {
-                            var range = this.yAxisRange(1);
-                            if (range[1] - range[0] > 0.002)
-                                return y.toFixed(3).substring(1);
-                            else
-                                return y.toFixed(4).substring(2);
+                            return y.toFixed(3).substring(1);
                         }
                     }
                 },
@@ -444,11 +426,11 @@
                 startX = endX;
             }
         };
-        BrewChart.prototype.addMode = function(m, x) {
+        BrewChart.prototype.addMode = function(m) {
             var s = String.fromCharCode(m);
             this.anno.push({
                 series: "beerTemp",
-                x: x,
+                x: this.ctime * 1000,
                 shortText: s.toUpperCase(),
                 text: BrewChart.Mode[s],
                 attachAtBottom: true
@@ -546,7 +528,6 @@
             var newchart = false;
             var sgPoint = false;
             var t = this;
-            //t.raw = data;
             t.filterSg = null;
             for (var i = 0; i < data.length;) {
                 var d0 = data[i++];
@@ -571,7 +552,6 @@
                     t.anno = [];
                     t.state = [];
                     t.angles = [];
-                    t.rawSG = [];
                     t.cstate = 0;
                     this.clearData();
                     newchart = true;
@@ -582,37 +562,23 @@
 
                 } else if (d0 == 0xF4) { // mode
                     //console.log(""+t.ctime/t.interval +" Stage:"+d1);
-                    t.addMode(d1, t.ctime * 1000);
+                    t.addMode(d1);
                 } else if (d0 == 0xF1) { // state
                     t.cstate = d1;
                 } else if (d0 == 0xFE) { // resume
-                    t.lidx = 0;
-                    var d2 = data[i++];
-                    var d3 = data[i++];
-                    var tdiff = d3 + (d2 << 8) + (d1 << 16);
-                    var ntime = t.starttime + tdiff;
-                    if (ntime > t.ctime && ntime - t.ctime < 600) {
-                        if (ntime - t.ctime > t.interval) t.ctime = ntime;
-                    } else {
-                        // add a gap to it                   
-                        t.data.push([new Date(t.ctime * 1000), NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN]);
-                        t.state.push(null);
-                        t.angles.push(null);
-                        t.rawSG.push[null];
-                        t.ctime += t.interval;
-                    }
-                    t.addResume(d1);
-                    // drop the data
-                    /*
                     if (t.lidx) {
                         var idx;
                         for (idx = t.lidx; idx < t.numLine; idx++) t.dataset.push(NaN);
                         t.data.push(t.dataset);
                         t.state.push(null);
                         t.angles.push(null);
-                        t.rawSG.push[null];
-                    }*/
-
+                    }
+                    t.lidx = 0;
+                    var d2 = data[i++];
+                    var d3 = data[i++];
+                    var tdiff = d3 + (d2 << 8) + (d1 << 16);
+                    this.ctime = t.starttime + tdiff;
+                    t.addResume(d1);
                 } else if (d0 == 0xF8) { //OG
                     var hh = data[i++];
                     var ll = data[i++];
@@ -627,7 +593,7 @@
                     t.changes = d1;
                     t.lidx = 0;
                     var d = new Date(this.ctime * 1000);
-                    //t.incTime(); // add one time interval
+                    t.incTime(); // add one time interval
                     t.dataset = [d];
                     t.processRecord();
                 } else if (d0 < 128) { // temp. or gravity
@@ -662,14 +628,6 @@
                 sg: sgPoint
             };
         };
-        BrewChart.prototype.getXRange = function() {
-            if (typeof this.chart == "undefined") return [0, 0];
-            return this.chart.xAxisRange();
-        };
-        BrewChart.prototype.setXRange = function(range) {
-            if (typeof this.chart == "undefined") return;
-            this.chart.updateOptions({ dateWindow: range });
-        };
         BrewChart.prototype.updateChart = function() {
             var t = this;
             if (typeof t.chart == "undefined") t.createChart();
@@ -686,7 +644,7 @@
             }
             if (t.lidx >= t.numData) {
                 var dataset = t.dataset.slice(0, 8);
-                var rawSG = t.dataset[7];
+
                 // gravity tracking
                 var sg = NaN;
                 if (!t.calculateSG && t.dataset[7] != null) {
@@ -710,8 +668,6 @@
                 t.data.push(dataset);
                 t.state.push(t.cstate);
                 t.angles.push(t.dataset[8]);
-                t.rawSG.push(rawSG);
-                t.incTime(); // add one time interval
             }
         };
         /* end of chart.js */
