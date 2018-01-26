@@ -48,6 +48,7 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  * v2.5.1 (working)
     * LCD backlight timer setting.
     * Support 2 Buttions
+    * Merge Tom's front-end
 
  * v2.5 (2018/01/18)
     * Optional: Latest ESP8266/Arduino framework w/ ESPAsyncTcp & ESPAsyncWebServer
