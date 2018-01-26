@@ -49,14 +49,14 @@ extern "C" {
 void IIClcd::scanForAddress(void)
 {
 	byte error, address;
-    Serial.println("Scan LCD Address...\n");
+    //Serial.println("Scan LCD Address...\n");
 
  	for(address = 127; address > 0; address-- )
   	{
     	// The i2c_scanner uses the return value of
     	// the Write.endTransmisstion to see if
     	// a device did acknowledge to the address.
-    	#ifdef RotaryViaPCF8574
+    	#if RotaryViaPCF8574 || ButtonViaPCF8574
     	if(address == PCF8574_ADDRESS) continue;
     	#endif
     	Wire.beginTransmission(address);
@@ -341,17 +341,13 @@ void IIClcd::resetBacklightTimer(void) {
 }
 
 void IIClcd::updateBacklight(void) {
-	#if BACKLIGHT_AUTO_OFF_PERIOD == 0
-	backlight();
-	#else
     // True = OFF, False = ON
-    bool backLightOutput = BREWPI_SIMULATE || ticks.timeSince(_backlightTime) > BACKLIGHT_AUTO_OFF_PERIOD;
+    bool backLightOutput = (backlightAutoOffPeriod !=0) && (BREWPI_SIMULATE || ticks.timeSince(_backlightTime) > backlightAutoOffPeriod);
     if(backLightOutput) {
         noBacklight();
     } else {
         backlight();
     }
-    #endif
 }
 
 // Puts the content of one LCD line into the provided buffer.

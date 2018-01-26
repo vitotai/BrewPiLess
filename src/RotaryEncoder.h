@@ -44,11 +44,13 @@ class RotaryEncoder
 	static int16_t readsteps(void){
 		return steps;
 	}
-
+#if BREWPI_BUTTONS || ButtonViaPCF8574
+	static bool pushed(void);
+#else
 	static bool pushed(void){
 		return pushFlag;
 	}
-
+#endif
 	static void resetPushed(void){
 		pushFlag = false;
 	}

@@ -159,7 +159,18 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
+#ifndef WAKEUP_BUTTON
 #define WAKEUP_BUTTON 0
+#endif
+
+#ifndef BREWPI_BUTTONS
+#define  BREWPI_BUTTONS 0
+#endif
+
+#ifndef ButtonViaPCF8574 
+#define ButtonViaPCF8574 0
+#endif
+
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -279,11 +290,11 @@
 #endif
 
 
-#if BREWPI_ROTARY_ENCODER || WAKEUP_BUTTON
-#define BACKLIGHT_AUTO_OFF_PERIOD 180
-#else
+//#if BREWPI_ROTARY_ENCODER || WAKEUP_BUTTON || BREWPI_BUTTONS
+//#define BACKLIGHT_AUTO_OFF_PERIOD 180
+//#else
 #define BACKLIGHT_AUTO_OFF_PERIOD 0 // disabled
-#endif
+//#endif
 // Pay attention when changing the pins for the rotary encoder.
 // They should be connected to external interrupt INT0, INT1 and INT3
 //#define rotaryAPin 2 // INT1
@@ -309,14 +320,33 @@
 #define PCF8574_INT NODEMCU_PIN_D3
 #define PCF8574_ADDRESS 0x20
 
-#else
+#else // #ifdef RotaryViaPCF8574
+
 #error "invalid setting"
-#define rotaryAPin NODEMCU_PIN_D8
+#define rotaryAPin NODEMCU_PIN_D3
 #define rotaryBPin NODEMCU_PIN_D7
 #define rotarySwitchPin NODEMCU_PIN_D4
-#endif
+
+#endif //#ifdef RotaryViaPCF8574
 
 #endif //BREWPI_ROTARY_ENCODER
+
+
+#if ButtonViaPCF8574
+#define PCF8574_INT NODEMCU_PIN_D3
+#define PCF8574_ADDRESS 0x20
+// use the same setting as BrewManiacEx
+#define UpButtonBitMask   2  
+#define DownButtonBitMask  1
+
+#else
+
+#if BREWPI_BUTTONS
+#define UpButtonPin NODEMCU_PIN_D3
+#define DownButtonPin NODEMCU_PIN_D4
+#endif
+
+#endif
 
 #ifdef ESP8266
 //#define ESP8266_WiFi 1			// This disables Serial and enables WiFi support
@@ -350,7 +380,7 @@
 //#endif
 
 #define EMIWorkaround 1
-#define BPL_VERSION "2.5"
+#define BPL_VERSION "2.5.1"
 
 #ifndef EanbleParasiteTempControl
 #define EanbleParasiteTempControl 0

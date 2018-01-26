@@ -141,17 +141,13 @@ void IICOledLcd::resetBacklightTimer(void) {
 }
 
 void IICOledLcd::updateBacklight(void) {
-	#if BACKLIGHT_AUTO_OFF_PERIOD == 0
-	backlight();
-	#else
     // True = OFF, False = ON
-    bool backLightOutput = BREWPI_SIMULATE || ticks.timeSince(_backlightTime) > BACKLIGHT_AUTO_OFF_PERIOD;
+    bool backLightOutput = (backlightAutoOffPeriod !=0) && (BREWPI_SIMULATE || ticks.timeSince(_backlightTime) > backlightAutoOffPeriod);
     if(backLightOutput) {
         noBacklight();
     } else {
         backlight();
     }
-    #endif
 }
 
 // Puts the content of one LCD line into the provided buffer.

@@ -130,12 +130,16 @@ public:
 
   using Print::write;
 
+  void setAutoOffPeriod(uint32 period){ backlightAutoOffPeriod = period; }
+
 private:
   void init_priv();
   void send(uint8_t, uint8_t);
   void write4bits(uint8_t);
   void expanderWrite(uint8_t);
   void pulseEnable(uint8_t);
+  
+  uint32_t backlightAutoOffPeriod;
   uint8_t _Addr;
   uint8_t _displayfunction;
   uint8_t _displaycontrol;

@@ -90,8 +90,10 @@ public:
   void printSpacesToRestOfLine(void);
 
   using Print::write;
+  void setAutoOffPeriod(uint32 period){ backlightAutoOffPeriod = period; }
 
 private:
+  uint32_t backlightAutoOffPeriod;
 #if BREWPI_OLED_SH1106
 SH1106  _display;
 #else

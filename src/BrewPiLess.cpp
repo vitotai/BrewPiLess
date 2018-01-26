@@ -433,7 +433,17 @@ public:
   				config.flush();
   				config.close();
 				request->send(200);
-				requestRestart(false);
+				
+				DynamicJsonBuffer jsonBuffer(JSON_OBJECT_SIZE(15));
+				JsonObject& root = jsonBuffer.parseObject(data->value());
+				//const char* host;
+				if(root.success() && root.containsKey("aoff")){
+					DBG_PRINTF("displaytimeout:%d",root["aoff"].as<int>());
+					display.setAutoOffPeriod(root["aoff"]);
+				}
+				if(!request->hasParam("nb")){
+					requestRestart(false);
+				}
   			}else{
 	  			request->send(400);
   			}
@@ -1307,6 +1317,12 @@ void setup(void){
 	DBG_PRINTF("title:%s, name:%s, user:%s, pass:%s\n",titlelabel,hostnetworkname,username,password);
   	DBG_PRINTF("Wifi mode? %d\n",wifiMode);
 
+	if(cfgJson->containsKey("aoff")){
+		display.setAutoOffPeriod(cfgJson->get<uint32_t>("aoff"));
+	}else{
+		display.setAutoOffPeriod(BACKLIGHT_AUTO_OFF_PERIOD);
+	}
+	
 	#ifdef ENABLE_LOGGING
   	dataLogger.loadConfig();
   	#endif

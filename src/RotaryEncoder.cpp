@@ -27,7 +27,7 @@
 #include "Brewpi.h"
 #include "TempControl.h"
 
-#ifdef RotaryViaPCF8574
+#if RotaryViaPCF8574 || ButtonViaPCF8574
 #include <pcf8574_esp.h>
 #endif
 
@@ -67,8 +67,261 @@ volatile bool RotaryEncoder::pushFlag;
 	#error Rotary encoder code is not compatible with boards other than leonardo or uno yet.
 #endif
 #endif
+#endif //#ifndef ESP8266
+
+
+#if BREWPI_BUTTONS || ButtonViaPCF8574
+
+#if ButtonViaPCF8574
+PCF8574 pcf8574(PCF8574_ADDRESS,PIN_SDA, PIN_SCL);
 #endif
 
+// *************************
+//*  Button timeing setting
+// *************************
+#define ButtonPressedDetectMinTime 125 // in ms
+#define ButtonLongPressedDetectMinTime 1000 // in ms
+#define ButtonContinuousPressedDetectMinTime 1000 // in ms
+#define ButtonContinuousPressedTrigerTime 150 // in ms
+#define ButtonFatFingerTolerance 50  // in ms
+
+static unsigned long _buttonChangeTime;
+static unsigned long _continuousPressedDectedTime;
+static unsigned long _oneFigerUp;
+
+static boolean _continuousPressedDetected;
+static boolean _longPressed;
+
+static uint8_t _testButtunStatus;
+static uint8_t _buttonPressed;
+
+#define ButtonUpMask    0x01
+#define ButtonDownMask  (0x01 << 1)
+//#define ButtonSetMask (0x01 << 2)
+
+#define btnIsUpPressed (_buttonPressed == ButtonUpMask)
+#define btnIsDownPressed (_buttonPressed == ButtonDownMask)
+#define btnIsSetPressed (_buttonPressed == (ButtonUpMask| ButtonDownMask))
+
+#define btnIsUpContinuousPressed (_buttonPressed == (ButtonUpMask<<4))
+#define btnIsDownContinuousPressed (_buttonPressed == (ButtonDownMask<<4))
+
+
+
+static void btnInit(void){
+	_testButtunStatus=0;
+	_buttonChangeTime=0;
+	_continuousPressedDectedTime=0;
+	_continuousPressedDetected=false;
+	_longPressed=0;
+	_buttonPressed=0;
+	_oneFigerUp=0;
+}
+#if SerialDebug
+#define BtnDebugPrintf(...)  //Serial.printf(__VA_ARGS__)
+#else
+#define BtnDebugPrintf(...)  
+#endif
+
+static boolean btnReadButtons(void)
+{
+	uint32_t currentTimeInMS=millis();
+
+  	unsigned char buttons=0;
+
+	#if ButtonViaPCF8574
+	uint8_t p;
+	
+	p =pcf8574.read8();
+	BtnDebugPrintf("pcfread:%d\n",p);
+
+	if(!(p & UpButtonBitMask))	buttons |= ButtonUpMask;
+	if(!(p & DownButtonBitMask))	buttons |= ButtonDownMask;
+
+	#else
+
+  	if (digitalRead(UpButtonPin) == 0)
+  	{
+  		buttons |= ButtonUpMask;
+  	}
+  	if (digitalRead(DownButtonPin) == 0)
+  	{
+  		buttons |= ButtonDownMask;
+  	}
+	#endif
+
+	if(buttons==0)
+	{
+		if(_testButtunStatus ==0) return false;
+
+		unsigned long duration=currentTimeInMS - _buttonChangeTime;
+
+    	BtnDebugPrintf("pressed:%d,%d for %ld\n",_testButtunStatus,buttons,duration);
+
+		if(duration > ButtonPressedDetectMinTime)
+		{
+			if(duration > ButtonLongPressedDetectMinTime) _longPressed=true;
+			else _longPressed =false;
+			_buttonPressed = _testButtunStatus;
+
+			_testButtunStatus =0;
+			_continuousPressedDetected = false;
+
+			BtnDebugPrintf("presse %d long?%d\n",_buttonPressed,_longPressed);
+
+			return true;
+		}
+
+    	BtnDebugPrintf("Not Pressed");
+
+		_testButtunStatus =0;
+		_continuousPressedDetected = false;
+
+		return false;
+	}
+
+	// current button status is not ZERO
+	if(buttons == _testButtunStatus) // pressing persists
+	{
+		if(_continuousPressedDetected )
+		{
+			//if duration exceeds a trigger point
+			if( (currentTimeInMS - _continuousPressedDectedTime) > ButtonContinuousPressedTrigerTime)
+			{
+				_continuousPressedDectedTime=currentTimeInMS;
+
+				BtnDebugPrintf("con-pre:%d @%ld\n",_buttonPressed,currentTimeInMS);
+
+				return true;
+			}
+		}
+		else
+		{
+			unsigned long duration=currentTimeInMS - _buttonChangeTime;
+
+			if(duration > ButtonContinuousPressedDetectMinTime)
+			{
+				_continuousPressedDetected=true;
+				_continuousPressedDectedTime=currentTimeInMS;
+				// fir the first event
+				_buttonPressed = buttons << 4; // user upper 4bits for long pressed
+
+				BtnDebugPrintf("Continue:%d start %ld\n",_buttonPressed,currentTimeInMS);
+
+				return true;
+			}
+		}
+	}
+	else // if(buttons == _testButtunStatus)
+	{
+		// for TWO buttons event, it is very hard to press and depress
+		// two buttons at exactly the same time.
+		// so if new status is contains in OLD status.
+		// it might be the short period when two fingers are leaving, but one is detected
+		// first before the other
+		// the case might be like  01/10 -> 11 -> 01/10
+		//  just handle the depressing case: 11-> 01/10
+		if((_testButtunStatus & buttons)
+			&&  (_testButtunStatus > buttons))
+		{
+			if(_oneFigerUp ==0)
+			{
+				_oneFigerUp = currentTimeInMS;
+				// skip this time
+				return false;
+			}
+			else
+			{
+				// one fat finger is dected
+				if( (currentTimeInMS -_oneFigerUp) < ButtonFatFingerTolerance)
+				{
+					return false;
+				}
+			}
+
+	    	BtnDebugPrintf("Failed fatfinger\n");
+
+		}
+		// first detect, note time to check if presist for a duration.
+		_testButtunStatus = buttons;
+		_buttonChangeTime = currentTimeInMS;
+		_oneFigerUp = 0;
+
+		BtnDebugPrintf("Attempt:%d\n",buttons);
+	}
+
+	return false;
+}
+
+void RotaryEncoder::init(void){
+
+#if ButtonViaPCF8574
+
+#else
+// BREWPI_BUTTONS
+	pinMode(UpButtonPin, INPUT_PULLUP);
+	pinMode(DownButtonPin, INPUT_PULLUP);
+#endif
+
+	btnInit();
+}
+
+void RotaryEncoder::setRange(int16_t start, int16_t minVal, int16_t maxVal){
+		// this part cannot be interrupted
+		// Multiply by two to convert to half steps
+		steps = start;
+		minimum = minVal;
+		maximum = maxVal; // +1 to make sure that one step is still two half steps at overflow
+}
+
+void RotaryEncoder::setPushed(void){
+	pushFlag = true;
+}
+
+void RotaryEncoder::process(void){
+	// check button status
+	if(btnReadButtons()){
+		display.resetBacklightTimer();
+
+		if(btnIsSetPressed){
+			setPushed();
+		}else if(btnIsUpPressed){
+			if(steps < maximum) steps++;
+		}else if(btnIsDownPressed){
+			if(steps > minimum)  steps--;
+		}else if(btnIsUpContinuousPressed){
+			steps+=2;
+			if(steps > maximum) steps = maximum;
+		}else if(btnIsDownContinuousPressed){
+			steps-=2;
+			if(steps < minimum) steps = minimum;
+		}
+	}
+}
+bool RotaryEncoder::pushed(void){
+	process();
+	return pushFlag;
+}
+bool RotaryEncoder::changed(void){
+	process();
+	// returns one if the value changed since the last call of changed.
+	static int16_t prevValue = 0;
+	int16_t r = read();
+	if(r != prevValue){
+		prevValue = r;
+		return 1;
+	}
+	if(pushFlag == true){
+		return 1;
+	}
+	return 0;
+}
+
+int16_t RotaryEncoder::read(void){
+	return steps;
+}
+
+#else //#if BREWPI_BUTTONS
 // Implementation based on work of Ben Buxton:
 
 /* Rotary encoder handler for arduino. v1.1
@@ -416,3 +669,4 @@ int16_t RotaryEncoder::read(void){
 #endif
 	return 0;
 }
+#endif // #if BREWPI_BUTTONS
