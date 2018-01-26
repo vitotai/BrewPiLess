@@ -24,7 +24,10 @@
             <div id="inputform" class="card">
                 <form action="/setconfig" action="post">
                     <h5>BrewPiLess config</h5>
-
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">LCD Auto Off</h6>
+                        <input name="aoff" type="text" size="5" maxlength="5" class="nb">
+                    </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">Title:</h6>
                         <input name="title" type="text" size="12" maxlength="24">
@@ -49,11 +52,6 @@
                         <h6 class="inline-header">Always ask for password:</h6>
                         <input type="checkbox" id="protect" name="protect" class="switch-input" checked>
                         <label for="protect" class="switch-label" style="min-width: 0;"></label>
-                    </div>
-                    <div layout horizontal cross-center>
-                        <h6 class="inline-header">Always softAP:</h6>
-                        <input type="checkbox" id="ap" name="ap" class="switch-input" checked>
-                        <label for="ap" class="switch-label" style="min-width: 0;"></label>
                     </div>
 
                     <div layout horizontal cross-center>

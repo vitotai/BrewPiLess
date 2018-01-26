@@ -87,7 +87,8 @@ class NullLcdDriver : public Print {
 
 	// Write spaces from current position to line end.
 	void printSpacesToRestOfLine(void);
-
+	void setAutoOffPeriod(uint32 period){}
+	
 	using Print::write;
 
 	private:

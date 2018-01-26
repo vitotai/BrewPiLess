@@ -163,8 +163,9 @@
 #define WAKEUP_BUTTON 0
 #endif
 
+// default supports 2 buttions
 #ifndef BREWPI_BUTTONS
-#define  BREWPI_BUTTONS 0
+#define  BREWPI_BUTTONS 1
 #endif
 
 #ifndef ButtonViaPCF8574 
@@ -248,7 +249,12 @@
 #ifdef BREWPI_LCD
 #undef BREWPI_LCD 
 #endif
+// NO LCD, NO BUTTONs
 #define BREWPI_LCD false
+#define BREWPI_MENU 0
+#undef  BREWPI_BUTTONS 
+#define  BREWPI_BUTTONS 0
+
 
 #elif BOARD == Thorrak_PCB
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
@@ -339,14 +345,14 @@
 #define UpButtonBitMask   2  
 #define DownButtonBitMask  1
 
-#else
+#else //#if ButtonViaPCF8574
 
 #if BREWPI_BUTTONS
 #define UpButtonPin NODEMCU_PIN_D3
 #define DownButtonPin NODEMCU_PIN_D4
 #endif
 
-#endif
+#endif //#if ButtonViaPCF8574
 
 #ifdef ESP8266
 //#define ESP8266_WiFi 1			// This disables Serial and enables WiFi support

@@ -5,9 +5,12 @@ NOTE: If you are upgrading from version prior to v2.3 without glycol option, you
 Those images are prebuilt:
 ## Simple Configuration
  * The Pins are defined as the main page.
- * No rotary encoder supported
+ * Two buttions as input
  * 20x4 LCD at any address
- * LCD backlight won't turn off automatically, because there is no rotary encoder available.
+
+## ioexpender
+ * Buttions are connected to PCF8574.
+ * other configuration are the same as default.
 
 ## sonoff
 * For SONOFF.
@@ -18,7 +21,7 @@ Those images are prebuilt:
  * **Not compatible to NEW SONOFF of ESP8285**
 
 ## sonoffota
-* Same as sonsoff, but
+ * Same as sonsoff, but
  * 64K SPIFFS for configurations
  * OTA update supported
  * **Not compatible with NEW SONOFF of ESP8285**

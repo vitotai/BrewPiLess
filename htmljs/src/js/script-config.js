@@ -32,6 +32,7 @@ function loadSetting() {
         m: "GET",
         success: function(data) {
             var j = JSON.parse(data);
+            window.oridata = j;
             Object.keys(j).map(function(key) {
                 var div = Q("input[name=" + key + "]");
                 if (div) {
@@ -66,6 +67,7 @@ function save() {
     var data = "";
     //(new Uint32Array([-1]))[0]
     var json = {};
+    var reboot = false;
     Object.keys(ins).map(function(key, i) {
         if (ins[i].type != "submit") {
             if (ins[i].name && ins[i].name != "") {
@@ -74,19 +76,21 @@ function save() {
                 else if (ins[i].type == "checkbox") val = (ins[i].checked ? 1 : 0);
                 else val = ins[i].value.trim();
                 json[ins[i].name] = val;
+                if (window.oridata[ins[i].name] != val && !ins[i].classList.contains("nb"))
+                    reboot = true;
             }
         }
     });
     var div = Q("select[name=wifi]");
     json["wifi"] = div.value;
     console.log(JSON.stringify(json));
-
+    var url = "config" + (reboot ? "" : "?nb");
     s_ajax({
-        url: "config",
+        url: url,
         data: "data=" + encodeURIComponent(JSON.stringify(json)),
         m: "POST",
         success: function(data) {
-            waitrestart();
+            if (reboot) waitrestart();
         },
         fail: function(d) {
             alert("error saving data:" + d);
@@ -95,7 +99,6 @@ function save() {
 }
 
 function load() {
-    getActiveNavItem();
     Q("#verinfo").innerHTML = "v" + JSVERSION;
     loadSetting();
 }

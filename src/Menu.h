@@ -21,10 +21,6 @@
 
 #include "Brewpi.h"
 
-#ifndef BREWPI_MENU
-#define BREWPI_MENU 1
-#endif
-
 
 #if BREWPI_MENU
 
