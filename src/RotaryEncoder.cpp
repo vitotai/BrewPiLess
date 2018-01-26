@@ -79,7 +79,7 @@ PCF8574 pcf8574(PCF8574_ADDRESS,PIN_SDA, PIN_SCL);
 // *************************
 //*  Button timeing setting
 // *************************
-#define ButtonPressedDetectMinTime 125 // in ms
+#define ButtonPressedDetectMinTime 20 // in ms
 #define ButtonLongPressedDetectMinTime 1000 // in ms
 #define ButtonContinuousPressedDetectMinTime 1000 // in ms
 #define ButtonContinuousPressedTrigerTime 150 // in ms
