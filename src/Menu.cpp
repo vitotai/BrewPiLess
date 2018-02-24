@@ -49,6 +49,8 @@ void Menu::pickSettingToChange(){
 /**
  * @return {@code true} if a value was selected. {@code false} on timeout.
  */
+#define BLINKING_TIME 250
+
 bool blinkLoop(
 	void (*changed)(),	// called to update the value
 	void (*show)(),		// called to show the current value
@@ -56,7 +58,9 @@ bool blinkLoop(
 	void (*pushed)())	// handle selection
 {
 	uint16_t lastChangeTime = ticks.seconds();
-	uint8_t blinkTimer = 0;
+	//uint8_t blinkTimer = 0;
+	uint32_t switchTime=0;
+	bool hidden=true;
 
 	while(ticks.timeSince(lastChangeTime) < MENU_TIMEOUT){ // time out at 10 seconds
 	//#if ESP8266
@@ -64,13 +68,22 @@ bool blinkLoop(
 	//#endif
 		if(rotaryEncoder.changed()){
 			lastChangeTime = ticks.seconds();
-			blinkTimer = 0;
+			//blinkTimer = 0;
+			switchTime=0;
+			hidden=true;
 			changed();
 		}
-		if (blinkTimer==0)
+/*		if (blinkTimer==0)
 			show();
 		else if (blinkTimer==128)
-			hide();
+			hide(); */
+		uint32_t current=millis();
+		if((current - switchTime) > BLINKING_TIME){
+			if(hidden) show();
+			else hide();
+			hidden = ! hidden;
+			switchTime = current;
+		}
 
 		if (rotaryEncoder.pushed()) {
 			rotaryEncoder.resetPushed();
@@ -79,8 +92,8 @@ bool blinkLoop(
 			return true;
 		}
 
-		blinkTimer++;
-		wait.millis(3); // delay for blinking
+		//blinkTimer++;
+		//wait.millis(3); // delay for blinking
 	}
 	return false;
 }
