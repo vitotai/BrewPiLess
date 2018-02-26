@@ -193,7 +193,10 @@ void pickTempSetting(ReadTemp readTemp, WriteTemp writeTemp, const char* tempNam
 
 	rotaryEncoder.setRange(fixedToTenths(oldSetting), fixedToTenths(tempControl.cc.tempSettingMin), fixedToTenths(tempControl.cc.tempSettingMax));
 
-	uint8_t blinkTimer = 0;
+	//uint8_t blinkTimer = 0;
+	uint32_t switchTime=0;
+	bool hidden=true;
+
 	uint16_t lastChangeTime = ticks.seconds();
 	while(ticks.timeSince(lastChangeTime) < MENU_TIMEOUT){ // time out at 10 seconds
 //		#if ESP8266
@@ -202,7 +205,10 @@ void pickTempSetting(ReadTemp readTemp, WriteTemp writeTemp, const char* tempNam
 
 		if(rotaryEncoder.changed()){
 			lastChangeTime = ticks.seconds();
-			blinkTimer = 0;
+			//blinkTimer = 0;
+			switchTime=0;
+			hidden=true;
+
 			startVal = tenthsToFixed(rotaryEncoder.read());
 			display.printTemperatureAt(12, row, startVal);
 
@@ -217,6 +223,7 @@ void pickTempSetting(ReadTemp readTemp, WriteTemp writeTemp, const char* tempNam
 			}
 		}
 		else{
+			/*
 			if(blinkTimer == 0){
 				display.printTemperatureAt(12, row, startVal);
 			}
@@ -225,6 +232,15 @@ void pickTempSetting(ReadTemp readTemp, WriteTemp writeTemp, const char* tempNam
 			}
 			blinkTimer++;
 			wait.millis(3); // delay for blinking
+			*/
+			uint32_t current=millis();
+			if((current - switchTime) > BLINKING_TIME){
+				if(hidden) display.printTemperatureAt(12, row, startVal);
+				else display.printAt_P(12, row, STR_6SPACES); 
+				hidden = ! hidden;
+				switchTime = current;
+			}
+			
 		}
 	}
 	// Time Out. Setting is not written

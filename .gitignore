@@ -9,3 +9,4 @@ htmljs/build/
 htmljs/node_modules/
 .vscode/launch.json
 .DS_Store
+.vscode/*.db
