@@ -632,7 +632,7 @@ AppleCNAHandler appleCNAHandler;
 
 void greeting(std::function<void(const char*)> sendFunc)
 {
-	char buf[128];
+	char buf[256];
 	// gravity related info.
 	if(externalData.iSpindelEnabled()){
 		externalData.sseNotify(buf);
@@ -745,6 +745,7 @@ void stringAvailable(const char *str)
 
 void notifyLogStatus(void)
 {
+	externalData.waitFormula();
 	const char *logname= brewLogger.currentLog();
 	String logstr=(logname)? String(logname):String("");
 	String status=String("V:{\"reload\":\"chart\", \"log\":\"") +  logstr + String("\"}");
@@ -935,6 +936,7 @@ LogHandler logHandler;
 
 #define GavityDeviceConfigFilename "/gdconfig"
 #define GravityDeviceConfigPath "/gdc"
+#define GravityFormulaPath "/coeff"
 
 class ExternalDataHandler:public AsyncWebHandler
 {
@@ -980,6 +982,7 @@ public:
 		DBG_PRINTF("req: %s\n", request->url().c_str());
 	 	if(request->url() == GRAVITY_PATH	) return true;
 	 	if(request->url() == GravityDeviceConfigPath) return true;
+	 	if(request->url() == GravityFormulaPath) return true;		
 
 	 	return false;
 	}
@@ -995,6 +998,24 @@ public:
 			// Process the name
 			externalData.sseNotify(_data);
 			stringAvailable(_data);
+			return;
+		}
+		if(request->url() == GravityFormulaPath){
+			if(request->hasParam("a0") && request->hasParam("a1") 
+				&& request->hasParam("a2") && request->hasParam("a3")){
+				float coeff[4];
+				coeff[0]=request->getParam("a0")->value().toFloat();
+				coeff[1]=request->getParam("a1")->value().toFloat();
+				coeff[2]=request->getParam("a2")->value().toFloat();
+				coeff[3]=request->getParam("a3")->value().toFloat();
+
+				externalData.formula(coeff);
+
+  				request->send(200,"application/json","{}");
+			}else{
+  				request->send(400);
+			}
+
 			return;
 		}
 		// config
@@ -1426,7 +1447,7 @@ void setup(void){
 	brewpi_setup();
   	brewPi.begin(stringAvailable);
 	brewKeeper.setFile(PROFILE_FILENAME);
-
+	//make sure externalData  is initialized.
 	brewLogger.begin();
 
 #if WAKEUP_BUTTON

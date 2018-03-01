@@ -53,7 +53,7 @@ EmbeddedFileMapEntry fileMaps[]={
 {file_setup_htm,data_setup_min_htm_gz,sizeof(data_setup_min_htm_gz),true},
 {file_testcmd_htm,(const uint8_t *)data_testcmd_htm,0,false},
 {file_logconfig,log_min_htm_gz,sizeof(log_min_htm_gz),true},
-{file_gravitydevice,(const uint8_t *)gravityconfig_html,0,false},
+{file_gravitydevice,gdc_htm_gz,sizeof(gdc_htm_gz),true},
 {file_config,config_htm_gz,sizeof(config_htm_gz),true}
 };
 

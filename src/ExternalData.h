@@ -25,6 +25,21 @@ extern BrewKeeper brewKeeper;
 extern BrewLogger brewLogger;
 extern BrewPiProxy brewPi;
 
+#define KeyEnableiSpindel "ispindel"
+#define KeyTempCorrection "tc"
+#define KeyCalibrateiSpindel "cal"
+#define KeyTiltInWater "tiltw"
+#define KeyCorrectionTemp "ctemp"
+#define KeyCalculateGravity "cbpl"
+#define KeyCoefficientA0 "a0"
+#define KeyCoefficientA1 "a1"
+#define KeyCoefficientA2 "a2"
+#define KeyCoefficientA3 "a3"
+#define KeyLPFBeta "lpc"
+#define KeyStableGravityThreshold "stpt"
+
+#define MimimumDifference 0.000000001
+
 #define ErrorNone 0
 #define ErrorAuthenticateNeeded 1
 #define ErrorJSONFormat 2
@@ -60,7 +75,6 @@ protected:
 	SimpleFilter filter;
 
     bool _ispindelEnable;
-    float _ispindelCalibration;
     bool _ispindelTempCal;
     float _ispindelCalibrationBaseTemp;
     float _ispindelCoefficients[4];
@@ -74,15 +88,17 @@ protected:
 	float _tiltInWater;
 	bool  _calibrating;
 	#endif
+	
+	bool _waitFormula;
 
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),_deviceVoltage(INVALID_VOLTAGE),_lastUpdate(0)
-	,_ispindelEnable(false),_ispindelName(NULL),_calculateGravity(false),_stableThreshold(1)
+	,_ispindelEnable(false),_ispindelName(NULL),_calculateGravity(false),_stableThreshold(1),_waitFormula(false)
 	#if BREW_AND_CALIBRATION	
 	 ,_calibrating(false)
 	#endif	
 	{}
-
+	void waitFormula(){_waitFormula =true; }
     bool iSpindelEnabled(void){return _ispindelEnable;}
 
 	#if BREW_AND_CALIBRATION	
@@ -91,7 +107,6 @@ public:
 	#endif
 
     void sseNotify(char *buf){
-
 
 		char strbattery[8];
 		int len=sprintFloat(strbattery,_deviceVoltage,2);
@@ -109,58 +124,62 @@ public:
 		len=sprintFloat(strtilt,_ispindelTilt,2);
 		strtilt[len]='\0';
 
+		char coeff[4][20];
+		for(int i=0;i<4;i++){
+			len=sprintFloat(coeff[i],_ispindelCoefficients[i],9);
+			coeff[i][len]='\0';	
+		}
 
 		const char *spname=(_ispindelName)? _ispindelName:"Unknown";
-		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d}",
+		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"ax\":[%s,%s,%s,%s]}",
 					spname, 
 					strbattery,
 					strgravity,
 					strtilt,
-					_lastUpdate,slowpassfilter,_stableThreshold);
+					_lastUpdate,slowpassfilter,_stableThreshold,
+					coeff[0],coeff[1],coeff[2],coeff[3]);
     }
     void config(char* configdata)
     {
-    	const int BUFFER_SIZE = JSON_OBJECT_SIZE(12);
+    	const int BUFFER_SIZE = JSON_OBJECT_SIZE(16);
 		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
 		JsonObject& root = jsonBuffer.parseObject(configdata);
 
 		if (!root.success()
-		    || !root.containsKey("ispindel")
-		    || !root.containsKey("gc")
-		    || !root.containsKey("tc")
-		    || !root.containsKey("a3")
-		    || !root.containsKey("a2")
-		    || !root.containsKey("a1")
-		    || !root.containsKey("a0")){
+		    || !root.containsKey(KeyEnableiSpindel)
+		    || !root.containsKey(KeyTempCorrection)){
   			DBG_PRINTF("Invalid JSON config\n");
   			return;
 		}
 
 		#if BREW_AND_CALIBRATION	
-		if(root.containsKey("cal") 
-			&& root.containsKey("tiltw")){
-			_calibrating = root["cal"];
-			_tiltInWater = root["tiltw"];
+		if(root.containsKey(KeyCalibrateiSpindel) 
+			&& root.containsKey(KeyTiltInWater)){
+			_calibrating = root[KeyCalibrateiSpindel];
+			_tiltInWater = root[KeyTiltInWater];
 		}
 		#endif
 
-		_ispindelEnable=root["ispindel"];
-		_ispindelCalibration =root["gc"];
-		_ispindelCalibration = _ispindelCalibration / 1000.0;
-		_ispindelTempCal = root["tc"];
+		_ispindelEnable=root[KeyEnableiSpindel];
+		_ispindelTempCal = root[KeyTempCorrection];
+
 		if(_ispindelTempCal){
-		    _ispindelCalibrationBaseTemp=(root.containsKey("ctemp"))? root["ctemp"]:20;
+		    _ispindelCalibrationBaseTemp=(root.containsKey(KeyCorrectionTemp))? root[KeyCorrectionTemp]:20;
 		}
-		_calculateGravity =(root.containsKey("cbpl"))? root["cbpl"]:false;
+		_calculateGravity =(root.containsKey(KeyCalculateGravity))? root[KeyCalculateGravity]:false;
 
-		_ispindelCoefficients[0]=root["a0"];
-		_ispindelCoefficients[1]=root["a1"];
-		_ispindelCoefficients[2]=root["a2"];
-		_ispindelCoefficients[3]=root["a3"];
-
-        if(root.containsKey("lpc")) filter.setBeta(root["lpc"]);
-        if(root.containsKey("stpt")){
-            _stableThreshold=root["stpt"];
+		if ( root.containsKey(KeyCoefficientA0)
+		     && root.containsKey(KeyCoefficientA1)
+			 && root.containsKey(KeyCoefficientA2)
+			 && root.containsKey(KeyCoefficientA3)){
+			_ispindelCoefficients[0]=root[KeyCoefficientA0];
+			_ispindelCoefficients[1]=root[KeyCoefficientA1];
+			_ispindelCoefficients[2]=root[KeyCoefficientA2];
+			_ispindelCoefficients[3]=root[KeyCoefficientA3];
+		}
+        if(root.containsKey(KeyLPFBeta)) filter.setBeta(root[KeyLPFBeta]);
+        if(root.containsKey(KeyStableGravityThreshold)){
+            _stableThreshold=root[KeyStableGravityThreshold];
              brewKeeper.setStableThreshold(_stableThreshold);
         }
 		// debug
@@ -173,6 +192,45 @@ public:
 		Serial.println("");
 		#endif
     }
+	void saveToFile(void){
+		// save to file
+    	const int BUFFER_SIZE = JSON_OBJECT_SIZE(16);
+		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+		JsonObject& root = jsonBuffer.createObject();
+		root[KeyEnableiSpindel] = _ispindelEnable;
+		root[KeyTempCorrection] = _ispindelTempCal;
+		root[KeyCalibrateiSpindel] = _calibrating;
+		root[KeyTiltInWater]=_tiltInWater;
+
+		root[KeyCorrectionTemp] = _ispindelCalibrationBaseTemp;
+		root[KeyCalculateGravity] = _calculateGravity;
+		root[KeyLPFBeta] = filter.beta();
+		root[KeyStableGravityThreshold] =_stableThreshold;
+
+		root[KeyCoefficientA0]=_ispindelCoefficients[0];
+		root[KeyCoefficientA1]=_ispindelCoefficients[1];
+		root[KeyCoefficientA2]=_ispindelCoefficients[2];
+		root[KeyCoefficientA3]=_ispindelCoefficients[3];
+	}	
+
+	void formula(float coeff[4]){
+		_waitFormula =false;
+		bool changed=false;
+		for(int i=0;i<4;i++){
+			if( ((_ispindelCoefficients[i] > coeff[i]) && (_ispindelCoefficients[i] - coeff[i] > MimimumDifference ))
+			  || ((_ispindelCoefficients[i] < coeff[i]) && (coeff[i] - _ispindelCoefficients[i]  > MimimumDifference ))){
+				  changed=true;
+				  break;
+			  }
+		}
+
+		if(! changed) return;
+
+		for(int i=0;i<4;i++){
+			_ispindelCoefficients[i] = coeff[i];
+		}
+		saveToFile();
+	}
 
 	void setOriginalGravity(float og){
 		_og = og;
@@ -182,11 +240,6 @@ public:
 #endif
 
 	}
-/*
-	void setPlato(float plato, time_t now){
-		float sg=1 + (plato / (258.6 -((plato/258.2)*227.1)));
-		setGravity(sg,now);
-	}*/
 
 	void setTilt(float tilt,float temp,time_t now){
 		_lastUpdate=now;
@@ -196,23 +249,16 @@ public:
 		// add tilt anyway
 		brewLogger.addTiltAngle(tilt);
 
-		if(brewLogger.calibrating()){
-			return;
-		}
+//		if(brewLogger.calibrating()){
+//			return;
+//		}
 		#endif
-
+		if(_waitFormula) return; // don't calculate if formula is not available.
 		// calculate plato
 	    float sg = _ispindelCoefficients[0]
                     +  _ispindelCoefficients[1] * tilt
                     +  _ispindelCoefficients[2] * tilt * tilt
                     +  _ispindelCoefficients[3] * tilt * tilt * tilt;
-      //  Serial.print("Plato:");
-	   // Serial.print(plato,2);
-	    // convert to SG
-	    //float sg=1 + (plato / (258.6 -((plato/258.2)*227.1)));
-
-	    //Serial.print(" SG:");
-	    //Serial.print(sg,3);
 
 	    // temp. correction
 	    if(_ispindelTempCal){
@@ -221,16 +267,11 @@ public:
     	    //Serial.print(sg,3);
 	    }
 
-	    // add correction
-	    sg += _ispindelCalibration;
-        	//Serial.print(" Corrected:");
-	        //Serial.println(sg,3);
-
-	    // update
-	    setGravity(sg,now);
+	    // update, gravity data calculated
+	    setGravity(sg,now,false);
 	}
 
-	void setGravity(float sg, time_t now){
+	void setGravity(float sg, time_t now,bool log=true){
         // copy these two for reporting to web interface
         float old_sg=_gravity;
 		_gravity = sg;
@@ -245,7 +286,8 @@ public:
 		brewKeeper.updateGravity(filtered_data);
 		gravityTracker.add(filtered_data,now);
 #endif
-		brewLogger.addGravity(sg,false);
+	// don't save it if it is cal&brew
+		if(log) brewLogger.addGravity(sg,false);
 	}
 
 	float gravity(void){ return _gravity;}
@@ -290,7 +332,7 @@ public:
 
 	bool processJSON(char data[],size_t length, bool authenticated, uint8_t& error)
 	{
-		const int BUFFER_SIZE = JSON_OBJECT_SIZE(8);
+		const int BUFFER_SIZE = JSON_OBJECT_SIZE(12);
 		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
 		JsonObject& root = jsonBuffer.parseObject((char*)data,length);
 
@@ -320,8 +362,8 @@ public:
 
 			if(root.containsKey("og")){
 				setOriginalGravity(gravity);
-			}
-			else{
+			}else{
+				// gravity data from user
 				setGravity(gravity,TimeKeeper.getTimeSeconds());
 			}
 		}else if(name.startsWith("iSpindel")){
@@ -354,11 +396,13 @@ public:
     		    setDeviceVoltage(root["battery"]);
 
 			//setPlato(root["gravityP"],TimeKeeper.getTimeSeconds());
-			if(!_calculateGravity && root.containsKey("gravity")
+			if(root.containsKey("gravity") &&
+				!_calculateGravity 
 				#if BREW_AND_CALIBRATION	
 				&& ! _calibrating 
 				#endif
 				){
+				// gravity information directly from iSpindel
             	setGravity(root["gravity"], TimeKeeper.getTimeSeconds());
             }
 		}else{

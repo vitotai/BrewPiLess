@@ -4,6 +4,31 @@
         toggle: function(line) {
             this.chart.toggleLine(line);
         },
+        updateFormula: function() {
+            var coeff = this.chart.coefficients;
+            var changed = true;
+            if (typeof window.formula != "undefined") {
+                changed = false;
+                for (var i = 0; i < 4; i++) {
+                    if (Math.abs(coeff[i] - window.formula[i]) > 0.00000001) {
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+            if (!changed) return;
+            var url = "coeff?" + "a0=" + coeff[0].toFixed(9) +
+                "&a1=" + coeff[1].toFixed(9) + "&a2=" + coeff[2].toFixed(9) +
+                "&a3=" + coeff[3].toFixed(9);
+            s_ajax({
+                url: url,
+                m: "GET",
+                success: function(d) {},
+                fail: function(d) {
+                    alert("failed sending formula:" + d);
+                }
+            });
+        },
         reqdata: function() {
             var t = this;
             var PD = 'offset=' + t.offset;
@@ -43,6 +68,8 @@
                         //  do it again
                         t.chart.process(data);
                         if (t.chart.calculateSG) Q("#formula-btn").style.display = "block";
+                        // update formula
+                        t.updateFormula();
                     }
                 } else {
                     t.offset += data.length;
@@ -279,6 +306,10 @@
                 if (Q("#iSpindel-tilt"))
                     Q("#iSpindel-tilt").innerHTML = "" + msg["angle"];
             }
+
+            if (typeof msg["ax"] != "undefined") {
+                window.formula = msg["ax"];
+            }
         }
         if (typeof msg["lpf"] != "undefined")
             GravityFilter.setBeta(msg["lpf"]);
@@ -338,6 +369,10 @@
             data: JSON.stringify(data),
             success: function(d) {
                 closeDlgLoading();
+                setTimeout(function() {
+                    // request to 
+                    if (Bchart.chart.calibrating) Bchart.chart.reqnow();
+                }, 1000);
             },
             fail: function(d) {
                 alert("failed:" + d);
@@ -462,6 +497,8 @@
                     if (typeof c["reload"] != "undefined") {
                         console.log("forced reload chart");
                         BChart.reqnow();
+                        if (!Q("#recording").innerHTML || Q("#recording").innerHTML != c.log)
+                            window.formula = null; // delete formula to force update to BPL.                
                     }
                     if (typeof c["nn"] != "undefined") {
                         Q("#hostname").innerHTML = c["nn"];
@@ -473,8 +510,9 @@
                     if (typeof c["tm"] != "undefined" && typeof c["off"] != "undefined") {
                         checkTime(c.tm, c.off);
                     }
-                    if (typeof c["log"] != "undefined")
+                    if (typeof c["log"] != "undefined") {
                         Q("#recording").innerHTML = c.log;
+                    }
 
                     ptcshow(c);
                 },
