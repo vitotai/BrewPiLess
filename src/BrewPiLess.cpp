@@ -934,7 +934,6 @@ public:
 LogHandler logHandler;
 
 
-#define GavityDeviceConfigFilename "/gdconfig"
 #define GravityDeviceConfigPath "/gdc"
 #define GravityFormulaPath "/coeff"
 
@@ -968,14 +967,7 @@ public:
 	}
 
 	void loadConfig(void){
-	    char *buf=_data;
-		File config=SPIFFS.open(GavityDeviceConfigFilename,"r+");
-		if(config){
-			size_t len=config.readBytes(buf,MAX_DATA_SIZE);
-			buf[len]='\0';
-			externalData.config(buf);
-		}
-		config.close();
+		externalData.loadConfig();
 	}
 
 	bool canHandle(AsyncWebServerRequest *request){
@@ -1002,17 +994,19 @@ public:
 		}
 		if(request->url() == GravityFormulaPath){
 			if(request->hasParam("a0") && request->hasParam("a1") 
-				&& request->hasParam("a2") && request->hasParam("a3")){
+				&& request->hasParam("a2") && request->hasParam("a3")
+				&& request->hasParam("pt")){
 				float coeff[4];
 				coeff[0]=request->getParam("a0")->value().toFloat();
 				coeff[1]=request->getParam("a1")->value().toFloat();
 				coeff[2]=request->getParam("a2")->value().toFloat();
 				coeff[3]=request->getParam("a3")->value().toFloat();
-
-				externalData.formula(coeff);
+				uint8_t npt=(uint8_t) request->getParam("pt")->value().toInt();
+				externalData.formula(coeff,npt);
 
   				request->send(200,"application/json","{}");
 			}else{
+				DBG_PRINTF("Invalid parameter\n");
   				request->send(400);
 			}
 
@@ -1020,18 +1014,17 @@ public:
 		}
 		// config
 		if(request->method() == HTTP_POST){
-			// post
-
-  			File config=SPIFFS.open(GavityDeviceConfigFilename,"w+");
-  			if(!config){
-  				request->send(500);
-  				return;
-  			}
-  			config.printf(_data);
-  			config.flush();
-  			config.close();
-  			externalData.config(_data);
-  			request->send(200);
+  			if(!externalData.processconfig(_data)){
+				request->send(400);
+				return;
+			}
+			if(externalData.saveConfig()){
+		  		request->send(200,"application/json","{}");
+			}else{
+				request->send(500);
+			}
+			
+				
 
 		}//else{
 			// get

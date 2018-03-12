@@ -538,13 +538,14 @@
                 });
 
             this.coefficients = (points.length > 3) ? [poly.equation[0], poly.equation[1], poly.equation[2], poly.equation[3]] :
-                ((points.length > 2) ? [poly.equation[0], poly.equation[1], poly.equation[2], 0] :
-                    [poly.equation[0], poly.equation[1], 0, 0]);
+                ((points.length > 2) ? [poly.equation[0], poly.equation[1], poly.equation[2], 0] : [poly.equation[0], poly.equation[1], 0, 0]);
+            this.npt = points.length;
         };
 
         BrewChart.prototype.tempCorrected = function(Reading, T) {
             var F = (this.celius) ? C2F(T) : T;
-            return Reading + 0.001 * (1.313454 - (0.132674 * F) + (0.002057793 * F * F) - (0.000002627634 * F * F * F));
+            //            return Reading + 0.001 * (1.313454 - (0.132674 * F) + (0.002057793 * F * F) - (0.000002627634 * F * F * F));
+            return Reading * ((1.00130346 - 0.000134722124 * F + 0.00000204052596 * F * F - 0.00000000232820948 * F * F * F) / (1.000845684));
         };
 
         BrewChart.prototype.process = function(data) {

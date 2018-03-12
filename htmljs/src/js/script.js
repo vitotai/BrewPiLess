@@ -6,24 +6,19 @@
         },
         updateFormula: function() {
             var coeff = this.chart.coefficients;
+            var npt = this.chart.npt;
             var changed = true;
-            if (typeof window.formula != "undefined") {
+            if (typeof window.npt != "undefined" && window.npt == npt) {
                 changed = false;
-                for (var i = 0; i < 4; i++) {
-                    if (Math.abs(coeff[i] - window.formula[i]) > 0.00000001) {
-                        changed = true;
-                        break;
-                    }
-                }
             }
             if (!changed) return;
             var url = "coeff?" + "a0=" + coeff[0].toFixed(9) +
                 "&a1=" + coeff[1].toFixed(9) + "&a2=" + coeff[2].toFixed(9) +
-                "&a3=" + coeff[3].toFixed(9);
+                "&a3=" + coeff[3].toFixed(9) + "&pt=" + npt;
             s_ajax({
                 url: url,
                 m: "GET",
-                success: function(d) {},
+                success: function(d) { window.npt = npt; },
                 fail: function(d) {
                     alert("failed sending formula:" + d);
                 }
@@ -67,9 +62,11 @@
                         t.chart.getFormula();
                         //  do it again
                         t.chart.process(data);
-                        if (t.chart.calculateSG) Q("#formula-btn").style.display = "block";
-                        // update formula
-                        t.updateFormula();
+                        if (t.chart.calculateSG) {
+                            Q("#formula-btn").style.display = "block";
+                            // update formula
+                            t.updateFormula();
+                        }
                     }
                 } else {
                     t.offset += data.length;
@@ -273,6 +270,11 @@
 
     function gravityDevice(msg) {
         if (typeof msg["name"] == "undefined") return;
+        // before iSpindel report to BPL, the name file is "unknown"
+        if (typeof msg["fpt"] != "undefined") {
+            window.npt = msg["fpt"];
+        }
+
         if (msg.name.startsWith("iSpindel")) {
             // iSpindel
             if (typeof msg["lu"] == "undefined") {
@@ -305,10 +307,6 @@
             if (typeof msg["angle"] != "undefined") {
                 if (Q("#iSpindel-tilt"))
                     Q("#iSpindel-tilt").innerHTML = "" + msg["angle"];
-            }
-
-            if (typeof msg["ax"] != "undefined") {
-                window.formula = msg["ax"];
             }
         }
         if (typeof msg["lpf"] != "undefined")
@@ -371,7 +369,7 @@
                 closeDlgLoading();
                 setTimeout(function() {
                     // request to 
-                    if (Bchart.chart.calibrating) Bchart.chart.reqnow();
+                    if (BChart.chart.calibrating) BChart.reqnow();
                 }, 1000);
             },
             fail: function(d) {
@@ -498,7 +496,7 @@
                         console.log("forced reload chart");
                         BChart.reqnow();
                         if (!Q("#recording").innerHTML || Q("#recording").innerHTML != c.log)
-                            window.formula = null; // delete formula to force update to BPL.                
+                            window.npt = 0; // delete formula to force update to BPL.                
                     }
                     if (typeof c["nn"] != "undefined") {
                         Q("#hostname").innerHTML = c["nn"];
@@ -530,7 +528,7 @@
         BWF.gotMsg = true;
         onloadCtrl(function() {
             connBWF();
-            BChart.start();
+            setTimeout(function() { BChart.start(); }, 100);
         });
     }
 
@@ -539,6 +537,6 @@
         initRssi();
         BWF.gotMsg = true;
         connBWF();
-        BChart.start();
+        setTimeout(function() { BChart.start(); }, 100);
         getActiveNavItem();
     }

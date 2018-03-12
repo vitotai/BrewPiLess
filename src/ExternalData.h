@@ -20,6 +20,8 @@
 //#define IsGravityValid(g) ((g) > 0)
 
 #define IsGravityInValidRange(g) ((g) > 0.8 && (g) < 1.25)
+#define GavityDeviceConfigFilename "/gdconfig"
+#define MAX_CONFIGDATA_SIZE 256
 
 extern BrewKeeper brewKeeper;
 extern BrewLogger brewLogger;
@@ -37,8 +39,9 @@ extern BrewPiProxy brewPi;
 #define KeyCoefficientA3 "a3"
 #define KeyLPFBeta "lpc"
 #define KeyStableGravityThreshold "stpt"
+#define KeyNumberCalPoints "npt"
 
-#define MimimumDifference 0.000000001
+#define MimimumDifference 0.0000001
 
 #define ErrorNone 0
 #define ErrorAuthenticateNeeded 1
@@ -89,16 +92,16 @@ protected:
 	bool  _calibrating;
 	#endif
 	
-	bool _waitFormula;
+	uint8_t _numberCalPoints;
 
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),_deviceVoltage(INVALID_VOLTAGE),_lastUpdate(0)
-	,_ispindelEnable(false),_ispindelName(NULL),_calculateGravity(false),_stableThreshold(1),_waitFormula(false)
+	,_ispindelEnable(false),_ispindelName(NULL),_calculateGravity(false),_stableThreshold(1),_numberCalPoints(0)
 	#if BREW_AND_CALIBRATION	
 	 ,_calibrating(false)
 	#endif	
 	{}
-	void waitFormula(){_waitFormula =true; }
+	void waitFormula(){_numberCalPoints =0; }
     bool iSpindelEnabled(void){return _ispindelEnable;}
 
 	#if BREW_AND_CALIBRATION	
@@ -131,15 +134,15 @@ public:
 		}
 
 		const char *spname=(_ispindelName)? _ispindelName:"Unknown";
-		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"ax\":[%s,%s,%s,%s]}",
+		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d}",
 					spname, 
 					strbattery,
 					strgravity,
 					strtilt,
 					_lastUpdate,slowpassfilter,_stableThreshold,
-					coeff[0],coeff[1],coeff[2],coeff[3]);
+					_numberCalPoints);
     }
-    void config(char* configdata)
+    bool processconfig(char* configdata)
     {
     	const int BUFFER_SIZE = JSON_OBJECT_SIZE(16);
 		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
@@ -149,7 +152,7 @@ public:
 		    || !root.containsKey(KeyEnableiSpindel)
 		    || !root.containsKey(KeyTempCorrection)){
   			DBG_PRINTF("Invalid JSON config\n");
-  			return;
+  			return false;
 		}
 
 		#if BREW_AND_CALIBRATION	
@@ -182,17 +185,35 @@ public:
             _stableThreshold=root[KeyStableGravityThreshold];
              brewKeeper.setStableThreshold(_stableThreshold);
         }
+		if(root.containsKey(KeyNumberCalPoints)){
+			_numberCalPoints=root[KeyNumberCalPoints];
+		}else{
+			_numberCalPoints=0;
+		}
 		// debug
-		#if 0
-		Serial.print("Coefficient:");
+		#if SerialDebug
+		Serial.print("\nCoefficient:");
 		for(int i=0;i<4;i++){
 		    Serial.print(_ispindelCoefficients[i],10);
 		    Serial.print(", ");
 		}
 		Serial.println("");
 		#endif
+		return true;
     }
-	void saveToFile(void){
+
+	void loadConfig(void){
+	    char buf[MAX_CONFIGDATA_SIZE];
+		File f=SPIFFS.open(GavityDeviceConfigFilename,"r+");
+		if(f){
+			size_t len=f.readBytes(buf,MAX_CONFIGDATA_SIZE);
+			buf[len]='\0';
+			processconfig(buf);
+		}
+		f.close();
+	}
+
+	bool saveConfig(void){
 		// save to file
     	const int BUFFER_SIZE = JSON_OBJECT_SIZE(16);
 		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
@@ -211,25 +232,31 @@ public:
 		root[KeyCoefficientA1]=_ispindelCoefficients[1];
 		root[KeyCoefficientA2]=_ispindelCoefficients[2];
 		root[KeyCoefficientA3]=_ispindelCoefficients[3];
+		root[KeyNumberCalPoints] = _numberCalPoints;
+
+  		File f=SPIFFS.open(GavityDeviceConfigFilename,"w+");
+  		if(!f){
+  			return false;
+  		}
+		root.printTo(f);
+  		f.flush();
+  		f.close();
+		DBG_PRINTF("Save gravity config\n");
+		return true;
 	}	
 
-	void formula(float coeff[4]){
-		_waitFormula =false;
-		bool changed=false;
-		for(int i=0;i<4;i++){
-			if( ((_ispindelCoefficients[i] > coeff[i]) && (_ispindelCoefficients[i] - coeff[i] > MimimumDifference ))
-			  || ((_ispindelCoefficients[i] < coeff[i]) && (coeff[i] - _ispindelCoefficients[i]  > MimimumDifference ))){
-				  changed=true;
-				  break;
-			  }
-		}
+	void formula(float coeff[4],uint8_t npt){
 
-		if(! changed) return;
+		if(_numberCalPoints == npt){ 
+			DBG_PRINTF("formula nochanged\n");
+			return;
+		}
+		_numberCalPoints =npt;
 
 		for(int i=0;i<4;i++){
 			_ispindelCoefficients[i] = coeff[i];
 		}
-		saveToFile();
+		saveConfig();
 	}
 
 	void setOriginalGravity(float og){
@@ -253,7 +280,10 @@ public:
 //			return;
 //		}
 		#endif
-		if(_waitFormula) return; // don't calculate if formula is not available.
+		if(_calibrating && _numberCalPoints <2){
+			DBG_PRINTF("No valid formula!\n");
+			return; // don't calculate if formula is not available.
+		}
 		// calculate plato
 	    float sg = _ispindelCoefficients[0]
                     +  _ispindelCoefficients[1] * tilt
@@ -268,7 +298,8 @@ public:
 	    }
 
 	    // update, gravity data calculated
-	    setGravity(sg,now,false);
+		bool log= !_calibrating;
+	    setGravity(sg,now,log);
 	}
 
 	void setGravity(float sg, time_t now,bool log=true){
@@ -276,6 +307,7 @@ public:
         float old_sg=_gravity;
 		_gravity = sg;
 		_lastUpdate=now;
+		DBG_PRINTF("setGravity:%d\n",(int)(sg*10000.0));
         // verfiy sg, even invalid value will be reported to web interface
 	    if(!IsGravityInValidRange(sg)) return;
 
