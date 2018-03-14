@@ -187,6 +187,11 @@ inline void** deviceTarget(DeviceConfig& config)
 		ppv = (void**)&tempControl.fan;
 		break;
 
+#if AUTO_CAP
+	case DEVICE_BEER_CAPPER:
+	break;
+#endif
+
 	case DEVICE_BEER_TEMP:
 		ppv = (void**)&tempControl.beerSensor;
 		break;
@@ -990,6 +995,9 @@ DeviceType deviceType(DeviceFunction id) {
 	case DEVICE_CHAMBER_FAN:
 	case DEVICE_BEER_HEAT:
 	case DEVICE_BEER_COOL:
+#if AUTO_CAP
+	case DEVICE_BEER_CAPPER:
+#endif
 		return DEVICETYPE_SWITCH_ACTUATOR;
 
 	case DEVICE_CHAMBER_TEMP:
