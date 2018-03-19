@@ -1,4 +1,4 @@
-# Prebuilt Image
+# Prebuilt Images
 
 NOTE: If you are upgrading from version prior to v2.3 without glycol option, you will need to run "Device Setup" again. Erase the EEPROM, setup the sensors, and the PINs.
 
@@ -8,12 +8,12 @@ Those images are prebuilt:
  * Two buttions as input
  * 20x4 LCD at any address
 
-## ioexpender
- * Buttions are connected to PCF8574.
- * other configuration are the same as default.
+## ioexpander
+ * Buttons are connected to PCF8574.
+ * other configurations are the same as default.
 
 ## sonoff
-* For SONOFF.
+ * For SONOFF.
     * Sensor on D5, Coolling on D6 
  * No rotary encoder. No LCD
  * OTA update **NOT** supported.
@@ -28,8 +28,8 @@ Those images are prebuilt:
 
 
 ## oled
-* Standard options
-* SSD1306 OLED I2C 128x64 instead of 20x4 LCD
+ * Standard options
+ * SSD1306 OLED I2C 128x64 instead of 20x4 LCD
 
 ## thorrax
-* Thorrax's board, Cooling and heating PIN on D5, D0
+ * Thorrax's board, Cooling and heating PIN on D5, D0
