@@ -21,17 +21,14 @@ public:
     int getLowerBound(){return(int)(_setTemp * 100.0);}
     int getUpperBound(){return(int)(_maxIdleTemp * 100.0);}
 
-protected:
-    bool _enabled;
-    bool _cooling;
+    static Actuator *cooler;
 
+protected:
+    bool _validSetting;
     float _setTemp;
     float _maxIdleTemp;
 
     float _currentTemp;
-
-    uint8_t _actuatorPin;
-    bool _invertedActuator;
 
     uint32_t _minCoolingTime;
     uint32_t _minIdleTime;
@@ -41,9 +38,6 @@ protected:
 
     void _setCooling(bool cool);
     bool _parseJson(const char* json);
-    bool _checkPinAvailable();
-    void _markPinNotAvailable(uint8_t pinNr);
-    bool _validPin(uint8_t pinNr);
 };
 
 extern ParasiteTempController parasiteTempController;

@@ -93,6 +93,7 @@ protected:
 	#endif
 	
 	uint8_t _numberCalPoints;
+	float _filteredGravity;
 
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),_deviceVoltage(INVALID_VOLTAGE),_lastUpdate(0)
@@ -100,7 +101,11 @@ public:
 	#if BREW_AND_CALIBRATION	
 	 ,_calibrating(false)
 	#endif	
-	{}
+	{ _filteredGravity = INVALID_GRAVITY;}
+
+	float gravity(bool filtered=false){ return filtered? _filteredGravity:_gravity;}
+
+
 	void waitFormula(){_numberCalPoints =0; }
     bool iSpindelEnabled(void){return _ispindelEnable;}
 
@@ -313,16 +318,15 @@ public:
 
 		if(!IsGravityValid(old_sg)) filter.setInitial(sg);
 #if EnableGravitySchedule
-        float filtered_data=filter.addData(sg);
+        float _filteredGravity=filter.addData(sg);
 		// use filter data as input to tracker and beer profile.
-		brewKeeper.updateGravity(filtered_data);
-		gravityTracker.add(filtered_data,now);
+		brewKeeper.updateGravity(_filteredGravity);
+		gravityTracker.add(_filteredGravity,now);
 #endif
 	// don't save it if it is cal&brew
 		if(log) brewLogger.addGravity(sg,false);
 	}
 
-	float gravity(void){ return _gravity;}
 	void invalidateGravity(void){  _gravity = INVALID_GRAVITY;}
 
 

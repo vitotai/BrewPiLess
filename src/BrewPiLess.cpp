@@ -33,6 +33,10 @@
 #include "SettingsManager.h"
 #include "EepromFormat.h"
 
+#if AUTO_CAP
+#include "AutoCapControl.h"
+#endif
+
 #if BREWPI_SIMULATE
 #include "Simulator.h"
 #endif
@@ -151,6 +155,10 @@ R"END(
 #define ParasiteTempControlPath "/ptc"
 #endif
 
+#if AUTO_CAP
+#define CAPPER_PATH "/cap"
+#endif
+
 const char *public_list[]={
 "/bwf.js",
 "/brewing.json"
@@ -218,7 +226,9 @@ void initTime(bool apmode)
 		TimeKeeper.begin((char*)"time.nist.gov",(char*)"time.windows.com",(char*)"de.pool.ntp.org");
 	}
 }
-
+#if AUTO_CAP
+void capStatusReport(void);
+#endif
 class BrewPiWebHandler: public AsyncWebHandler
 {
 	void handleFileList(AsyncWebServerRequest *request) {
@@ -268,7 +278,7 @@ class BrewPiWebHandler: public AsyncWebHandler
       		fh.print(c.c_str());
       		fh.close();
         	ESP.wdtEnable(10);
-            request->send(200);
+            request->send(200,"application/json","{}");
             DBG_PRINTF("fputs path=%s\n",file.c_str());
             if(file == PROFILE_FILENAME){
 	            DBG_PRINTF("reload file\n");
@@ -401,7 +411,7 @@ public:
 		        return request->requestAuthentication();
 
 	 		brewPi.putLine(data.c_str());
-	 		request->send(200);
+	 		request->send(200,"application/json","{}");
 	 	}
 		#endif
 		 /*else if(request->method() == HTTP_GET && request->url() == CONTROL_CC_PATH){
@@ -432,7 +442,7 @@ public:
   				config.print(data->value());
   				config.flush();
   				config.close();
-				request->send(200);
+				request->send(200,"application/json","{}");
 				
 				DynamicJsonBuffer jsonBuffer(JSON_OBJECT_SIZE(15));
 				JsonObject& root = jsonBuffer.parseObject(data->value());
@@ -463,7 +473,7 @@ public:
 				DBG_PRINTF("Set timezone:%ld\n",tvalue->value().toInt());
 			   TimeKeeper.setTimezoneOffset(tvalue->value().toInt());
 		    }		   
-			request->send(200, "text/plain;", "");
+			request->send(200,"application/json","{}");
 			 
 		}else if(request->method() == HTTP_GET &&  request->url() == RESETWIFI_PATH){
 	 	    if(!request->authenticate(username, password))
@@ -499,17 +509,18 @@ public:
 			+ String(",\"roomTemp\":") + TEMPorNull(roomTemp)
 			+String("}");
 			request->send(200,"application/json",json);
-
+		}
 	 	#ifdef ENABLE_LOGGING
-	 	}else if (request->url() == LOGGING_PATH){
+	 	else if (request->url() == LOGGING_PATH){
 	 		if(request->method() == HTTP_POST){
 		 		dataLogger.updateSetting(request);
 	 		}else{
 	 			dataLogger.getSettings(request);
 	 		}
+		 }
 	 	#endif
 		#if EanbleParasiteTempControl
-		}else if(request->url() == ParasiteTempControlPath){
+		else if(request->url() == ParasiteTempControlPath){
 			if(request->method() == HTTP_POST){
 				if(request->hasParam("c", true)){
 		    		String content=request->getParam("c", true)->value();
@@ -523,8 +534,36 @@ public:
 				String status=parasiteTempController.getSettings();
 				request->send(200,"application/json",status);
 	 		}
+		}
 		#endif
-	 	}else if(request->method() == HTTP_GET){
+		#if AUTO_CAP
+		else if(request->url() == CAPPER_PATH){
+	 	    if(!request->authenticate(username, password))
+	        return request->requestAuthentication();
+			// auto cap.
+			bool response=true;
+			if(request->hasParam("cap")){
+				AsyncWebParameter* value = request->getParam("cap");
+				autoCapControl.capManualSet(value->value().toInt()!=0);
+				// manual
+			}else if(request->hasParam("at")){
+				// time
+				AsyncWebParameter* value = request->getParam("at");
+				autoCapControl.capAtTime(value->value().toInt());
+				
+			}else if(request->hasParam("sg")){
+				// gravity
+				AsyncWebParameter* value = request->getParam("sg");
+				autoCapControl.catOnGravity(value->value().toFloat());
+			}else{
+				request->send(400);
+				response=false;
+			}
+			if(response) request->send(200,"application/json","{}");
+			capStatusReport();
+		}
+		#endif
+	 	else if(request->method() == HTTP_GET){
 
 			String path=request->url();
 	 		if(path.endsWith("/")) path +=DEFAULT_INDEX_FILE;
@@ -563,6 +602,9 @@ public:
 			 #if EanbleParasiteTempControl
 			 || request->url() == ParasiteTempControlPath
 			 #endif
+			#if AUTO_CAP
+			 || request->url() == CAPPER_PATH
+			#endif
 	 		){
 	 			return true;
 			}else{
@@ -630,6 +672,32 @@ public:
 AppleCNAHandler appleCNAHandler;
 #endif //#if ResponseAppleCNA == true
 
+
+#if AUTO_CAP
+String capControlStatus(void)
+{
+	AutoCapMode mode=autoCapControl.mode();
+	bool capped = autoCapControl.isCapOn();
+	String 	capstate=String("\"m\":") + String((int)mode) + String(",\"c\":") + String(capped);
+
+	if(mode == AutoCapModeGravity){
+		capstate += String(",\"g\":") + String(autoCapControl.targetGravity());
+	}else if (mode ==AutoCapModeTime){
+		capstate += String(",\"t\":") + String(autoCapControl.targetTime());
+	}	
+	return capstate;
+} 
+void stringAvailable(const char*);
+void capStatusReport(void)
+{
+	char buf[128];
+	String capstate= capControlStatus();
+
+	sprintf(buf,"V:{\"cap\":{%s}}", capstate.c_str());
+	stringAvailable(buf);
+}
+#endif
+
 void greeting(std::function<void(const char*)> sendFunc)
 {
 	char buf[256];
@@ -642,8 +710,21 @@ void greeting(std::function<void(const char*)> sendFunc)
 	const char *logname= brewLogger.currentLog();
 	if(logname == NULL) logname="";
 
+#if AUTO_CAP
+	String capstate= capControlStatus();
+	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
+				\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s}}"
+		,titlelabel,BPL_VERSION,WiFi.RSSI(),
+		TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset(),
+		logname, capstate.c_str());
+	
+#else
 	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld, \"log\":\"%s\"}"
-		,titlelabel,BPL_VERSION,WiFi.RSSI(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset(),logname);
+		,titlelabel,BPL_VERSION,WiFi.RSSI(),
+		TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset(),
+		logname);
+#endif
+
 	sendFunc(buf);
 }
 
@@ -852,14 +933,14 @@ public:
 				#else
 				if(brewLogger.startSession(filename.c_str())){
 				#endif
-					request->send(200);
+					request->send(200,"application/json","{}");
 					notifyLogStatus();
 				}else
 					request->send(404);
 			}else if(request->hasParam("stop")){
 				DBG_PRINTF("Stop logging\n");
 				brewLogger.endSession();
-				request->send(200);
+				request->send(200,"application/json","{}");
 				notifyLogStatus();
 			}else{
 				// default. list information
@@ -1210,13 +1291,6 @@ void requestRestart(bool disc)
 
 #define IS_RESTARTING (_systemState!=SystemStateOperating)
 
-#if WAKEUP_BUTTON
-void isr_wakeupLcd(void) { display.resetBacklightTimer(); }
-void initWakeupButton(void){
-	pinMode(WakeupButtonPin, INPUT_PULLUP);
-	attachInterrupt(WakeupButtonPin, isr_wakeupLcd, FALLING);
-}
-#endif //#ifdef WAKEUP_BUTTON
 
 #ifdef EMIWorkaround
 uint32_t _lcdReinitTime;
@@ -1443,10 +1517,10 @@ void setup(void){
 	//make sure externalData  is initialized.
 	brewLogger.begin();
 
-#if WAKEUP_BUTTON
-	initWakeupButton();
-#endif
-
+	#if AUTO_CAP
+	//Note: necessary to call after brewpi_setup() so that device has been installed.
+	autoCapControl.begin();
+	#endif
 
 #if EanbleParasiteTempControl
 	parasiteTempController.init();
@@ -1520,6 +1594,14 @@ void loop(void){
  	dataLogger.loop(now);
  	#endif
 	
+	#if AUTO_CAP
+	if(autoCapControl.autoCapOn(now,externalData.gravity(true))){
+		char buf[128];
+		sprintf(buf,"V:{\"cap\":{\"c\":%d}}",autoCapControl.isCapOn());
+		stringAvailable(buf);
+	}
+	#endif
+
 	#if GreetingInMainLoop
 	sayHello();
 	#endif
