@@ -5,7 +5,7 @@ NOTE: If you are upgrading from version prior to v2.3 without glycol option, you
 Those images are prebuilt:
 ## Simple Configuration
  * The Pins are defined as the main page.
- * Two buttions as input
+ * Two buttons as input
  * 20x4 LCD at any address
 
 ## ioexpander
@@ -14,7 +14,7 @@ Those images are prebuilt:
 
 ## sonoff
  * For SONOFF.
-    * Sensor on D5, Coolling on D6 
+ * Sensor on D5, Coolling on D6 
  * No rotary encoder. No LCD
  * OTA update **NOT** supported.
  * 512K SPIFFS for logging.
