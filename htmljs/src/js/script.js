@@ -511,6 +511,8 @@
                     if (typeof c["log"] != "undefined") {
                         Q("#recording").innerHTML = c.log;
                     }
+                    if (typeof c["cap"] != "undefined")
+                        Capper.status(c["cap"]);
 
                     ptcshow(c);
                 },

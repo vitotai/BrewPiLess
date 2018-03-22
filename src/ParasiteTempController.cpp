@@ -34,13 +34,13 @@ void ParasiteTempController::_setCooling(bool cool){
 }
 
 char ParasiteTempController::getMode(){
-    if(_validSetting || cooler == &defaultActuator) return 'o';
+    if(!_validSetting || cooler == &defaultActuator) return 'o';
     if(cooler->isActive()) return 'c';
     else return 'i';
 }
 
 uint32_t ParasiteTempController::getTimeElapsed(){
-    if(_validSetting || cooler == &defaultActuator) return 0;
+    if(!_validSetting || cooler == &defaultActuator) return 0;
     return (millis() - _lastSwitchedTime)/1000;
 }
 
@@ -138,7 +138,8 @@ String ParasiteTempController::getSettings(){
     const int BUFFER_SIZE = 2*JSON_ARRAY_SIZE(6) + JSON_OBJECT_SIZE(9);
     StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
-    root[EnableKey]= _validSetting && (cooler != &defaultActuator);
+    root[EnableKey]= (cooler != &defaultActuator);
+    
     root[SetTempKey]=_setTemp ;
     root[TrigerTempKey] =_maxIdleTemp;
     root[MinCoolKey] =_minCoolingTime /  1000;
@@ -154,7 +155,7 @@ bool ParasiteTempController::updateSettings(String json){
     if(json.length() >= MAX_CONFIG_LEN ) return false;
     char configBuf[MAX_CONFIG_LEN];
     strcpy(configBuf,json.c_str());
-    bool saved= _validSetting;
+//    bool oldSettingValid= _validSetting;
     if(!_parseJson(configBuf)){
         _validSetting = false;
         ret=false;
@@ -168,8 +169,9 @@ bool ParasiteTempController::updateSettings(String json){
              DBG_PRINTF("erro write config\n");
         }
     }
-    if(saved  && !_validSetting){
+//    if(oldSettingValid  && !_validSetting){
+      // stop cooling anyway
         _setCooling(false);
-    }
+//    }
     return ret;
 }
