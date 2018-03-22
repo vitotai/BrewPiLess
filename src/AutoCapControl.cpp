@@ -104,12 +104,21 @@ void AutoCapControl::capManualSet(bool capped)
 
 bool AutoCapControl::autoCapOn(uint32_t current, float gravity)
 {
-    if(_autoCapMode == AutoCapModeNone 
-        || _autoCapMode == AutoCapModeManualClose 
-        || _autoCapMode == AutoCapModeManualOpen
-        || AutoCapControl::capper == &defaultActuator ) return false;
+    if( AutoCapControl::capper == &defaultActuator ) return false;
 
-    if(_autoCapMode == AutoCapModeTime){
+    if(_autoCapMode == AutoCapModeNone){
+        // asigned. auto change to open
+        // not necessary for it is check at first statement
+        //    if( AutoCapControl::capper != &defaultActuator ) 
+        _autoCapMode = AutoCapModeManualOpen;
+        return true;
+    }else if(_autoCapMode == AutoCapModeManualClose ){
+        if(!AutoCapControl::capper->isActive())
+            AutoCapControl::capper->setActive(true);
+    }else if (_autoCapMode == AutoCapModeManualOpen){
+        if(AutoCapControl::capper->isActive())
+            AutoCapControl::capper->setActive(false);
+    }else if(_autoCapMode == AutoCapModeTime){
         if(current > _targetTime){
             if(!AutoCapControl::capper->isActive()){
                 DBG_PRINTF("times up, capped. act:%d\n",AutoCapControl::capper->isActive());
