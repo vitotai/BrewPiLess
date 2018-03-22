@@ -45,6 +45,10 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * v2.7
+    * Cap(spunding) control
+    * revise parasite temperature control
+
  * v2.6
     * fix the bug that don't save Gravity Device settings
     * Write formula back to ESP8266 in brew and calibrate  mode
