@@ -1,25 +1,11 @@
 <html>
 
 <head>
-    <title>Parasite Temperature Control Setup</title>
+    <title>Parasite Temperature Control Setup v0.2a</title>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <script>
         var valueurl = "/ptc";
         var saveurl = "/ptc"
-        var PinNames = {
-            0: "D3",
-            1: "D10",
-            2: "D4",
-            3: "D9",
-            4: "D2",
-            5: "D1",
-            12: "D6",
-            13: "D7",
-            14: "D5",
-            15: "D8",
-            16: "D0",
-            17: "A0"
-        };
 
         function s_ajax(b) {
             var c = new XMLHttpRequest();
@@ -48,20 +34,8 @@
             return document.querySelector(d);
         };
 
-        function setpins(pins, avail) {
-            var select = Q("#pinsel");
-            for (var i = 0; i < pins.length; i++) {
-                var option = document.createElement("option");
-                option.text = PinNames[pins[i]];
-                option.value = pins[i];
-                option.disabled = avail[i] ? false : true;
-                select.add(option);
-            }
-        }
 
         function fill(setting) {
-            setpins(setting.pins, setting.avail);
-            Q("#pinsel").value = setting.pin;
             for (var name in setting) {
                 var ele = Q("input[name=" + name + "]");
                 if (ele) {
@@ -69,6 +43,9 @@
                     else {
                         ele.value = setting[name];
                     }
+                } else if (name == "enabled") {
+                    if (setting[name]) Q("#pin_unassigned").style.display = "none";
+                    else Q("#pin_assigned").style.display = "none";
                 }
             }
         }
@@ -83,7 +60,6 @@
                     else if (ele.type == "text") setting[ele.name] = parseFloat(ele.value);
                 }
             }
-            setting.pin = parseInt(Q("#pinsel").value);
             console.log("result=" + JSON.stringify(setting));
             s_ajax({
                 url: saveurl,
@@ -118,13 +94,8 @@
     <form action="" method="post">
         <table>
             <tr>
-                <td>Enable Parasite Temperature Control</td>
-                <td><input type="checkbox" name="enabled" value="1"></td>
-            </tr>
-            <tr>
-                <td>Cooling PIN</td>
-                <td><select name="pin" id="pinsel"></select>
-                    <label for="inverted">Inverted</label> <input type="checkbox" name="inverted" value="1"> </td>
+                <td>Parasite Control PIN</td>
+                <td><span id=pin_assigned>ASSIGNED</span><span id=pin_unassigned>UNASSIGNED</span></td>
             </tr>
             <tr>
                 <td>Target Temperature</td>
