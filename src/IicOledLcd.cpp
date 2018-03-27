@@ -47,7 +47,7 @@ void IICOledLcd::begin(uint8_t cols, uint8_t lines){
     _currline = 0;
     _currpos = 0;
 
-    _display.flipScreenVertically();
+    // _display.flipScreenVertically();
     _display.clear();
     _display.display();
 
