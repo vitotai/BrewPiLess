@@ -293,7 +293,19 @@
 #ifdef BREWPI_OLED128x64_LCD
 #define OLED128x64_LCD_ADDRESS 0x3c
 #define STATUS_LINE 1
+//////////////////////////////////////////////////////////////////////////
+//
+// OLED orientation
+// 1: flipScreenVertically() will be called on init,
+//    resulting in a 180° rotation. This is the default.
+// 0: flipScreenVertically() will be omitted
+//
+#ifndef OLED128x64_LCD_ORIENTATION
+#define OLED128x64_LCD_ORIENTATION 1
 #endif
+/////////////////////////////////////////////////////////////////////////
+
+#endif //BREWPI_OLED128x64_LCD
 
 
 //#if BREWPI_ROTARY_ENCODER || WAKEUP_BUTTON || BREWPI_BUTTONS
