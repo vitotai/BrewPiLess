@@ -251,10 +251,10 @@
 #endif
 // NO LCD, NO BUTTONs
 #define BREWPI_LCD false
+#undef BREWPI_MENU
 #define BREWPI_MENU 0
 #undef  BREWPI_BUTTONS 
 #define  BREWPI_BUTTONS 0
-
 
 #elif BOARD == Thorrak_PCB
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
