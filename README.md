@@ -55,7 +55,7 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
     
  * v2.5.1 
     * LCD backlight timer setting
-    * support 2 Buttons
+    * support 2 buttons
     * merge Tom's front-end
 
  * v2.5 (2018/01/18)
