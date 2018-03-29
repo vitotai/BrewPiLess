@@ -48,7 +48,7 @@ void IICOledLcd::begin(uint8_t cols, uint8_t lines){
     _currpos = 0;
 
 #if OLED128x64_LCD_ORIENTATION
-    // _display.flipScreenVertically();
+    _display.flipScreenVertically();
 #endif
     _display.clear();
     _display.display();
