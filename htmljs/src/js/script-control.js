@@ -823,6 +823,8 @@ function ccparameter(s) {
 function onloadCtrl(next) {
     modekeeper.init();
 
+    Capper.init();
+
     openDlgLoading();
 
     function complete() {

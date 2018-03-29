@@ -29,6 +29,14 @@
 #include "PiLink.h"
 #include "EepromFormat.h"
 
+#if AUTO_CAP
+#include "AutoCapControl.h"
+#endif
+
+#if EanbleParasiteTempControl
+#include "ParasiteTempController.h"
+#endif
+
 #define CALIBRATION_OFFSET_PRECISION (4)
 
 #ifdef ARDUINO
@@ -186,6 +194,16 @@ inline void** deviceTarget(DeviceConfig& config)
 	case DEVICE_CHAMBER_FAN:
 		ppv = (void**)&tempControl.fan;
 		break;
+
+#if AUTO_CAP
+	case DEVICE_BEER_CAPPER:
+		ppv = (void**)&autoCapControl.capper;
+	break;
+#endif
+
+#if EanbleParasiteTempControl
+		ppv = (void**)& parasiteTempController.cooler;
+#endif
 
 	case DEVICE_BEER_TEMP:
 		ppv = (void**)&tempControl.beerSensor;
@@ -990,6 +1008,12 @@ DeviceType deviceType(DeviceFunction id) {
 	case DEVICE_CHAMBER_FAN:
 	case DEVICE_BEER_HEAT:
 	case DEVICE_BEER_COOL:
+#if AUTO_CAP
+	case DEVICE_BEER_CAPPER:
+#endif
+#if EanbleParasiteTempControl
+	case DEVICE_PTC_COOL:
+#endif
 		return DEVICETYPE_SWITCH_ACTUATOR;
 
 	case DEVICE_CHAMBER_TEMP:

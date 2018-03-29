@@ -145,7 +145,7 @@
 //////////////////////////////////////////////////////////////////////////
 //
 #ifndef BREWPI_BUZZER
-#define BREWPI_BUZZER 1
+#define BREWPI_BUZZER 0
 #endif
 //
 //////////////////////////////////////////////////////////////////////////
@@ -158,10 +158,6 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
-#ifndef WAKEUP_BUTTON
-#define WAKEUP_BUTTON 0
-#endif
-
 // default supports 2 buttons
 #ifndef BREWPI_BUTTONS
 #define  BREWPI_BUTTONS 1
@@ -169,6 +165,10 @@
 
 #ifndef ButtonViaPCF8574 
 #define ButtonViaPCF8574 0
+#endif
+
+#ifndef AUTO_CAP
+#define  AUTO_CAP 1
 #endif
 
 
@@ -263,16 +263,25 @@
 #define heatingPin NODEMCU_PIN_D0
 #define doorPin    NODEMCU_PIN_D7
 #define BuzzPin NODEMCU_PIN_D3
-#define WakeupButtonPin NODEMCU_PIN_D4
+
+#define UpButtonPin NODEMCU_PIN_D3
+#define DownButtonPin NODEMCU_PIN_D4
 
 #elif BOARD == BrewShield
 // default
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
 #define coolingPin NODEMCU_PIN_D5
 #define heatingPin NODEMCU_PIN_D7
+#if AUTO_CAP
+#define doorPin    NODEMCU_PIN_D0
+#else
 #define doorPin    NODEMCU_PIN_D4
 #define BuzzPin NODEMCU_PIN_D0
-#define WakeupButtonPin NODEMCU_PIN_D3
+#endif
+
+#define UpButtonPin NODEMCU_PIN_D3
+#define DownButtonPin NODEMCU_PIN_D4
+
 #else
 #error "unknown board"
 #endif
@@ -296,7 +305,7 @@
 #endif
 
 
-//#if BREWPI_ROTARY_ENCODER || WAKEUP_BUTTON || BREWPI_BUTTONS
+//#if BREWPI_ROTARY_ENCODER  || BREWPI_BUTTONS
 //#define BACKLIGHT_AUTO_OFF_PERIOD 180
 //#else
 #define BACKLIGHT_AUTO_OFF_PERIOD 0 // disabled
@@ -307,11 +316,6 @@
 //#define rotaryBPin 1 // INT3
 //#define rotarySwitchPin 0 // INT2
 
-#if WAKEUP_BUTTON
-#if BREWPI_ROTARY_ENCODER
-#error "No wakeup button with rotary encoder"
-#endif
-#endif
 
 #if BREWPI_ROTARY_ENCODER
 
@@ -344,13 +348,6 @@
 // use the same setting as BrewManiacEx
 #define UpButtonBitMask   2  
 #define DownButtonBitMask  1
-
-#else //#if ButtonViaPCF8574
-
-#if BREWPI_BUTTONS
-#define UpButtonPin NODEMCU_PIN_D3
-#define DownButtonPin NODEMCU_PIN_D4
-#endif
 
 #endif //#if ButtonViaPCF8574
 
@@ -386,7 +383,7 @@
 //#endif
 
 #define EMIWorkaround 1
-#define BPL_VERSION "2.6"
+#define BPL_VERSION "2.7"
 
 #ifndef EanbleParasiteTempControl
 #define EanbleParasiteTempControl 0

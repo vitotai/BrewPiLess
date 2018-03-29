@@ -73,7 +73,8 @@ enum DeviceFunction {
 	DEVICE_BEER_TEMP2 = 10,								// secondary beer temp sensor
 	DEVICE_BEER_HEAT = 11, DEVICE_BEER_COOL = 12,				// individual actuators
 	DEVICE_BEER_SG = 13,									// SG sensor
-	DEVICE_BEER_RESERVED1 = 14, DEVICE_BEER_RESERVED2 = 15,	// reserved
+	DEVICE_BEER_CAPPER = 14, 
+	DEVICE_PTC_COOL = 15,	// reserved
 	DEVICE_MAX = 16
 };
 
