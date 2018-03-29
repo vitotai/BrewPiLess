@@ -74,9 +74,9 @@
 //
 // Enable External temperature Sensor
 //
-// #ifndef BREWPI_EXTERNAL_SENSOR
- #define BREWPI_EXTERNAL_SENSOR true
-// #endif
+#ifndef BREWPI_EXTERNAL_SENSOR
+#define BREWPI_EXTERNAL_SENSOR true
+#endif
 //
 //////////////////////////////////////////////////////////////////////////
 
@@ -153,9 +153,9 @@
 
 //////////////////////////////////////////////////////////////////////////
 //
-// #ifndef BREWPI_ROTARY_ENCODER
+#ifndef BREWPI_ROTARY_ENCODER
 #define BREWPI_ROTARY_ENCODER 0
-// #endif
+#endif
 //
 //////////////////////////////////////////////////////////////////////////
 
@@ -165,7 +165,7 @@
 
 // default supports 2 buttions
 #ifndef BREWPI_BUTTONS
-#define  BREWPI_BUTTONS 1
+#define BREWPI_BUTTONS 1
 #endif
 
 #ifndef ButtonViaPCF8574 
