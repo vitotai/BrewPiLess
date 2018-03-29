@@ -24,7 +24,7 @@
 # Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
 ![Main Screen](img/bplmain.jpg)
-BrewPi is the greatest, if not the ultimate, fermentation temperature controller. The original design uses a RPI to log temperatures and maintain a temperature schedule. The RPI also hosts a web server for the front-end via internet web access. 
+BrewPi is the greatest, if not the ultimate, fermentation temperature controller. The original design uses a RPI to log temperatures and maintain a temperature schedule. The RPI also hosts a web server for the browser-based front-end. 
 Using a RPI or a PC allows the maximum power of BrewPi to be used but requires additional hardware (namely a RPI or PC). 
 
 ESP8266 is cheap and powerful WiFi-enabling IOT solution. 
