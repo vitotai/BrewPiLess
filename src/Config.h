@@ -139,7 +139,6 @@
 #ifndef BREWPI_LCD
 #define BREWPI_LCD 1
 #endif
-
 //
 //////////////////////////////////////////////////////////////////////////
 
@@ -159,7 +158,7 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
-// default supports 2 buttions
+// default supports 2 buttons
 #ifndef BREWPI_BUTTONS
 #define  BREWPI_BUTTONS 1
 #endif
@@ -201,7 +200,7 @@
 
 //////////////////////////////////////////////////////////////////////////
 //
-// Board Definitoin
+// Board Definition
 //
 // 
 #define BrewShield 0
@@ -214,13 +213,14 @@
 
 //////////////////////////////////////////////////////////////////////////
 //
-// Pin Configuration - Change the below to match your individual pinout
+// Pin Configuration - Change the settings below to match your individual pinout
 //
 // pins
 
 #define NODEMCU_PIN_A0 17	// Analog
 
-#define NODEMCU_PIN_D0 16	// No interrupt, do not use for rotary encoder
+#define NODEMCU_PIN_D0 16	// No interrupt, do not use for rotary encoder,
+                            // Also controlls 2nd LED on NodeMCU board
 #define NODEMCU_PIN_D1 5	// Generally used for I2C
 #define NODEMCU_PIN_D2 4	// Generally used for I2C
 #define NODEMCU_PIN_D3 0
