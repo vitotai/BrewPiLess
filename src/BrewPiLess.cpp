@@ -85,10 +85,10 @@ extern "C" {
 /**************************************************************************************/
 static const char DefaultConfiguration[] PROGMEM =
 R"END(
-{"name":"brewpiless",
-"user":"brewpiless",
-"pass":"brewpiless",
-"title":"brewpiless",
+{"name":DEFAULT_NAME,
+"user":DEFAULT_USERNAME,
+"pass":DEFAULT_PASS,
+"title":DEFAULT_NAME,
 "protect":0,
 "wifi":1,
 "ip":"0.0.0.0",
@@ -427,7 +427,7 @@ public:
 		 else if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
 			request->redirect(request->url() + ".htm");
 	 	}else if(request->method() == HTTP_POST && request->url() == CONFIG_PATH){
-	 	    if(!request->authenticate(username, password))
+	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
 	        return request->requestAuthentication();
 
 			if(request->hasParam("data", true)){
@@ -476,22 +476,22 @@ public:
 			request->send(200,"application/json","{}");
 			 
 		}else if(request->method() == HTTP_GET &&  request->url() == RESETWIFI_PATH){
-	 	    if(!request->authenticate(username, password))
+	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
 	        return request->requestAuthentication();
 		 	request->send(200,"text/html","Done, restarting..");
 			requestRestart(true);
 	 	}else if(request->method() == HTTP_POST &&  request->url() == FLIST_PATH){
-	 	    if(!request->authenticate(username, password))
+	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
 	        return request->requestAuthentication();
 
 			handleFileList(request);
 	 	}else if(request->method() == HTTP_DELETE &&  request->url() == DELETE_PATH){
-	 	    if(!request->authenticate(username, password))
+	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
 	        return request->requestAuthentication();
 
 			handleFileDelete(request);
 	 	}else if(request->method() == HTTP_POST &&  request->url() == FPUTS_PATH){
-	 	    if(!request->authenticate(username, password))
+	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
 	        return request->requestAuthentication();
 
 			handleFilePuts(request);
@@ -538,7 +538,7 @@ public:
 		#endif
 		#if AUTO_CAP
 		else if(request->url() == CAPPER_PATH){
-	 	    if(!request->authenticate(username, password))
+	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
 	        return request->requestAuthentication();
 			// auto cap.
 			bool response=true;
@@ -584,7 +584,7 @@ public:
 					}
 			}
 
-	 	    if(auth && !request->authenticate(username, password))
+	 	    if(auth && !request->authenticate(username, password,DEFAULT_NAME))
 	        return request->requestAuthentication();
 
 	 		sendFile(request,path); //request->send(SPIFFS, path);
@@ -1031,7 +1031,7 @@ private:
 		if(length ==0) return request->send(500);;
 
         uint8_t error;
-		if(externalData.processJSON(data,length,request->authenticate(username, password),error)){
+		if(externalData.processJSON(data,length,request->authenticate(username, password,DEFAULT_NAME),error)){
     		request->send(200,"application/json","{}");
 		}else{
 		    if(error == ErrorAuthenticateNeeded) return request->requestAuthentication();

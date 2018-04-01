@@ -396,6 +396,10 @@
 
 #define EMIWorkaround 1
 #define BPL_VERSION "2.7"
+#define DEFAULT_NAME "brewpiless"
+#define DEFAULT_USERNAME DEFAULT_NAME
+#define DEFAULT_PASS DEFAULT_NAME
+
 
 #ifndef EanbleParasiteTempControl
 #define EanbleParasiteTempControl 0
