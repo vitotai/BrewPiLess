@@ -260,7 +260,101 @@
         </div>
     </div>
 
-    <!-- build:include partials/footer.html -->
+    <div class='device-container ow-device'>
+        <table>
+            <tr>
+                <td ROWSPAN=2>
+                    <div class='device-title'></div>
+                    <br>
+                    <button>apply</button>
+                </td>
+                <td>
+                    <div class='device-setting-container'>
+                        <span class='setting-name'>Device slot</span>
+                        <select class='slot-select'>
+                            <option value='-1'>Unassigned</option>
+                            <option value='0'>0</option>
+                            <option value='1'>1</option>
+                            <option value='2'>2</option>
+                            <option value='3'>3</option>
+                            <option value='4'>4</option>
+                            <option value='5'>5</option>
+                            <option value='6'>6</option>
+                            <option value='7'>7</option>
+                            <option value='8'>8</option>
+                            <option value='9'>9</option>
+                            <option value='10'>10</option>
+                            <option value='11'>11</option>
+                            <option value='12'>12</option>
+                            <option value='13'>13</option>
+                            <option value='14'>14</option>
+                            <option value='15'>15</option>
+                        </select>
+                    </div>
+                </td>
+                <td>
+                    <div class='device-setting-container'>
+                        <span class='setting-name'>Hardware Type</span>
+                        <span class='setting-value device-type'>1-wire actuator</span>
+                    </div>
+                </td>
+                <td>
+                    <div class='device-setting-container device-address-container'>
+                        <span class='setting-name'>Address</span>
+                        <span class='setting-value device-address'></span>
+                    </div>
+                </td>
+                <td>
+                    <div class='device-setting-container device-channel-container'>
+                        <span class='setting-name'>Channel</span>
+                        <span class='setting-value device-channel'></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class='device-setting-container'>
+                        <span class='setting-name'>Controller PIN</span>
+                        <span class='setting-value device-pin'></span>
+                    </div>
+                </td>
+                <td>
+                    <div class='device-setting-container'>
+                        <span class='setting-name'>Value</span>
+                        <span class='setting-value device-value'></span>
+                    </div>
+                </td>
+                <td>
+                    <div class='device-setting-container'>
+                        <span class='setting-name'>Function</span>
+                        <select class='setting-value device-function'>
+                            <option value=0>None</option>
+                            <option value=1>Chamber Door</option>
+                            <option value=2>Chamber Heater</option>
+                            <option value=3>Chamber Cooler</option>
+                            <option value=4>Chamber Light</option>
+                            <option value=7>Chamber Fan</option>
+                            <option value=14>Capper</option>
+                            <option value=15>PTC Cooler</option>
+
+                        </select>
+                    </div>
+                </td>
+                <td>
+                    <div class='device-setting-container device-pintype-container'>
+                        <span class='setting-name'>Pin type</span>
+                        <select class='setting-value device-pintype'>
+                            <option value=0>Not Inverted</option>
+                            <option value=1>Inverted</option>
+                        </select>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- build:include partials/footer.html -->
     <!-- /build -->
 
     <div id="blockscreen" class="modal">
