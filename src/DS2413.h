@@ -86,7 +86,7 @@ public:
 	}
 
 	// assumes pio is either 0 or 1, which translates to masks 0x1 and 0x2
-	uint8_t pioMask(pio_t pio) { return pio++; }
+	uint8_t pioMask(pio_t pio) { return ++pio; }
 
 	/*
 	 * Reads the output state of a given channel, defaulting to a given value on error.
