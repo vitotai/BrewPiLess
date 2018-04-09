@@ -161,6 +161,7 @@ bool ParasiteTempController::updateSettings(String json){
         ret=false;
         DBG_PRINTF("Invalid config\n");
     }else{
+        _validSetting = true;        
     	File newconfig=SPIFFS.open(CONFIG_FILENAME,"w+");
         if(newconfig){
     	    newconfig.print(json);

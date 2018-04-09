@@ -58,7 +58,7 @@ void AutoCapControl::begin(void)
             _autoCapMode == AutoCapModeNone;
       		return;
         }
-        _targetTime = root["g"];
+        _targetGravity = root["g"];
     }
 }
 
@@ -74,7 +74,8 @@ void AutoCapControl::saveConfig(void)
         f.printf("{\"s\":%d, \"t\":%ld}",_autoCapMode,_targetTime);
     }else if(_autoCapMode ==AutoCapModeGravity){
         char buf[10];
-        sprintFloat(buf,_targetGravity,2);
+        int len=sprintFloat(buf,_targetGravity,3);
+        buf[len]='\0';
         f.printf("{\"s\":%d, \"g\":%s}",_autoCapMode,buf);
     }
 	f.close();
@@ -128,7 +129,8 @@ bool AutoCapControl::autoCapOn(uint32_t current, float gravity)
         }else if(AutoCapControl::capper->isActive())
             AutoCapControl::capper->setActive(false);
     }else if(_autoCapMode == AutoCapModeGravity){
-        if(gravity <= _targetGravity){
+        if((gravity > 0.8 && gravity < 1.25)
+            && (gravity <= _targetGravity)){
             if(!AutoCapControl::capper->isActive()){
                 DBG_PRINTF("gravity meet, capped.\n");
                 AutoCapControl::capper->setActive(true);

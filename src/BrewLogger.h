@@ -19,9 +19,11 @@
 #define PeriodTag 0xF0
 #define StateTag 0xF1
 #define EventTag 0xF2
-//#define SetPointTag 0xF3
+
+#define CorrectionTempTag 0xF3
+
 #define ModeTag 0xF4
-//#define BeerSetPointTag 0xF7
+
 #define OriginGravityTag 0xF8
 
 #if BREW_AND_CALIBRATION
@@ -607,14 +609,29 @@ public:
 	{
 		_extTileAngle = TiltEncode(tilt);
 	}
-	void addTiltInWater(float tilt)
+	void correctionTemperature(float temp)
+	{
+		if(!_recording) return;
+		int idx = allocByte(2);
+		if(idx < 0) return;
+		writeBuffer(idx,CorrectionTempTag);
+		writeBuffer(idx+1,(uint8_t)temp);
+	}
+	void addTiltInWater(float tilt,float reading)
 	{
 		if(!_recording) return;
 		int idx = allocByte(4);
 		if(idx < 0) return;
+		// the readings of water is suppose to be in a very small ranges
+		// around 1.000
+		// for example, 0.959 @ 100C -> corrected to 15
+		// for example, 1.002 @ 0C -> corrected to 20
+		// to save space, pack the data into ONE byte by simply 
+		// subtract 0.9 to make it ranges from 0.059 - 0.102
+		uint8_t compressed_reading =(uint8_t)((int)(reading * 1000.0) - 900);
 		uint16_t angle=TiltEncode(tilt);		
 		writeBuffer(idx,CalibrationPointTag);
-		writeBuffer(idx+1,0);
+		writeBuffer(idx+1,compressed_reading);
 		writeBuffer(idx+2,HighOctect(angle));
 		writeBuffer(idx+3,LowOctect(angle));
 		commitData(idx,4);		

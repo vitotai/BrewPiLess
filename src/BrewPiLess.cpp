@@ -681,7 +681,7 @@ String capControlStatus(void)
 	String 	capstate=String("\"m\":") + String((int)mode) + String(",\"c\":") + String(capped);
 
 	if(mode == AutoCapModeGravity){
-		capstate += String(",\"g\":") + String(autoCapControl.targetGravity());
+		capstate += String(",\"g\":") + String(autoCapControl.targetGravity(),3);
 	}else if (mode ==AutoCapModeTime){
 		capstate += String(",\"t\":") + String(autoCapControl.targetTime());
 	}	
@@ -927,12 +927,25 @@ public:
 				String filename=request->getParam("start")->value();
 				DBG_PRINTF("start logging:%s\n",filename.c_str());
 				#if BREW_AND_CALIBRATION
-				bool cal=externalData.isCalibrating();
+				bool cal=false;
+				float tiltwater, hydroreading;
+				if(request->hasParam("tw") && request->hasParam("hr")){
+					cal=true;
+					tiltwater=request->getParam("tw")->value().toFloat();
+					hydroreading=request->getParam("hr")->value().toFloat();
+				}
+
 				if(brewLogger.startSession(filename.c_str(),cal)){
-					if(cal) brewLogger.addTiltInWater(externalData.titltInWater());
+					if(cal){
+						brewLogger.addTiltInWater(tiltwater,hydroreading);
+						externalData.setCalibrating(true);
+					}
 				#else
 				if(brewLogger.startSession(filename.c_str())){
 				#endif
+
+					brewLogger.correctionTemperature(externalData.hydrometerCalibration());
+
 					request->send(200,"application/json","{}");
 					notifyLogStatus();
 				}else
@@ -940,6 +953,7 @@ public:
 			}else if(request->hasParam("stop")){
 				DBG_PRINTF("Stop logging\n");
 				brewLogger.endSession();
+				externalData.setCalibrating(false);
 				request->send(200,"application/json","{}");
 				notifyLogStatus();
 			}else{
@@ -1596,9 +1610,7 @@ void loop(void){
 	
 	#if AUTO_CAP
 	if(autoCapControl.autoCapOn(now,externalData.gravity(true))){
-		char buf[128];
-		sprintf(buf,"V:{\"cap\":{\"c\":%d}}",autoCapControl.isCapOn());
-		stringAvailable(buf);
+		capStatusReport();
 	}
 	#endif
 

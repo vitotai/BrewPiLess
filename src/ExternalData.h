@@ -88,7 +88,7 @@ protected:
 	uint8_t _stableThreshold;
 	
 	#if BREW_AND_CALIBRATION	
-	float _tiltInWater;
+//	float _tiltInWater;
 	bool  _calibrating;
 	#endif
 	
@@ -110,9 +110,12 @@ public:
     bool iSpindelEnabled(void){return _ispindelEnable;}
 
 	#if BREW_AND_CALIBRATION	
-	bool isCalibrating(void){return _calibrating;}
-	float titltInWater(void){ return _tiltInWater;}
+	void setCalibrating(bool cal){ _calibrating=cal;}
+
+//	bool isCalibrating(void){return _calibrating;}
+//	float titltInWater(void){ return _tiltInWater;}
 	#endif
+	float hydrometerCalibration(void) { return _ispindelCalibrationBaseTemp;}
 
     void sseNotify(char *buf){
 
@@ -161,11 +164,11 @@ public:
 		}
 
 		#if BREW_AND_CALIBRATION	
-		if(root.containsKey(KeyCalibrateiSpindel) 
-			&& root.containsKey(KeyTiltInWater)){
-			_calibrating = root[KeyCalibrateiSpindel];
-			_tiltInWater = root[KeyTiltInWater];
-		}
+//		if(root.containsKey(KeyCalibrateiSpindel) 
+//			&& root.containsKey(KeyTiltInWater)){
+//			_calibrating = root[KeyCalibrateiSpindel];
+//			_tiltInWater = root[KeyTiltInWater];
+//		}
 		#endif
 
 		_ispindelEnable=root[KeyEnableiSpindel];
@@ -225,8 +228,8 @@ public:
 		JsonObject& root = jsonBuffer.createObject();
 		root[KeyEnableiSpindel] = _ispindelEnable;
 		root[KeyTempCorrection] = _ispindelTempCal;
-		root[KeyCalibrateiSpindel] = _calibrating;
-		root[KeyTiltInWater]=_tiltInWater;
+//		root[KeyCalibrateiSpindel] = _calibrating;
+//		root[KeyTiltInWater]=_tiltInWater;
 
 		root[KeyCorrectionTemp] = _ispindelCalibrationBaseTemp;
 		root[KeyCalculateGravity] = _calculateGravity;
@@ -368,8 +371,9 @@ public:
 
 	bool processJSON(char data[],size_t length, bool authenticated, uint8_t& error)
 	{
-		const int BUFFER_SIZE = JSON_OBJECT_SIZE(12);
-		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+		//const int BUFFER_SIZE = JSON_OBJECT_SIZE(20);
+		//StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+		DynamicJsonBuffer jsonBuffer;
 		JsonObject& root = jsonBuffer.parseObject((char*)data,length);
 
 
