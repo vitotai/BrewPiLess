@@ -208,7 +208,6 @@ BrewKeeper brewKeeper([](const char* str){ brewPi.putLine(str);});
 DataLogger dataLogger;
 #endif
 
-BrewLogger brewLogger;
 
 #if UseServerSideEvent == true
 AsyncEventSource sse(SSE_PATH);
@@ -926,7 +925,6 @@ public:
 			}else if(request->hasParam("start")){
 				String filename=request->getParam("start")->value();
 				DBG_PRINTF("start logging:%s\n",filename.c_str());
-				#if BREW_AND_CALIBRATION
 				bool cal=false;
 				float tiltwater, hydroreading;
 				if(request->hasParam("tw") && request->hasParam("hr")){
@@ -940,11 +938,8 @@ public:
 						brewLogger.addTiltInWater(tiltwater,hydroreading);
 						externalData.setCalibrating(true);
 					}
-				#else
-				if(brewLogger.startSession(filename.c_str())){
-				#endif
 
-					brewLogger.correctionTemperature(externalData.hydrometerCalibration());
+					brewLogger.addCorrectionTemperature(externalData.hydrometerCalibration());
 
 					request->send(200,"application/json","{}");
 					notifyLogStatus();

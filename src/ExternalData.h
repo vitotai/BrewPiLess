@@ -87,10 +87,7 @@ protected:
     bool _calculateGravity;
 	uint8_t _stableThreshold;
 	
-	#if BREW_AND_CALIBRATION	
-//	float _tiltInWater;
 	bool  _calibrating;
-	#endif
 	
 	uint8_t _numberCalPoints;
 	float _filteredGravity;
@@ -98,9 +95,7 @@ protected:
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),_deviceVoltage(INVALID_VOLTAGE),_lastUpdate(0)
 	,_ispindelEnable(false),_ispindelName(NULL),_calculateGravity(false),_stableThreshold(1),_numberCalPoints(0)
-	#if BREW_AND_CALIBRATION	
 	 ,_calibrating(false)
-	#endif	
 	{ _filteredGravity = INVALID_GRAVITY;}
 
 	float gravity(bool filtered=false){ return filtered? _filteredGravity:_gravity;}
@@ -109,12 +104,8 @@ public:
 	void waitFormula(){_numberCalPoints =0; }
     bool iSpindelEnabled(void){return _ispindelEnable;}
 
-	#if BREW_AND_CALIBRATION	
 	void setCalibrating(bool cal){ _calibrating=cal;}
 
-//	bool isCalibrating(void){return _calibrating;}
-//	float titltInWater(void){ return _tiltInWater;}
-	#endif
 	float hydrometerCalibration(void) { return _ispindelCalibrationBaseTemp;}
 
     void sseNotify(char *buf){
@@ -163,13 +154,6 @@ public:
   			return false;
 		}
 
-		#if BREW_AND_CALIBRATION	
-//		if(root.containsKey(KeyCalibrateiSpindel) 
-//			&& root.containsKey(KeyTiltInWater)){
-//			_calibrating = root[KeyCalibrateiSpindel];
-//			_tiltInWater = root[KeyTiltInWater];
-//		}
-		#endif
 
 		_ispindelEnable=root[KeyEnableiSpindel];
 		_ispindelTempCal = root[KeyTempCorrection];
@@ -280,14 +264,9 @@ public:
 		_lastUpdate=now;
 		_ispindelTilt=tilt;
 
-		#if BREW_AND_CALIBRATION	
 		// add tilt anyway
 		brewLogger.addTiltAngle(tilt);
 
-//		if(brewLogger.calibrating()){
-//			return;
-//		}
-		#endif
 		if(_calibrating && _numberCalPoints <2){
 			DBG_PRINTF("No valid formula!\n");
 			return; // don't calculate if formula is not available.
@@ -438,9 +417,7 @@ public:
 			//setPlato(root["gravityP"],TimeKeeper.getTimeSeconds());
 			if(root.containsKey("gravity") &&
 				!_calculateGravity 
-				#if BREW_AND_CALIBRATION	
 				&& ! _calibrating 
-				#endif
 				){
 				// gravity information directly from iSpindel
             	setGravity(root["gravity"], TimeKeeper.getTimeSeconds());
