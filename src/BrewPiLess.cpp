@@ -407,8 +407,8 @@ public:
 	 		String data=request->getParam("data", true, false)->value();
 	 		//DBG_PRINTF("putline:%s\n",data.c_str());
 
-			if(data.startsWith("j") && !request->authenticate(username, password))
-		        return request->requestAuthentication();
+			if(data.startsWith("j") && !request->authenticate(username, password, DEFAULT_NAME))
+		        return request->requestAuthentication(DEFAULT_NAME);
 
 	 		brewPi.putLine(data.c_str());
 	 		request->send(200,"application/json","{}");
@@ -427,8 +427,8 @@ public:
 		 else if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
 			request->redirect(request->url() + ".htm");
 	 	}else if(request->method() == HTTP_POST && request->url() == CONFIG_PATH){
-	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
-	        return request->requestAuthentication();
+	 	    if(!request->authenticate(username, password, DEFAULT_NAME))
+	        return request->requestAuthentication(DEFAULT_NAME);
 
 			if(request->hasParam("data", true)){
 
@@ -472,27 +472,27 @@ public:
 				AsyncWebParameter* tvalue = request->getParam("off", true);
 				DBG_PRINTF("Set timezone:%ld\n",tvalue->value().toInt());
 			   TimeKeeper.setTimezoneOffset(tvalue->value().toInt());
-		    }		   
+		    }
 			request->send(200,"application/json","{}");
-			 
+
 		}else if(request->method() == HTTP_GET &&  request->url() == RESETWIFI_PATH){
-	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
-	        return request->requestAuthentication();
+	 	    if(!request->authenticate(username, password, DEFAULT_NAME))
+	        return request->requestAuthentication(DEFAULT_NAME);
 		 	request->send(200,"text/html","Done, restarting..");
 			requestRestart(true);
 	 	}else if(request->method() == HTTP_POST &&  request->url() == FLIST_PATH){
-	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
-	        return request->requestAuthentication();
+	 	    if(!request->authenticate(username, password, DEFAULT_NAME))
+	        return request->requestAuthentication(DEFAULT_NAME);
 
 			handleFileList(request);
 	 	}else if(request->method() == HTTP_DELETE &&  request->url() == DELETE_PATH){
-	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
-	        return request->requestAuthentication();
+	 	    if(!request->authenticate(username, password, DEFAULT_NAME))
+	        return request->requestAuthentication(DEFAULT_NAME);
 
 			handleFileDelete(request);
 	 	}else if(request->method() == HTTP_POST &&  request->url() == FPUTS_PATH){
-	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
-	        return request->requestAuthentication();
+	 	    if(!request->authenticate(username, password, DEFAULT_NAME))
+	        return request->requestAuthentication(DEFAULT_NAME);
 
 			handleFilePuts(request);
 		}else if(request->method() == HTTP_GET && request->url() == GETSTATUS_PATH){
@@ -538,8 +538,8 @@ public:
 		#endif
 		#if AUTO_CAP
 		else if(request->url() == CAPPER_PATH){
-	 	    if(!request->authenticate(username, password,DEFAULT_NAME))
-	        return request->requestAuthentication();
+	 	    if(!request->authenticate(username, password, DEFAULT_NAME))
+	        return request->requestAuthentication(DEFAULT_NAME);
 			// auto cap.
 			bool response=true;
 			if(request->hasParam("cap")){
@@ -584,8 +584,8 @@ public:
 					}
 			}
 
-	 	    if(auth && !request->authenticate(username, password,DEFAULT_NAME))
-	        return request->requestAuthentication();
+	 	    if(auth && !request->authenticate(username, password, DEFAULT_NAME))
+	        return request->requestAuthentication(DEFAULT_NAME);
 
 	 		sendFile(request,path); //request->send(SPIFFS, path);
 		}
@@ -1031,10 +1031,10 @@ private:
 		if(length ==0) return request->send(500);;
 
         uint8_t error;
-		if(externalData.processJSON(data,length,request->authenticate(username, password,DEFAULT_NAME),error)){
+		if(externalData.processJSON(data,length,request->authenticate(username, password, DEFAULT_NAME),error)){
     		request->send(200,"application/json","{}");
 		}else{
-		    if(error == ErrorAuthenticateNeeded) return request->requestAuthentication();
+		    if(error == ErrorAuthenticateNeeded) return request->requestAuthentication(DEFAULT_NAME);
 		    else request->send(500);
 		}
 	}
