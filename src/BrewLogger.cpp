@@ -369,7 +369,7 @@ BrewLogger::BrewLogger(void){
 		//                        that is,  total size = _savedLength + _logIndex
 		// in abnormal cases, the file size is total size since all data are "written".
 
-		DBG_PRINTF("beginCopyAfter:%d, _logIndex=%ld, saved=%ld last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength, (last >= (_logIndex +_savedLength))? 'Y':'N' );
+		DBG_PRINTF("beginCopyAfter:%d, _logIndex=%ld, saved=%ld, return:%ld, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
 		if(last >= (_logIndex +_savedLength)) return 0;
 		return ( _logIndex+_savedLength - last);
 	}
@@ -382,11 +382,11 @@ BrewLogger::BrewLogger(void){
 		// rindex is the real index of the whole log
 		size_t rindex= index + _lastRead;
 
-		DBG_PRINTF("read _lastRead =%ld, index:%ld, rindex=%ld\n",_lastRead,index,rindex);
+		DBG_PRINTF("read index:%ld, max:%ld, _lastRead =%ld, rindex=%ld\n",index,maxLen,_lastRead,rindex);
 
 		// the reqeust data index is more than what we have.
 		if(rindex > (_savedLength +_logIndex)) return maxLen; // return whatever it wants.
-
+    
 		// the staring data is not in buffer
 		if( rindex < _savedLength){
 
@@ -398,9 +398,16 @@ BrewLogger::BrewLogger(void){
 			sizeRead=_logFile.read(buffer,sizeRead);
 
 			if(sizeRead < maxLen){
-				DBG_PRINTF("!Error: file read:%ld of %ld\n",sizeRead,maxLen);
+				DBG_PRINTF("!Error: file read:%ld of %ld, file size:%ld\n",sizeRead,maxLen,_logFile.size());
 				size_t insufficient = maxLen - sizeRead;
-				memset(buffer + sizeRead,FillTag,insufficient);
+                if(insufficient > _logIndex){
+                    size_t fillsize=insufficient - _logIndex;
+                    memset(buffer + sizeRead,FillTag,fillsize);
+                    sizeRead += fillsize;
+                    insufficient = _logIndex;
+    				DBG_PRINTF("!Error: fill blank:%ld\n",fillsize);
+                }
+                memcpy(buffer+ sizeRead,_logBuffer,insufficient);
 				sizeRead += insufficient;
 			}
 			DBG_PRINTF("read file:%ld\n",sizeRead);
