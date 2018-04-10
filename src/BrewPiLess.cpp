@@ -85,10 +85,10 @@ extern "C" {
 /**************************************************************************************/
 static const char DefaultConfiguration[] PROGMEM =
 R"END(
-{"name":DEFAULT_NAME,
-"user":DEFAULT_USERNAME,
-"pass":DEFAULT_PASS,
-"title":DEFAULT_NAME,
+{"name":"brewpiless",
+"user":"brewpiless",
+"pass":"brewpiless",
+"title":"brewpiless",
 "protect":0,
 "wifi":1,
 "ip":"0.0.0.0",
