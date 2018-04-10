@@ -21,7 +21,7 @@ public:
 //    void preInit(void);
 	void setNetwork(WiFiMode mode,IPAddress ip,IPAddress gw,IPAddress mask);
 
-	void begin(void){begin("brewpiless");}
+	void begin(void){begin(DEFAULT_NAME);}
 	void begin(char const *ssid,const char *passwd=NULL);
 	void beginAP(char const *ssid,const char *passwd=NULL);
 
