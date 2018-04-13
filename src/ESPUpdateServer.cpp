@@ -303,7 +303,7 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
             return;
         }
         strcpy(data,json.c_str());
-		if(externalData.processJSON(data,json.length(),false,error)){
+		if(externalData.processGravityReport(data,json.length(),false,error)){
     		server.send(200,"application/json","{}");
 		}else{
 		     server.send(500);

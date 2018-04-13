@@ -28,6 +28,15 @@ SystemConfiguration* BPLSettings::systemConfiguration(){
     return &_data.syscfg;
 }
     // decode json
+static void stringNcopy(char *dst,const char *src,int n){
+	if(strlen(src) < n){
+		strcpy(dst,src);
+	}else{
+		strncpy(dst,src,n-1);
+		dst[n-1]='\0';
+	}
+}
+
 bool BPLSettings::dejsonSystemConfiguration(String json){
     char *buffer=strdup(json.c_str());
 
@@ -38,10 +47,10 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
     SystemConfiguration *syscfg=&_data.syscfg;
 
     if (root.success()){
-        strcpy(syscfg->titlelabel,root[KeyPageTitle]);
-        strcpy(syscfg->hostnetworkname,root[KeyHostName]);
-        strcpy(syscfg->username,root[KeyUsername]);
-        strcpy(syscfg->password,root[KeyPassword]);
+        stringNcopy(syscfg->titlelabel,root[KeyPageTitle],32);
+        stringNcopy(syscfg->hostnetworkname,root[KeyHostName],32);
+        stringNcopy(syscfg->username,root[KeyUsername],32);
+        stringNcopy(syscfg->password,root[KeyPassword],32);
 
         syscfg->port = root[KeyPort];
         syscfg->passwordLcd = root[KeyProtect];
@@ -97,11 +106,11 @@ String BPLSettings::jsonSystemConfiguration(void){
 #define KeyNumberCalPoints "npt"
 
 
- bool BPLSettings::dejsonGravityConfig(char* configdata)
+ bool BPLSettings::dejsonGravityConfig(char* json)
 {
     	const int BUFFER_SIZE = JSON_OBJECT_SIZE(16);
 		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
-		JsonObject& root = jsonBuffer.parseObject(configdata);
+		JsonObject& root = jsonBuffer.parseObject(json);
 
 		if (!root.success()){
   			DBG_PRINTF("Invalid JSON config\n");
@@ -136,34 +145,28 @@ String BPLSettings::jsonSystemConfiguration(void){
 	return true;
 }
 
-	bool saveConfig(void){
+String BPLSettings::jsonGravityConfig(void){
 		// save to file
     	const int BUFFER_SIZE = JSON_OBJECT_SIZE(16);
 		StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
 		JsonObject& root = jsonBuffer.createObject();
-		root[KeyEnableiSpindel] = _ispindelEnable;
-		root[KeyTempCorrection] = _ispindelTempCal;
-//		root[KeyCalibrateiSpindel] = _calibrating;
-//		root[KeyTiltInWater]=_tiltInWater;
 
-		root[KeyCorrectionTemp] = _ispindelCalibrationBaseTemp;
-		root[KeyCalculateGravity] = _calculateGravity;
-		root[KeyLPFBeta] = filter.beta();
-		root[KeyStableGravityThreshold] =_stableThreshold;
+        GravityDeviceConfiguration *gdc = &_data.gdc;
 
-		root[KeyCoefficientA0]=_ispindelCoefficients[0];
-		root[KeyCoefficientA1]=_ispindelCoefficients[1];
-		root[KeyCoefficientA2]=_ispindelCoefficients[2];
-		root[KeyCoefficientA3]=_ispindelCoefficients[3];
-		root[KeyNumberCalPoints] = _numberCalPoints;
+		root[KeyEnableiSpindel] = gdc->ispindelEnable;
+		root[KeyTempCorrection] = gdc->ispindelTempCal;
 
-  		File f=SPIFFS.open(GavityDeviceConfigFilename,"w+");
-  		if(!f){
-  			return false;
-  		}
-		root.printTo(f);
-  		f.flush();
-  		f.close();
-		DBG_PRINTF("Save gravity config\n");
-		return true;
-	}	
+		root[KeyCorrectionTemp] = gdc->ispindelCalibrationBaseTemp;
+		root[KeyCalculateGravity] = gdc->calculateGravity;
+		root[KeyLPFBeta] =gdc->lpfBeta;
+		root[KeyStableGravityThreshold] = gdc->stableThreshold;
+
+		root[KeyCoefficientA0]=gdc->ispindelCoefficients[0];
+		root[KeyCoefficientA1]=gdc->ispindelCoefficients[1];
+		root[KeyCoefficientA2]=gdc->ispindelCoefficients[2];
+		root[KeyCoefficientA3]=gdc->ispindelCoefficients[3];
+		root[KeyNumberCalPoints] = gdc->numberCalPoints;
+	 String ret;
+    root.printTo(ret);
+    return ret;
+}	

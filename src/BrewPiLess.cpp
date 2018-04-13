@@ -157,9 +157,6 @@ const char *nocache_list[]={
 		return "text/plain";
 	  }
 
-
-ExternalData externalData;
-
 GravityTracker gravityTracker;
 
 AsyncWebServer *webServer;
@@ -988,7 +985,7 @@ private:
 		if(length ==0) return request->send(500);;
 		SystemConfiguration *syscfg=theSettings.systemConfiguration();
         uint8_t error;
-		if(externalData.processJSON(data,length,request->authenticate(syscfg->username,syscfg->password),error)){
+		if(externalData.processGravityReport(data,length,request->authenticate(syscfg->username,syscfg->password),error)){
     		request->send(200,"application/json","{}");
 		}else{
 		    if(error == ErrorAuthenticateNeeded) return request->requestAuthentication();
@@ -1067,7 +1064,7 @@ public:
 		}//else{
 			// get
 		if(request->hasParam("data")){
-		    request->send(SPIFFS,GavityDeviceConfigFilename, "application/json");
+			request->send(200,"application/json",theSettings.jsonGravityConfig());
 		}else{
 			// get the HTML
 			request->redirect(request->url() + ".htm");

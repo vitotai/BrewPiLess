@@ -74,7 +74,7 @@ public:
     TimeInformation* timeInformation(void){ return &_data.timeinfo;}
     // gravity device
     GravityDeviceConfiguration* GravityConfig(void){return &_data.gdc; }
-    bool dejsonGravityConfig(String json);
+    bool dejsonGravityConfig(char* json);
     String jsonGravityConfig(void);
 
 protected:
