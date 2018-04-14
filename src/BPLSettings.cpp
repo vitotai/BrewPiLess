@@ -517,3 +517,54 @@ String BPLSettings::jsonRemoteLogging(void)
     root.printTo(ret);
     return ret;
 }
+//***************************************************************
+// parasite control
+#define EnableKey "enabled"
+#define SetTempKey "temp"
+#define TrigerTempKey "stemp"
+#define MinCoolKey "mincool"
+#define MinIdleKey "minidle"
+
+bool BPLSettings::dejsonParasiteTempControlSettings(String json){
+    DynamicJsonBuffer jsonBuffer(JSON_OBJECT_SIZE(10));
+	JsonObject& root = jsonBuffer.parseObject(json.c_str());
+	if(!root.success()
+		|| !root.containsKey(SetTempKey)
+		|| !root.containsKey(TrigerTempKey)
+		|| !root.containsKey(MinCoolKey)
+		|| !root.containsKey(MinIdleKey)){
+            return false;
+        }
+	ParasiteTempControlSettings *ps=parasiteTempControlSettings();
+
+    float n_setTemp = root[SetTempKey];
+    float n_maxIdleTemp = root[TrigerTempKey];
+    uint32_t n_mincool=root[MinCoolKey] ;
+    uint32_t n_minidle= root[MinIdleKey];
+
+    ps->minIdleTime = n_minidle * 1000;
+    ps->minCoolingTime = n_mincool * 1000;
+    ps->setTemp = n_setTemp;
+    ps->maxIdleTemp = n_maxIdleTemp;
+
+    return true;
+}
+
+String BPLSettings::jsonParasiteTempControlSettings(bool enabled){
+    // using string operation for simpler action?
+    const int BUFFER_SIZE = 2*JSON_ARRAY_SIZE(6) + JSON_OBJECT_SIZE(9);
+    StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+    JsonObject& root = jsonBuffer.createObject();
+
+    root[EnableKey]= enabled;
+    
+	ParasiteTempControlSettings *ps=parasiteTempControlSettings();
+
+    root[SetTempKey]=ps->setTemp ;
+    root[TrigerTempKey] =ps->maxIdleTemp;
+    root[MinCoolKey] = ps->minCoolingTime /  1000;
+    root[MinIdleKey]=  ps->minIdleTime / 1000;
+    String output;
+    root.printTo(output);
+    return output;
+}

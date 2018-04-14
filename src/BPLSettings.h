@@ -161,6 +161,16 @@ typedef struct _AutoCapSettings{
     uint8_t _padding[7];
 } AutoCapSettings;
 
+//*****************************************************
+// Parasite temp control
+typedef struct _ParasiteTempControlSettings{
+    float setTemp;
+    float maxIdleTemp;
+    uint32_t minCoolingTime;
+    uint32_t minIdleTime;
+    uint8_t _padding[4];
+}ParasiteTempControlSettings;
+
 //####################################################
 // whole structure
 struct Settings{
@@ -172,6 +182,7 @@ struct Settings{
     FileIndexes  logFileIndexes;
     RemoteLoggingInformation remoteLogginInfo;
     AutoCapSettings autoCapSettings;
+    ParasiteTempControlSettings parasiteTempControlSettings;
 };
 
 class BPLSettings
@@ -207,6 +218,10 @@ public:
 
     // autocap
     AutoCapSettings *autoCapSettings(void){ return &_data.autoCapSettings;}
+    //ParasiteTempControlSettings
+    ParasiteTempControlSettings *parasiteTempControlSettings(void){ return &_data.parasiteTempControlSettings;}
+    bool dejsonParasiteTempControlSettings(String json);
+    String jsonParasiteTempControlSettings(bool enabled);
 protected:
     Settings _data;
 };
