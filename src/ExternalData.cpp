@@ -42,13 +42,14 @@ void ExternalData::sseNotify(char *buf){
 		}
 
 		const char *spname=(_ispindelName)? _ispindelName:"Unknown";
-		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d}",
+		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d,\"ctemp\":%d}",
 					spname, 
 					strbattery,
 					strgravity,
 					strtilt,
 					_lastUpdate,slowpassfilter,_cfg->stableThreshold,
-					_cfg->numberCalPoints);
+					_cfg->numberCalPoints,
+                    _cfg->ispindelCalibrationBaseTemp);
 }
 
 

@@ -90,8 +90,6 @@ extern "C" {
 
 
 
-#define PROFILE_FILENAME "/brewing.json"
-
 #define WS_PATH 		"/ws"
 #define SSE_PATH 		"/getline"
 
@@ -118,8 +116,9 @@ extern "C" {
 
 #define GRAVITY_PATH       "/gravity"
 
-#define GETSTATUS_PATH "/getstatus"
+#define BEER_PROFILE_PATH       "/tschedule"
 
+#define GETSTATUS_PATH "/getstatus"
 #define DEFAULT_INDEX_FILE     "index.htm"
 
 #if EanbleParasiteTempControl
@@ -238,10 +237,6 @@ class BrewPiWebHandler: public AsyncWebHandler
         	ESP.wdtEnable(10);
             request->send(200,"application/json","{}");
             DBG_PRINTF("fputs path=%s\n",file.c_str());
-            if(file == PROFILE_FILENAME){
-	            DBG_PRINTF("reload file\n");
-            	brewKeeper.reloadProfile();
-            }
         } else
           request->send(404);
     }
@@ -455,9 +450,22 @@ public:
 	 	#ifdef ENABLE_LOGGING
 	 	else if (request->url() == LOGGING_PATH){
 	 		if(request->method() == HTTP_POST){
-		 		dataLogger.updateSetting(request);
+				if(request->hasParam("data", true)){
+		    		if(theSettings.dejsonRemoteLogging(request->getParam("data", true)->value())){
+		    			request->send(200,"application/json","{}");
+						theSettings.save();
+					}else{
+						request->send(401);
+					}
+        		} else{
+        		  request->send(404);
+    			}
 	 		}else{
-	 			dataLogger.getSettings(request);
+				if(request->hasParam("data")){
+					request->send(200,"application/json",theSettings.jsonRemoteLogging());
+				}else{
+					request->redirect(request->url() + ".htm");
+				} 
 	 		}
 		 }
 	 	#endif
@@ -505,7 +513,20 @@ public:
 			capStatusReport();
 		}
 		#endif
-	 	else if(request->method() == HTTP_GET){
+		else if(request->url() == BEER_PROFILE_PATH){
+			if(request->method() == HTTP_GET){
+				request->send(200,"application/json",theSettings.jsonBeerProfile());
+			}else{ //if(request->method() == HTTP_POST){
+				if(request->hasParam("data",true)){
+					if(theSettings.dejsonBeerProfile(request->getParam("data",true)->value())){
+						request->send(200,"application/json","{}");
+					}else
+						request->send(402);
+				}else{
+					request->send(401);
+				}
+			}
+		}else if(request->method() == HTTP_GET){
 
 			String path=request->url();
 	 		if(path.endsWith("/")) path +=DEFAULT_INDEX_FILE;
@@ -539,6 +560,7 @@ public:
 	 		if(request->url() == POLLING_PATH || request->url() == CONFIG_PATH || request->url() == TIME_PATH
 			 || request->url() == RESETWIFI_PATH  /*|| request->url() == CONTROL_CC_PATH*/
 			 || request->url() == GETSTATUS_PATH
+			 || request->url() == BEER_PROFILE_PATH
 	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
 	 		#endif
@@ -1058,9 +1080,6 @@ public:
 			}else{
 				request->send(500);
 			}
-			
-				
-
 		}//else{
 			// get
 		if(request->hasParam("data")){
@@ -1287,7 +1306,7 @@ void setup(void){
 	display.setAutoOffPeriod(syscfg->backlite);
 	
 	#ifdef ENABLE_LOGGING
-  	dataLogger.loadConfig();
+//  	dataLogger.loadConfig();
   	#endif
 
 
@@ -1386,9 +1405,11 @@ void setup(void){
 	// 5. try to connnect Arduino
 	brewpi_setup();
   	brewPi.begin(stringAvailable);
-	brewKeeper.setFile(PROFILE_FILENAME);
 	//make sure externalData  is initialized.
-	brewLogger.begin();
+	if(brewLogger.begin()){
+		// resume, update calibrating information to external data
+		externalData.setCalibrating(brewLogger.isCalibrating());
+	}
 
 	#if AUTO_CAP
 	//Note: necessary to call after brewpi_setup() so that device has been installed.

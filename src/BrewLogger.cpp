@@ -12,12 +12,12 @@ BrewLogger::BrewLogger(void){
 }
 
 	
-	void BrewLogger::begin(void)
+	bool BrewLogger::begin(void)
 	{
     	bool resumeSuccess=false;
 		loadIdxFile();
 		checkspace();
-		if(_fileInfo.logname[0]!='\0'){
+		if(_pFileInfo->logname[0]!='\0'){
 			resumeSuccess=resumeSession();
 		}
 
@@ -26,6 +26,7 @@ BrewLogger::BrewLogger(void){
 			logData();
 			startVolatileLog();
 		}
+        return resumeSuccess;
 	}
 
 	String BrewLogger::fsinfo(void)
@@ -42,8 +43,8 @@ BrewLogger::BrewLogger(void){
 	
 	const char* BrewLogger::currentLog(void)
 	{
-		if(_fileInfo.logname[0] != 0)
-			return _fileInfo.logname;
+		if(_pFileInfo->logname[0] != 0)
+			return _pFileInfo->logname;
 		else return NULL;
 	}
 
@@ -51,20 +52,20 @@ BrewLogger::BrewLogger(void){
 	{
 		// populate JS
 		String ret=String("{\"rec\":");
-		if(_fileInfo.logname[0] != 0){
-			ret += "1, \"log\":\"" + String(_fileInfo.logname)
-				+"\",\"start\":" + String(_fileInfo.starttime);
+		if(_pFileInfo->logname[0] != 0){
+			ret += "1, \"log\":\"" + String(_pFileInfo->logname)
+				+"\",\"start\":" + String(_pFileInfo->starttime);
 		}else{
 			ret += "0";
 		}
 		ret += ",\"fs\":" + fsinfo();
 		ret += ",\"list\":[";
 
-		for(int i=0;i<MAX_FILE_NUMBER;i++){
-			if(_fileInfo.files[i].name[0] == 0) break;
+		for(int i=0;i<MAX_LOG_FILE_NUMBER;i++){
+			if(_pFileInfo->files[i].name[0] == 0) break;
 			if(i!=0) ret +=",";
-			ret +="{\"name\":\"" + String(_fileInfo.files[i].name);
-			ret +="\",\"time\":" +String(_fileInfo.files[i].time) +"}";
+			ret +="{\"name\":\"" + String(_pFileInfo->files[i].name);
+			ret +="\",\"time\":" +String(_pFileInfo->files[i].time) +"}";
 		}
 		ret += "]}";
 
@@ -76,18 +77,18 @@ BrewLogger::BrewLogger(void){
 		//TODO: race condition
 		// multiple access issue
 		char buff[36];
-		sprintf(buff,"%s/%s",LOG_PATH,_fileInfo.files[index].name);
+		sprintf(buff,"%s/%s",LOG_PATH,_pFileInfo->files[index].name);
 		SPIFFS.remove(buff);
 		DBG_PRINTF("remove %d: %s\n",index,buff);
 		int i;
-		for(i=index+1;i<MAX_FILE_NUMBER;i++){
-			if(_fileInfo.files[i].name[0]=='\0') break;
-			DBG_PRINTF("move %d: %s\n",i,_fileInfo.files[i].name);
-			strcpy(_fileInfo.files[i-1].name,_fileInfo.files[i].name);
-			_fileInfo.files[i-1].time=_fileInfo.files[i].time;
+		for(i=index+1;i<MAX_LOG_FILE_NUMBER;i++){
+			if(_pFileInfo->files[i].name[0]=='\0') break;
+			DBG_PRINTF("move %d: %s\n",i,_pFileInfo->files[i].name);
+			strcpy(_pFileInfo->files[i-1].name,_pFileInfo->files[i].name);
+			_pFileInfo->files[i-1].time=_pFileInfo->files[i].time;
 		}
-		_fileInfo.files[i-1].name[0]='\0';
-		_fileInfo.files[i-1].time =0;
+		_pFileInfo->files[i-1].name[0]='\0';
+		_pFileInfo->files[i-1].time =0;
 
 		checkspace();
 		saveIdxFile();
@@ -95,10 +96,10 @@ BrewLogger::BrewLogger(void){
 
 	bool BrewLogger::resumeSession()
 	{
-    	_resumeLastLogTime = _fileInfo.starttime;
+    	_resumeLastLogTime = _pFileInfo->starttime;
 
 		char buff[36];
-		sprintf(buff,"%s/%s",LOG_PATH,_fileInfo.logname);
+		sprintf(buff,"%s/%s",LOG_PATH,_pFileInfo->logname);
 
 		_logFile=SPIFFS.open(buff,"a+");
 		if(! _logFile){
@@ -155,7 +156,7 @@ BrewLogger::BrewLogger(void){
 					size_t d1 =(size_t)_logFile.read();
 		    		size_t d0 =(size_t)_logFile.read();
 					size_t tdiff= (mask <<16) + (d1 << 8) + d0;
-			    	_resumeLastLogTime = _fileInfo.starttime + tdiff;
+			    	_resumeLastLogTime = _pFileInfo->starttime + tdiff;
 			}else if(tag == CalibrationPointTag || tag == OriginGravityTag){
 				if (dataAvail<4 ) break;
 				_logFile.read();
@@ -199,7 +200,7 @@ BrewLogger::BrewLogger(void){
 			DBG_PRINTF("Not enough space:%d\n",_fsspace);
 			return false;
 		}
-		strcpy(_fileInfo.logname,filename);
+		strcpy(_pFileInfo->logname,filename);
 		char buff[36];
 		sprintf(buff,"%s/%s",LOG_PATH,filename);
 
@@ -210,7 +211,7 @@ BrewLogger::BrewLogger(void){
 			return false;
 		}
 
-		_fileInfo.starttime= TimeKeeper.getTimeSeconds();
+		_pFileInfo->starttime= TimeKeeper.getTimeSeconds();
 		_logIndex = 0;
 
 		_lastTempLog=0;
@@ -238,19 +239,19 @@ BrewLogger::BrewLogger(void){
 		_logFile.close();
 		// copy the file name into last entry
 		int index=0;
-		for(;index<MAX_FILE_NUMBER;index++)
+		for(;index<MAX_LOG_FILE_NUMBER;index++)
 		{
-			if(_fileInfo.files[index].name[0] == 0) break;
+			if(_pFileInfo->files[index].name[0] == 0) break;
 		}
 		// exceptional case.
-		if(index == MAX_FILE_NUMBER){
+		if(index == MAX_LOG_FILE_NUMBER){
 			rmLog(0);
-			index = MAX_FILE_NUMBER-1;
+			index = -1;
 		}
-		strcpy(_fileInfo.files[index].name,_fileInfo.logname);
-		_fileInfo.files[index].time = _fileInfo.starttime;
-		_fileInfo.logname[0]='\0';
-		_fileInfo.starttime=0;
+		strcpy(_pFileInfo->files[index].name,_pFileInfo->logname);
+		_pFileInfo->files[index].time = _pFileInfo->starttime;
+		_pFileInfo->logname[0]='\0';
+		_pFileInfo->starttime=0;
 		saveIdxFile();
 
 		startVolatileLog();
@@ -427,7 +428,7 @@ BrewLogger::BrewLogger(void){
 
 	void BrewLogger::getFilePath(char* buf,int index)
 	{
-		sprintf(buf,"%s/%s",LOG_PATH,_fileInfo.files[index].name);
+		sprintf(buf,"%s/%s",LOG_PATH,_pFileInfo->files[index].name);
 	}
 
 	size_t BrewLogger::volatileDataOffset(void)
@@ -611,10 +612,10 @@ BrewLogger::BrewLogger(void){
 		int period = _tempLogPeriod/1000;
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
-		*ptr++ = (char) (_fileInfo.starttime >> 24);
-		*ptr++ = (char) (_fileInfo.starttime >> 16);
-		*ptr++ = (char) (_fileInfo.starttime >> 8);
-		*ptr++ = (char) (_fileInfo.starttime & 0xFF);
+		*ptr++ = (char) (_pFileInfo->starttime >> 24);
+		*ptr++ = (char) (_pFileInfo->starttime >> 16);
+		*ptr++ = (char) (_pFileInfo->starttime >> 8);
+		*ptr++ = (char) (_pFileInfo->starttime & 0xFF);
 		_logIndex=0;
 		_savedLength=0;
 		commitData(_logIndex,ptr - _logBuffer );
@@ -779,7 +780,7 @@ BrewLogger::BrewLogger(void){
 			DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
 			_logFile.close();
 			char buff[36];
-			sprintf(buff,"%s/%s",LOG_PATH,_fileInfo.logname);
+			sprintf(buff,"%s/%s",LOG_PATH,_pFileInfo->logname);
 
 			_logFile=SPIFFS.open(buff,"a+");
 			_logFile.write((const uint8_t*)buf+wlen,len-wlen);
@@ -838,8 +839,8 @@ BrewLogger::BrewLogger(void){
 		if(idx < 0) return;
 		writeBuffer(idx,ResumeBrewTag); //*ptr = ResumeBrewTag;
 		size_t rtime= TimeKeeper.getTimeSeconds();
-		size_t gap=rtime - _fileInfo.starttime;
-		DBG_PRINTF("resume, start:%d, current:%d gap:%d\n",_fileInfo.starttime,rtime,gap);
+		size_t gap=rtime - _pFileInfo->starttime;
+		DBG_PRINTF("resume, start:%d, current:%d gap:%d\n",_pFileInfo->starttime,rtime,gap);
 		//if (gap > 255) gap = 255;
 		writeBuffer(idx+1,(uint8_t) (gap>>16)&0xFF );
 		writeBuffer(idx+2,(uint8_t) (gap>>8)&0xFF );
@@ -849,28 +850,11 @@ BrewLogger::BrewLogger(void){
 
 	void BrewLogger::loadIdxFile(void)
 	{
-		// load index
-		File idxFile= SPIFFS.open(LOG_RECORD_FILE,"r+");
-		if(idxFile){
-			idxFile.readBytes((char*)&_fileInfo,sizeof(_fileInfo));
-			idxFile.close();
-			//DBG_PRINTF("Load index from file\n");
-		}else{
-			for(uint8_t i=0;i<MAX_FILE_NUMBER;i++){
-				_fileInfo.files[i].name[0] = '\0';
-				_fileInfo.logname[0]='\0';
-				_fileInfo.starttime=0;
-			}
-		}
+        _pFileInfo = theSettings.logFileIndexes();
 	}
 
 	void BrewLogger::saveIdxFile(void)
 	{
-		File idxFile= SPIFFS.open(LOG_RECORD_FILE,"w+");
-		if(idxFile){
-			idxFile.write((uint8_t*)&_fileInfo,sizeof(_fileInfo));
-			idxFile.close();
-			//DBG_PRINTF("save file index\n");
-		}
+        theSettings.save();
 	}
 
