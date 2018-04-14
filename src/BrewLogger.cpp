@@ -12,7 +12,7 @@ BrewLogger::BrewLogger(void){
 }
 
 	
-	void BrewLogger::begin(void)
+	bool BrewLogger::begin(void)
 	{
     	bool resumeSuccess=false;
 		loadIdxFile();
@@ -26,6 +26,7 @@ BrewLogger::BrewLogger(void){
 			logData();
 			startVolatileLog();
 		}
+        return resumeSuccess;
 	}
 
 	String BrewLogger::fsinfo(void)

@@ -73,7 +73,7 @@ class BrewLogger
 public:
 	BrewLogger(void);
 	
-	void begin(void);
+	bool begin(void);
 
 	String fsinfo(void);
 	const char* currentLog(void);
@@ -102,7 +102,7 @@ public:
 	void addTiltAngle(float tilt);
 	void addCorrectionTemperature(float temp);
 	void addTiltInWater(float tilt,float reading);
-
+	bool isCalibrating(void){ return _calibrating; }
 private:
 	size_t _fsspace;
 	uint32_t  _tempLogPeriod;

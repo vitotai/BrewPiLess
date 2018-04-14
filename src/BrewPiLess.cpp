@@ -1524,7 +1524,9 @@ void setup(void){
   	brewPi.begin(stringAvailable);
 	brewKeeper.setFile(PROFILE_FILENAME);
 	//make sure externalData  is initialized.
-	brewLogger.begin();
+	if(brewLogger.begin()){
+		externalData.setCalibrating(brewLogger.isCalibrating());
+	}
 
 	#if AUTO_CAP
 	//Note: necessary to call after brewpi_setup() so that device has been installed.
