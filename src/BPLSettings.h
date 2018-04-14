@@ -148,6 +148,19 @@ typedef struct _RemoteLoggingInformation{
     uint8_t _padding[3];
 } RemoteLoggingInformation;
 
+
+//*****************************************************
+// Auto Cap
+
+typedef struct _AutoCapSettings{
+    union _condition{
+        uint32_t targetTime;
+        float    targetGravity;
+    }condition;
+    uint8_t autoCapMode;
+    uint8_t _padding[7];
+} AutoCapSettings;
+
 //####################################################
 // whole structure
 struct Settings{
@@ -158,6 +171,7 @@ struct Settings{
     BrewStatus  brewStatus;
     FileIndexes  logFileIndexes;
     RemoteLoggingInformation remoteLogginInfo;
+    AutoCapSettings autoCapSettings;
 };
 
 class BPLSettings
@@ -191,6 +205,8 @@ public:
     bool dejsonRemoteLogging(String json);
     String jsonRemoteLogging(void);
 
+    // autocap
+    AutoCapSettings *autoCapSettings(void){ return &_data.autoCapSettings;}
 protected:
     Settings _data;
 };

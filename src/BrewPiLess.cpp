@@ -641,7 +641,7 @@ AppleCNAHandler appleCNAHandler;
 #if AUTO_CAP
 String capControlStatus(void)
 {
-	AutoCapMode mode=autoCapControl.mode();
+	uint8_t mode=autoCapControl.mode();
 	bool capped = autoCapControl.isCapOn();
 	String 	capstate=String("\"m\":") + String((int)mode) + String(",\"c\":") + String(capped);
 
