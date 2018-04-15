@@ -58,12 +58,13 @@ void ExternalData::loadConfig(void){
     filter.setBeta(_cfg->lpfBeta);
 }
 
-bool ExternalData::saveConfig(void){
-    theSettings.save();
-}
 
 bool ExternalData::processconfig(char* configdata){
-    theSettings.dejsonGravityConfig(configdata);
+   bool ret= theSettings.dejsonGravityConfig(configdata);
+   if(ret){
+	   theSettings.save();
+   }
+   return ret;
 }
 
 void ExternalData::formula(float coeff[4],uint8_t npt){
@@ -76,7 +77,7 @@ void ExternalData::formula(float coeff[4],uint8_t npt){
 	for(int i=0;i<4;i++){
 		_cfg->ispindelCoefficients[i] = coeff[i];
 	}
-	saveConfig();
+	 theSettings.save();
 }
 
 void ExternalData::setOriginalGravity(float og){

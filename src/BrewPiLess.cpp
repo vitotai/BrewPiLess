@@ -13,7 +13,6 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
-#include "espconfig.h"
 //{ brewpi
 #include <OneWire.h>
 
@@ -43,7 +42,6 @@
 #include "AutoCapControl.h"
 #endif
 
-#include "espconfig.h"
 #include "TimeKeeper.h"
 #include "mystrlib.h"
 
@@ -519,6 +517,7 @@ public:
 			}else{ //if(request->method() == HTTP_POST){
 				if(request->hasParam("data",true)){
 					if(theSettings.dejsonBeerProfile(request->getParam("data",true)->value())){
+						theSettings.save();
 						request->send(200,"application/json","{}");
 					}else
 						request->send(402);
@@ -1072,13 +1071,9 @@ public:
 		// config
 		if(request->method() == HTTP_POST){
   			if(!externalData.processconfig(_data)){
-				request->send(400);
-				return;
-			}
-			if(externalData.saveConfig()){
 		  		request->send(200,"application/json","{}");
 			}else{
-				request->send(500);
+				request->send(400);
 			}
 		}//else{
 			// get

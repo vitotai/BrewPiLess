@@ -3,20 +3,6 @@
 #include <FS.h>
 #include <time.h>
 //*****************************************************
-// System confiuration
-/*R"END(
-{"name":"brewpiless",
-"user":"brewpiless",
-"pass":"brewpiless",
-"title":"brewpiless",
-"protect":0,
-"wifi":1,
-"ip":"0.0.0.0",
-"gw":"0.0.0.0",
-"mask":"255.255.255.0",
-"port":80}
-)END";
-*/
 typedef struct _SystemConfiguration{
     char  username[32];
     char  password[32];
@@ -224,6 +210,17 @@ public:
     String jsonParasiteTempControlSettings(bool enabled);
 protected:
     Settings _data;
+
+    void    setDefault(void);
+
+    void defaultSystemConfiguration(void);
+    void defaultTimeInformation(void);
+    void defaultGravityConfig(void);
+    void defaultBeerProfile(void);
+    void defaultLogFileIndexes(void);
+    void defaultRemoteLogging(void);
+    void defaultAutoCapSettings(void);
+    void defaultParasiteTempControlSettings(void);
 };
 
 extern BPLSettings theSettings;

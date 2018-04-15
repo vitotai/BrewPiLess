@@ -5,7 +5,7 @@
 #include <ESP8266mDNS.h>
 #include <FS.h>
 #include <ArduinoJson.h>
-#include "espconfig.h"
+#include "Config.h"
 #include "ExternalData.h"
 
 #define EXTERNALDATA_ON_SYNC_SERVER false

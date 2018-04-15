@@ -1,7 +1,7 @@
 #ifndef BrewKeeper_H
 #define BrewKeeper_H
 #include <Arduino.h>
-#include "espconfig.h"
+#include "Config.h"
 #include "GravityTracker.h"
 #include "BPLSettings.h"
 // always enabled #if EnableGravitySchedule

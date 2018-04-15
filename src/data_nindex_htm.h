@@ -1,7 +1,3 @@
-#include "espconfig.h"
-#if !EnableGravitySchedule
-#error "EnableGravitySchedule must be true"
-#endif
 
 const unsigned char data_nindex_htm_gz[] PROGMEM = {
   0x1f, 0x8b, 0x08, 0x08, 0xec, 0x3f, 0xb3, 0x5a, 0x02, 0x03, 0x69, 0x6e,

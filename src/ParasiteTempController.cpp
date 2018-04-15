@@ -3,7 +3,7 @@
 #include "ParasiteTempController.h"
 #include "DeviceManager.h"
 
-#include "espconfig.h"
+#include "Config.h"
 #define MIN_TEM_DIFF 0.5
 #define MIN_COOL_TIME 180000 //ms
 #define MIN_IDLE_TIME 180000 //ms
@@ -78,7 +78,8 @@ void ParasiteTempController::run(){
 
 bool ParasiteTempController::updateSettings(String json){
     bool ret=theSettings.dejsonParasiteTempControlSettings(json);
-    if(ret) _validSetting=checkSettings();
+    theSettings.save();
+    if(ret)_validSetting=checkSettings();
     _setCooling(false);
     return ret;
 }

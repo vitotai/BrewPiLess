@@ -1,7 +1,7 @@
 #include "FS.h"
 #include "ArduinoJson.h"
 #include "AutoCapControl.h"
-#include "espconfig.h"
+#include "Config.h"
 #include "mystrlib.h"
 
 #define MAX_CONFIGDATA_SIZE 256

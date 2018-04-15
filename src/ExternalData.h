@@ -96,7 +96,6 @@ public:
 	//configuration processs
     bool processconfig(char* configdata);
 	void loadConfig(void);
-	bool saveConfig(void);
 	//update formula
 	void formula(float coeff[4],uint8_t npt);
 

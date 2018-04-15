@@ -1,13 +1,58 @@
 #include <ArduinoJson.h>
 #include <string.h>
 #include <IPAddress.h>
-#include "espconfig.h"
+#include <FS.h>
+#include <ESP8266WiFi.h>
+
+#include "Config.h"
 #include "BPLSettings.h"
 
 BPLSettings theSettings;
 
-void BPLSettings::load(){}
-void BPLSettings::save(){}
+#define BPLSettingFileName "/bpl.cfg"
+
+void BPLSettings::load()
+{
+	fs::File f = SPIFFS.open(BPLSettingFileName, "r");
+	if(!f){
+		setDefault();
+		return;
+	}
+	f.read((uint8_t*)&_data,sizeof(_data));
+	f.close();
+}
+
+void BPLSettings::save()
+{
+	fs::File f = SPIFFS.open(BPLSettingFileName, "w");
+    if(!f){
+		DBG_PRINTF("error open configuratoin file\n");
+		return;
+	}
+    f.write((uint8_t*)&_data,sizeof(_data));
+    f.close();
+}
+
+
+void BPLSettings::setDefault(void)
+{
+	// clear. to be safe
+	memset((char*)&_data,'\0',sizeof(_data));
+	// 
+	defaultSystemConfiguration();
+    defaultTimeInformation();
+    defaultGravityConfig();
+    defaultBeerProfile();
+    defaultLogFileIndexes();
+    defaultRemoteLogging();
+    defaultAutoCapSettings();
+    defaultParasiteTempControlSettings();
+}
+
+void BPLSettings::defaultTimeInformation(void){}
+void BPLSettings::defaultLogFileIndexes(void){}
+void BPLSettings::defaultAutoCapSettings(void){}
+
 //***************************************************************
 // system configuration
 #define  KeyLcdBackLight "aoff"
@@ -35,6 +80,24 @@ static void stringNcopy(char *dst,const char *src,int n){
 		strncpy(dst,src,n-1);
 		dst[n-1]='\0';
 	}
+}
+
+
+void BPLSettings::defaultSystemConfiguration(void){
+    SystemConfiguration *syscfg=&_data.syscfg;
+
+    stringNcopy(syscfg->titlelabel,DEFAULT_PAGE_TITLE,32);
+    stringNcopy(syscfg->hostnetworkname,DEFAULT_HOSTNAME,32);
+    stringNcopy(syscfg->username,DEFAULT_USERNAME,32);
+    stringNcopy(syscfg->password,DEFAULT_PASSWORD,32);
+
+    syscfg->port = 80;
+    syscfg->passwordLcd = false;
+    syscfg->wifiMode = WIFI_STA;
+    syscfg->backlite = 0;
+    syscfg->ip = (uint32_t) IPAddress(0,0,0,0);
+    syscfg->gw = (uint32_t) IPAddress(0,0,0,0);
+    syscfg->netmask = (uint32_t) IPAddress(0,0,0,0);
 }
 
 bool BPLSettings::dejsonSystemConfiguration(String json){
@@ -88,8 +151,7 @@ String BPLSettings::jsonSystemConfiguration(void){
     root.printTo(ret);
     return ret;
 }
-
-
+   
 //***************************************************************
 // Gravity configuration
 
@@ -171,6 +233,20 @@ String BPLSettings::jsonGravityConfig(void){
     return ret;
 }	
 
+void BPLSettings::defaultGravityConfig(void)
+{
+	GravityDeviceConfiguration *gdc = &_data.gdc;
+
+	//gdc->ispindelEnable=0;
+	//gdc->ispindelTempCal =0;
+
+	//gdc->calculateGravity= 0;
+    gdc->lpfBeta = 0.1;
+    gdc->stableThreshold=1;
+	//gdc->numberCalPoints=0;
+	
+}
+  
 //***************************************************************
 // Beer profile
 
@@ -266,10 +342,19 @@ void makeTime(time_t timeInput, struct tm &tm){
   tm.tm_mday = time + 1;     // day of month
 }
 
+ void BPLSettings::defaultBeerProfile(void)
+ {
+	BeerTempSchedule *tempSchedule = & _data.tempSchedule;
+	tempSchedule->unit = 'C';
+	tempSchedule->numberOfSteps =1;
+	ScheduleStep *step = &tempSchedule->steps[0];
+	step->condition = 't';
+	step->days = ScheduleDayFromJson(7);
+	step->temp = ScheduleTempFromJson(20);
+ }
 
 bool BPLSettings::dejsonBeerProfile(String json)
 {
-
 	const int PROFILE_JSON_BUFFER_SIZE = JSON_ARRAY_SIZE(15) + 7*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(4) + 5*JSON_OBJECT_SIZE(6);
 	DynamicJsonBuffer jsonBuffer(PROFILE_JSON_BUFFER_SIZE);
 	JsonObject& root = jsonBuffer.parseObject(json.c_str());
@@ -446,6 +531,10 @@ String BPLSettings::jsonBeerProfile(void)
 
 //***************************************************************
 // Remote data logging
+void BPLSettings::defaultRemoteLogging(void)
+{
+	// OK for all zero
+}
 
 bool BPLSettings::dejsonRemoteLogging(String json)
 {
@@ -517,6 +606,7 @@ String BPLSettings::jsonRemoteLogging(void)
     root.printTo(ret);
     return ret;
 }
+
 //***************************************************************
 // parasite control
 #define EnableKey "enabled"
@@ -524,6 +614,16 @@ String BPLSettings::jsonRemoteLogging(void)
 #define TrigerTempKey "stemp"
 #define MinCoolKey "mincool"
 #define MinIdleKey "minidle"
+
+
+void BPLSettings::defaultParasiteTempControlSettings(void)
+{
+	ParasiteTempControlSettings *ps=parasiteTempControlSettings();
+    ps->minIdleTime = 300 * 1000;
+    ps->minCoolingTime = 300 * 1000;
+    ps->setTemp = 0;
+    ps->maxIdleTemp = 4;
+}
 
 bool BPLSettings::dejsonParasiteTempControlSettings(String json){
     DynamicJsonBuffer jsonBuffer(JSON_OBJECT_SIZE(10));
@@ -568,3 +668,4 @@ String BPLSettings::jsonParasiteTempControlSettings(bool enabled){
     root.printTo(output);
     return output;
 }
+
