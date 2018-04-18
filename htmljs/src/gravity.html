@@ -29,13 +29,11 @@
                         </div>
                     </div>
 
-                    <div layout horizontal cross-center>
-                        <h6 class="inline-header">Calibrate iSpindel:</h6>
-                        <input type="checkbox" id="cal" name="cal" class="switch-input" checked>
-                        <label for="cal" class="switch-label" style="min-width: 0;"></label>
-                        <h6 class="inline-header tilt-field tilt-header">Tilt in Water:</h6>
-                        <div layout horizontal main-justified cross-center flex class="tilt-field">
-                            <input type="text" name="tiltw" size="5">
+                    <div layout horizontal main-justified cross-center>
+                        <h6 class="inline-header">Calculated by BPL</h6>
+                        <div>
+                            <input type="checkbox" id="cbpl" name="cbpl" class="switch-input" checked>
+                            <label for="cbpl" class="switch-label" style="min-width: 0;"></label>
                         </div>
                     </div>
 
@@ -55,10 +53,14 @@
 
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">Coefficients:</h6>
-                        <input type="text" name="a3" size=15><div class="coefficient" layout horizontal main-center>x³ +</div>
-                        <input type="text" name="a2" size=15><div class="coefficient" layout horizontal main-center>x² +</div>
-                        <input type="text" name="a1" size=15><div class="coefficient" layout horizontal main-center>x +</div>
-                        <input type="text" name="a0" size=15><div class="coefficient" layout horizontal main-center>c</div>
+                        <input type="text" name="a3" size=15>
+                        <div class="coefficient" layout horizontal main-center>x³ +</div>
+                        <input type="text" name="a2" size=15>
+                        <div class="coefficient" layout horizontal main-center>x² +</div>
+                        <input type="text" name="a1" size=15>
+                        <div class="coefficient" layout horizontal main-center>x +</div>
+                        <input type="text" name="a0" size=15>
+                        <div class="coefficient" layout horizontal main-center>c</div>
                     </div>
 
                     <div layout horizontal cross-center>

@@ -16,9 +16,7 @@ String.prototype.escapeJSON = function() {
         .replace(/[\r]/g, '\\r')
         .replace(/[\t]/g, '\\t');
 };
-var EI = function(i) {
-    return document.getElementById(i);
-};
+
 
 var logs = {
     url: "loglist.php",
@@ -42,17 +40,17 @@ var logs = {
         return ret;
     },
     fsinfo: function(s, u) {
-        EI("fssize").innerHTML = s.format(0, 3, ',');
-        EI("fsused").innerHTML = u.format(0, 3, ',');
-        EI("fsfree").innerHTML = (s - u).format(0, 3, ',');
+        Q("#fssize").innerHTML = s.format(0, 3, ',');
+        Q("#fsused").innerHTML = u.format(0, 3, ',');
+        Q("#fsfree").innerHTML = (s - u).format(0, 3, ',');
     },
-    slog: function() {
+    stoplog: function() {
         var t = this;
         if (t.logging) {
             // stop
             if (confirm("Stop current logging?")) {
                 //console.log("Stop logging");
-                var n = EI("logname").value.trim();
+                var n = Q("#logname").value.trim();
                 s_ajax({
                     url: t.stopurl + n,
                     m: "GET",
@@ -64,7 +62,11 @@ var logs = {
                     }
                 });
             }
-        } else {
+        }
+    },
+    startlog: function() {
+        var t = this;
+        if (!t.logging) {
             if (t.ll.length >= 10) {
                 alert("Too many logs. Delete some before creating new.");
                 return;
@@ -73,7 +75,7 @@ var logs = {
                 alert("Not enough free space!");
                 return;
             }
-            var name = EI("logname").value.trim();
+            var name = Q("#logname").value.trim();
             if (t.vname(name) === false) {
                 alert("Invalid file name, no special characters allowed.");
                 return;
@@ -82,11 +84,22 @@ var logs = {
                 alert("Duplicated name.");
                 return;
             }
+            var arg = "";
+            var calispindel = Q("#calispindel").checked;
+            if (calispindel) {
+                var tilt = parseFloat(Q("#tiltinw").value.trim());
+                var reading = parseFloat(Q("#hydrometer").value.trim());
+                if (isNaN(tilt) || isNaN(reading)) {
+                    alert("tilt value and hydrometer reading is necessary!");
+                    return;
+                }
+                arg = "&tw=" + tilt + "&hr=" + reading;
+            }
 
             if (confirm("Start new logging?")) {
                 //console.log("Start logging");
                 s_ajax({
-                    url: t.starturl + name,
+                    url: t.starturl + name + arg,
                     m: "GET",
                     success: function(d) {
                         location.reload();
@@ -101,19 +114,15 @@ var logs = {
     recording: function(n, t) {
         this.logging = true;
         var d = new Date(t * 1000);
-        EI("logtitle").innerHTML = "Recording since <b>" + d.toLocaleString() + "</b> ";
-        var l = EI("logname");
-        l.value = n;
-        l.disabled = true;
-        EI("logbutton").innerHTML = "STOP Logging";
+        Q("#start-log-date").innerHTML = d.toLocaleString();
+        Q("#loggingtitle").innerHTML = n;
+        Q("#logstartinput").style.display = "none";
+        Q("#logstopinput").style.display = "block";
     },
     stop: function() {
         this.logging = false;
-        EI("logtitle").innerHTML = "New Log Name:";
-        var l = EI("logname");
-        l.value = "";
-        l.disabled = false;
-        EI("logbutton").innerHTML = "Start Logging";
+        Q("#logstartinput").style.display = "block";
+        Q("#logstopinput").style.display = "none";
     },
     //view:function(n){
     //	alert("View " + this.ll[n].name);
@@ -144,7 +153,7 @@ var logs = {
         window.open(this.dlurl + n);
     },
     list: function(l) {
-        var tb = EI("loglist").querySelector("tbody");
+        var tb = Q("#loglist").querySelector("tbody");
         var tr;
         while (tr = tb.querySelector("tr:nth-of-type(2)"))
             tb.removeChild(tr);
@@ -170,10 +179,14 @@ var logs = {
     },
     init: function() {
         var t = this;
-        EI("logbutton").onclick = function() {
-            t.slog();
+        Q("#startlogbutton").onclick = function() {
+            t.startlog();
         };
-        t.row = EI("loglist").querySelector("tr:nth-of-type(2)");
+        Q("#stoplogbutton").onclick = function() {
+            t.stoplog();
+        };
+
+        t.row = Q("#loglist").querySelector("tr:nth-of-type(2)");
         t.row.parentNode.removeChild(t.row);
         s_ajax({
             url: t.url,
@@ -204,7 +217,7 @@ function checkformat(ta) {
     if (ta.value.length > 256) {
         ta.value = t.value.substring(0, 256);
     }
-    EI("fmthint").innerHTML = "" + ta.value.length + "/256";
+    Q("#fmthint").innerHTML = "" + ta.value.length + "/256";
 }
 
 function method(c) {
@@ -222,7 +235,7 @@ function update() {
         alert("select Method!");
         return;
     }
-    var format = EI("format").value.trim();
+    var format = Q("#format").value.trim();
 
     if (window.selectedMethod == "GET") {
         var myRe = new RegExp("\s", "g");
@@ -233,12 +246,12 @@ function update() {
     }
 
     var r = {};
-    r.enabled = EI("enabled").checked;
-    r.url = EI("url").value.trim();
+    r.enabled = Q("#enabled").checked;
+    r.url = Q("#url").value.trim();
     r.format = encodeURIComponent(format.escapeJSON());
-    r.period = EI("period").value;
-    r.method = (EI("m_post").checked) ? "POST" : "GET";
-    r.type = EI("data-type").value.trim();
+    r.period = Q("#period").value;
+    r.method = (Q("#m_post").checked) ? "POST" : "GET";
+    r.type = Q("#data-type").value.trim();
     s_ajax({
         url: logurl,
         m: "POST",
@@ -253,10 +266,28 @@ function update() {
 
 }
 
-function init() {
+function init(classic) {
+    if (typeof classic == "undefined") classic = false;
+    if (!classic) {
+        getActiveNavItem();
+        Q("#verinfo").innerHTML = "v" + JSVERSION;
+    }
 
-    getActiveNavItem();
-    Q("#verinfo").innerHTML = "v" + JSVERSION;
+    function readingByTemp() {
+        var temp = parseFloat(Q("#watertemp").value);
+        var ctemp = parseFloat(Q("#caltemp").value);
+        var unit = Q("#tempunit").value;
+        if (isNaN(temp) || isNaN(ctemp)) return;
+        if (unit == 'C') {
+            ctemp = C2F(ctemp);
+            temp = C2F(temp);
+        }
+        var reading = BrewMath.tempCorrectionF(1.0, ctemp, temp);
+        Q("#hydrometer").value = reading.toFixed(3);
+    }
+    Q("#watertemp").onchange = readingByTemp;
+    Q("#caltemp").onchange = readingByTemp;
+    Q("#tempunit").onchange = readingByTemp;
 
     s_ajax({
         url: logurl + "?data=1",
@@ -264,14 +295,14 @@ function init() {
         success: function(d) {
                 var r = JSON.parse(d);
                 if (typeof r.enabled == "undefined") return;
-                EI("enabled").checked = r.enabled;
+                Q("#enabled").checked = r.enabled;
                 window.selectedMethod = r.method;
-                EI("m_" + r.method.toLowerCase()).checked = true;
-                EI("url").value = (r.url === undefined) ? "" : r.url;
-                EI("data-type").value = (r.type === undefined) ? "" : r.type;
-                EI("format").value = (r.format === undefined) ? "" : r.format;
-                checkformat(EI("format"));
-                EI("period").value = (r.period === undefined) ? 300 : r.period;
+                Q("#m_" + r.method.toLowerCase()).checked = true;
+                Q("#url").value = (r.url === undefined) ? "" : r.url;
+                Q("#data-type").value = (r.type === undefined) ? "" : r.type;
+                Q("#format").value = (r.format === undefined) ? "" : r.format;
+                checkformat(Q("#format"));
+                Q("#period").value = (r.period === undefined) ? 300 : r.period;
             }
             /*,
                 fail:function(d){
@@ -283,7 +314,7 @@ function init() {
 }
 
 function showformat(lab) {
-    var f = EI("formatlist");
+    var f = Q("#formatlist");
     var rec = lab.getBoundingClientRect();
     f.style.display = "block";
     f.style.left = (rec.left) + "px";
@@ -291,5 +322,5 @@ function showformat(lab) {
 }
 
 function hideformat() {
-    EI("formatlist").style.display = "none";
+    Q("#formatlist").style.display = "none";
 }

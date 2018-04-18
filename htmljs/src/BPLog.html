@@ -1,0 +1,1005 @@
+<html>
+
+<head>
+    <meta http-equiv=content-type content="text/html; charset=utf-8">
+    <meta name=viewport content="width=device-width,initial-scale=1">
+    <title>BPL Log Viewer v3.0 - online</title>
+    <meta name=apple-mobile-web-app-title content=BrewPiLess>
+    <meta name=apple-mobile-web-app-capable content=yes>
+    <script type="text/javascript" src="js/vendor/dygraph-combined.js"></script>
+
+    <script type="text/javascript" src="js/vendor/regression.js"></script>
+    <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/ical.js"></script>
+    <script type="text/javascript" src="js/vendor/chart.js"></script>
+    <script type="text/javascript" src="js/script-webviewer.js"></script>
+
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel=stylesheet>
+    <style>
+        * {
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+        
+        body,
+        html {
+            height: 100%
+        }
+        
+        a {
+            text-decoration: none
+        }
+        
+        html {
+            line-height: 1.5;
+            font-family: Roboto, sans-serif;
+            font-weight: 400;
+            color: rgba(0, 0, 0, .87)
+        }
+        
+        @media only screen and (min-width:0) {
+            html {
+                font-size: 14px
+            }
+        }
+        
+        @media only screen and (min-width:992px) {
+            html {
+                font-size: 14.5px
+            }
+        }
+        
+        @media only screen and (min-width:1200px) {
+            html {
+                font-size: 15px
+            }
+        }
+        
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-weight: 400;
+            line-height: 1.1
+        }
+        
+        h1 a,
+        h2 a,
+        h3 a,
+        h4 a,
+        h5 a,
+        h6 a {
+            font-weight: inherit
+        }
+        
+        h1 {
+            font-size: 4.2rem;
+            line-height: 110%;
+            margin: 2.1rem 0 1.68rem 0
+        }
+        
+        h2 {
+            font-size: 3.56rem;
+            line-height: 110%;
+            margin: 1.78rem 0 1.424rem 0
+        }
+        
+        h3 {
+            font-size: 2.92rem;
+            line-height: 110%;
+            margin: 1.46rem 0 1.168rem 0
+        }
+        
+        h4 {
+            font-size: 2.28rem;
+            line-height: 110%;
+            margin: 1.14rem 0 .912rem 0
+        }
+        
+        h5 {
+            font-size: 1.64rem;
+            line-height: 110%;
+            margin: .82rem 0 .656rem 0
+        }
+        
+        h6 {
+            font-size: 1rem;
+            line-height: 110%;
+            margin: .5rem 0 .4rem 0
+        }
+        
+        em {
+            font-style: italic
+        }
+        
+        strong {
+            font-weight: 500
+        }
+        
+        small {
+            font-size: 75%
+        }
+        
+        .light {
+            font-weight: 300
+        }
+        
+        .thin {
+            font-weight: 200
+        }
+        
+        html [layout],
+        html [layout][horizontal],
+        html [layout][vertical] {
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex
+        }
+        
+        html [layout][horizontal] {
+            -webkit-box-orient: horizontal;
+            -webkit-box-direction: normal;
+            -ms-flex-direction: row;
+            flex-direction: row
+        }
+        
+        html [layout][vertical] {
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -ms-flex-direction: column;
+            flex-direction: column
+        }
+        
+        html [flex] {
+            -webkit-box-flex: 1;
+            -ms-flex: 1;
+            flex: 1;
+            -ms-flex-preferred-size: .000000001px;
+            flex-basis: .000000001px
+        }
+        
+        html [layout][center-center],
+        html [layout][cross-center] {
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center
+        }
+        
+        html [layout][center-center],
+        html [layout][main-center] {
+            -webkit-box-pack: center;
+            -ms-flex-pack: center;
+            justify-content: center
+        }
+        
+        html [layout][main-justified] {
+            -webkit-box-pack: justify;
+            -ms-flex-pack: justify;
+            justify-content: space-between
+        }
+        
+        html [layout][main-distributed] {
+            -ms-flex-pack: distribute;
+            justify-content: space-around
+        }
+        
+        html [hidden] {
+            display: none!important
+        }
+        
+        html [relative] {
+            position: relative
+        }
+        
+        .header {
+            height: 64px;
+            background: #009688;
+            -webkit-box-shadow: 0 0 4px rgba(0, 0, 0, .14), 0 4px 8px rgba(0, 0, 0, .28);
+            box-shadow: 0 0 4px rgba(0, 0, 0, .14), 0 4px 8px rgba(0, 0, 0, .28);
+            padding: 0 16px;
+            z-index: 2
+        }
+        
+        .header_title {
+            font-size: 32px;
+            line-height: 64px;
+            color: #fff;
+            margin: 0;
+            padding: 0
+        }
+        
+        .header_version-display {
+            font-size: 14px;
+            color: #fff
+        }
+        
+        @media (max-width:700px) {
+            [navigation] [menuToggle] {
+                display: block;
+                position: relative;
+                z-index: 1;
+                top: 3px;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none
+            }
+        }
+        
+        [navigation] input {
+            display: none
+        }
+        
+        @media (max-width:700px) {
+            [navigation] input {
+                display: block;
+                width: 40px;
+                height: 32px;
+                position: absolute;
+                top: -7px;
+                left: -5px;
+                cursor: pointer;
+                opacity: 0;
+                z-index: 2;
+                -webkit-touch-callout: none
+            }
+            [navigation] input:checked~ul {
+                -webkit-transform: scale(1, 1);
+                transform: scale(1, 1);
+                opacity: 1
+            }
+            [navigation] input:checked~span {
+                opacity: 1;
+                -webkit-transform: rotate(45deg) translate(-2px, -1px);
+                transform: rotate(45deg) translate(-2px, -1px);
+                background: #232323
+            }
+            [navigation] input:checked~span:nth-last-child(3) {
+                opacity: 0;
+                -webkit-transform: rotate(0) scale(.2, .2);
+                transform: rotate(0) scale(.2, .2)
+            }
+            [navigation] input:checked~span:nth-last-child(2) {
+                opacity: 1;
+                -webkit-transform: rotate(-45deg) translate(0, -1px);
+                transform: rotate(-45deg) translate(0, -1px)
+            }
+        }
+        
+        [navigation] span {
+            display: none
+        }
+        
+        @media (max-width:700px) {
+            [navigation] span {
+                display: block;
+                width: 33px;
+                height: 4px;
+                margin-bottom: 5px;
+                position: relative;
+                background: #fff;
+                border-radius: 3px;
+                z-index: 1;
+                -webkit-transform-origin: 4px 0;
+                transform-origin: 4px 0;
+                -webkit-transition: background .5s cubic-bezier(.77, .2, .05, 1), opacity .55s ease, -webkit-transform .5s cubic-bezier(.77, .2, .05, 1);
+                transition: background .5s cubic-bezier(.77, .2, .05, 1), opacity .55s ease, -webkit-transform .5s cubic-bezier(.77, .2, .05, 1);
+                transition: transform .5s cubic-bezier(.77, .2, .05, 1), background .5s cubic-bezier(.77, .2, .05, 1), opacity .55s ease;
+                transition: transform .5s cubic-bezier(.77, .2, .05, 1), background .5s cubic-bezier(.77, .2, .05, 1), opacity .55s ease, -webkit-transform .5s cubic-bezier(.77, .2, .05, 1)
+            }
+            [navigation] span:first-child {
+                -webkit-transform-origin: 0 0;
+                transform-origin: 0 0
+            }
+            [navigation] span:nth-last-child(2) {
+                -webkit-transform-origin: 0 100%;
+                transform-origin: 0 100%
+            }
+        }
+        
+        [navigation] .options {
+            list-style-type: none;
+            height: 100%
+        }
+        
+        [navigation] .options>li {
+            display: inline-block;
+            height: 100%
+        }
+        
+        [navigation] .options a {
+            color: #fff;
+            text-transform: uppercase;
+            height: 100%;
+            padding: 8px;
+            display: inline-block;
+            line-height: 48px
+        }
+        
+        [navigation] .options a.active {
+            border-bottom: 3px solid #ffc107
+        }
+        
+        [navigation] .options a:hover {
+            border-bottom: 3px solid #fff
+        }
+        
+        @media (max-width:700px) {
+            [navigation] .options {
+                padding-top: 64px;
+                position: fixed;
+                display: block;
+                width: 100vw;
+                height: 100vh;
+                right: 0;
+                top: 0;
+                background: #ededed;
+                list-style-type: none;
+                -webkit-font-smoothing: antialiased;
+                -webkit-transform-origin: 0 0;
+                transform-origin: 0 0;
+                -webkit-transform: translate(100%, 0);
+                transform: translate(100%, 0);
+                -webkit-transition: -webkit-transform .5s cubic-bezier(.77, .2, .05, 1);
+                transition: -webkit-transform .5s cubic-bezier(.77, .2, .05, 1);
+                transition: transform .5s cubic-bezier(.77, .2, .05, 1);
+                transition: transform .5s cubic-bezier(.77, .2, .05, 1), -webkit-transform .5s cubic-bezier(.77, .2, .05, 1)
+            }
+            [navigation] .options>li {
+                display: block;
+                height: auto;
+                text-align: center
+            }
+            [navigation] .options a {
+                color: #222;
+                height: auto;
+                width: 100%;
+                display: block
+            }
+            [navigation] .options a.active {
+                color: #ffc107;
+                border: none
+            }
+            [navigation] .options a:hover {
+                background: #ccc;
+                border: none
+            }
+        }
+        
+        .footer {
+            height: 40px;
+            background: #222;
+            color: rgba(255, 255, 255, .87);
+            padding: 0 16px
+        }
+        
+        .footer a {
+            color: rgba(255, 255, 255, .87);
+            font-weight: 700
+        }
+        
+        [viewport] {
+            height: calc(100% - 104px)
+        }
+        
+        @media (max-width:900px) {
+            [viewport] {
+                -webkit-box-orient: vertical!important;
+                -webkit-box-direction: normal!important;
+                -ms-flex-direction: column!important;
+                flex-direction: column!important;
+                height: auto
+            }
+        }
+        
+        [main] {
+            padding: 16px;
+            overflow-y: auto
+        }
+        
+        @media (max-width:900px) {
+            [main] {
+                overflow: initial
+            }
+        }
+        
+        @media (max-width:599px) {
+            [main]>[layout] .chart-legend {
+                width: 100%
+            }
+        }
+        
+        @media (max-width:599px) {
+            [main]>[layout] {
+                -webkit-box-orient: vertical!important;
+                -webkit-box-direction: normal!important;
+                -ms-flex-direction: column!important;
+                flex-direction: column!important
+            }
+        }
+        
+        .error {
+            position: fixed;
+            left: 20px;
+            bottom: 50px;
+            background-color: #323232;
+            padding: 12px 24px 17px 24px;
+            vertical-align: middle;
+            color: #fff;
+            -webkit-box-shadow: 0 7px 18px rgba(0, 0, 0, .2);
+            box-shadow: 0 7px 18px rgba(0, 0, 0, .2)
+        }
+        
+        .error:empty {
+            display: none
+        }
+        
+        input[type=datetime-local],
+        input[type=number],
+        input[type=text] {
+            width: 100%;
+            margin: 16px 0;
+            display: block;
+            border: none;
+            padding: 18px 0 10px;
+            border-bottom: solid 1px #009688;
+            -webkit-transition: all .3s cubic-bezier(.64, .09, .08, 1);
+            transition: all .3s cubic-bezier(.64, .09, .08, 1);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(96%, rgba(255, 255, 255, 0)), color-stop(4%, #009688));
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 96%, #009688 4%);
+            background-position: -100% 0;
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            color: #00302c
+        }
+        
+        input[type=datetime-local]:focus,
+        input[type=number]:focus,
+        input[type=text]:focus {
+            -webkit-box-shadow: none;
+            box-shadow: none;
+            outline: 0;
+            background-position: 0 0
+        }
+        
+        input[type=datetime-local]:focus::-webkit-input-placeholder,
+        input[type=number]:focus::-webkit-input-placeholder,
+        input[type=text]:focus::-webkit-input-placeholder {
+            color: #009688;
+            font-size: 11px;
+            -webkit-transform: translateY(-20px);
+            transform: translateY(-20px);
+            visibility: visible!important;
+            -webkit-transition: all .3s ease-in-out;
+            transition: all .3s ease-in-out
+        }
+        
+        input[type=datetime-local]:focus:-ms-input-placeholder,
+        input[type=number]:focus:-ms-input-placeholder,
+        input[type=text]:focus:-ms-input-placeholder {
+            color: #009688;
+            font-size: 11px;
+            transform: translateY(-20px);
+            visibility: visible!important;
+            -webkit-transition: all .3s ease-in-out;
+            transition: all .3s ease-in-out
+        }
+        
+        input[type=datetime-local]:focus::placeholder,
+        input[type=number]:focus::placeholder,
+        input[type=text]:focus::placeholder {
+            color: #009688;
+            font-size: 11px;
+            -webkit-transform: translateY(-20px);
+            transform: translateY(-20px);
+            visibility: visible!important;
+            -webkit-transition: all .3s ease-in-out;
+            transition: all .3s ease-in-out
+        }
+        
+        input[type=datetime-local]:invalid,
+        input[type=number]:invalid,
+        input[type=text]:invalid {
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(96%, rgba(255, 255, 255, 0)), color-stop(4%, red));
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 96%, red 4%)
+        }
+        
+        .hide {
+            display: none!important
+        }
+        
+        .switch-input {
+            display: none
+        }
+        
+        .switch-label {
+            position: relative;
+            display: inline-block;
+            min-width: 148px;
+            cursor: pointer;
+            font-weight: 500;
+            text-align: left;
+            margin: 0;
+            padding: 4px 0 4px 44px
+        }
+        
+        .switch-label:after,
+        .switch-label:before {
+            content: "";
+            position: absolute;
+            margin: 0;
+            outline: 0;
+            top: 50%;
+            -webkit-transform: translate(0, -50%);
+            transform: translate(0, -50%);
+            -webkit-transition: all .3s ease;
+            transition: all .3s ease
+        }
+        
+        .switch-label:before {
+            left: 1px;
+            width: 34px;
+            height: 14px;
+            background-color: #ddd;
+            border-radius: 8px
+        }
+        
+        .switch-label:after {
+            left: 0;
+            width: 20px;
+            height: 20px;
+            background-color: #fafafa;
+            border-radius: 50%;
+            -webkit-box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .14), 0 2px 2px 0 rgba(0, 0, 0, .098), 0 1px 5px 0 rgba(0, 0, 0, .084);
+            box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .14), 0 2px 2px 0 rgba(0, 0, 0, .098), 0 1px 5px 0 rgba(0, 0, 0, .084)
+        }
+        
+        .switch-input:checked+.switch-label:after {
+            background-color: #4caf50;
+            -webkit-transform: translate(80%, -50%);
+            transform: translate(80%, -50%)
+        }
+        
+        .switch-input:checked+label[for=beer-temp].switch-label:after {
+            background-color: #29aa29
+        }
+        
+        .switch-input:checked+label[for=beer-set].switch-label:after {
+            background-color: #f06464
+        }
+        
+        .switch-input:checked+label[for=fridge-temp].switch-label:after {
+            background-color: #59b8ff
+        }
+        
+        .switch-input:checked+label[for=fridge-set].switch-label:after {
+            background-color: #ffa14c
+        }
+        
+        .switch-input:checked+label[for=room-temp].switch-label:after {
+            background-color: #aaa
+        }
+        
+        .switch-input:checked+label[for=gravity].switch-label:after {
+            background-color: #909
+        }
+        
+        .switch-input:checked+label[for=aux-temp].switch-label:after {
+            background-color: #f5e127
+        }
+        
+        .switch-input:checked+label[for=filtersg].switch-label:after {
+            background-color: #000abb
+        }
+        
+        .modal {
+            display: none;
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            -webkit-box-pack: center;
+            -ms-flex-pack: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 1000;
+            -webkit-transition: all .5s cubic-bezier(.23, 1, .32, 1);
+            transition: all .5s cubic-bezier(.23, 1, .32, 1);
+            -webkit-transition-delay: 0s;
+            transition-delay: 0s;
+            background: rgba(0, 0, 0, .3)
+        }
+        
+        .modal-content {
+            position: relative;
+            padding: 2.4rem;
+            background: #fff;
+            background-clip: padding-box;
+            -webkit-box-shadow: 0 12px 15px 0 rgba(0, 0, 0, .25);
+            box-shadow: 0 12px 15px 0 rgba(0, 0, 0, .25);
+            -webkit-transition: all .25s cubic-bezier(.23, 1, .32, 1);
+            transition: all .25s cubic-bezier(.23, 1, .32, 1);
+            max-width: 600px;
+            padding: 2rem
+        }
+        
+        .modal-content h2.message {
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase
+        }
+        
+        .btn {
+            display: inline-block;
+            position: relative;
+            cursor: pointer;
+            height: 35px;
+            line-height: 35px;
+            padding: 0 1.5rem;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: .8px;
+            text-align: center;
+            text-transform: uppercase;
+            vertical-align: middle;
+            white-space: nowrap;
+            outline: 0;
+            border: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-transition: all .3s ease-out;
+            transition: all .3s ease-out;
+            background-color: transparent;
+            margin-right: 8px
+        }
+        
+        .btn[disabled] {
+            color: #bdbdbd
+        }
+        
+        .btn[disabled]:hover {
+            background-color: transparent;
+            cursor: not-allowed
+        }
+        
+        .btn--raised {
+            background-color: #009688;
+            color: #fff;
+            -webkit-box-shadow: 0 2px 2px 0 rgba(0, 0, 0, .14), 0 3px 1px -2px rgba(0, 0, 0, .2), 0 1px 5px 0 rgba(0, 0, 0, .12);
+            box-shadow: 0 2px 2px 0 rgba(0, 0, 0, .14), 0 3px 1px -2px rgba(0, 0, 0, .2), 0 1px 5px 0 rgba(0, 0, 0, .12)
+        }
+        
+        .btn--raised:hover {
+            background-color: #00635a
+        }
+        
+        .btn--primary {
+            color: #009688
+        }
+        
+        .btn:hover {
+            background-color: rgba(153, 153, 153, .2);
+            cursor: pointer
+        }
+        
+        [side] {
+            -webkit-box-shadow: 0 2px 2px 0 rgba(0, 0, 0, .14), 0 1px 5px 0 rgba(0, 0, 0, .12), 0 3px 1px -2px rgba(0, 0, 0, .2);
+            box-shadow: 0 2px 2px 0 rgba(0, 0, 0, .14), 0 1px 5px 0 rgba(0, 0, 0, .12), 0 3px 1px -2px rgba(0, 0, 0, .2);
+            width: 300px;
+            padding: 16px;
+            overflow-y: auto;
+            background: #eee
+        }
+        
+        @media (max-width:900px) {
+            [side] {
+                width: 100%;
+                -webkit-box-ordinal-group: 6;
+                -ms-flex-order: 5;
+                order: 5
+            }
+        }
+        
+        .data-pane {
+            list-style-type: none;
+            display: block
+        }
+        
+        .data-pane .heading {
+            border-bottom: 1px solid rgba(0, 0, 0, .64);
+            padding-top: 8px;
+            padding-bottom: 4px;
+            margin-bottom: 4px
+        }
+        
+        .data-pane .heading strong {
+            text-transform: uppercase;
+            display: inline-block
+        }
+        
+        .data-pane .heading #lcdControlState:empty+.for {
+            display: none
+        }
+        
+        .chart {
+            width: calc(100% - 240px);
+            height: 390px
+        }
+        
+        @media (max-width:599px) {
+            .chart {
+                width: 100%;
+                margin-bottom: 16px
+            }
+        }
+        
+        .chart-legend {
+            list-style-type: none;
+            width: 240px
+        }
+        
+        .chart-legend-row {
+            padding: 8px 16px 0 16px
+        }
+        
+        .chart-legend-row>div {
+            display: inline-block
+        }
+        
+        .chart-legend-row .toggle {
+            width: 12px;
+            height: 12px;
+            margin-right: 8px;
+            border-radius: 100%;
+            border: 1px solid #000
+        }
+        
+        .chart-legend-row .toggle:hover {
+            cursor: pointer
+        }
+        
+        .chart-legend-row.time {
+            background-color: #def;
+            padding-bottom: 8px
+        }
+        
+        .legend-label {
+            width: 100px;
+            font-weight: 700
+        }
+        
+        .legend-label:hover {
+            cursor: pointer
+        }
+        
+        #rssi {
+            position: relative;
+            height: 16px;
+            width: 24px;
+            display: inline-block
+        }
+        
+        #wifisignal {
+            font-size: 12pt;
+            color: #000;
+            font-family: Courier New, Courier, monospace;
+            position: absolute;
+            top: 6px;
+            left: 4px;
+            display: none
+        }
+        
+        .rssi-bar {
+            position: absolute;
+            bottom: 0;
+            float: left;
+            width: 4px;
+            border-radius: 1px;
+            background-color: #ddd
+        }
+        
+        .rssi-bar1 {
+            height: 4px;
+            left: 0
+        }
+        
+        .rssi-bar2 {
+            height: 8px;
+            left: 6px
+        }
+        
+        .rssi-bar3 {
+            height: 12px;
+            left: 12px
+        }
+        
+        .rssi-bar4 {
+            height: 16px;
+            left: 18px
+        }
+        
+        #fgstate {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin: 6px 0 0 0;
+            border: 0
+        }
+        
+        #viewlogname {
+            font-size: 14px;
+            color: black;
+        }
+        
+        #formula-btn {
+            float: right;
+            display: none;
+            font-style: italic;
+        }
+        
+        #polynomialpane .modal-content {
+            position: relative;
+            max-width: 800px;
+        }
+        
+        #pointlist {
+            border-collapse: collapse;
+        }
+        
+        #pointlist th {
+            border: solid 1px;
+        }
+        
+        #pointlist td {
+            border: solid 1px;
+            border-collapse: collapse;
+        }
+        
+        #xclose {
+            float: right;
+            font-size: 14px;
+        }
+        
+        header a {
+            color: #fff;
+            font-style: italic;
+            height: 100%;
+            padding: 8px;
+            display: inline-block;
+            line-height: 48px;
+            float: right;
+        }
+        /* dropdown menu */
+        
+        .dropdown {
+            position: absolute;
+            left: 2px;
+            top: 2px;
+            display: inline-block;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            overflow: auto;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        }
+        
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            border: 1px solid;
+        }
+        
+        .dropdown a:hover {
+            background-color: #f1f1f1
+        }
+        
+        .show {
+            display: block;
+        }
+    </style>
+</head>
+
+<body onload=loaded()>
+    <div viewport layout horizontal>
+        <div main flex>
+            <span id="viewlogname"></span>
+            <div layout horizontal>
+                <div id=div_g class=chart></div>
+                <ul flex class=chart-legend>
+                    <li layout horizontal main-justified class="chart-legend-row time"><span class=beer-chart-legend-time>Date/Time</span> <span class=beer-chart-state>state</span></li>
+                    <li layout horizontal main-justified class="chart-legend-row"><label>Since</label><span id="log-start"></span></li>
+                    <li layout horizontal main-justified class="chart-legend-row elapse"><label>Elapsed</label><span class="beer-chart-legend-elapse legend-value">--</span></li>
+                    <li layout horizontal main-justified class="chart-legend-row beer-temp"><input type=checkbox id=beer-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(BeerTempLine)' for=beer-temp class=switch-label>Beer Temp:</label>
+                        <div class=legend-value>--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row beer-set"><input type=checkbox id=beer-set name=set-name class=switch-input checked><label onclick='BChart.toggle(BeerSetLine)' for=beer-set class=switch-label>Beer Set:</label>
+                        <div class=legend-value>--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row fridge-temp"><input type=checkbox id=fridge-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(FridgeTempLine)' for=fridge-temp class=switch-label>Fridge Temp:</label>
+                        <div class=legend-value>--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row fridge-set"><input type=checkbox id=fridge-set name=set-name class=switch-input checked><label onclick='BChart.toggle(FridgeSetLine)' for=fridge-set class=switch-label>Fridge Set:</label>
+                        <div class=legend-value>--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row room-temp"><input type=checkbox id=room-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(RoomTempLine)' for=room-temp class=switch-label>Room Temp:</label>
+                        <div class=legend-value>--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row aux-temp"><input type=checkbox id=aux-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(AuxTempLine)' for=aux-temp class=switch-label>Aux Temp:</label>
+                        <div class=legend-value>--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row gravity"><input type=checkbox id=gravity name=set-name class=switch-input checked><label onclick='BChart.toggle(GravityLine)' for=gravity class=switch-label>Gravity:</label>
+                        <div class=legend-value>--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row filtersg"><input type=checkbox id=filtersg name=set-name class=switch-input checked><label onclick='BChart.toggle(FilteredSgLine)' for=filtersg class=switch-label>Filter SG:</label>
+                        <div class=legend-value>--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row" id="formula-btn" onclick="openpolynomialpane()">f</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div id="polynomialpane" class="modal">
+        <div class="modal-content">
+            <div id="xclose" onclick="closepolynomialpane()">X</div>
+            <table>
+                <tr>
+                    <td>
+                        <table id="pointlist">
+                            <thead>
+                                <tr>
+                                    <th>Tilt</th>
+                                    <th>SG</th>
+                                    <th>Cal'ed</th>
+                                    <th>Error</th>
+                                    <th>Ignored</th>
+                                </tr>
+                            </thead>
+                            <tobdy>
+                                <tr class="pl_calpoint">
+                                    <td class="pl_tilt"></td>
+                                    <td class="pl_sg"></td>
+                                    <td class="pl_value"></td>
+                                    <td class="pl_error"></td>
+                                    <td><input class="pl_ignored_cb" type="checkbox"></td>
+                                </tr>
+                            </tobdy>
+                        </table>
+                        <div style="float:right;"><button onclick="applyIgnoreMask()">Apply</button></div>
+                    </td>
+                    <td>
+                        <div id="graph"></div>
+                        <span id="polynormial"></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="dropdown">
+        <div id="myDropdown" class="dropdown-content">
+            <a href="" id="open-selection">Open Selection</a>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

@@ -1,0 +1,907 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrewPiLess reporting for duty!</title>
+    <meta name="apple-mobile-web-app-title" content="BrewPiLess">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/dygraph/1.1.1/dygraph-combined.js"></script>
+    <script type="text/javascript" src="js/vendor/regression.js"></script>
+    <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/vendor/bwf.js"></script>
+    <script type="text/javascript" src="js/vendor/chart.js"></script>
+    <script type="text/javascript" src="js/ical.js"></script>
+    <script type="text/javascript" src="js/capper.js"></script>
+    <script type="text/javascript" src="js/script-control.js"></script>
+    <script type="text/javascript" src="js/script.js"></script>
+    <style>
+        /* LCD display styling */
+        
+        .lcddisplay {
+            width: 280px;
+            height: 90px;
+            float: left;
+            margin: 5px;
+            background: #000000;
+            /* Old browsers */
+            background: -moz-linear-gradient(top, #000000 2%, #2b2b2b 11%, #212121 54%, #212121 92%, #000000 100%);
+            /* FF3.6+ */
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(2%, #000000), color-stop(11%, #2b2b2b), color-stop(54%, #212121), color-stop(92%, #212121), color-stop(100%, #000000));
+            /* Chrome,Safari4+ */
+            background: -webkit-linear-gradient(top, #000000 2%, #2b2b2b 11%, #212121 54%, #212121 92%, #000000 100%);
+            /* Chrome10+,Safari5.1+ */
+            background: -o-linear-gradient(top, #000000 2%, #2b2b2b 11%, #212121 54%, #212121 92%, #000000 100%);
+            /* Opera11.10+ */
+            background: -ms-linear-gradient(top, #000000 2%, #2b2b2b 11%, #212121 54%, #212121 92%, #000000 100%);
+            /* IE10+ */
+            filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#000000', endColorstr='#000000', GradientType=0);
+            /* IE6-9 */
+            background: linear-gradient(top, #000000 2%, #2b2b2b 11%, #212121 54%, #212121 92%, #000000 100%);
+            /* W3C */
+            -webkit-box-shadow: inset 1px 1px 5px #333333;
+            -moz-box-shadow: inset 1px 1px 5px #333333;
+            box-shadow: inset 1px 1px 5px #333333;
+            border: 2px solid #333;
+            -webkit-border-radius: 2px;
+            -moz-border-radius: 2px;
+            border-radius: 2px;
+        }
+        
+        .lcddisplay .lcd-text {
+            float: left;
+            margin: 5px 16px;
+        }
+        
+        .lcd-line {
+            float: left;
+            clear: left;
+            font-size: 16px;
+            font-weight: normal;
+            font-style: normal;
+            font-family: "Courier New", Courier, monospace;
+            color: #FFFF00;
+            white-space: pre;
+        }
+        
+        .chart-legend-row .toggle {
+            width: 8px;
+            height: 8px;
+            border-radius: 5px;
+            float: left;
+            margin: 2px 0 0 0;
+            cursor: pointer;
+            border: 1px solid;
+        }
+        
+        .chart-legend {
+            font-family: Lucida Grande, Lucida Sans, Arial, sans-serif;
+            font-size: 11px;
+            margin: 10px 0 0 0;
+            border: solid 1px #777;
+            border-radius: 5px;
+            float: right;
+            width: 155px;
+        }
+        
+        .chart-legend-row {
+            padding: 8px 5px 8px 5px;
+        }
+        
+        .legend-label {
+            float: left;
+            padding: 0 5px 0 5px;
+            cursor: pointer;
+        }
+        
+        .legend-value {
+            float: right;
+        }
+        
+        .chart-legend-row.time {
+            background-color: #ddeeff;
+        }
+        
+        #div_lb {
+            display: none;
+        }
+        
+        #div_g {
+            float: left;
+            width: 800px;
+            height: 390px;
+        }
+        
+        #chart-container {
+            width: 965px;
+            height: 410px;
+            padding: 5px 5px 5px 5px;
+        }
+        
+        .hide {
+            display: none;
+        }
+        
+        .frame {
+            border-radius: 5px;
+            margin: 5px 5px 5px 5px;
+            border: solid 1px #304d75;
+            width: 975px;
+        }
+        
+        #top-frame {
+            height: 520px;
+        }
+        
+        #bottom-frame {
+            height: 380px;
+        }
+        
+        #topbar {
+            width: 965px;
+            height: 108px;
+            background-color: rgb(92, 156, 204);
+            padding: 5px 5px 5px 5px;
+        }
+        
+        #menu {
+            float: right;
+        }
+        
+        #banner {
+            font-size: 18pt;
+            float: left;
+            color: white;
+            /*            font-family: "Comic Sans MS", cursive, sans-serif;*/
+            margin-top: 20px;
+            margin-left: 20px;
+        }
+        
+        #recording {
+            color: lightblue;
+            font-size: 18px;
+            font-family: serif;
+        }
+        
+        #top-frame button {
+            float: right;
+            width: 200px;
+            margin-top: 3px;
+        }
+        /* control*/
+        
+        .navbar {
+            margin: 0;
+            padding: .2em .2em 0;
+            border: 1px solid #4297d7;
+            background: #5c9ccc;
+            color: #ffffff;
+            height: 4em;
+            display: block;
+            position: relative;
+            width: 968px;
+        }
+        
+        #set-mode-text {
+            margin-left: 2px;
+            float: left;
+            margin: .2em;
+        }
+        
+        .navitem {
+            background: #dfeffc;
+            font-weight: bold;
+            color: #2e6e9e;
+            margin: .2em .2em 0 0;
+            padding: .5em;
+            border-top-right-radius: 5px;
+            border-top-left-radius: 5px;
+        }
+        
+        .nav-selected {
+            background: #ffffff;
+            font-weight: bold;
+            color: #e17009;
+            margin: .2em .2em 0 0;
+            padding: .5em .5em .75em .5em;
+        }
+        
+        .navitems {
+            display: block;
+            margin-top: 2em;
+        }
+        
+        #apply {
+            background: #dfeffc;
+            font-weight: bold;
+            color: #2e6e9e;
+            margin: .2em .1em 0 0;
+            padding: .5em;
+        }
+        
+        .tab-containter {
+            margin: 0.5em;
+            width: 965px;
+        }
+        
+        .profileTable td,
+        th {
+            padding: 3px;
+            text-align: center;
+        }
+        
+        .profileTable tbody TR.odd {
+            background: #f7f7f7;
+        }
+        
+        .profileTable tbody TR.even {
+            width: 100%;
+        }
+        
+        .profileTable TH {
+            border: 1px solid #4297d7;
+            background: #5c9ccc;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        
+        table.profileTable {
+            width: 100%;
+        }
+        
+        #bottom-frame button {
+            color: #1d5987;
+            background: #dfeffc;
+            font-weight: bold;
+            border-radius: 6px;
+            margin: 4px;
+        }
+        
+        #addbutton {
+            float: right;
+            width: 120px;
+        }
+        
+        #header {}
+        
+        #clearbtn {
+            width: 18%;
+        }
+        
+        #savebtn {
+            width: 25%;
+            float: right;
+        }
+        
+        #delbtn {
+            width: 18%;
+        }
+        
+        .modal {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            /* Stay in place */
+            z-index: 100;
+            /* Sit on top */
+            padding-top: 100px;
+            /* Location of the box */
+            left: 0;
+            top: 0;
+            width: 100%;
+            /* Full width */
+            height: 100%;
+            /* Full height */
+            overflow: auto;
+            /* Enable scroll if needed */
+            background-color: rgb(0, 0, 0);
+            /* Fallback color */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Black w/ opacity */
+        }
+        /* Modal Content */
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 10px;
+            border: 1px solid #888;
+            width: 340px;
+            height: 220px;
+            border-radius: 8px;
+        }
+        
+        #dlg_addgravity button {
+            float: right;
+            width: 56px;
+            margin-top: 2px;
+        }
+        
+        .dialog-buttons {
+            float: center;
+        }
+        
+        #modekeeper-apply {
+            margin-top: 0px;
+        }
+        
+        #profile-edit {
+            float: left;
+            margin: 6px;
+            width: 510px;
+            position: relative;
+        }
+        
+        #tc_chart {
+            width: 430px;
+            height: 280px;
+            float: right;
+            margin: 6px;
+        }
+        
+        .info-pane table {
+            width: 92px;
+            float: right;
+            border: 1px solid white;
+            border-radius: 5px;
+            margin-right: 4px;
+            color: cyan;
+            font-size: 12px;
+        }
+        
+        .hidden-pane {
+            display: none;
+        }
+        
+        #profile-list-pane .modal-content {
+            height: 360px;
+            width: 240px;
+            overflow: scroll;
+        }
+        
+        #profile-list-pane {
+            border-style: outset;
+            border: solid 3px;
+            overflow: auto;
+        }
+        
+        #profile-list-pane li {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        
+        #profile-list-pane .rmbutton {
+            color: red;
+        }
+        
+        #profile-list-pane a,
+        #profile-list-pane u {
+            text-decoration: none;
+        }
+        
+        .small-led {
+            width: 10px;
+            height: 10px;
+            border-radius: 6px;
+            border: 0px;
+        }
+        
+        #fgstate {
+            margin: 4px 0 0 0;
+            float: right;
+        }
+        
+        #rssi {
+            float: right;
+            position: relative;
+            margin: 0px 16px 0px 0px;
+            height: 16px;
+            width: 12px;
+            display: inline-block;
+        }
+        
+        #wifisignal {
+            font-size: 12pt;
+            color: black;
+            font-family: Courier New, Courier, monospace;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            display: none;
+        }
+        
+        .rssi-bar {
+            position: absolute;
+            bottom: 0;
+            float: left;
+            width: 4px;
+            border-radius: 1px;
+            background-color: #FFFFFF;
+        }
+        
+        .rssi-bar1 {
+            height: 4px;
+            left: 0px;
+        }
+        
+        .rssi-bar2 {
+            height: 8px;
+            left: 6px;
+        }
+        
+        .rssi-bar3 {
+            height: 12px;
+            left: 12px;
+        }
+        
+        .rssi-bar4 {
+            height: 16px;
+            left: 18px;
+        }
+        
+        #verinfo {
+            display: inline-block;
+            font-size: 8pt;
+            color: white;
+        }
+        /* iSpindel calibration */
+        
+        #pointlist th,
+        #pointlist td,
+        #pointlist tr,
+        #pointlist {
+            border: 1px solid;
+            border-collapse: collapse;
+        }
+        
+        #pointlist th {
+            width: 52px;
+            background-color: #ffff27;
+        }
+        
+        #pointlist td {
+            text-align: right;
+        }
+        
+        #graph {
+            width: 500px;
+            height: 500px;
+        }
+        
+        #formula-btn {
+            font-style: italic;
+            float: right;
+            display: none;
+        }
+        
+        #polynomialpane .modal-content {
+            width: 800px;
+            height: 600px;
+            position: relative;
+        }
+        
+        #xclose {
+            position: absolute;
+            color: red;
+            background-color: lightgray;
+            width: 20px;
+            height: 20px;
+            right: 0;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        #gravity-sg,
+        #gravity-og {
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body onload=init_classic()>
+    <div class="frame" id="top-frame">
+        <div id="topbar">
+            <div id="lcd" class="lcddisplay"><span class="lcd-text">
+             <span class="lcd-line" id="lcd-line-0">Live LCD waiting</span>
+                <span class="lcd-line" id="lcd-line-1">for update from</span>
+                <span class="lcd-line" id="lcd-line-2">script...</span>
+                <span class="lcd-line" id="lcd-line-3"></span></p>
+                <p>
+            </div>
+            <div id="banner">
+                <div id="hostname">BrewPiLess</div>
+                <div id="recording"></div>
+            </div>
+            <div id="menu">
+                <div id="versionsignal">
+                    <div id="verinfo">v2</div>
+                    <div id="rssi">
+                        <div class="rssi-bar rssi-bar1"></div>
+                        <div class="rssi-bar rssi-bar2"></div>
+                        <div class="rssi-bar rssi-bar3"></div>
+                        <div class="rssi-bar rssi-bar4"></div>
+                        <div id="wifisignal">?</div>
+                    </div>
+                </div>
+                <button onclick="window.open('/log')">Data Logging</button>
+                <br>
+                <button onclick="window.open('/setup.htm')">Device Setup</button>
+                <br>
+                <button onclick="window.open('/config')">System Config</button>
+                <br>
+                <button onclick="window.open('/gdc')">Gravity Sensor</button>
+            </div>
+            <div id="gravity-pane" class="info-pane">
+                <table>
+                    <tr>
+                        <th>OG:</th>
+                        <td> <span id="gravity-og" onclick="inputOG()">--</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>SG:</th>
+                        <td> <span id="gravity-sg" onclick="inputSG()">--</span>
+                            <div id="fgstate" class="small-led"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>ATT:</th>
+                        <td> <span id="gravity-att"> --</span>%
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>ABV:</th>
+                        <td> <span id="gravity-abv"> --</span>%
+                        </td>
+                    </tr>
+
+                </table>
+            </div>
+
+            <div id="iSpindel-pane" class="info-pane hidden-pane">
+                <table>
+                    <tr>
+                        <th colspan="2"><span id="iSpindel-name"></span></th>
+                    </tr>
+                    <tr>
+                        <th>Battery</th>
+                        <td> <span id="iSpindel-battery">--</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Tilt</th>
+                        <td><span id="iSpindel-tilt"></span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" align="center">@<span id="iSpindel-last">--</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div id="ptc-pane" class="info-pane hidden-pane">
+                <table>
+                    <tr>
+                        <th>PTC</th>
+                        <td>
+                            <div id="ptc-state" class="small-led"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>TEMP</th>
+                        <td>
+                            <div id="ptc-temp">11 &deg;C</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan=2 align="center">
+                            <span id="ptc-set"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" align="center"><span id="ptc-time">100H59M32S</span></td>
+                    </tr>
+                </table>
+            </div>
+
+        </div>
+
+        <div id="chart-container">
+            <div id="div_g"></div>
+
+            <div id="chart-legend" class="chart-legend">
+                <div class="chart-legend-row time">
+                    <div class="beer-chart-legend-time">Date/Time</div>
+                </div>
+                <div class="chart-legend-row beer-temp">
+                    <div class="toggle beer-temp" onclick="BChart.toggle(BeerTempLine)"></div>
+                    <div class="legend-label" onclick="BChart.toggle(BeerTempLine)">Beer Temp</div>
+                    <div class="legend-value">--</div>
+                    <br>
+                </div>
+                <div class="chart-legend-row beer-set">
+                    <div class="toggle beer-set" onclick="BChart.toggle(BeerSetLine)"></div>
+                    <div class="legend-label" onclick="BChart.toggle(BeerSetLine)">Beer Set</div>
+                    <div class="legend-value">--</div>
+                    <br>
+                </div>
+                <div class="chart-legend-row fridge-temp">
+                    <div class="toggle fridge-temp" onclick="BChart.toggle(FridgeTempLine)"></div>
+                    <div class="legend-label" onclick="BChart.toggle(FridgeTempLine)">Fridge Temp</div>
+                    <div class="legend-value">--</div>
+                    <br>
+                </div>
+                <div class="chart-legend-row fridge-set">
+                    <div class="toggle fridge-set" onclick="BChart.toggle(FridgeSetLine)"></div>
+                    <div class="legend-label" onclick="BChart.toggle(FridgeSetLine)">Fridge Set</div>
+                    <div class="legend-value">--</div>
+                    <br>
+                </div>
+
+                <div class="chart-legend-row room-temp">
+                    <div class="toggle room-temp" onclick="BChart.toggle(RoomTempLine)"></div>
+                    <div class="legend-label" onclick="BChart.toggle(RoomTempLine)">Room Temp</div>
+                    <div class="legend-value">--</div>
+                    <br>
+                </div>
+                <div class="chart-legend-row aux-temp">
+                    <div class="toggle aux-temp" onclick="BChart.toggle(AuxTempLine)"></div>
+                    <div class="legend-label" onclick="BChart.toggle(AuxTempLine)">Aux Temp</div>
+                    <div class="legend-value">--</div>
+                    <br>
+                </div>
+                <div class="chart-legend-row gravity">
+                    <div class="toggle gravity" onclick="BChart.toggle(GravityLine)"></div>
+                    <div class="legend-label" onclick="BChart.toggle(GravityLine)">Gravity</div>
+                    <div class="legend-value">--</div>
+                    <br>
+                </div>
+                <div class="chart-legend-row filtersg">
+                    <div class="toggle filtersg" onclick="BChart.toggle(FilteredSgLine)"></div>
+                    <div class="legend-label" onclick="BChart.toggle(FilteredSgLine)">FilteredSG</div>
+                    <div class="legend-value">--</div>
+                    <br>
+                </div>
+
+                <div class="chart-legend-row state">
+                    <div class="beer-chart-state">state</div>
+                    <br>
+                </div>
+                <div class="chart-legend-row" id="formula-btn" onclick="openpolynomialpane()">
+                    <div class="legend-label">f</div>
+                    <br>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="frame" id="bottom-frame">
+        <div class="navbar" id="header">
+            <div id="set-mode-text">Set temperature mode:</div>
+            <div class="navitems">
+                <span class="navitem" id="profile-m">Beer profile</span>
+                <span class="navitem" id="beer-m">Beer Const.</span>
+                <span class="navitem" id="fridge-m">Fridge Const.</span>
+                <span class="navitem" id="off-m">Off</span>
+                <button id="modekeeper-apply" onclick="modekeeper.apply()">Apply</button>
+            </div>
+        </div>
+
+        <div class="tab-containter">
+            <div id="profile-s" class="detail">
+                <div id="profile-edit">
+                    <div>
+                        <div><span>Start Date:</span><input type="text" size="16" id="startdate" onchange="profileEditor.startDayChange();">
+                            <button id="setnow" onclick=profileEditor.startnow()>Now</button>
+                            <button id="addbutton" onclick="profileEditor.addRow();">Add</button></div>
+                    </div>
+                    <table class="profileTable" id="profile_t">
+                        <thead>
+                            <tr>
+                                <th>T(&deg;<span class="t_unit">C</span>)</th>
+                                <th>Condition</th>
+                                <th>Days</th>
+                                <th>SG</th>
+                                <th>Stable</th>
+                                <th>Start Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="stage-temp">19</td>
+                                <td>
+                                    <div class="for-time">Ramp</div>
+                                    <div class="condition-con">
+                                        <select class="condition">
+   <option value="t">Time</option>
+   <option value="g">SG</option>
+   <option value="s">Stable</option>
+   <option value="a">Time & SG</option>
+   <option value="o">Time OR SG</option>
+   <option value="u">Time OR Stable</option>
+   <option value="v">Time & Stable</option>
+    <option value="b">SG OR Stable</option>
+    <option value="x">SG & Stable</option>
+    <option value="w">ALL</option>
+    <option value="e">Either</option>
+   </select>
+                                    </div>
+                                </td>
+                                <td class="stage-time">7</td>
+                                <td class="stage-sg">1.01</td>
+                                <td class="stage-stabletime"></td>
+                                <td class="diaplay-time"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div><button id="delbtn" onclick="profileEditor.delRow();">Delete</button>
+                        <button id="clearbtn" onclick="profileEditor.clear()">Clear</button>
+                        <button id="loadbtn" onclick="PL.toggle()">...</button>
+                        <button id="saveasbtn" onclick="PL.saveas()">Save As</button>
+                        <button id="savebtn" onclick="saveprofile()">Save</button></div>
+                </div>
+                <div id="tc_chart"></div>
+            </div>
+            <div id="beer-s" class="detail">
+                Set Beer temp:
+                <input type="text" size="6" id="beer-t"></input>&deg;<span class="t_unit">C</span>
+            </div>
+
+            <div id="fridge-s" class="detail">
+                Set Fridge temp:
+                <input type="text" size="6" id="fridge-t"></input>&deg;<span class="t_unit">C</span>
+            </div>
+            <div id="off-s" class="detail">Turning temperature control Off.</div>
+        </div>
+    </div>
+
+    <!-- end of bottom frame -->
+    <!-- capper -->
+    <div class="frame" id="capper-frame">
+        <div class="navbar" id="cap-header" class="captimeset">
+            <div id="set-mode-text" class="capping-info-pane">Capping State:
+                <span id="capstate-open" class="capstate">OPEN</span>
+                <span id="capstate-close" class="capstate">Capped</span> @
+                <span id="cs-sgcon" class="capstate">gravity &lt;= <span id="capgravityset"></span></span>
+                <span id="cs-timecon" class="capstate"><span id="captimeset"></span></span>
+                <span id="cs-mancap" class="capstate">Manual capped</span>
+                <span id="cs-manopen" class="capstate">Manual open</span>
+            </div>
+            <div class="navitems">
+                <span class="navitem" id="tab-gravity-m">Gravity</span>
+                <span class="navitem" id="tab-time-m">Time</span>
+                <span class="navitem" id="tab-manual-m">Manual</span>
+                <button id="cap-apply">Apply</button>
+            </div>
+        </div>
+
+        <div class="tab-containter">
+            <div id="tab-gravity-s" class="detail">
+                Cap when gravity is less than <input type=text size="6" id="capgravityinput">
+            </div>
+            <div id="tab-time-s" class="detail">
+                Cap after <input type=text size="20" id="captimeinput">
+            </div>
+            <div id="tab-manual-s" class="detail">
+                CAPPED <input type="checkbox" checked id="capswitch">
+
+            </div>
+        </div>
+    </div>
+    <!-- Dialogs -->
+    <div id="dlg_beerprofilereminder" class="modal">
+        <div class="modal-content">
+            <p><span class="message"></span>Note: For Beer Profoile to work properly,
+                <ol>
+                    <li>Original Gravity Must be specified if SG is specified as percentage(%)</li>
+                    <li>Local data log must be activated if stability of gravity reading is used.</li>
+                </ol>
+                Original Gravity:<input type="text" size="6" value="1.0">
+                <div class="dialog-buttons">
+                    <button class="oknog">OK, OG already set</button>
+                    <button class="ok">OK, Set OG</button>
+                    <button class="cancel">Cancel</button></div>
+        </div>
+    </div>
+
+
+    <div id="dlg_loading" class="modal">
+        <div class="modal-content">
+            <p>Communicating with BrewPiLess controller..</p>
+        </div>
+    </div>
+
+    <div id="dlg_addgravity" class="modal">
+        <div class="modal-content">
+            <span class="message"></span>
+            <p>
+                Please enter a value between 0.8 and 1.25.
+            </p>
+            <ul style="list-style-type: none">
+                <li>
+                    <input class=sginput type="text" size="6" value="1.0" onchange=inputsg_change()> @
+                    <input class=tempinput type="text" size="6" value="20" onchange=inputsg_change()>
+                    <sapn class=temp-unit>&deg;C</sapn>
+                </li>
+                <li>
+                    ~ <span id="sginput-hmc"></span> @ <span id="sginput-hm-cal-temp"></span>
+                    <sapn class=temp-unit>&deg;C</sapn>
+                </li>
+                <li>
+                    ~ <span id="sginput-sg-ispindel"></span> @ <span id="sginput-ispindel-temp"></span>
+                    <sapn class=temp-unit>&deg;C</sapn>
+                </li>
+            </ul>
+
+            <div class="dialog-buttons">
+                <button onclick="dismissgravity()">Cancel</button>
+                <button onclick="inputgravity()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dlg_saveas" class="modal">
+        <div class="modal-content">
+            <span class="message">Save Profile As</span>
+            <br><input type="text" size="32">
+            <br>*No special letters and space allowed.
+            <button onclick="PL.cancelSave()">Cancel</button>
+            <button onclick="PL.doSave()">OK</button>
+        </div>
+    </div>
+
+
+    <div id=profile-list-pane class=modal>
+        <div class=modal-content>
+            <h3 class=profile-load-heading>Load Profile</h3>
+            <hr>
+            <ul class=profile-list style="margin:16px 0">
+                <li style="margin:8px 0">
+                    <button class="rmbutton">Del</button>
+                    <a href=# class=profile-name></a>
+                </li>
+            </ul>
+            <hr>
+            <button class=btn onclick=PL.toggle()>Cancel</button></div>
+    </div>
+
+    <div id="polynomialpane" class="modal">
+        <div class="modal-content">
+            <div id="xclose" onclick="closepolynomialpane()">X</div>
+            <table>
+                <tr>
+                    <td>
+                        <table id="pointlist">
+                            <thead>
+                                <tr>
+                                    <th>Tilt</th>
+                                    <th>SG</th>
+                                    <th>Cal'ed</th>
+                                    <th>Error</th>
+                                    <th>Ignored</th>
+                                </tr>
+                            </thead>
+                            <tobdy>
+                                <tr class="pl_calpoint">
+                                    <td class="pl_tilt"></td>
+                                    <td class="pl_sg"></td>
+                                    <td class="pl_value"></td>
+                                    <td class="pl_error"></td>
+                                    <td><input class="pl_ignored_cb" type="checkbox"></td>
+                                </tr>
+                            </tobdy>
+                        </table>
+                        <div style="float:right;"><button onclick="applyIgnoreMask()">Apply</button></div>
+                    </td>
+                    <td>
+                        <div id="graph"></div>
+                        <span id="polynormial"></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+</body>
+
+</html>

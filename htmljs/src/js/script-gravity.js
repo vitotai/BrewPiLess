@@ -1,36 +1,9 @@
 var gdcurl = "/gdc";
 
-function s_ajax(b) {
-    var c = new XMLHttpRequest();
-    c.onreadystatechange = function () {
-        if (c.readyState == 4) {
-            if (c.status == 200) {
-                b.success(c.responseText)
-            } else {
-                c.onerror(c.status)
-            }
-        }
-    };
-    c.ontimeout = function () {
-        if (typeof b["timeout"] != "undefined") b.timeout();
-        else c.onerror(-1)
-    }, c.onerror = function (a) {
-        if (typeof b["fail"] != "undefined") b.fail(a)
-    };
-    c.open(b.m, b.url, true);
-    if (typeof b["data"] != "undefined") {
-        c.setRequestHeader("Content-Type", (typeof b["mime"] != "undefined") ? b["mime"] : "application/x-www-form-urlencoded");
-        c.send(b.data)
-    } else c.send()
-}
-var Q = function (d) {
-    return document.querySelector(d);
-};
-
 function toFixed() {
     var texts = document.querySelectorAll("input[type=text]");
     for (var i = 0; i < texts.length; i++) {
-        texts[i].onchange = function () {
+        texts[i].onchange = function() {
             if (this.value.match(/[\-\d\.]+e[\+\-][\d]+/))
                 this.value = Number(this.value).toFixed(9);
         };
@@ -40,9 +13,9 @@ function toFixed() {
 function fill(setting) {
     for (var name in setting) {
         var ele = Q("input[name=" + name + "]");
-        if (ele.type == "checkbox") ele.checked = setting[name];
-        else {
-            ele.value = setting[name];
+        if (ele) {
+            if (ele.type == "checkbox") ele.checked = setting[name];
+            else ele.value = setting[name];
         }
     }
 }
@@ -61,28 +34,30 @@ function save() {
         m: "POST",
         mime: "aplication/json",
         data: JSON.stringify(setting),
-        success: function (a) {
+        success: function(a) {
             alert("done.");
         },
-        fail: function (a) {
+        fail: function(a) {
             alert("failed updating data:" + a)
         }
     });
 }
 
-function init() {
+function init(classic) {
+    if (typeof classic == "undefined") classic = false;
 
-    getActiveNavItem();
-    Q("#verinfo").innerHTML = "v" + JSVERSION;
-
+    if (!classic) {
+        getActiveNavItem();
+        Q("#verinfo").innerHTML = "v" + JSVERSION;
+    }
     toFixed();
     s_ajax({
         url: gdcurl + "?data",
         m: "GET",
-        success: function (a) {
+        success: function(a) {
             fill(JSON.parse(a));
         },
-        fail: function (a) {
+        fail: function(a) {
             //alert("failed getting data:" + a)
         }
     });

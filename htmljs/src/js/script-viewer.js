@@ -4,6 +4,21 @@
             },
             init: function(id) {
                 this.chart = new BrewChart(id);
+            },
+            setIgnoredMask: function(m) {
+                var t = this;
+                if (t.chart.cal_igmask == m) return;
+                t.chart.calculateSG = false;
+                t.chart.process(t.raw);
+                // the data will be updated by the "data"
+                t.chart.cal_igmask = m;
+                t.chart.getFormula();
+
+                t.chart.process(t.raw);
+
+                t.chart.updateChart();
+                // the data will be updated by the "data",again
+                t.chart.cal_igmask = m;
             }
         };
 
@@ -16,7 +31,7 @@
                         //chart.clear();
                         var data = new Uint8Array(e.target.result);
                         if (BrewChart.testData(data) !== false) {
-
+                            BChart.raw = data;
                             BChart.chart.process(data);
                             if (BChart.chart.calibrating) {
                                 BChart.chart.getFormula();

@@ -8,7 +8,6 @@
 @import 'ui-elements/modal';
 @import 'ui-elements/select';
 
-
 /** Tabs **/
 
 .navbar {
@@ -16,127 +15,129 @@
 }
 
 .navitems {
-  position: relative;
-  display: block;
-  padding:0;
+    position: relative;
+    display: block;
+    padding: 0;
 }
 
 .navitem {
-  position: relative;
-  display:inline-block;
-  text-decoration: none;
-  padding: 22px;
-  text-transform: uppercase;
-  font-size: 14px;
-  font-weight: 600;
-  color: #424f5a;
-  text-align: center;
-  outline: none;
-
-  &.nav-selected {
-    color: $primary-color;
-    outline:none;
-  }
-  &:not(.nav-selected):hover {
-    background-color: inherit;
-    color: $accent-color;
-  }
+    position: relative;
+    display: inline-block;
+    text-decoration: none;
+    padding: 22px;
+    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: 600;
+    color: #424f5a;
+    text-align: center;
+    outline: none;
+    &.nav-selected {
+        color: $primary-color;
+        outline: none;
+    }
+    &:not(.nav-selected):hover {
+        background-color: inherit;
+        color: $accent-color;
+    }
 }
 
 .yellow-bar {
-  position: absolute;
-  z-index: 10;
-  bottom: 0;
-  height: 3px;
-  background: #458CFF;
-  display: block;
-  left: 0;
-  transition: left .2s ease;
-  -webkit-transition: left .2s ease;
+    position: absolute;
+    z-index: 10;
+    bottom: 0;
+    height: 3px;
+    background: #458CFF;
+    display: block;
+    left: 0;
+    transition: left .2s ease;
+    -webkit-transition: left .2s ease;
 }
 
-.profileTable td, th {
-  padding: 6px 4px;
-  text-align: center;
+.profileTable td,
+th {
+    padding: 6px 4px;
+    text-align: center;
 }
 
-.profileTable td:not(:last-child), th:not(:last-child) {
-  border-right: 1px solid rgba(0,0,0,0.87);
+.profileTable td:not(:last-child),
+th:not(:last-child) {
+    border-right: 1px solid rgba(0, 0, 0, 0.87);
 }
 
 .profileTable tbody:empty:before {
-  content: 'No data.';
-  padding: 16px;
-  display: block;
+    content: 'No data.';
+    padding: 16px;
+    display: block;
 }
 
 .profileTable tbody tr.odd {
-  background: #EEE;
+    background: #EEE;
 }
 
 .profileTable tbody tr.even {
-  background: #FFF;
+    background: #FFF;
 }
 
 .for-time {
-  margin-left: 8px;
-  text-align: left;
+    margin-left: 8px;
+    text-align: left;
 }
 
 table.profileTable {
-  width: 100%;
-  border-collapse: collapse;
-
-  thead {
-    border-bottom: 1px solid rgba(0,0,0,0.87);
-  }
+    width: 100%;
+    border-collapse: collapse;
+    thead {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.87);
+    }
 }
 
 .profile-load-heading {
-  font-size: 18px;
+    font-size: 18px;
     text-transform: uppercase;
     margin-top: 0;
 }
 
 .btn--delete {
-  content: url("data:image/svg+xml; utf8, <svg fill='#000000' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    content: url("data:image/svg+xml; utf8, <svg fill='#000000' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
 }
 
 .start-date {
-  font-weight: bold;
+    font-weight: bold;
     text-transform: uppercase;
     display: inline-block;
     margin-right: 16px;
 }
 
 .spacing {
-  margin: 8px 0;
+    margin: 8px 0;
 }
 
 .condition-con {
-  position: relative;
+    position: relative;
 }
 
 #profile-s {
-  @include for-tablet-landscape-down {
-    flex-direction: column;
-  }
+    @include for-tablet-landscape-down {
+        flex-direction: column;
+    }
 }
 
 #profile-edit {
-  margin: 6px;
-  width: 510px;
-  position: relative;
-  @include for-tablet-landscape-down {
-    width: 100%;
-  }
+    margin: 6px;
+    width: 510px;
+    position: relative;
+    @include for-tablet-landscape-down {
+        width: 48%;
+    }
 }
 
 #tc_chart {
-  width: calc(100% - 510px);
-  height: 390px;
-  margin: 16px 0;
-  @include for-tablet-landscape-down {
-    width: 100%;
-  }
+    width: calc(100% - 510px);
+    min-width: 360px;
+    float: right;
+    height: 390px;
+    margin: 16px 0;
+    @include for-tablet-landscape-down {
+        width: 38%;
+    }
 }

@@ -1,4 +1,5 @@
 <html>
+
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,6 +12,7 @@
     <script type="text/javascript" src="js/vendor/regression.js"></script>
     <script type="text/javascript" src="js/ical.js"></script>
     <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/capper.js"></script>
     <script type="text/javascript" src="js/script.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -29,9 +31,6 @@
                         <div style="display: inline-block"><strong id="lcdControlState"></strong> <span class="for">for</span> <span id="lcdControlStateSince"></span></div>
                     </li>
                     <li layout horizontal main-justified><span class="descriptor">Mode:</span><span id="lcdControlMode"></span></li>
-                </ul>
-                <ul class="data-pane">
-                    <li class="heading"><strong>temperature data:</strong></li>
                     <li layout horizontal main-justified><span class="descriptor">Beer Temp:</span><span id="lcdBeerTemp"></span></li>
                     <li layout horizontal main-justified><span class="descriptor">Beer Set:</span><span id="lcdBeerSet"></span></li>
                     <li layout horizontal main-justified><span class="descriptor">Fridge Temp:</span><span id="lcdFridgeTemp"></span></li>
@@ -51,12 +50,38 @@
                 <li layout horizontal main-justified><span class="descriptor">ABV:</span> <span id="gravity-abv"> --%</span></li>
 
             </ul>
-            <ul class="data-pane spindle-pine">
-                <li class="heading"><strong>spindel data:</strong></li>
+            <ul class="data-pane ispindle-pane">
+                <li class="heading"><strong>iSpindel data:</strong></li>
                 <li layout horizontal main-justified><span class="descriptor">Tilt:</span> <span id="iSpindel-tilt">--</span></li>
                 <li layout horizontal main-justified><span class="descriptor">Battery:</span> <span id="iSpindel-battery">--</span></li>
                 <li layout horizontal main-justified><span class="descriptor">Last Update:</span> <span id="iSpindel-last">--</span></li>
             </ul>
+
+            <ul class="data-pane ptc-pane" id="ptc-pane" style="display:none">
+                <li class="heading" layout horizontal main-justified><strong>Glycol Temp Control:</strong>
+                    <div style="display: inline-block"><strong><span id="ptc-state-idle">IDLE</span><span id="ptc-state-run" style="display:none">RUNNING</span></strong></div>
+                </li>
+                <li layout horizontal main-justified><span class="descriptor"></span> for <span id="ptc-time"></span></li>
+                <li layout horizontal main-justified><span class="descriptor">Range:</span> <span id="ptc-set"></span></li>
+            </ul>
+
+            <ul class="data-pane capping-info-pane">
+                <li class="heading" layout horizontal main-justified><strong>Cap status:</strong>
+                    <div style="display: inline-block">
+                        <strong><span id="capstate-open" class="capstate">OPEN</span>
+                        <span id="capstate-close" class="capstate">Capped</span></strong> </div>
+                </li>
+                <li layout horizontal main-justified>
+                    <span class="descriptor">Condition:</span>
+                    <div style="display: inline-block">
+                        <span id="cs-sgcon" class="capstate">gravity &lt;= <span id="capgravityset"></span></span>
+                        <span id="cs-timecon" class="capstate">after <span id="captimeset"></span></span>
+                        <span id="cs-mancap" class="capstate">Manual capped</span>
+                        <span id="cs-manopen" class="capstate">Manual open</span>
+                    </div>
+                </li>
+            </ul>
+
             <ul class="data-pane">
                 <li class="heading"><strong>system:</strong></li>
                 <li layout horizontal main-justified><span class="descriptor">Writing Log:</span><span id="recording"></span></li>
@@ -140,16 +165,32 @@
         </div>
     </div>
 
+
     <div id="dlg_addgravity" class="modal">
         <div class="modal-content">
-            <h2 class="message"></h2>
+            <span class="message"></span>
             <p>
                 Please enter a value between 0.8 and 1.25.
             </p>
-            <input type="number" size="6" placeholder="Gravity" min="0.8" max="1.25" step="any">
+            <ul style="list-style-type: none">
+                <li>
+                    <input class=sginput type="text" size="6" value="1.0" onchange=inputsg_change()> @
+                    <input class=tempinput type="text" size="6" value="20" onchange=inputsg_change()>
+                    <sapn class=temp-unit>&deg;C</sapn>
+                </li>
+                <li>
+                    ~ <span id="sginput-hmc"></span> @ <span id="sginput-hm-cal-temp"></span>
+                    <sapn class=temp-unit>&deg;C</sapn>
+                </li>
+                <li>
+                    ~ <span id="sginput-sg-ispindel"></span> @ <span id="sginput-ispindel-temp"></span>
+                    <sapn class=temp-unit>&deg;C</sapn>
+                </li>
+            </ul>
+
             <div class="dialog-buttons">
-                <input class="btn btn--primary btn--ok" onclick="inputgravity()" type="button" value="OK">
-                <input class="btn" onclick="dismissgravity()" type="button" value="Cancel">
+                <button onclick="dismissgravity()">Cancel</button>
+                <button onclick="inputgravity()">OK</button>
             </div>
         </div>
     </div>
@@ -161,13 +202,26 @@
                 <tr>
                     <td>
                         <table id="pointlist">
-                            <tr>
-                                <th>Tilt</th>
-                                <th>SG</th>
-                                <th>Interpolated</th>
-                                <th>Error</th>
-                            </tr>
+                            <thead>
+                                <tr>
+                                    <th>Tilt</th>
+                                    <th>SG</th>
+                                    <th>Cal'ed</th>
+                                    <th>Error</th>
+                                    <th>Ignored</th>
+                                </tr>
+                            </thead>
+                            <tobdy>
+                                <tr class="pl_calpoint">
+                                    <td class="pl_tilt"></td>
+                                    <td class="pl_sg"></td>
+                                    <td class="pl_value"></td>
+                                    <td class="pl_error"></td>
+                                    <td><input class="pl_ignored_cb" type="checkbox"></td>
+                                </tr>
+                            </tobdy>
                         </table>
+                        <div style="float:right;"><button onclick="applyIgnoreMask()">Apply</button></div>
                     </td>
                     <td>
                         <div id="graph"></div>
