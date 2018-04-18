@@ -31,12 +31,13 @@ typedef struct _TimeInformation{
 typedef struct _GravityDeviceConfiguration{
     float ispindelCoefficients[4];
     float   lpfBeta;
+	uint32_t  numberCalPoints;
+    
     uint8_t  ispindelEnable;
     uint8_t  ispindelTempCal;
     uint8_t  calculateGravity;
     uint8_t  ispindelCalibrationBaseTemp;
 	uint8_t  stableThreshold;
-	uint8_t  numberCalPoints;
 
     uint8_t _padding[6];
 }GravityDeviceConfiguration;

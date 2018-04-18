@@ -134,14 +134,14 @@ void DataLogger::sendData(void)
 		return;
 	}
 
-	DBG_PRINTF("url=%s\n",_url);
+	DBG_PRINTF("url=%s\n",_loggingInfo->url);
 	DBG_PRINTF("data= %d, \"%s\"\n",len,data);
 
 	int code;
 	HTTPClient _http;
   	_http.setUserAgent(F("ESP8266"));
 
-	DBG_PRINTF("[HTTP] %s...\n",_method);
+	DBG_PRINTF("[HTTP] %d...\n",_loggingInfo->method);
 	if(_loggingInfo->method == mHTTP_POST
 		|| _loggingInfo->method== mHTTP_PUT ){
 		// post

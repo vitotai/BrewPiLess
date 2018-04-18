@@ -383,7 +383,7 @@
 //#endif
 
 #define EMIWorkaround 1
-#define BPL_VERSION "2.7"
+#define BPL_VERSION "3.0"
 
 #ifndef EanbleParasiteTempControl
 #define EanbleParasiteTempControl 0

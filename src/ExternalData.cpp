@@ -67,7 +67,7 @@ bool ExternalData::processconfig(char* configdata){
    return ret;
 }
 
-void ExternalData::formula(float coeff[4],uint8_t npt){
+void ExternalData::formula(float coeff[4],uint32_t npt){
     if(_cfg->numberCalPoints == npt){ 
 		DBG_PRINTF("formula nochanged\n");
 		return;
@@ -95,7 +95,7 @@ void ExternalData::setTilt(float tilt,float temp,time_t now){
 	// add tilt anyway
 	brewLogger.addTiltAngle(tilt);
 
-	if(_calibrating && _cfg->numberCalPoints <2){
+	if(_calibrating && _cfg->numberCalPoints ==0){
 		DBG_PRINTF("No valid formula!\n");
 		return; // don't calculate if formula is not available.
 	}
@@ -118,7 +118,7 @@ void ExternalData::setGravity(float sg, time_t now,bool log){
         // copy these two for reporting to web interface
     float old_sg=_gravity;
 	
-    DBG_PRINTF("setGravity:%d\n",(int)(sg*10000.0));
+    DBG_PRINTF("setGravity:%d, saved:%d\n",(int)(sg*10000.0),log);
     // verfiy sg, even invalid value will be reported to web interface
 	if(!IsGravityInValidRange(sg)) return;
 	_gravity = sg;

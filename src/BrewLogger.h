@@ -12,8 +12,10 @@
 
 #define LogBufferSize 1024
 
+// Log tags
 #define StartLogTag 0xFF
 #define ResumeBrewTag 0xFE
+
 #define PeriodTag 0xF0
 #define StateTag 0xF1
 #define EventTag 0xF2
@@ -21,13 +23,13 @@
 #define ModeTag 0xF4
 
 #define FillTag 0xF7
-
 #define OriginGravityTag 0xF8
 #define CalibrationPointTag 0xF9
+#define IgnoredCalPointMaskTag 0xFA
+
 
 #define INVALID_TEMP_INT 0x7FFF
 #define INVALID_GRAVITY_INT 0x7FFF
-
 #define VolatileHeaderSize 28
 
 #define OrderBeerSet 0
@@ -91,6 +93,8 @@ public:
 	void addCorrectionTemperature(float temp);
 	void addTiltInWater(float tilt,float reading);
 	bool isCalibrating(void){ return _calibrating;}
+	void addIgnoredCalPointMask(uint32_t mask);
+
 private:
 	size_t _fsspace;
 	uint32_t  _tempLogPeriod;

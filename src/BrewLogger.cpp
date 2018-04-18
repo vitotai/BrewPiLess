@@ -116,14 +116,26 @@ BrewLogger::BrewLogger(void){
 		}
 
 		size_t dataAvail;
-		int tag, mask;
+		uint8_t tag, mask;
+
+		tag= _logFile.read();
+		mask = _logFile.read();
+
+		if(tag == StartLogTag){
+			_calibrating = (mask & 0x20) != 0x20;
+			DBG_PRINTF("resume cal:%d\n",_calibrating);
+			for(int v=0;v<6;v++) _logFile.read();
+		}else{
+			DBG_PRINTF("resume failed, no start tag\n");
+			_logFile.close();
+			return false;
+		}
 		while((dataAvail=_logFile.available())){
-			
 			if (dataAvail<2 ) break;
 
 			tag= _logFile.read();
 			mask = _logFile.read();
-	
+
 			if(tag == PeriodTag){
 				// advance one tick
 		        _resumeLastLogTime += _tempLogPeriod/1000;
@@ -157,14 +169,11 @@ BrewLogger::BrewLogger(void){
 		    		size_t d0 =(size_t)_logFile.read();
 					size_t tdiff= (mask <<16) + (d1 << 8) + d0;
 			    	_resumeLastLogTime = _pFileInfo->starttime + tdiff;
-			}else if(tag == CalibrationPointTag || tag == OriginGravityTag){
+			}else if(tag == CalibrationPointTag  || tag == OriginGravityTag || tag == IgnoredCalPointMaskTag) {
 				if (dataAvail<4 ) break;
 				_logFile.read();
 				_logFile.read();
-			}else if(tag == StartLogTag){
-				_calibrating = (mask & 0x20) ^ 0x20;
-				for(int v=0;v<6;v++) _logFile.read();
-			}else if(tag == StateTag || tag == ModeTag || tag ==CorrectionTempTag){
+			}else if(tag == StateTag  || tag == ModeTag  || tag ==CorrectionTempTag ){
 				// DO nothing.
 			}else{
 				DBG_PRINTF("Unknown tag %d,%d @%ld\n",tag,mask,dataAvail);
@@ -177,9 +186,9 @@ BrewLogger::BrewLogger(void){
 		}
 		// seek for SeekEnd might has a bug. use 
 		//_logFile.seek(dataAvail,SeekEnd);
-		_logFile.seek(fsize - dataAvail,SeekSet);
+		_logFile.seek(fsize,SeekSet);
 		_logIndex =0;
-		_savedLength = fsize - dataAvail;
+		_savedLength = fsize;
 		DBG_PRINTF("resume, total _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
 
 		_lastTempLog=0;
@@ -371,7 +380,11 @@ BrewLogger::BrewLogger(void){
 		// in abnormal cases, the file size is total size since all data are "written".
 
 		DBG_PRINTF("beginCopyAfter:%d, _logIndex=%ld, saved=%ld, return:%ld, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
-		if(last >= (_logIndex +_savedLength)) return 0;
+		if(last >= (_logIndex +_savedLength)){
+            DBG_PRINTF(" return:0\n");
+            return 0;
+        }
+        DBG_PRINTF(" return:%ld\n",_logIndex+_savedLength - last);
 		return ( _logIndex+_savedLength - last);
 	}
 
@@ -391,7 +404,7 @@ BrewLogger::BrewLogger(void){
 		// the staring data is not in buffer
 		if( rindex < _savedLength){
 
-			sizeRead = _savedLength - rindex;
+			sizeRead = _savedLength +_logIndex - rindex;
 			if(sizeRead > maxLen) sizeRead=maxLen;
 
 			_logFile.seek(rindex,SeekSet);
@@ -519,6 +532,20 @@ BrewLogger::BrewLogger(void){
 		writeBuffer(idx,CorrectionTempTag);
 		writeBuffer(idx+1,(uint8_t)temp);
 	}
+	#define ICPM_B1(m)  (((m)>>14) & 0x7F)
+	#define ICPM_B2(m)  (((m)>>7) & 0x7F)
+	#define ICPM_B3(m)  ((m) & 0x7F)
+	void BrewLogger::addIgnoredCalPointMask(uint32_t mask)
+	{
+		if(!_recording) return;
+		int idx = allocByte(4);
+		if(idx < 0) return;
+		writeBuffer(idx,IgnoredCalPointMaskTag);
+		writeBuffer(idx+1,ICPM_B1(mask));
+		writeBuffer(idx+2,ICPM_B2(mask));
+		writeBuffer(idx+3,ICPM_B3(mask));
+	}
+
 	void BrewLogger::addTiltInWater(float tilt,float reading)
 	{
 		if(!_recording) return;

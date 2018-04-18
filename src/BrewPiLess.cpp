@@ -123,6 +123,11 @@ extern "C" {
 #define ParasiteTempControlPath "/ptc"
 #endif
 
+#define IGNORE_MASK_PATH  "/icalm"
+
+#define GravityDeviceConfigPath "/gdc"
+#define GravityFormulaPath "/coeff"
+
 #if AUTO_CAP
 #define CAPPER_PATH "/cap"
 #endif
@@ -589,6 +594,7 @@ public:
 			 request->url() == CONFIG_PATH
 	 			|| request->url() ==  FPUTS_PATH || request->url() == FLIST_PATH
 	 			|| request->url() == TIME_PATH
+				|| request->url() == BEER_PROFILE_PATH
 	 			#ifdef ENABLE_LOGGING
 	 			|| request->url() == LOGGING_PATH
 	 			#endif
@@ -657,40 +663,46 @@ void capStatusReport(void)
 	char buf[128];
 	String capstate= capControlStatus();
 
-	sprintf(buf,"V:{\"cap\":{%s}}", capstate.c_str());
+	sprintf(buf,"A:{\"cap\":{%s}}", capstate.c_str());
 	stringAvailable(buf);
 }
 #endif
 
 void greeting(std::function<void(const char*)> sendFunc)
 {
-	char buf[256];
-	// gravity related info.
+	char buf[512];
+	// gravity related info., starting from "G"
 	if(externalData.iSpindelEnabled()){
 		externalData.sseNotify(buf);
 		sendFunc(buf);
 	}
+
+	// misc informatoin, including
+
 	// RSSI && 
 	const char *logname= brewLogger.currentLog();
 	if(logname == NULL) logname="";
 	SystemConfiguration *syscfg= theSettings.systemConfiguration();
-
 #if AUTO_CAP
 	String capstate= capControlStatus();
-	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
+	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
 				\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s}}"
 		,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
 		TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset(),
 		logname, capstate.c_str());
 	
 #else
-	sprintf(buf,"V:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld, \"log\":\"%s\"}"
+	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld, \"log\":\"%s\"}"
 		,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
 		TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset(),
 		logname);
 #endif
 
 	sendFunc(buf);
+
+	// beer profile:
+	String profile=String("B:") + theSettings.jsonBeerProfile();
+	sendFunc(profile.c_str());
 }
 
 #define GreetingInMainLoop 1
@@ -794,7 +806,7 @@ void notifyLogStatus(void)
 	externalData.waitFormula();
 	const char *logname= brewLogger.currentLog();
 	String logstr=(logname)? String(logname):String("");
-	String status=String("V:{\"reload\":\"chart\", \"log\":\"") +  logstr + String("\"}");
+	String status=String("A:{\"reload\":\"chart\", \"log\":\"") +  logstr + String("\"}");
 	stringAvailable(status.c_str());
 }
 
@@ -805,9 +817,9 @@ void reportRssi(void)
 	char mode=parasiteTempController.getMode();
 	
 	if(mode == 'o')
-		sprintf(buf,"V:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%ld}",WiFi.RSSI(),mode,parasiteTempController.getTimeElapsed());
+		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%ld}",WiFi.RSSI(),mode,parasiteTempController.getTimeElapsed());
 	else{
-		sprintf(buf,"V:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%ld,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d}",
+		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%ld,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d}",
 			WiFi.RSSI(),mode,parasiteTempController.getTimeElapsed(),
 			parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound());
 	}
@@ -815,7 +827,7 @@ void reportRssi(void)
 	stringAvailable(buf);
 #else
 	char buf[32];
-	sprintf(buf,"V:{\"rssi\":%d}",WiFi.RSSI());
+	sprintf(buf,"A:{\"rssi\":%d}",WiFi.RSSI());
 	stringAvailable(buf);
 #endif
 }
@@ -872,7 +884,15 @@ class LogHandler:public AsyncWebHandler
 public:
 
 	void handleRequest(AsyncWebServerRequest *request){
-		if( request->url() == LOGLIST_PATH){
+		if( request->url() == IGNORE_MASK_PATH){
+			if(request->hasParam("m")){
+				uint32_t mask= request->getParam("m")->value().toInt();
+				brewLogger.addIgnoredCalPointMask(mask);
+				request->send(200,"application/json","{}");
+			}else{
+				request->send(404);
+			}
+		}else if( request->url() == LOGLIST_PATH){
 			if(request->hasParam("dl")){
 				int index=request->getParam("dl")->value().toInt();
 				char buf[36];
@@ -903,6 +923,7 @@ public:
 					if(cal){
 						brewLogger.addTiltInWater(tiltwater,hydroreading);
 						externalData.setCalibrating(true);
+						DBG_PRINTF("Start BrweNCal log\n");
 					}
 
 					brewLogger.addCorrectionTemperature(externalData.hydrometerCalibration());
@@ -983,15 +1004,12 @@ public:
 
 	LogHandler(){}
 	bool canHandle(AsyncWebServerRequest *request){
-	 	if(request->url() == CHART_DATA_PATH || request->url() ==LOGLIST_PATH) return true;
+	 	if(request->url() == CHART_DATA_PATH || request->url() ==LOGLIST_PATH || request->url() == IGNORE_MASK_PATH) return true;
 	 	return false;
 	}
 };
 LogHandler logHandler;
 
-
-#define GravityDeviceConfigPath "/gdc"
-#define GravityFormulaPath "/coeff"
 
 class ExternalDataHandler:public AsyncWebHandler
 {
@@ -1057,7 +1075,7 @@ public:
 				coeff[1]=request->getParam("a1")->value().toFloat();
 				coeff[2]=request->getParam("a2")->value().toFloat();
 				coeff[3]=request->getParam("a3")->value().toFloat();
-				uint8_t npt=(uint8_t) request->getParam("pt")->value().toInt();
+				uint32_t npt=(uint32_t) request->getParam("pt")->value().toInt();
 				externalData.formula(coeff,npt);
 
   				request->send(200,"application/json","{}");
@@ -1070,7 +1088,7 @@ public:
 		}
 		// config
 		if(request->method() == HTTP_POST){
-  			if(!externalData.processconfig(_data)){
+  			if(externalData.processconfig(_data)){
 		  		request->send(200,"application/json","{}");
 			}else{
 				request->send(400);
@@ -1404,6 +1422,7 @@ void setup(void){
 	if(brewLogger.begin()){
 		// resume, update calibrating information to external data
 		externalData.setCalibrating(brewLogger.isCalibrating());
+		DBG_PRINTF("Start BrweNCal log:%d\n",brewLogger.isCalibrating());
 	}
 
 	#if AUTO_CAP

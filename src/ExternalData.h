@@ -97,7 +97,7 @@ public:
     bool processconfig(char* configdata);
 	void loadConfig(void);
 	//update formula
-	void formula(float coeff[4],uint8_t npt);
+	void formula(float coeff[4],uint32_t npt);
 
 
 	// for remote data logger

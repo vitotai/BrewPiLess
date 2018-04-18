@@ -122,7 +122,8 @@ bool BrewProfile::checkCondition(unsigned long time,Gravity gravity){
 		if(IsGravityValid(stepSG)) sgCondition=(stepSG <= stepSG);
 		bool stableSg = gravityTracker.stable(step->gravity.stable.stableTime,step->gravity.stable.stablePoint);
 
-		DBG_PRINTF("tempByTimeGravity: sgC:%c,gravity=%d, target=%d\n",sgCondition? 'Y':'N',gravity,_schedule->steps[_status->currentStep].data.sg);
+		DBG_PRINTF("tempByTimeGravity: sgC:%c,gravity=%d, target=%d\n",sgCondition? 'Y':'N',
+			gravity,_schedule->steps[_status->currentStep].gravity.sg);
 	
 		if(condition == 'g'){
 			if(sgCondition) return true;

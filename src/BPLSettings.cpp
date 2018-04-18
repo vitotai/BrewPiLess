@@ -199,7 +199,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 		#if SerialDebug
 		Serial.print("\nCoefficient:");
 		for(int i=0;i<4;i++){
-		    Serial.print(_ispindelCoefficients[i],10);
+		    Serial.print(gdc->ispindelCoefficients[i],10);
 		    Serial.print(", ");
 		}
 		Serial.println("");
@@ -425,7 +425,7 @@ bool BPLSettings::dejsonBeerProfile(String json)
     			    const char* attStr=entry["g"];
     			    float att=atof(attStr);
     			    if( strchr ( attStr, '%' ) > 0){
-	    			    DBG_PRINTF(" att:%s sg:%d",attStr,_steps[i].sg);
+	    			    DBG_PRINTF(" att:%s sg:%d",attStr,step->gravity.sg);
 						step->attSpecified=true;
 						step->gravity.attenuation =(uint8_t) att;
                     }
@@ -454,7 +454,8 @@ bool BPLSettings::dejsonBeerProfile(String json)
 	// unit
 	tempSchedule->unit= root["u"];
 
-	DBG_PRINTF("Load finished, st:%ld, unit:%c, _numberOfSteps:%d\n",tempSchedule->startDay,unit,tempSchedule->numberOfSteps);
+	DBG_PRINTF("Load finished, st:%ld, unit:%c, _numberOfSteps:%d\n",tempSchedule->startDay,
+	tempSchedule->unit,tempSchedule->numberOfSteps);
 
 	return true;
 }
@@ -476,15 +477,25 @@ String BPLSettings::jsonBeerProfile(void)
 	sprintf(timeBuf,"%d-%02d-%02dT%02d:%02d:%02d.0Z",ptm->tm_year+1900,ptm->tm_mon+1,ptm->tm_mday,
 		ptm->tm_hour,ptm->tm_min,ptm->tm_sec);
 	root["s"]=timeBuf;
-	// unit
-	root["u"]=tempSchedule->unit;
+	// unit, unfortunatly, no "char" type in JSON. "char" will be integer.
+	//root["u"]=(char)tempSchedule->unit;
+	char unitBuffer[4];
+	sprintf(unitBuffer,"%c",tempSchedule->unit);
+	root["u"]=unitBuffer;
+
 	JsonArray& steps=root.createNestedArray("t");
+
+	char conditionBuf[MaximumSteps][4];
+	char pertages[MaximumSteps][16];
+	int  pertageIndex=0;
 
 	for(int i=0;i< tempSchedule->numberOfSteps;i++){
 		ScheduleStep *s_step= & tempSchedule->steps[i];
 		JsonObject& jstep = steps.createNestedObject();
 		// condition
-		jstep["c"] = s_step->condition;
+		//jstep["c"] =(char) s_step->condition;
+		sprintf(conditionBuf[i],"%c", s_step->condition);
+		jstep["c"] = conditionBuf[i];
 		// days
 		jstep["d"] =ScheduleDayToJson(s_step->days);
 		// temp.
@@ -504,8 +515,6 @@ String BPLSettings::jsonBeerProfile(void)
                     <option value="w">ALL</option>
                     <option value="e">Either</option>
 		*/
-		char pertages[MaximumSteps][16];
-		int  pertageIndex=0;
 		if(strchr("gaobxwe",s_step->condition)){ 
 			// gravity
 			if(s_step->attSpecified){
