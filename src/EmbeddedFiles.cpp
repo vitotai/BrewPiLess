@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <pgmspace.h>
-#include "espconfig.h"
+#include "Config.h"
 
 #ifndef NULL
 #define NULL 0

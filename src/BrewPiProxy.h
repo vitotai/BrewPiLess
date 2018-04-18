@@ -2,7 +2,7 @@
 #define BrewPiProxy_H
 
 #include <Arduino.h>
-#include "espconfig.h"
+#include "Config.h"
 
 #define BUFF_SIZE 1024
 

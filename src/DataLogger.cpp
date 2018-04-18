@@ -6,7 +6,7 @@
 #include <ESPAsyncWebServer.h>
 #include "mystrlib.h"
 #include "DataLogger.h"
-#include "espconfig.h"
+#include "Config.h"
 #include "TemperatureFormats.h"
 #include "BrewPiProxy.h"
 #include "ExternalData.h"
@@ -83,9 +83,9 @@ int DataLogger::dataSprintf(char *buffer,const char *format)
 
 void DataLogger::loop(time_t now)
 {
-	if(!_enabled) return;
+	if(!_loggingInfo->enabled) return;
 
-	if((now - _lastUpdate) < _period) return;
+	if((now - _lastUpdate) < _loggingInfo->period) return;
 
 	sendData();
 	_lastUpdate=now;
@@ -127,35 +127,35 @@ void DataLogger::sendData(void)
 	char data[512];
 	int len=0;
 
-	len =dataSprintf(data,_format);
+	len =dataSprintf(data,_loggingInfo->format);
 
 	if(len==0){
 		DBG_PRINTF("Invalid format\n");
 		return;
 	}
 
-	DBG_PRINTF("url=%s\n",_url);
+	DBG_PRINTF("url=%s\n",_loggingInfo->url);
 	DBG_PRINTF("data= %d, \"%s\"\n",len,data);
 
 	int code;
 	HTTPClient _http;
   	_http.setUserAgent(F("ESP8266"));
 
-	DBG_PRINTF("[HTTP] %s...\n",_method);
-	if(strcmp(_method,"POST")==0
-		|| strcmp(_method,"PUT")==0 ){
+	DBG_PRINTF("[HTTP] %d...\n",_loggingInfo->method);
+	if(_loggingInfo->method == mHTTP_POST
+		|| _loggingInfo->method== mHTTP_PUT ){
 		// post
 
- 		_http.begin(_url);
- 		if(_contentType){
-  			_http.addHeader("Content-Type", _contentType);
+ 		_http.begin(_loggingInfo->url);
+ 		if(_loggingInfo->contentType){
+  			_http.addHeader("Content-Type", _loggingInfo->contentType);
  		}else{
   			_http.addHeader("Content-Type", "application/x-www-form-urlencoded");
   		}
     // start connection and send HTTP header
-    	code = _http.sendRequest(_method,(uint8_t*)data,len);
+    	code = _http.sendRequest((_loggingInfo->method == mHTTP_POST)? "POST":"PUT",(uint8_t*)data,len);
     }else{
- 		_http.begin(String(_url) + String("?") + String(data));
+ 		_http.begin(String(_loggingInfo->url) + String("?") + String(data));
 
     	code = _http.GET();
     }
@@ -178,111 +178,4 @@ void DataLogger::sendData(void)
     String output=_http.getString();
     DBG_PRINTF("output:\n%s\n",output.c_str());
 	_http.end();
-}
-
-
-
-bool DataLogger::processJson(char* jsonstring)
-{
-	DynamicJsonBuffer jsonBuffer(GSLOG_JSON_BUFFER_SIZE);
-	JsonObject& root = jsonBuffer.parseObject(jsonstring);
-	if(!root.success()
-		|| !root.containsKey("enabled")
-		|| !root.containsKey("format")
-		|| !root.containsKey("method")
-		|| !root.containsKey("period")){
-		_enabled=false;
-		return false;
-	}
-	_enabled= root["enabled"];
-	_period = root["period"];
-
-	const char *url=root["url"];
-	const char *method=root["method"];
-	const char *format=root["format"];
-	const char *contentType=root["type"];
-
-	if(url == NULL || method==NULL || format==NULL || strcmp(url,"") ==0 || strcmp(method,"") ==0 || strcmp(format,"") ==0){
-		_enabled=false;
-		return false;
-	}
-	#define COPYSTRING(a) if(_##a) free(_##a); _##a = (a==NULL || strcmp(a,"") ==0)? NULL:strdup(a)
-
-	COPYSTRING(url);
-	COPYSTRING(method);
-	COPYSTRING(format);
-  	COPYSTRING(contentType);
-
-  	return true;
-}
-
-void DataLogger::loadConfig(void)
-{
-	File f=SPIFFS.open(GSLogConfigFile,"r+");
-	char configBuf[MAX_GSLOG_CONFIG_LEN];
-
-	if(f){
-		size_t len=f.readBytes(configBuf,MAX_GSLOG_CONFIG_LEN);
-		f.close();
-		configBuf[len]='\0';
-		processJson(configBuf);
-	}else{
-		_enabled=false;
-	}
-}
-
-void DataLogger::updateSetting(AsyncWebServerRequest *request)
-{
-		if(request->hasParam("data", true)){
-    		String c=request->getParam("data", true)->value();
-			char *tbuf=strdup(c.c_str());
-			if(!processJson(tbuf)){
-		         request->send(404);
-		         free(tbuf);
-		         return;
-		    }
-		    free(tbuf);
-
-        	ESP.wdtDisable();
-    		File fh= SPIFFS.open(GSLogConfigFile, "w");
-    		if(!fh){
-    			request->send(500);
-    			return;
-    		}
-	      	fh.print(c.c_str());
-      		fh.close();
-        	ESP.wdtEnable(10);
-            request->send(200);
-        } else{
-          request->send(404);
-    	}
-
-}
-
-void DataLogger::getSettings(AsyncWebServerRequest *request)
-{
-	if(request->hasParam("data")){
-		if(SPIFFS.exists(GSLogConfigFile))
-			request->send(SPIFFS, GSLogConfigFile);
-		else
-			request->send(200,"application/json","{}");
-	}else{
-		request->redirect(request->url() + ".htm");
-		/*  use htm file
-		AsyncWebServerResponse *response = request->beginResponse(String("text/html"),
-  		strlen_P(LogConfigHtml),
-  		[=](uint8_t *buffer, size_t maxLen, size_t alreadySent) -> size_t {
-    		if (strlen_P(LogConfigHtml+alreadySent)>maxLen) {
-      		// We have more to read than fits in maxLen Buffer
-      		memcpy_P((char*)buffer, LogConfigHtml+alreadySent, maxLen);
-      		return maxLen;
-    	}
-    	// Ok, last chunk
-    	memcpy_P((char*)buffer, LogConfigHtml+alreadySent, strlen_P(LogConfigHtml+alreadySent));
-    	return strlen_P(LogConfigHtml+alreadySent); // Return from here to end of indexhtml
- 	 	}
-		);
-		request->send(response);
-		*/
-	}
 }

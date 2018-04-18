@@ -1,7 +1,7 @@
 #ifndef BrewLogger_H
 #define BrewLogger_H
 #include <FS.h>
-
+#include "BPLSettings.h"
 #include "TimeKeeper.h"
 
 #define INVALID_RECOVERY_TIME 0xFF
@@ -9,13 +9,13 @@
 #define INVALID_GRAVITY -1
 
 #define LOG_PATH "/log"
-#define LOG_RECORD_FILE "/loginfo"
-#define MAX_FILE_NUMBER 10
 
 #define LogBufferSize 1024
 
+// Log tags
 #define StartLogTag 0xFF
 #define ResumeBrewTag 0xFE
+
 #define PeriodTag 0xF0
 #define StateTag 0xF1
 #define EventTag 0xF2
@@ -23,13 +23,13 @@
 #define ModeTag 0xF4
 
 #define FillTag 0xF7
-
 #define OriginGravityTag 0xF8
 #define CalibrationPointTag 0xF9
+#define IgnoredCalPointMaskTag 0xFA
+
 
 #define INVALID_TEMP_INT 0x7FFF
 #define INVALID_GRAVITY_INT 0x7FFF
-
 #define VolatileHeaderSize 28
 
 #define OrderBeerSet 0
@@ -54,17 +54,7 @@
 #define HighOctect(a) (uint8_t)((a)>>8) 
 #define LowOctect(a) (uint8_t)((a)&0xFF)
 
-typedef struct _FileIndexEntry{
-	char name[24];
-	unsigned long time;
-} FileIndexEntry;
 
-typedef struct _FileIndexes
-{
-	FileIndexEntry files[MAX_FILE_NUMBER];
-	char logname[24];
-	unsigned long starttime;
-} FileIndexes;
 extern BrewPiProxy brewPi;
 
 class BrewLogger
@@ -102,7 +92,9 @@ public:
 	void addTiltAngle(float tilt);
 	void addCorrectionTemperature(float temp);
 	void addTiltInWater(float tilt,float reading);
-	bool isCalibrating(void){ return _calibrating; }
+	bool isCalibrating(void){ return _calibrating;}
+	void addIgnoredCalPointMask(uint32_t mask);
+
 private:
 	size_t _fsspace;
 	uint32_t  _tempLogPeriod;
@@ -135,7 +127,7 @@ private:
 	uint32_t _startOffset;
 	bool _sendHeader;
 	uint32_t _sendOffset;
-	FileIndexes _fileInfo;
+	FileIndexes *_pFileInfo;
 
 	#define VolatileDataHeaderSize 7
 	uint16_t  _headData[VolatileDataHeaderSize];

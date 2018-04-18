@@ -17,7 +17,7 @@ BrewLogger::BrewLogger(void){
     	bool resumeSuccess=false;
 		loadIdxFile();
 		checkspace();
-		if(_fileInfo.logname[0]!='\0'){
+		if(_pFileInfo->logname[0]!='\0'){
 			resumeSuccess=resumeSession();
 		}
 
@@ -43,8 +43,8 @@ BrewLogger::BrewLogger(void){
 	
 	const char* BrewLogger::currentLog(void)
 	{
-		if(_fileInfo.logname[0] != 0)
-			return _fileInfo.logname;
+		if(_pFileInfo->logname[0] != 0)
+			return _pFileInfo->logname;
 		else return NULL;
 	}
 
@@ -52,20 +52,20 @@ BrewLogger::BrewLogger(void){
 	{
 		// populate JS
 		String ret=String("{\"rec\":");
-		if(_fileInfo.logname[0] != 0){
-			ret += "1, \"log\":\"" + String(_fileInfo.logname)
-				+"\",\"start\":" + String(_fileInfo.starttime);
+		if(_pFileInfo->logname[0] != 0){
+			ret += "1, \"log\":\"" + String(_pFileInfo->logname)
+				+"\",\"start\":" + String(_pFileInfo->starttime);
 		}else{
 			ret += "0";
 		}
 		ret += ",\"fs\":" + fsinfo();
 		ret += ",\"list\":[";
 
-		for(int i=0;i<MAX_FILE_NUMBER;i++){
-			if(_fileInfo.files[i].name[0] == 0) break;
+		for(int i=0;i<MAX_LOG_FILE_NUMBER;i++){
+			if(_pFileInfo->files[i].name[0] == 0) break;
 			if(i!=0) ret +=",";
-			ret +="{\"name\":\"" + String(_fileInfo.files[i].name);
-			ret +="\",\"time\":" +String(_fileInfo.files[i].time) +"}";
+			ret +="{\"name\":\"" + String(_pFileInfo->files[i].name);
+			ret +="\",\"time\":" +String(_pFileInfo->files[i].time) +"}";
 		}
 		ret += "]}";
 
@@ -77,18 +77,18 @@ BrewLogger::BrewLogger(void){
 		//TODO: race condition
 		// multiple access issue
 		char buff[36];
-		sprintf(buff,"%s/%s",LOG_PATH,_fileInfo.files[index].name);
+		sprintf(buff,"%s/%s",LOG_PATH,_pFileInfo->files[index].name);
 		SPIFFS.remove(buff);
 		DBG_PRINTF("remove %d: %s\n",index,buff);
 		int i;
-		for(i=index+1;i<MAX_FILE_NUMBER;i++){
-			if(_fileInfo.files[i].name[0]=='\0') break;
-			DBG_PRINTF("move %d: %s\n",i,_fileInfo.files[i].name);
-			strcpy(_fileInfo.files[i-1].name,_fileInfo.files[i].name);
-			_fileInfo.files[i-1].time=_fileInfo.files[i].time;
+		for(i=index+1;i<MAX_LOG_FILE_NUMBER;i++){
+			if(_pFileInfo->files[i].name[0]=='\0') break;
+			DBG_PRINTF("move %d: %s\n",i,_pFileInfo->files[i].name);
+			strcpy(_pFileInfo->files[i-1].name,_pFileInfo->files[i].name);
+			_pFileInfo->files[i-1].time=_pFileInfo->files[i].time;
 		}
-		_fileInfo.files[i-1].name[0]='\0';
-		_fileInfo.files[i-1].time =0;
+		_pFileInfo->files[i-1].name[0]='\0';
+		_pFileInfo->files[i-1].time =0;
 
 		checkspace();
 		saveIdxFile();
@@ -96,10 +96,10 @@ BrewLogger::BrewLogger(void){
 
 	bool BrewLogger::resumeSession()
 	{
-    	_resumeLastLogTime = _fileInfo.starttime;
+    	_resumeLastLogTime = _pFileInfo->starttime;
 
 		char buff[36];
-		sprintf(buff,"%s/%s",LOG_PATH,_fileInfo.logname);
+		sprintf(buff,"%s/%s",LOG_PATH,_pFileInfo->logname);
 
 		_logFile=SPIFFS.open(buff,"a+");
 		if(! _logFile){
@@ -116,14 +116,26 @@ BrewLogger::BrewLogger(void){
 		}
 
 		size_t dataAvail;
-		int tag, mask;
+		uint8_t tag, mask;
+
+		tag= _logFile.read();
+		mask = _logFile.read();
+
+		if(tag == StartLogTag){
+			_calibrating = (mask & 0x20) != 0x20;
+			DBG_PRINTF("resume cal:%d\n",_calibrating);
+			for(int v=0;v<6;v++) _logFile.read();
+		}else{
+			DBG_PRINTF("resume failed, no start tag\n");
+			_logFile.close();
+			return false;
+		}
 		while((dataAvail=_logFile.available())){
-			
 			if (dataAvail<2 ) break;
 
 			tag= _logFile.read();
 			mask = _logFile.read();
-	
+
 			if(tag == PeriodTag){
 				// advance one tick
 		        _resumeLastLogTime += _tempLogPeriod/1000;
@@ -156,15 +168,12 @@ BrewLogger::BrewLogger(void){
 					size_t d1 =(size_t)_logFile.read();
 		    		size_t d0 =(size_t)_logFile.read();
 					size_t tdiff= (mask <<16) + (d1 << 8) + d0;
-			    	_resumeLastLogTime = _fileInfo.starttime + tdiff;
-			}else if(tag == CalibrationPointTag || tag == OriginGravityTag){
+			    	_resumeLastLogTime = _pFileInfo->starttime + tdiff;
+			}else if(tag == CalibrationPointTag  || tag == OriginGravityTag || tag == IgnoredCalPointMaskTag) {
 				if (dataAvail<4 ) break;
 				_logFile.read();
 				_logFile.read();
-			}else if(tag == StartLogTag){
-				_calibrating = (mask & 0x20) ^ 0x20;
-				for(int v=0;v<6;v++) _logFile.read();
-			}else if(tag == StateTag || tag == ModeTag || tag ==CorrectionTempTag){
+			}else if(tag == StateTag  || tag == ModeTag  || tag ==CorrectionTempTag ){
 				// DO nothing.
 			}else{
 				DBG_PRINTF("Unknown tag %d,%d @%ld\n",tag,mask,dataAvail);
@@ -177,9 +186,9 @@ BrewLogger::BrewLogger(void){
 		}
 		// seek for SeekEnd might has a bug. use 
 		//_logFile.seek(dataAvail,SeekEnd);
-		_logFile.seek(fsize - dataAvail,SeekSet);
+		_logFile.seek(fsize,SeekSet);
 		_logIndex =0;
-		_savedLength = fsize - dataAvail;
+		_savedLength = fsize;
 		DBG_PRINTF("resume, total _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
 
 		_lastTempLog=0;
@@ -200,7 +209,7 @@ BrewLogger::BrewLogger(void){
 			DBG_PRINTF("Not enough space:%d\n",_fsspace);
 			return false;
 		}
-		strcpy(_fileInfo.logname,filename);
+		strcpy(_pFileInfo->logname,filename);
 		char buff[36];
 		sprintf(buff,"%s/%s",LOG_PATH,filename);
 
@@ -211,7 +220,7 @@ BrewLogger::BrewLogger(void){
 			return false;
 		}
 
-		_fileInfo.starttime= TimeKeeper.getTimeSeconds();
+		_pFileInfo->starttime= TimeKeeper.getTimeSeconds();
 		_logIndex = 0;
 
 		_lastTempLog=0;
@@ -239,19 +248,19 @@ BrewLogger::BrewLogger(void){
 		_logFile.close();
 		// copy the file name into last entry
 		int index=0;
-		for(;index<MAX_FILE_NUMBER;index++)
+		for(;index<MAX_LOG_FILE_NUMBER;index++)
 		{
-			if(_fileInfo.files[index].name[0] == 0) break;
+			if(_pFileInfo->files[index].name[0] == 0) break;
 		}
 		// exceptional case.
-		if(index == MAX_FILE_NUMBER){
+		if(index == MAX_LOG_FILE_NUMBER){
 			rmLog(0);
-			index = MAX_FILE_NUMBER-1;
+			index = -1;
 		}
-		strcpy(_fileInfo.files[index].name,_fileInfo.logname);
-		_fileInfo.files[index].time = _fileInfo.starttime;
-		_fileInfo.logname[0]='\0';
-		_fileInfo.starttime=0;
+		strcpy(_pFileInfo->files[index].name,_pFileInfo->logname);
+		_pFileInfo->files[index].time = _pFileInfo->starttime;
+		_pFileInfo->logname[0]='\0';
+		_pFileInfo->starttime=0;
 		saveIdxFile();
 
 		startVolatileLog();
@@ -371,7 +380,11 @@ BrewLogger::BrewLogger(void){
 		// in abnormal cases, the file size is total size since all data are "written".
 
 		DBG_PRINTF("beginCopyAfter:%d, _logIndex=%ld, saved=%ld, return:%ld, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
-		if(last >= (_logIndex +_savedLength)) return 0;
+		if(last >= (_logIndex +_savedLength)){
+            DBG_PRINTF(" return:0\n");
+            return 0;
+        }
+        DBG_PRINTF(" return:%ld\n",_logIndex+_savedLength - last);
 		return ( _logIndex+_savedLength - last);
 	}
 
@@ -391,7 +404,7 @@ BrewLogger::BrewLogger(void){
 		// the staring data is not in buffer
 		if( rindex < _savedLength){
 
-			sizeRead = _savedLength - rindex;
+			sizeRead = _savedLength +_logIndex - rindex;
 			if(sizeRead > maxLen) sizeRead=maxLen;
 
 			_logFile.seek(rindex,SeekSet);
@@ -428,7 +441,7 @@ BrewLogger::BrewLogger(void){
 
 	void BrewLogger::getFilePath(char* buf,int index)
 	{
-		sprintf(buf,"%s/%s",LOG_PATH,_fileInfo.files[index].name);
+		sprintf(buf,"%s/%s",LOG_PATH,_pFileInfo->files[index].name);
 	}
 
 	size_t BrewLogger::volatileDataOffset(void)
@@ -519,6 +532,20 @@ BrewLogger::BrewLogger(void){
 		writeBuffer(idx,CorrectionTempTag);
 		writeBuffer(idx+1,(uint8_t)temp);
 	}
+	#define ICPM_B1(m)  (((m)>>14) & 0x7F)
+	#define ICPM_B2(m)  (((m)>>7) & 0x7F)
+	#define ICPM_B3(m)  ((m) & 0x7F)
+	void BrewLogger::addIgnoredCalPointMask(uint32_t mask)
+	{
+		if(!_recording) return;
+		int idx = allocByte(4);
+		if(idx < 0) return;
+		writeBuffer(idx,IgnoredCalPointMaskTag);
+		writeBuffer(idx+1,ICPM_B1(mask));
+		writeBuffer(idx+2,ICPM_B2(mask));
+		writeBuffer(idx+3,ICPM_B3(mask));
+	}
+
 	void BrewLogger::addTiltInWater(float tilt,float reading)
 	{
 		if(!_recording) return;
@@ -612,10 +639,10 @@ BrewLogger::BrewLogger(void){
 		int period = _tempLogPeriod/1000;
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
-		*ptr++ = (char) (_fileInfo.starttime >> 24);
-		*ptr++ = (char) (_fileInfo.starttime >> 16);
-		*ptr++ = (char) (_fileInfo.starttime >> 8);
-		*ptr++ = (char) (_fileInfo.starttime & 0xFF);
+		*ptr++ = (char) (_pFileInfo->starttime >> 24);
+		*ptr++ = (char) (_pFileInfo->starttime >> 16);
+		*ptr++ = (char) (_pFileInfo->starttime >> 8);
+		*ptr++ = (char) (_pFileInfo->starttime & 0xFF);
 		_logIndex=0;
 		_savedLength=0;
 		commitData(_logIndex,ptr - _logBuffer );
@@ -780,7 +807,7 @@ BrewLogger::BrewLogger(void){
 			DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
 			_logFile.close();
 			char buff[36];
-			sprintf(buff,"%s/%s",LOG_PATH,_fileInfo.logname);
+			sprintf(buff,"%s/%s",LOG_PATH,_pFileInfo->logname);
 
 			_logFile=SPIFFS.open(buff,"a+");
 			_logFile.write((const uint8_t*)buf+wlen,len-wlen);
@@ -839,8 +866,8 @@ BrewLogger::BrewLogger(void){
 		if(idx < 0) return;
 		writeBuffer(idx,ResumeBrewTag); //*ptr = ResumeBrewTag;
 		size_t rtime= TimeKeeper.getTimeSeconds();
-		size_t gap=rtime - _fileInfo.starttime;
-		DBG_PRINTF("resume, start:%d, current:%d gap:%d\n",_fileInfo.starttime,rtime,gap);
+		size_t gap=rtime - _pFileInfo->starttime;
+		DBG_PRINTF("resume, start:%d, current:%d gap:%d\n",_pFileInfo->starttime,rtime,gap);
 		//if (gap > 255) gap = 255;
 		writeBuffer(idx+1,(uint8_t) (gap>>16)&0xFF );
 		writeBuffer(idx+2,(uint8_t) (gap>>8)&0xFF );
@@ -850,28 +877,11 @@ BrewLogger::BrewLogger(void){
 
 	void BrewLogger::loadIdxFile(void)
 	{
-		// load index
-		File idxFile= SPIFFS.open(LOG_RECORD_FILE,"r+");
-		if(idxFile){
-			idxFile.readBytes((char*)&_fileInfo,sizeof(_fileInfo));
-			idxFile.close();
-			//DBG_PRINTF("Load index from file\n");
-		}else{
-			for(uint8_t i=0;i<MAX_FILE_NUMBER;i++){
-				_fileInfo.files[i].name[0] = '\0';
-				_fileInfo.logname[0]='\0';
-				_fileInfo.starttime=0;
-			}
-		}
+        _pFileInfo = theSettings.logFileIndexes();
 	}
 
 	void BrewLogger::saveIdxFile(void)
 	{
-		File idxFile= SPIFFS.open(LOG_RECORD_FILE,"w+");
-		if(idxFile){
-			idxFile.write((uint8_t*)&_fileInfo,sizeof(_fileInfo));
-			idxFile.close();
-			//DBG_PRINTF("save file index\n");
-		}
+        theSettings.save();
 	}
 
