@@ -28,7 +28,7 @@ function verifyIP(t) {
 
 function loadSetting() {
     s_ajax({
-        url: "brewpi.cfg",
+        url: "config?cfg=1",
         m: "GET",
         success: function(data) {
             var j = JSON.parse(data);
@@ -99,6 +99,6 @@ function save() {
 }
 
 function load() {
-    Q("#verinfo").innerHTML = "v" + JSVERSION;
+    if (Q("#verinfo")) Q("#verinfo").innerHTML = "v" + JSVERSION;
     loadSetting();
 }

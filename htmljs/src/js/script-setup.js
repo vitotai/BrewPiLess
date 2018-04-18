@@ -157,7 +157,7 @@ function list() {
 }
 
 function erase() {
-    BWF.send("E")
+    if (confirm("Erase All Setting?")) BWF.send("E");
 }
 
 function listGot() {
@@ -179,10 +179,12 @@ function detachNode(query) {
     return d;
 }
 
-function init() {
-
-    getActiveNavItem();
-    Q("#verinfo").innerHTML = "v" + JSVERSION;
+function init(classic) {
+    if (typeof classic == "undefined") classic = false;
+    if (!classic) {
+        getActiveNavItem();
+        Q("#verinfo").innerHTML = "v" + JSVERSION;
+    }
 
     window.sensorContainer = detachNode(".device-container.sensor-device");
     window.pinContainer = detachNode(".device-container.pin-device");

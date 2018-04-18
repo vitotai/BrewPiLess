@@ -87,11 +87,25 @@
             <div class="card">
                 <h5>Local Log</h5>
 
-                <div layout horizontal cross-center>
-                    <h6 id="logtitle" class="inline-header">New Log Name:</h6>
-                    <input type="text" id="logname" size="24" maxlength="24"></input>
-                    <button id="logbutton" class="btn">Start Log</button>
+                <div id=logctrl layout horizontal cross-center>
+                    <div id=logstartinput>
+                        <span id="logtitle">New Log Name:</span>
+                        <input type="text" id="logname" size="24" maxlength="24"></input>
+                        <button id="startlogbutton">Start Logging</button>
+                        <div style="margin-left:16px">
+                            <strong> Optoins:</strong><br> Calibrate iSpindel <input type=checkbox id=calispindel>
+                            <br> Tilt value in water
+                            <input type=text id=tiltinw size=6> Hydrometer reading:
+                            <input type=text id=hydrometer size=6> , or water @ <input type=text id=watertemp size=4>&deg; calibrated <input type=text id=caltemp size=4>&deg;
+                            <select id=tempunit><option vlue=C>C</option><option value=F>F</option></select>
+                        </div>
+                    </div>
+                    <div id=logstopinput style="display:none">
+                        Recording <strong id="loggingtitle"></strong> since <strong id=start-log-date></strong>
+                        <button id="stoplogbutton">Stop Logging</button>
+                    </div>
                 </div>
+
 
                 <div id="fsinfo">
                     Free Space:

@@ -25,6 +25,7 @@ function TabPane(modes) {
             dselect(t.cmode);
             // select current
             select(tm);
+            return false;
         };
     }
     // select the first one
@@ -35,17 +36,37 @@ function TabPane(modes) {
 var Capper = {
     init: function() {
         var t = this;
+        // three conditions:
+        //  classic, info-pane within capper-frame
+        //  Tom's : info-pane only in index.htm
+        //  Tom's UI: capper-frame(control) in control.htm
+
+        var cp = Q(".capping-info-pane");
+        if (cp) {
+            // classic or Tom's index.htm, do no harm in classic
+            cp.style.display = "none";
+        }
+
+        var cf = Q("#capper-frame");
+        if (cf) {
+            // classic or Tom's control.htm
+            cf.style.display = "none";
+            t.initCtrl();
+        }
+
+    },
+    initCtrl: function() {
+        var t = this;
         t.tabs = new TabPane(["tab-gravity", "tab-time", "tab-manual"]);
-        Q("#capper-frame").style.display = "none";
         var date_in = Q("#captimeinput");
         t.time = new Date();
         date_in.onchange = function() {
             var nd = new Date(date_in.value);
             if (isNaN(nd.getTime())) {
                 // console.log("invalid date");
-                t.setTime(t.time);
+                t.setInputTime(t.time);
             } else {
-                t.setTime(nd);
+                t.setInputTime(nd);
             }
         };
         Q("#cap-apply").onclick = function() {
@@ -61,8 +82,8 @@ var Capper = {
                     return;
                 } else t.send("at=" + (time.getTime() / 1000));
             } else {
-                if (Q("#capswitch").checked) t.send("cap=0");
-                else t.send("cap=1");
+                if (Q("#capswitch").checked) t.send("cap=1");
+                else t.send("cap=0");
             }
         };
     },
@@ -81,6 +102,7 @@ var Capper = {
 
     },
     setcap: function(capped) {
+        if (!Q("#capstate-open")) return;
         if (capped) {
             Q("#capstate-open").style.display = "none";
             Q("#capstate-close").style.display = "inline-block";
@@ -89,34 +111,58 @@ var Capper = {
             Q("#capstate-close").style.display = "none";
         }
     },
-    setTime: function(d) {
+    setInputTime: function(d) {
         this.time = d;
         var date_in = Q("#captimeinput");
         date_in.value = (date_in.type == "datetime-local") ? formatDateForPicker(d) : formatDate(d);
     },
     status: function(capst) {
         // first set cap
-        if (typeof capst["c"] != "undefined") this.setcap(capst["c"]);
         //0: none, 1: open, 2: close, 3:time, 4: gravity
-        if (typeof capst["m"] == "undefined") return;
-        var mode = capst.m;
-        if (mode == 0) return;
-        Q("#capper-frame").style.display = "block";
-        var IDs = ["", "cs-manopen", "cs-mancap", "cs-timecon", "cs-sgcon"];
-        for (var i = 1; i < IDs.length; i++) {
-            if (i == mode) Q("#" + IDs[i]).style.display = "inline-block";
-            else Q("#" + IDs[i]).style.display = "none";
+        //  might need to hide the DOM, but a reload will solve this. just save some code
+        if (typeof capst["m"] == "undefined" || capst.m == 0) return;
+
+        this.statusInfo(capst);
+        this.updateCtrl(capst);
+    },
+    statusInfo: function(capst) {
+        // cap status
+        var cp = Q(".capping-info-pane");
+        if (cp) {
+            cp.style.display = "block";
+
+            this.setcap(capst["c"]);
+            // info: cap condition
+            var IDs = ["", "cs-manopen", "cs-mancap", "cs-timecon", "cs-sgcon"];
+            for (var i = 1; i < IDs.length; i++) {
+                if (i == capst.m) Q("#" + IDs[i]).style.display = "inline-block";
+                else Q("#" + IDs[i]).style.display = "none";
+            }
+
+            if (typeof capst["g"] != "undefined")
+                Q("#capgravityset").innerHTML = capst["g"];
+
+            if (typeof capst["t"] != "undefined")
+                Q("#captimeset").innerHTML = formatDate(new Date(capst["t"] * 1000));
         }
-        if (typeof capst["g"] != "undefined") {
-            Q("#capgravityset").innerHTML = capst["g"];
-            Q("#capgravityinput").value = capst["g"];
-        }
-        if (typeof capst["t"] != "undefined") {
-            var dt = new Date(capst["t"] * 1000);
-            Q("#captimeset").innerHTML = formatDate(dt);
-            this.setTime(dt);
-        } else {
-            this.setTime(new Date());
+    },
+    updateCtrl: function(capst) {
+        // cap control
+        var cf = Q("#capper-frame");
+        if (cf) {
+            cf.style.display = "block";
+
+            if (typeof capst["g"] != "undefined")
+                Q("#capgravityinput").value = capst["g"];
+
+            if (typeof capst["t"] != "undefined")
+                this.setInputTime(new Date(capst["t"] * 1000));
+            else
+                this.setInputTime(new Date());
+
+            // check mode
+            if (capst.m == 1) Q("#capswitch").checked = false;
+            else if (capst.m == 2) Q("#capswitch").checked = true;
         }
     }
 };

@@ -202,7 +202,9 @@ inline void** deviceTarget(DeviceConfig& config)
 #endif
 
 #if EanbleParasiteTempControl
+	case DEVICE_PTC_COOL:
 		ppv = (void**)& parasiteTempController.cooler;
+		break;
 #endif
 
 	case DEVICE_BEER_TEMP:

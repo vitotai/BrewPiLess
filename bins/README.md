@@ -1,4 +1,6 @@
-# Prebuilt Images
+# **Note: ALL BPL settings will be gone after upgrading to v3.0**
+
+# Prebuilt Image
 
 NOTE: If you are upgrading from version prior to v2.3 without glycol option, you will need to run "Device Setup" again. Erase the EEPROM, setup the sensors, and the PINs.
 

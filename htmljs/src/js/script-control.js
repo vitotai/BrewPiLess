@@ -1,3 +1,6 @@
+var BPURL = "/tschedule";
+var MAX_STEP = 7;
+
 function formatDate(dt) {
     //	var y = dt.getFullYear();
     //	var M = dt.getMonth() +1;
@@ -241,7 +244,7 @@ var profileEditor = {
         var tb = document.getElementById("profile_t").getElementsByTagName("tbody")[0];
         var rowlist = tb.getElementsByTagName("tr");
 
-        if (rowlist.length >= 13) {
+        if (rowlist.length >= MAX_STEP) {
             alert("Too many steps!");
             return;
         }
@@ -445,11 +448,10 @@ var profileEditor = {
         if (u == this.tempUnit) return;
         this.tempUnit = u;
         var rl = this.rowList();
-
         for (var i = 0; i < rl.length; i++) {
-            var tcell = rl[i].querySelector('td.ptemp');
+            var tcell = rl[i].querySelector('td.stage-temp');
             var temp = parseFloat(tcell.innerHTML);
-            tcell.innerHTML = (u == 'C') ? F2C(temp) : C2F(temp);
+            if (!isNaN(temp)) tcell.innerHTML = (u == 'C') ? F2C(temp) : C2F(temp);
         }
     }
 };
@@ -714,6 +716,7 @@ var modekeeper = {
                 me.dselect(me.cmode);
                 me.select(tm);
                 me.cmode = tm;
+                return false;
             };
         }
         me.cmode = "profile";
@@ -791,11 +794,17 @@ function saveprofile() {
     var json = JSON.stringify(r);
     console.log("result=" + json);
 
-    BWF.save(BWF.BrewProfile, json, function() {
-        profileEditor.markdirty(false);
-        alert("Done.");
-    }, function(e) {
-        alert("save failed:" + e);
+    s_ajax({
+        url: BPURL,
+        m: "POST",
+        mime: "application/x-www-form-urlencoded",
+        data: "data=" + encodeURIComponent(json),
+        success: function(d) {
+            alert("Done.")
+        },
+        fail: function(d) {
+            alert("failed to save.");
+        }
     });
 }
 
@@ -820,36 +829,19 @@ function ccparameter(s) {
     BrewPiSetting = setting;
 }
 
-function onloadCtrl(next) {
+function rcvBeerProfile(p) {
+    updateTempUnit(p.u); // using profile temp before we get from controller
+    BrewPiSetting.tempUnit = p.u;
+    profileEditor.initProfile(p);
+    ControlChart.init("tc_chart", profileEditor.chartdata(), p.u);
+    closeDlgLoading();
+}
+
+function initctrl_C(next) {
     modekeeper.init();
-
     Capper.init();
-
+    modekeeper.init();
     openDlgLoading();
-
-    function complete() {
-        closeDlgLoading();
-        next();
-    }
-    //get current profile
-    BWF.load(BWF.BrewProfile, function(d) {
-        try {
-            var p = JSON.parse(d);
-            updateTempUnit(p.u); // using profile temp before we get from controller
-            BrewPiSetting.tempUnit = p.u;
-            profileEditor.initProfile(p);
-            ControlChart.init("tc_chart", profileEditor.chartdata(), p.u);
-        } catch (err) {
-            console.log("error:" + err);
-            profileEditor.initProfile();
-            ControlChart.init("tc_chart", profileEditor.chartdata(), profileEditor.tempUnit);
-        }
-        complete();
-    }, function(e) {
-        profileEditor.initProfile();
-        ControlChart.init("tc_chart", profileEditor.chartdata(), profileEditor.tempUnit);
-        complete();
-    });
 }
 
 function communicationError() {
@@ -862,27 +854,32 @@ function communicationError() {
 
 function initctrl() {
     getActiveNavItem();
-    onloadCtrl(function() {
-        BWF.init({
-            onconnect: function() {
-                BWF.send("c");
+    Capper.init();
+    modekeeper.init();
+    openDlgLoading();
+
+    BWF.init({
+        onconnect: function() {
+            BWF.send("c");
+        },
+        error: function(e) {
+            //console.log("error");
+            communicationError();
+        },
+        handlers: {
+            A: function(c) {
+                if (typeof c["nn"] != "undefined") {
+                    Q("#hostname").innerHTML = c["nn"];
+                }
+                if (typeof c["ver"] != "undefined") {
+                    if (JSVERSION != c["ver"]) alert("Version Mismatched!. Reload the page.");
+                    Q("#verinfo").innerHTML = "v" + c["ver"];
+                }
+                if (typeof c["cap"] != "undefined")
+                    Capper.status(c["cap"]);
             },
-            error: function(e) {
-                //console.log("error");
-                communicationError();
-            },
-            handlers: {
-                V: function(c) {
-                    if (typeof c["nn"] != "undefined") {
-                        Q("#hostname").innerHTML = c["nn"];
-                    }
-                    if (typeof c["ver"] != "undefined") {
-                        if (JSVERSION != c["ver"]) alert("Version Mismatched!. Reload the page.");
-                        Q("#verinfo").innerHTML = "v" + c["ver"];
-                    }
-                },
-                C: function(c) { ccparameter(c); }
-            }
-        });
+            C: function(c) { ccparameter(c); },
+            B: rcvBeerProfile
+        }
     });
 }

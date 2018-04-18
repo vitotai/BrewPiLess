@@ -1,14 +1,15 @@
 #include <time.h>
 #include <Arduino.h>
 #include <FS.h>
-#include "espconfig.h"
+#include "Config.h"
+#include "BPLSettings.h"
 extern "C" {
 #include <sntp.h>
 }
 #include "TimeKeeper.h"
 
 #define TIME_SAVE_FILENAME "/time.saved"
-#define TIME_SAVING_PERIOD 300
+#define TIME_SAVING_PERIOD 3600
 
 #define RESYNC_TIME 43200000UL
 // time gap in seconds from 01.01.1900 (NTP time) to 01.01.1970 (UNIX time)
@@ -105,28 +106,21 @@ const char* TimeKeeperClass::getDateTimeStr(void)
 
 void TimeKeeperClass::saveTime(time_t t)
 {
-	File f = SPIFFS.open(TIME_SAVE_FILENAME, "w");
-	if(!f){
-		DBG_PRINTF("Failed to save time!\n");
-		return;
-	}
-	f.write((unsigned char*)&t,sizeof(time_t));
-	f.write((unsigned char*)&_timezoneOffset,sizeof(_timezoneOffset));
-	f.close();
+	(theSettings.timeInformation())->savedTime = t;
+	theSettings.save();
 }
 
 time_t TimeKeeperClass::loadTime(void)
 {
-	time_t t;
-	File f = SPIFFS.open(TIME_SAVE_FILENAME, "r");
-	if(!f){
-		DBG_PRINTF("Failed to open time saving file!\n");
-		return 0;
-	}
-	f.read((unsigned char*)&t,sizeof(time_t));
-	if(! f.read((unsigned char*)&_timezoneOffset,sizeof(_timezoneOffset)) ){
-		_timezoneOffset=0;
-	}
-	f.close();
-	return t;
+	return (theSettings.timeInformation())->savedTime;
+}
+
+void TimeKeeperClass::setTimezoneOffset(int32_t offset){
+	(theSettings.timeInformation())->timezoneoffset = offset;
+}
+int32_t TimeKeeperClass::getTimezoneOffset(void){
+	return (theSettings.timeInformation())->timezoneoffset;
+}
+time_t TimeKeeperClass::getLocalTimeSeconds(void){ 
+	return  getTimeSeconds() + (theSettings.timeInformation())->timezoneoffset;
 }

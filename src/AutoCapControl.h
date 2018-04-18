@@ -3,22 +3,19 @@
 
 #include "Brewpi.h"
 #include "Actuator.h"
+#include "BPLSettings.h"
 
-typedef enum _AutoCapMode{
-    AutoCapModeNone=0,
-    AutoCapModeManualOpen=1,
-    AutoCapModeManualClose=2,
-    AutoCapModeTime=3,
-    AutoCapModeGravity=4
-}AutoCapMode;
+#define AutoCapModeNone 0
+#define AutoCapModeManualOpen 1
+#define AutoCapModeManualClose 2
+#define AutoCapModeTime 3
+#define AutoCapModeGravity 4
 
 class AutoCapControl
 {
 public:
 
-    AutoCapControl(void){
-        _autoCapMode=  AutoCapModeNone;
-    }
+    AutoCapControl(void){}
 
     bool isCapOn(void){ return AutoCapControl::capper->isActive();}
     bool autoCapOn(uint32_t current, float gravity);
@@ -28,15 +25,13 @@ public:
     void capAtTime(uint32_t now);
     void catOnGravity(float sg);
     
-    uint32_t targetTime(void){return _targetTime;}
-    float    targetGravity(void){return _targetGravity;}
-    AutoCapMode mode(void){return _autoCapMode;}
+    uint32_t targetTime(void){return _settings->condition.targetTime;}
+    float    targetGravity(void){return _settings->condition.targetGravity;}
+    uint8_t mode(void){return _settings->autoCapMode;}
 
     static Actuator* capper;
 private:
-    AutoCapMode _autoCapMode;
-    uint32_t _targetTime;
-    float _targetGravity;
+    AutoCapSettings *_settings;
 
     void saveConfig(void);
 };

@@ -85,17 +85,18 @@
         var RoomTemperatureIndex = 4;
 
         var BrewChart = function(div) {
-            this.cid = div;
-            this.ctime = 0;
-            this.interval = 60;
-            this.numLine = 7;
-            this.numData = 8;
-            this.calculateSG = false;
-            this.calibrating = false;
+            var t = this;
+            t.cid = div;
+            t.ctime = 0;
+            t.interval = 60;
+            t.numLine = 7;
+            t.numData = 8;
+            t.calculateSG = false;
+            t.calibrating = false;
 
-            this.lidx = 0;
-            this.celius = true;
-            this.clearData();
+            t.lidx = 0;
+            t.celius = true;
+            t.clearData();
         };
         var colorIdle = "white";
         var colorCool = "rgba(0, 0, 255, 0.4)";
@@ -477,58 +478,85 @@
         };
 
         BrewChart.prototype.getTiltAround = function(idx) {
+            var t = this;
             var left = -1;
             var right = -1;
 
-            if (this.angles[idx] != null) return this.angles[idx];
+            if (t.angles[idx] != null) return [t.angles[idx], t.data[idx][AuxTempLine]];
 
             for (var i = idx - 1; i >= 0; i--) {
-                if (this.angles[i] != null) {
+                if (t.angles[i] != null) {
                     left = i;
                     break;
                 }
             }
-            for (var i = idx + 1; i < this.angles.length > 0; i++) {
-                if (this.angles[i] != null) {
+            for (var i = idx + 1; i < t.angles.length > 0; i++) {
+                if (t.angles[i] != null) {
                     right = i;
                     break;
                 }
             }
-            if (left < 0 && right < 0) return NaN;
-            if (left < 0) return this.angles[right];
-            if (right < 0) return this.angles[left];
-            return this.angles[left] + (this.angles[right] - this.angles[left]) / (right - left) * (idx - left);
+            if (left < 0 && right < 0) return null;
+            if (left < 0) return [t.angles[right], t.data[right][AuxTempLine]];
+            if (right < 0) return [t.angles[left], t.data[left][AuxTempLine]];
+            return [t.angles[left] + (t.angles[right] - t.angles[left]) / (right - left) * (idx - left),
+                (t.data[left][AuxTempLine] + t.data[right][AuxTempLine]) / 2
+            ];
         };
 
         BrewChart.prototype.getCalibration = function() {
             var pairs = [];
             for (var i = 0; i < this.data.length; i++) {
-                if (this.data[i][7]) {
-                    var tilt = this.getTiltAround(i);
-                    if (!isNaN(tilt)) pairs.push([tilt, this.data[i][7]]);
+                if (this.data[i][GravityLine]) {
+                    var data = this.getTiltAround(i);
+                    // corrected the reading into current beer data
+                    if (data) {
+                        var beerTemp = this.celius ? C2F(data[1]) : data[1];
+                        var converted = BrewMath.tempCorrectionF(this.data[i][GravityLine], C2F(this.coTemp), beerTemp);
+                        pairs.push([data[0], converted]);
+                    }
                 }
             }
-            pairs.push([this.tiltInWater, 1.0]);
+            pairs.push([this.tiltInWater, this.readingInWater]);
             return pairs;
+        };
+        BrewChart.prototype.filterPoints = function(points, mask) {
+            var nps = [];
+            for (var i = 0; i < points.length; i++) {
+                if (!(mask & (0x1 << i))) nps.push(points[i]);
+            }
+            return nps;
+        };
+
+        BrewChart.prototype.setIgnoredMask = function(mask) {
+            if (this.cal_igmask == mask) return false;
+            this.cal_igmask = mask;
+            return true;
         };
 
         BrewChart.prototype.getFormula = function() {
             var points = this.getCalibration();
             if (points.length < 2) return;
-            var poly = regression('polynomial', points, (points.length > 3) ? 3 : ((points.length > 2) ? 2 : 1), {
-                precision: 9
-            });
+            var cpoints = this.filterPoints(points, this.cal_igmask);
+            if (cpoints.length < 2) {
+                cpoints = points;
+                this.cal_igmask = 0;
+            }
+            var poly = regression('polynomial', cpoints, (cpoints.length > 3) ?
+                3 : ((cpoints.length > 2) ? 2 : 1), {
+                    precision: 9
+                });
             this.calibrationPoints = points;
             //this.equation = poly.equation;
             this.calculateSG = true;
 
-            this.sgByTilt = (points.length > 3) ?
+            this.sgByTilt = (cpoints.length > 3) ?
                 function(x) {
                     return poly.equation[0] +
                         poly.equation[1] * x +
                         poly.equation[2] * x * x +
                         poly.equation[3] * x * x * x;
-                } : ((points.length > 2) ? function(x) {
+                } : ((cpoints.length > 2) ? function(x) {
                     return poly.equation[0] +
                         poly.equation[1] * x +
                         poly.equation[2] * x * x;
@@ -537,17 +565,20 @@
                         poly.equation[1] * x;
                 });
 
-            this.coefficients = (points.length > 3) ? [poly.equation[0], poly.equation[1], poly.equation[2], poly.equation[3]] :
-                ((points.length > 2) ? [poly.equation[0], poly.equation[1], poly.equation[2], 0] : [poly.equation[0], poly.equation[1], 0, 0]);
+            this.coefficients = (cpoints.length > 3) ? [poly.equation[0], poly.equation[1], poly.equation[2], poly.equation[3]] :
+                ((cpoints.length > 2) ? [poly.equation[0], poly.equation[1], poly.equation[2], 0] : [poly.equation[0], poly.equation[1], 0, 0]);
             this.npt = points.length;
         };
-
-        BrewChart.prototype.tempCorrected = function(Reading, T) {
-            var F = (this.celius) ? C2F(T) : T;
-            //            return Reading + 0.001 * (1.313454 - (0.132674 * F) + (0.002057793 * F * F) - (0.000002627634 * F * F * F));
-            return Reading * ((1.00130346 - 0.000134722124 * F + 0.00000204052596 * F * F - 0.00000000232820948 * F * F * F) / (1.000845684));
-        };
-
+        /*
+                BrewChart.prototype.tempCorrected = function(sg, T, ct) {
+                    var F = (this.celius) ? C2F(T) : T;
+                    var c = C2F(ct);
+                    var nsg = sg * ((1.00130346 - 0.000134722124 * F + 0.00000204052596 * F * F -
+                            0.00000000232820948 * F * F * F) /
+                        (1.00130346 - 0.000134722124 * c + 0.00000204052596 * c * c - 0.00000000232820948 * c * c * c));
+                    return nsg;
+                };
+        */
         BrewChart.prototype.process = function(data) {
             var newchart = false;
             var sgPoint = false;
@@ -579,13 +610,16 @@
                     t.angles = [];
                     t.rawSG = [];
                     t.cstate = 0;
+                    t.coTemp = 20;
+                    t.cal_igmask = 0;
                     this.clearData();
                     newchart = true;
                     // gravity tracking
                     GravityFilter.reset();
                     GravityTracker.init();
                     // gravity tracking
-
+                } else if (d0 == 0xF3) { // correction temperature
+                    t.coTemp = d1; // always celisus
                 } else if (d0 == 0xF4) { // mode
                     //console.log(""+t.ctime/t.interval +" Stage:"+d1);
                     t.addMode(d1, t.ctime * 1000);
@@ -597,15 +631,17 @@
                     var d3 = data[i++];
                     var tdiff = d3 + (d2 << 8) + (d1 << 16);
                     var ntime = t.starttime + tdiff;
-                    if (ntime > t.ctime && ntime - t.ctime < 600) {
-                        if (ntime - t.ctime > t.interval) t.ctime = ntime;
-                    } else {
+                    if (ntime > t.ctime) {
                         // add a gap to it                   
                         t.data.push([new Date(t.ctime * 1000), NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN]);
                         t.state.push(null);
                         t.angles.push(null);
                         t.rawSG.push[null];
-                        t.ctime += t.interval;
+
+                        if (ntime - t.ctime > t.interval)
+                            t.ctime = ntime;
+                        else
+                            t.ctime += t.interval;
                     }
                     t.addResume(d1);
                     // drop the data
@@ -624,11 +660,17 @@
                     var ll = data[i++];
                     var v = (hh & 0x7F) * 256 + ll;
                     t.og = v / 10000;
+                } else if (d0 == 0xFA) { //Ignored mask
+                    var b2 = data[i++];
+                    var b3 = data[i++];
+                    t.cal_igmask = (d1 << 14) + (b2 << 7) + b3;
                 } else if (d0 == 0xF9) { //Tilt in water
                     var hh = data[i++];
                     var ll = data[i++];
                     var v = (hh & 0x7F) * 256 + ll;
                     t.tiltInWater = v / 100;
+                    // 
+                    t.readingInWater = (d1 == 0) ? 1.0 : (0.9 + d1 / 1000);
                 } else if (d0 == 0xF0) { // record
                     t.changes = d1;
                     t.lidx = 0;
@@ -700,7 +742,8 @@
                 } else if (t.calculateSG) {
                     if (t.dataset[8] == null) dataset[7] = null;
                     else {
-                        sg = t.tempCorrected(t.sgByTilt(t.dataset[8]), dataset[AuxTempLine]);
+                        var temp = (this.celius) ? C2F(dataset[AuxTempLine]) : dataset[AuxTempLine];
+                        sg = BrewMath.tempCorrectionF(t.sgByTilt(t.dataset[8]), temp, C2F(t.coTemp));
                         dataset[7] = sg;
                     }
                 }

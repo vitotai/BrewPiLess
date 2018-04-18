@@ -1,0 +1,73 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrewPi Test Commands</title>
+    <meta name="apple-mobile-web-app-title" content="BrewPiLite">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script type="text/javascript" src="bwf.js"></script>
+</head>
+<style>
+    #log {
+        width: 100%;
+        height: 40em;
+        background: #eee;
+        overflow: scroll;
+        overflow-wrap: break-word;
+    }
+</style>
+<script>
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function log(d, m) {
+        var log = document.getElementById("log");
+        var t = new Date();
+        var tstr = t.getHours() + ":" + t.getMinutes() + ":" + t.getSeconds();
+        log.innerHTML = log.innerHTML + tstr + " " +
+            ((d == 'D') ? "&darr;" : "&uarr;") + " " +
+            escapeHtml(m) + "<br>";
+    }
+
+    function sendCmd() {
+        var f = document.getElementById("command");
+        var data = f.value.trim();
+        if (data.legnth == 0) return;
+        BWF.send(data);
+        log('U', data);
+        return false;
+    }
+
+    function clearLogs() {
+        document.getElementById("log").innerHTML = "";
+    }
+
+    function init() {
+        BWF.init({
+            error: function(e) {
+                alert(e);
+            },
+            raw: function(m) {
+                log('D', m);
+            }
+        });
+    }
+</script>
+
+<body onload=init()>
+    <div id="log">
+    </div>
+    <input id="command" type="text" size="60"></input>
+    <button onclick=sendCmd()>Send</button>
+    <button onclick=clearLogs()>Clear</button>
+
+</body>
+
+</html>

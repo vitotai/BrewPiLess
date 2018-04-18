@@ -30,8 +30,6 @@ function invoke(arg) {
 }
 
 var BWF = {
-    BrewProfile: "/brewing.json",
-    sse: true,
     process: function(msg) {
         if (this.raw != null) {
             this.raw(msg);
@@ -53,6 +51,11 @@ var BWF = {
         opt = (typeof opt == "undefined") ? {} : opt;
         //console.log("snd:" + data);
         var b = this;
+        if (b.state != 2) {
+            console.log("SSE not conneced.");
+            b.error(-2);
+            return;
+        }
         invoke({
             m: "POST",
             url: "/putline",
@@ -66,36 +69,37 @@ var BWF = {
         });
     },
     reconnecting: false,
+    state: 0, //0: disconnected, 1: connecting, 2. connected. 3:wait-reconnect
     connect: function() {
         var b = this;
         var es = new EventSource("/getline");
+        b.state = 1;
         es.onmessage = function(e) {
             b.process(e.data);
         };
         es.onerror = function() {
-            if (b.reconnecting) return;
+            b.state = 0;
             b.error(-2);
-            if (b.auto) setTimeout(function() { b.reconnect(); }, 5000);
+            if (b.auto) {
+                b.state = 3;
+                setTimeout(function() { b.reconnect(); }, 5000);
+            }
         };
         es.onopen = function() {
+            b.state = 2;
             b.onconnect();
         };
         b.es = es;
     },
     reconnect: function(forced) {
         forced = (typeof forced == "undefined") ? false : forced;
-        var me = this;
-        if (me.reconnecting) return;
-        if (!forced && me.es.readyState == 1) return;
-        me.reconnecting = true;
-        if (typeof me.es != "undefined") {
-            this.es.close();
-        } else {
-            this.ws.close();
-        }
+        var t = this;
+        if (!forced && t.es.readyState == 1) return;
+        // to ignore "onerror()"
+        t.es.onerror = function() {};
+        t.es.close();
         // this might triger onerror, and result in "reconnect" call again.
-        this.connect();
-        this.reconnecting = false;
+        t.connect();
     },
     init: function(arg) {
         var b = this;

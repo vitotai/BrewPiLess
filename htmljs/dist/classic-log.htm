@@ -1,0 +1,112 @@
+<html><head><title>Logging Setting</title><script>var JSVERSION = "3.0";
+
+function s_ajax(b) {
+    var c = new XMLHttpRequest();
+    c.onreadystatechange = function() {
+        if (c.readyState == 4) {
+            if (c.status == 200) {
+                b.success(c.responseText)
+            } else {
+                c.onerror(c.status)
+            }
+        }
+    };
+    c.ontimeout = function() {
+        if (typeof b["timeout"] != "undefined") b.timeout();
+        else c.onerror(-1)
+    }, c.onerror = function(a) {
+        if (typeof b["fail"] != "undefined") b.fail(a)
+    };
+    c.open(b.m, b.url, true);
+    if (typeof b["data"] != "undefined") {
+        c.setRequestHeader("Content-Type", (typeof b["mime"] != "undefined") ? b["mime"] : "application/x-www-form-urlencoded");
+        c.send(b.data)
+    } else c.send()
+}
+
+var Q = function(d) {
+    return document.querySelector(d);
+};
+
+function C2F(c) {
+    return Math.round((c * 1.8 + 32) * 10) / 10
+}
+
+function F2C(f) {
+    return Math.round((f - 32) / 1.8 * 10) / 10
+}
+
+function openDlgLoading() {
+    document.getElementById('dlg_loading').style.display = "block";
+}
+
+function closeDlgLoading() {
+    document.getElementById('dlg_loading').style.display = "none";
+}
+
+var BrewMath = {
+    abv: function(og, fg) {
+        return ((76.08 * (og - fg) / (1.775 - og)) * (fg / 0.794)).toFixed(1);
+    },
+    att: function(og, fg) {
+        return Math.round((og - fg) / (og - 1) * 100);
+    },
+    sg2pla: function(sg) {
+        return -616.868 + 1111.14 * sg - 630.272 * sg * sg + 135.997 * sg * sg * sg;
+    },
+    pla2sg: function(pla) {
+        return 1 + (pla / (258.6 - ((pla / 258.2) * 227.1)));
+    },
+    tempCorrectionF(sg, t, c) {
+        var nsg = sg * ((1.00130346 - 0.000134722124 * t + 0.00000204052596 * t * t - 0.00000000232820948 * t * t * t) /
+            (1.00130346 - 0.000134722124 * c + 0.00000204052596 * c * c - 0.00000000232820948 * c * c * c));
+        return nsg;
+    },
+    tempCorrection(celsius, sg, t, c) {
+        return celsius ? BrewMath.tempCorrectionF(sg, C2F(t), C2F(c)) : BrewMath.tempCorrectionF(sg, t, c);
+    }
+};
+
+Date.prototype.shortLocalizedString = function() {
+    var y = this.getYear() + 1900;
+    var re = new RegExp('[^\d]?' + y + '[^\d]?');
+    var n = this.toLocaleDateString();
+    var ds = n.replace(re, "");
+    var HH = this.getHours();
+    var MM = this.getMinutes();
+
+    function T(x) {
+        return (x > 9) ? x : ("0" + x);
+    }
+    return ds + " " + T(HH) + ":" + T(MM);
+};
+
+function getActiveNavItem() {
+    var path = window.location.pathname.split("/").pop();
+    if (path == "") path = "index.htm";
+    var element = Q('.options>li>a[href="/' + path + '"]');
+    element.className += 'active';
+}
+
+function formatDate(dt) {
+    //	var y = dt.getFullYear();
+    //	var M = dt.getMonth() +1;
+    //	var d = dt.getDate();
+    var h = dt.getHours();
+    var m = dt.getMinutes();
+    //    var s = dt.getSeconds();
+    function dd(n) {
+        return (n < 10) ? '0' + n : n;
+    }
+    //	return dd(M) + "/" + dd(d) + "/" + y +" "+ dd(h) +":"+dd(m)+":"+dd(s);
+    //	return dd(M) + "/" + dd(d) +" "+ dd(h) +":"+dd(m);
+    return dt.toLocaleDateString() + " " + dd(h) + ":" + dd(m);
+}
+
+function formatDateForPicker(date) {
+    var h = date.getHours();
+    var m = date.getMinutes();
+
+    function dd(n) { return (n < 10) ? '0' + n : n; }
+    return date.getFullYear() + "-" + dd(date.getMonth() + 1) + "-" + dd(date.getDate()) + "T" + dd(h) + ":" + dd(m);
+}</script><script>var logurl="log";Number.prototype.format=function(e,t,o,l){var r="\\d(?=(\\d{"+(t||3)+"})+"+(e>0?"\\D":"$")+")",n=this.toFixed(Math.max(0,~~e));return(l?n.replace(".",l):n).replace(new RegExp(r,"g"),"$&"+(o||","))},String.prototype.escapeJSON=function(){return this.replace(/[\\]/g,"\\\\").replace(/[\"]/g,'\\"').replace(/[\/]/g,"\\/").replace(/[\b]/g,"\\b").replace(/[\f]/g,"\\f").replace(/[\n]/g,"\\n").replace(/[\r]/g,"\\r").replace(/[\t]/g,"\\t")};var logs={url:"loglist.php",rmurl:"loglist.php?rm=",starturl:"loglist.php?start=",stopurl:"loglist.php?stop=1",dlurl:"loglist.php?dl=",ll:[],fs:{},logging:!1,vname:function(e){return""!=e&&!e.match(/[\W]/g)},dupname:function(e){var t=!1;return this.ll.forEach(function(o){e==o.name&&(t=!0)}),t},fsinfo:function(e,t){Q("#fssize").innerHTML=e.format(0,3,","),Q("#fsused").innerHTML=t.format(0,3,","),Q("#fsfree").innerHTML=(e-t).format(0,3,",")},stoplog:function(){if(this.logging&&confirm("Stop current logging?")){var e=Q("#logname").value.trim();s_ajax({url:this.stopurl+e,m:"GET",success:function(e){location.reload()},fail:function(e){alert("Failed to stop for:"+e)}})}},startlog:function(){var e=this;if(!e.logging){if(e.ll.length>=10)return void alert("Too many logs. Delete some before creating new.");if(e.fs.size-e.fs.used<=2*e.fs.block)return void alert("Not enough free space!");var t=Q("#logname").value.trim();if(!1===e.vname(t))return void alert("Invalid file name, no special characters allowed.");if(e.dupname(t))return void alert("Duplicated name.");var o="";if(Q("#calispindel").checked){var l=parseFloat(Q("#tiltinw").value.trim()),r=parseFloat(Q("#hydrometer").value.trim());if(isNaN(l)||isNaN(r))return void alert("tilt value and hydrometer reading is necessary!");o="&tw="+l+"&hr="+r}confirm("Start new logging?")&&s_ajax({url:e.starturl+t+o,m:"GET",success:function(e){location.reload()},fail:function(e){alert("Failed to start for:"+e)}})}},recording:function(e,t){this.logging=!0;var o=new Date(1e3*t);Q("#start-log-date").innerHTML=o.toLocaleString(),Q("#loggingtitle").innerHTML=e,Q("#logstartinput").style.display="none",Q("#logstopinput").style.display="block"},stop:function(){this.logging=!1,Q("#logstartinput").style.display="block",Q("#logstopinput").style.display="none"},rm:function(e){var t=this;confirm("Delete the log "+t.ll[e].name)&&(console.log("rm "+t.ll[e].name),s_ajax({url:t.rmurl+e,m:"GET",success:function(o){var l=JSON.parse(o);t.fs=l,t.fsinfo(l.size,l.used),t.ll.splice(e,1),t.list(t.ll)},fail:function(e){alert("Failed to delete for:"+e)}}))},dl:function(e){window.open(this.dlurl+e)},list:function(e){for(var t,o=Q("#loglist").querySelector("tbody");t=o.querySelector("tr:nth-of-type(2)");)o.removeChild(t);var l=this,r=l.row;e.forEach(function(e,t){var n=e.name,a=new Date(1e3*e.time),i=r.cloneNode(!0);i.querySelector(".logid").innerHTML=n,i.querySelector(".logdate").innerHTML=a.toLocaleString(),i.querySelector(".dlbutton").onclick=function(){l.dl(t)},i.querySelector(".rmbutton").onclick=function(){l.rm(t)},o.appendChild(i)})},init:function(){var e=this;Q("#startlogbutton").onclick=function(){e.startlog()},Q("#stoplogbutton").onclick=function(){e.stoplog()},e.row=Q("#loglist").querySelector("tr:nth-of-type(2)"),e.row.parentNode.removeChild(e.row),s_ajax({url:e.url,m:"GET",success:function(t){var o=JSON.parse(t);e.fs=o.fs,o.rec&&e.recording(o.log,o.start),e.ll=o.list,e.list(o.list),e.fsinfo(o.fs.size,o.fs.used)},fail:function(e){alert("failed:"+e)}})}};function checkurl(e){e.value.trim().startsWith("https")&&alert("HTTPS is not supported")}function checkformat(e){e.value.length>256&&(e.value=t.value.substring(0,256)),Q("#fmthint").innerHTML=e.value.length+"/256"}function method(e){for(var t=document.querySelectorAll('input[name$="method"]'),o=0;o<t.length;o++)t[o].id!=e.id&&(t[o].checked=!1);window.selectedMethod=e.value}function update(){if(void 0!==window.selectedMethod){var e=Q("#format").value.trim();if("GET"==window.selectedMethod)if(new RegExp("s","g").exec(e))return void alert("space is not allowed");var t={};t.enabled=Q("#enabled").checked,t.url=Q("#url").value.trim(),t.format=encodeURIComponent(e.escapeJSON()),t.period=Q("#period").value,t.method=Q("#m_post").checked?"POST":"GET",t.type=Q("#data-type").value.trim(),s_ajax({url:logurl,m:"POST",data:"data="+JSON.stringify(t),success:function(e){alert("done")},fail:function(e){alert("failed:"+e)}})}else alert("select Method!")}function init(e){function t(){var e=parseFloat(Q("#watertemp").value),t=parseFloat(Q("#caltemp").value),o=Q("#tempunit").value;if(!isNaN(e)&&!isNaN(t)){"C"==o&&(t=C2F(t),e=C2F(e));var l=BrewMath.tempCorrectionF(1,t,e);Q("#hydrometer").value=l.toFixed(3)}}void 0===e&&(e=!1),e||(getActiveNavItem(),Q("#verinfo").innerHTML="v"+JSVERSION),Q("#watertemp").onchange=t,Q("#caltemp").onchange=t,Q("#tempunit").onchange=t,s_ajax({url:logurl+"?data=1",m:"GET",success:function(e){var t=JSON.parse(e);void 0!==t.enabled&&(Q("#enabled").checked=t.enabled,window.selectedMethod=t.method,Q("#m_"+t.method.toLowerCase()).checked=!0,Q("#url").value=void 0===t.url?"":t.url,Q("#data-type").value=void 0===t.type?"":t.type,Q("#format").value=void 0===t.format?"":t.format,checkformat(Q("#format")),Q("#period").value=void 0===t.period?300:t.period)}}),logs.init()}function showformat(e){var t=Q("#formatlist"),o=e.getBoundingClientRect();t.style.display="block",t.style.left=o.left+"px",t.style.top=o.top+100+"px"}function hideformat(){Q("#formatlist").style.display="none"}</script><style>#loglist,#loglist td,#loglist th,#loglist tr{border:1px solid #000}fieldset{margin:10px}#fsinfo{margin:10px}#formatlist{display:none;position:absolute;border:1px solid #fff;background:#d3d3d3}#formatlist table,#formatlist td,#formatlist th{border:1px solid #000;border-collapse:collapse}</style></head><body onload=init(!0)><fieldset><legend>Remote Log</legend><form><table><tr><th>Enabled:</th><td><input type=checkbox id=enabled value=yes></td></tr><tr><th>Method:</th><td><input type=checkbox id=m_get name=method value=GET onchange=mothod(this)>Get <input type=checkbox id=m_post name=method value=POST onchange=mothod(this)>Post <input type=checkbox id=m_put name=method value=PUT onchange=mothod(this)>Put</td></tr><tr><th>URL:</th><td><input type=text id=url size=128 placeholder="input link" onchange=checkurl(this)></td></tr><tr><th></th><td>JSON:"application/json", Form Type:"application/x-www-form-urlencoded"</td></tr><tr><th>Data Type:</th><td><input type=text id=data-type size=42 placeholder=Content-Type></td></tr><tr><th></th><td><span onmouseover=showformat(this) onmouseout=hideformat()><u>Notations...</u></span></td></tr><tr><th>Format:</th><td><textarea id=format rows=4 cols=64 oninput=checkformat(this)></textarea></td></tr><tr><th></th><td>Characters:<span id=fmthint></span></td></tr><tr><th>Log time period:</th><td><input type=text id=period size=4>Seconds</td></tr><tr><th></th><td><button type=button onclick=update()>Update</button></td></tr></table></form></fieldset><fieldset><legend>Local Log</legend><div id=logctrl style=border-style:outset;padding:16px><div id=logstartinput><span id=logtitle>New Log Name:</span> <input type=text id=logname size=24 maxlength=24> <button id=startlogbutton>Start Logging</button><div style=margin-left:16px><strong>Optoins:</strong><br>Calibrate iSpindel <input type=checkbox id=calispindel><br>Tilt value in water <input type=text id=tiltinw size=6> Hydrometer reading: <input type=text id=hydrometer size=6> , or water @ <input type=text id=watertemp size=4>&deg; calibrated <input type=text id=caltemp size=4>&deg;<select id=tempunit><option vlue=C>C</option><option value=F>F</option></select></div></div><div id=logstopinput style=display:none>Recording <strong id=loggingtitle></strong> since <strong id=start-log-date></strong> <button id=stoplogbutton>Stop Logging</button></div></div><div id=fsinfo>Free Space: <span id=fsfree>0</span> Bytes, Used Space: <span id=fsused>0</span> Bytes, Total Space: <span id=fssize>0</span> Bytes</div><table id=loglist><tr><th style=width:30%>Log</th><th style=width:40%>Date</th><th>Action</th></tr><tr><td class=logid></td><td class=logdate></td><td><button class=dlbutton>Download</button><button class=rmbutton>Delete</button></td></tr></table></fieldset><div id=formatlist><table><tr><th>%b</th><td>beer temp</td></tr><tr><th>%B</th><td>beer setting</td></tr><tr><th>%f</th><td>fridge temp</td></tr><tr><th>%F</th><td>fridge setting</td></tr><tr><th>%r</th><td>room temp</td></tr><tr><th>%g</th><td>gravity</td></tr><tr><th>%a</th><td>Aux temp.</td></tr><tr><th>%v</th><td>device voltage</td></tr><tr><th>%t</th><td>Tilt Value</td></tr><tr><th>%u</th><td>Unix timestamp of last gravity update</td></tr></table></div></body></html>

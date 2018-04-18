@@ -1,0 +1,174 @@
+<html>
+
+<head>
+    <title>Logging Setting</title>
+    <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/script-logging.js"></script>
+
+    <style>
+        #loglist td,
+        #loglist tr,
+        #loglist th,
+        #loglist {
+            border: 1px solid black;
+        }
+        
+        fieldset {
+            margin: 10px;
+        }
+        
+        #fsinfo {
+            margin: 10px;
+        }
+        
+        #formatlist {
+            display: none;
+            position: absolute;
+            border: 1px solid white;
+            background: lightgray;
+        }
+        
+        #formatlist table,
+        #formatlist td,
+        #formatlist th {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+    </style>
+</head>
+
+<body onload="init(true);">
+    <fieldset>
+        <legend>Remote Log</legend>
+        <form>
+            <table>
+                <tr>
+                    <th>Enabled:</th>
+                    <td><input type="checkbox" id="enabled" value="yes"></td>
+                </tr>
+                <tr>
+                    <th>Method:</th>
+                    <td><input type="checkbox" id="m_get" name="method" value="GET" onchange="mothod(this);">Get
+                        <input type="checkbox" id="m_post" name="method" value="POST" onchange="mothod(this);">Post
+                        <input type="checkbox" id="m_put" name="method" value="PUT" onchange="mothod(this);">Put
+                    </td>
+                </tr>
+                <tr>
+                    <th>URL:</th>
+                    <td><input type="text" id="url" size="128" placeholder="input link" onchange="checkurl(this);"></td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td>JSON:"application/json", Form Type:"application/x-www-form-urlencoded"</td>
+                </tr>
+                <tr>
+                    <th>Data Type:</th>
+                    <td><input type="text" id="data-type" size="42" placeholder="Content-Type">
+                    </td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td><span onmouseover="showformat(this)" onmouseout="hideformat()"><u>Notations...</u></span></td>
+                </tr>
+                <tr>
+                    <th>Format:</th>
+                    <td><textarea id="format" rows="4" cols="64" oninput="checkformat(this)"></textarea></td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td>Characters:<span id="fmthint"></span></td>
+                </tr>
+                <tr>
+                    <th>Log time period:</th>
+                    <td><input type="text" id="period" size="4">Seconds</td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td><button type="button" onclick="update();">Update</button></td>
+                </tr>
+            </table>
+        </form>
+    </fieldset>
+    <fieldset>
+        <legend>Local Log</legend>
+        <div id=logctrl style="border-style:outset;padding:16px">
+            <div id=logstartinput>
+                <span id="logtitle">New Log Name:</span>
+                <input type="text" id="logname" size="24" maxlength="24"></input>
+                <button id="startlogbutton">Start Logging</button>
+                <div style="margin-left:16px">
+                    <strong> Optoins:</strong><br> Calibrate iSpindel <input type=checkbox id=calispindel>
+                    <br> Tilt value in water
+                    <input type=text id=tiltinw size=6> Hydrometer reading:
+                    <input type=text id=hydrometer size=6> , or water @ <input type=text id=watertemp size=4>&deg; calibrated <input type=text id=caltemp size=4>&deg;
+                    <select id=tempunit><option vlue=C>C</option><option value=F>F</option></select>
+                </div>
+            </div>
+            <div id=logstopinput style="display:none">
+                Recording <strong id="loggingtitle"></strong> since <strong id=start-log-date></strong>
+                <button id="stoplogbutton">Stop Logging</button>
+            </div>
+        </div>
+        <div id="fsinfo">
+            Free Space: <span id="fsfree">0</span> Bytes, Used Space: <span id="fsused">0</span> Bytes, Total Space: <span id="fssize">0</span> Bytes
+        </div>
+        <table id="loglist">
+            <tr>
+                <th style="width:30%;">Log</th>
+                <th style="width:40%;">Date</th>
+                <th>Action</th>
+            </tr>
+            <tr>
+                <td class="logid"></td>
+                <td class="logdate"></td>
+                <td><button class="dlbutton">Download</button><button class="rmbutton">Delete</button></td>
+            </tr>
+        </table>
+    </fieldset>
+    <div id="formatlist">
+        <table>
+            <tr>
+                <th>%b</th>
+                <td>beer temp</td>
+            </tr>
+            <tr>
+                <th>%B</th>
+                <td>beer setting</td>
+            </tr>
+            <tr>
+                <th>%f</th>
+                <td>fridge temp</td>
+            </tr>
+            <tr>
+                <th>%F</th>
+                <td>fridge setting</td>
+            </tr>
+            <tr>
+                <th>%r</th>
+                <td>room temp</td>
+            </tr>
+            <tr>
+                <th>%g</th>
+                <td>gravity</td>
+            </tr>
+            <tr>
+                <th>%a</th>
+                <td>Aux temp.</td>
+            </tr>
+            <tr>
+                <th>%v</th>
+                <td>device voltage</td>
+            </tr>
+            <tr>
+                <th>%t</th>
+                <td>Tilt Value</td>
+            </tr>
+            <tr>
+                <th>%u</th>
+                <td>Unix timestamp of last gravity update</td>
+            </tr>
+        </table>
+    </div>
+</body>
+
+</html>
