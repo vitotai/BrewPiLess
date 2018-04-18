@@ -1,4 +1,6 @@
 # BrewPiLess
+ **Note: ALL BPL settings will be gone after upgrading to v3.0**
+
  **Note: re-SETUP is necessary after upgrading to v2.4**
 
 ## Features
@@ -45,6 +47,15 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * v3.0 (working)
+    * Avoid frequent access file system
+    * Revise settings. Merge all settings into one file.
+    * Temperature corection of iSpindel calibration informatoin.
+    * Selective iSpindel calibration points.
+    * Brew&Cal option moved to start of logs.
+    * Merge classic HTML/JS files into grunt
+    * bug fixes.
+
  * v2.7
     * Cap(spunding) control
     * revise parasite temperature control
