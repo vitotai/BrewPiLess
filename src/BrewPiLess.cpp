@@ -884,7 +884,7 @@ class LogHandler:public AsyncWebHandler
 public:
 
 	void handleRequest(AsyncWebServerRequest *request){
-		if( request->url() == IGNORE_MASK_PATH){
+/*		if( request->url() == IGNORE_MASK_PATH){
 			if(request->hasParam("m")){
 				uint32_t mask= request->getParam("m")->value().toInt();
 				brewLogger.addIgnoredCalPointMask(mask);
@@ -892,7 +892,8 @@ public:
 			}else{
 				request->send(404);
 			}
-		}else if( request->url() == LOGLIST_PATH){
+		}else */
+		if( request->url() == LOGLIST_PATH){
 			if(request->hasParam("dl")){
 				int index=request->getParam("dl")->value().toInt();
 				char buf[36];
@@ -1004,7 +1005,8 @@ public:
 
 	LogHandler(){}
 	bool canHandle(AsyncWebServerRequest *request){
-	 	if(request->url() == CHART_DATA_PATH || request->url() ==LOGLIST_PATH || request->url() == IGNORE_MASK_PATH) return true;
+	 	if(request->url() == CHART_DATA_PATH || request->url() ==LOGLIST_PATH
+		  /*|| request->url() == IGNORE_MASK_PATH */) return true;
 	 	return false;
 	}
 };
@@ -1078,7 +1080,9 @@ public:
 				uint32_t npt=(uint32_t) request->getParam("pt")->value().toInt();
 				externalData.formula(coeff,npt);
 
-  				request->send(200,"application/json","{}");
+				brewLogger.addIgnoredCalPointMask(npt & 0xFFFFFF);
+  				
+				request->send(200,"application/json","{}");
 			}else{
 				DBG_PRINTF("Invalid parameter\n");
   				request->send(400);
