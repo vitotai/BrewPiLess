@@ -884,7 +884,11 @@ class LogHandler:public AsyncWebHandler
 public:
 
 	void handleRequest(AsyncWebServerRequest *request){
+<<<<<<< HEAD
 /*		if( request->url() == IGNORE_MASK_PATH){
+=======
+		if( request->url() == IGNORE_MASK_PATH){
+>>>>>>> master
 			if(request->hasParam("m")){
 				uint32_t mask= request->getParam("m")->value().toInt();
 				brewLogger.addIgnoredCalPointMask(mask);
