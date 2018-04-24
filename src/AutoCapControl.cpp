@@ -1,5 +1,5 @@
-#include "FS.h"
-#include "ArduinoJson.h"
+#include <FS.h>
+#include <ArduinoJson.h>
 #include "AutoCapControl.h"
 #include "Config.h"
 #include "mystrlib.h"

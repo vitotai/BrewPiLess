@@ -132,7 +132,7 @@ BrewLogger::BrewLogger(void){
 		}
 		while((dataAvail=_logFile.available())){
 			if (dataAvail<2 ) break;
-
+			DBG_PRINTF("dataavail:%ld\n",dataAvail);
 			tag= _logFile.read();
 			mask = _logFile.read();
 

@@ -1,4 +1,4 @@
-#include <ArduinoJSON.h>
+#include <ArduinoJson.h>
 #include "ExternalData.h"
 
 ExternalData externalData;

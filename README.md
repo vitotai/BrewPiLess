@@ -47,12 +47,13 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
 
 ## Version History
  * v3.0 (working)
-    * Avoid frequent access file system
+    * Avoid frequent access access of file system
     * Revise settings. Merge all settings into one file.
-    * Temperature corection of iSpindel calibration informatoin.
+    * Applying temperature corection of iSpindel calibration informatoin.
     * Selective iSpindel calibration points.
     * Brew&Cal option moved to start of logs.
     * Merge classic HTML/JS files into grunt
+    * Using push for beer profile information to reduce additional connection establishment. 
     * bug fixes.
 
  * v2.7
