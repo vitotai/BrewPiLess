@@ -83,7 +83,7 @@ PCF8574 pcf8574(PCF8574_ADDRESS,PIN_SDA, PIN_SCL);
 #define ButtonLongPressedDetectMinTime 1000 // in ms
 #define ButtonContinuousPressedDetectMinTime 1000 // in ms
 #define ButtonContinuousPressedTrigerTime 150 // in ms
-#define ButtonFatFingerTolerance 250  // in ms
+#define ButtonFatFingerTolerance 400  // in ms
 
 static unsigned long _buttonChangeTime;
 static unsigned long _continuousPressedDectedTime;

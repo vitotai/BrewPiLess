@@ -13,6 +13,14 @@ BPLSettings theSettings;
 
 void BPLSettings::load()
 {
+	DBG_PRINTF("syscfg:%d, timeinfo:%d, gdc:%d, \
+		tempSchedule:%d, brewStatus:%d, logFileIndexes:%d, \
+		remoteLogginInfo:%d, autoCapSettings:%d, parasiteTempControlSettings:%d\n",\
+		 offsetof(Settings,syscfg),offsetof(Settings,timeinfo),offsetof(Settings,gdc),
+		 offsetof(Settings,tempSchedule),offsetof(Settings,brewStatus),offsetof(Settings,logFileIndexes),
+		 offsetof(Settings,remoteLogginInfo),offsetof(Settings,autoCapSettings),
+		 offsetof(Settings,parasiteTempControlSettings));
+
 	fs::File f = SPIFFS.open(BPLSettingFileName, "r");
 	if(!f){
 		setDefault();
@@ -452,7 +460,8 @@ bool BPLSettings::dejsonBeerProfile(String json)
 	}
 
 	// unit
-	tempSchedule->unit= root["u"];
+	const char *uintStr=root["u"];
+	tempSchedule->unit=  *uintStr;
 
 	DBG_PRINTF("Load finished, st:%ld, unit:%c, _numberOfSteps:%d\n",tempSchedule->startDay,
 	tempSchedule->unit,tempSchedule->numberOfSteps);

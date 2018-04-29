@@ -3,6 +3,7 @@
 #include <FS.h>
 #include <time.h>
 //*****************************************************
+// 156 bytes
 typedef struct _SystemConfiguration{
     char  username[32];
     char  password[32];
@@ -20,6 +21,7 @@ typedef struct _SystemConfiguration{
 
 //*****************************************************
 // time information
+// 12
 typedef struct _TimeInformation{
     uint32_t savedTime;
     uint32_t timezoneoffset;
@@ -28,6 +30,7 @@ typedef struct _TimeInformation{
 
 //*****************************************************
 // gravity device
+//  36
 typedef struct _GravityDeviceConfiguration{
     float ispindelCoefficients[4];
     float   lpfBeta;
@@ -37,9 +40,9 @@ typedef struct _GravityDeviceConfiguration{
     uint8_t  ispindelTempCal;
     uint8_t  calculateGravity;
     uint8_t  ispindelCalibrationBaseTemp;
-	uint8_t  stableThreshold;
 
-    uint8_t _padding[6];
+	uint8_t  stableThreshold;
+    uint8_t _padding[7];
 }GravityDeviceConfiguration;
 
 //*****************************************************
@@ -64,6 +67,7 @@ typedef int16_t Gravity;
 #define GravityToFloat(g) (((float)(g) / 1000.0))
 #define PointToGravity(p) (1000+(Gravity)((p)+0.5))
 
+// 12
 typedef struct _ScheduleStep{
     int16_t   temp;
     uint16_t  days;
@@ -77,9 +81,9 @@ typedef struct _ScheduleStep{
     } gravity;
     uint8_t  attSpecified;
     char     condition;
-    uint8_t _padding[3];
+    uint8_t _padding[4];
 } ScheduleStep; // 12bytes
-
+// 12 * 7 +12 = 96
 typedef struct _BeerTempSchedule{
 	ScheduleStep steps[MaximumSteps];
 	time_t   startDay;
@@ -161,15 +165,15 @@ typedef struct _ParasiteTempControlSettings{
 //####################################################
 // whole structure
 struct Settings{
-    SystemConfiguration syscfg;
-    TimeInformation  timeinfo;
-    GravityDeviceConfiguration gdc;
-    BeerTempSchedule tempSchedule;
-    BrewStatus  brewStatus;
-    FileIndexes  logFileIndexes;
-    RemoteLoggingInformation remoteLogginInfo;
-    AutoCapSettings autoCapSettings;
-    ParasiteTempControlSettings parasiteTempControlSettings;
+    SystemConfiguration syscfg; //0:156
+    TimeInformation  timeinfo; //156:12
+    GravityDeviceConfiguration gdc;  //168:36
+    BeerTempSchedule tempSchedule; // 204:96
+    BrewStatus  brewStatus; // 300:20
+    FileIndexes  logFileIndexes; // 320:316
+    RemoteLoggingInformation remoteLogginInfo; // 636: 444
+    AutoCapSettings autoCapSettings; // 1080: 12
+    ParasiteTempControlSettings parasiteTempControlSettings; //1092: 20
 };
 
 class BPLSettings

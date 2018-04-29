@@ -332,6 +332,8 @@ var profileEditor = {
         }
     },
     renderRows: function(g) {
+        if (typeof g.length == "undefined")
+            console.log("error!!");
         var e = document.getElementById("profile_t").getElementsByTagName("tbody")[0];
         for (var f = 0; f < g.length; f++) {
             var c = this.row.cloneNode(true);
@@ -343,9 +345,13 @@ var profileEditor = {
 
     initable: function(c, e) {
         this.setStartDate(e);
-        var b = document.getElementById("profile_t").getElementsByTagName("tbody")[0];
-        this.row = b.getElementsByTagName("tr")[0];
-        b.removeChild(this.row);
+        if (!this.row) {
+            var b = document.getElementById("profile_t").getElementsByTagName("tbody")[0];
+            this.row = b.getElementsByTagName("tr")[0];
+            b.removeChild(this.row);
+        } else {
+            this.clear();
+        }
         this.renderRows(c)
     },
     clear: function() {
@@ -508,12 +514,12 @@ var PL = {
     list: function(i) {
         var a = this;
         var h = Q(a.div).querySelector(".profile-list");
-        var e;
-        while (e = h.querySelector("li:nth-of-type(0)")) {
-            h.removeChild(e)
+        var lis = h.querySelectorAll("li");
+        for (var i = 0; i < lis.length; i++) {
+            h.removeChild(lis[i]);
         }
         var b = a.row;
-        i.forEach(function(f, g) {
+        a.plist.forEach(function(f, g) {
             var c = b.cloneNode(true);
             c.querySelector(".profile-name").innerHTML = f;
             c.querySelector(".profile-name").onclick = function(j) {
@@ -800,6 +806,7 @@ function saveprofile() {
         mime: "application/x-www-form-urlencoded",
         data: "data=" + encodeURIComponent(json),
         success: function(d) {
+            profileEditor.markdirty(false);
             alert("Done.")
         },
         fail: function(d) {

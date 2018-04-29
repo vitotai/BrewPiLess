@@ -43,6 +43,7 @@ BrewLogger::BrewLogger(void){
 	
 	const char* BrewLogger::currentLog(void)
 	{
+		if(!_recording) return NULL;
 		if(_pFileInfo->logname[0] != 0)
 			return _pFileInfo->logname;
 		else return NULL;
@@ -52,7 +53,7 @@ BrewLogger::BrewLogger(void){
 	{
 		// populate JS
 		String ret=String("{\"rec\":");
-		if(_pFileInfo->logname[0] != 0){
+		if(_recording){
 			ret += "1, \"log\":\"" + String(_pFileInfo->logname)
 				+"\",\"start\":" + String(_pFileInfo->starttime);
 		}else{

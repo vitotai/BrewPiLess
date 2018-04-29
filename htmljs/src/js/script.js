@@ -1,9 +1,9 @@
     var T_CHART_REQUEST = 12000;
     var T_CHART_RETRYTO = 6000;
     var T_CHART_ZERODATA = 10000;
-    var T_CHART_REFRESH = 5000;
+    var T_CHART_REFRESH = 2500;
     var T_CHART_RETRY = 10000;
-
+    var T_LOAD_CHART = 150;
     var T_BWF_RECONNECT = 10000;
     var T_BWF_LCD = 4800;
     var BChart = {
@@ -657,7 +657,7 @@
         BWF.gotMsg = true;
         initctrl_C();
         connBWF();
-        setTimeout(function() { BChart.start(); }, 250);
+        setTimeout(function() { BChart.start(); }, T_LOAD_CHART);
     }
 
     function init() {
@@ -666,6 +666,6 @@
         Capper.init();
         BWF.gotMsg = true;
         connBWF();
-        setTimeout(function() { BChart.start(); }, 250);
+        setTimeout(function() { BChart.start(); }, T_LOAD_CHART);
         getActiveNavItem();
     }
