@@ -523,6 +523,7 @@ public:
 				if(request->hasParam("data",true)){
 					if(theSettings.dejsonBeerProfile(request->getParam("data",true)->value())){
 						theSettings.save();
+						brewKeeper.profileUpdated();
 						request->send(200,"application/json","{}");
 					}else
 						request->send(402);
@@ -1428,6 +1429,8 @@ void setup(void){
 		externalData.setCalibrating(brewLogger.isCalibrating());
 		DBG_PRINTF("Start BrweNCal log:%d\n",brewLogger.isCalibrating());
 	}
+	
+	brewKeeper.begin();
 
 	#if AUTO_CAP
 	//Note: necessary to call after brewpi_setup() so that device has been installed.

@@ -31,6 +31,7 @@ void BrewKeeper::keep(time_t now)
 	_profile.setUnit(unit);
 
 	float temp=_profile.tempByTimeGravity(now,_lastGravity);
+	DBG_PRINTF("beerpfoile:Temp:%d\n",(int)(temp *100));
 
 	if(IS_INVALID_CONTROL_TEMP(temp)) return;
 	if(OUT_OF_RANGE(temp,beerSet,MINIMUM_TEMPERATURE_STEP)){
@@ -73,20 +74,19 @@ void BrewProfile::_saveBrewingStatus(void){
 
 void BrewProfile::_estimateStep(time_t now,Gravity gravity)
 {
-	uint32_t timeEnterCurrentStep = _schedule->startDay;
-	uint8_t currentStep =0;
-	while(currentStep<_schedule->numberOfSteps)
+	_status->startingDate= _schedule->startDay;
+	_status->timeEnterCurrentStep = _schedule->startDay;
+	_status->currentStep =0;
+	while(_status->currentStep<_schedule->numberOfSteps && _status->timeEnterCurrentStep <= now)
 	{
 		uint32_t csd=currentStepDuration();
 		if(checkCondition(now,gravity)){
-			timeEnterCurrentStep += csd;
-			currentStep++;
+			_status->timeEnterCurrentStep += csd;
+			_status->currentStep++;
 		}else{
 			break;
 		}
 	}
-	_status->currentStep = currentStep;
-	_status->timeEnterCurrentStep = timeEnterCurrentStep;
 }
 
 void BrewProfile::_toNextStep(unsigned long time)
@@ -98,6 +98,7 @@ void BrewProfile::_toNextStep(unsigned long time)
 			csd = currentStepDuration();
 	}while(csd == 0 && _status->currentStep < _schedule->numberOfSteps );
 	_status->timeEnterCurrentStep=time;	
+	_status->startingDate= _schedule->startDay;
 	_saveBrewingStatus();
 	DBG_PRINTF("_toNextStep:%d current:%ld, duration:%ld\n",_status->currentStep,time, csd );
 }
@@ -154,7 +155,9 @@ float BrewProfile::tempByTimeGravity(unsigned long time,Gravity gravity)
 {
 	if(time < _schedule->startDay) return INVALID_CONTROL_TEMP;
 
-	if(	_status->currentStep==0 && _status->timeEnterCurrentStep==0){
+	DBG_PRINTF("currentStep:%d, timeEnterCurrentSTep:%ld, time:%ld\n",_status->currentStep,_status->timeEnterCurrentStep,time);
+
+	if(	_status->startingDate ==0 ||(_status->currentStep==0 && _status->timeEnterCurrentStep==0)){
 		_estimateStep(time,gravity);
 	}
 	if(_status->currentStep >= _schedule->numberOfSteps) return INVALID_CONTROL_TEMP;
@@ -195,4 +198,16 @@ float BrewProfile::tempByTimeGravity(unsigned long time,Gravity gravity)
 
 uint32_t BrewProfile::currentStepDuration(void){
 	return ScheduleDayToTime(_schedule->steps[_status->currentStep].days);
+}
+
+void  BrewProfile::profileUpdated(){
+	// the beer profile is updated: update status
+	if(_schedule->startDay != _status->startingDate){
+		// update current status.
+		_status->startingDate=0;
+		_status->currentStep=0;
+		_status->timeEnterCurrentStep=0;
+	}else{
+		// assume the same schedule. do nothing.
+	}
 }

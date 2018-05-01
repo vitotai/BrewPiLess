@@ -30,12 +30,11 @@ public:
 		_schedule =  theSettings.beerTempSchedule();
 		_status =  theSettings.brewStatus();
 	}
-
 	void setUnit(char unit);
-
 	void setOriginalGravity(float gravity);
 	float tempByTimeGravity(unsigned long time,Gravity gravity);
 	void setStableThreshold(uint8_t threshold){ _stableThreshold=threshold; }
+	void profileUpdated();
 };
 
 
@@ -58,6 +57,10 @@ public:
 	void keep(time_t now);
 
 	void setStableThreshold(uint8_t threshold){_profile.setStableThreshold(threshold);}
+
+	void profileUpdated(){ _profile.profileUpdated();}
+	void begin(void){ _profile.profileUpdated();}
+
 };
 
 #endif

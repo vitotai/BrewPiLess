@@ -274,6 +274,8 @@ BrewLogger::BrewLogger(void){
 		addState(_state);
 
 		saveIdxFile();
+		// flush to force write to file system.
+		_logFile.flush();
 		return true;
 	}
 
