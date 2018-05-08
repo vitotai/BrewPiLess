@@ -22,7 +22,7 @@ int DataLogger::printFloat(char* buffer,float value,int precision,bool valid)
 	if(valid){
 		return sprintFloat(buffer,value,precision);
 	}else{
-		strcpy(buffer,"null");
+		strcpy(buffer,"255"); // ubidots.com doesn't accept "null" as values.
 		return 4;
 	}
 }
