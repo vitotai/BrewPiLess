@@ -141,7 +141,7 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 		#endif
 #if BREWPI_EXTERNAL_SENSOR //vito: create sensor object
 		case DEVICE_HARDWARE_EXTERNAL_SENSOR:
-			return new WirelessTempSensor(false);// initially disconnected, so init doesn't populate the filters with the default value of 0.0
+			return new WirelessTempSensor(false,config.hw.calibration);// initially disconnected, so init doesn't populate the filters with the default value of 0.0
 #endif
 
 #if BREWPI_DS2413
@@ -636,7 +636,11 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 		appendAttrib(deviceString, DEVICE_ATTRIB_PIO, config.hw.pio);
 	}
 #endif
-	if (config.deviceHardware==DEVICE_HARDWARE_ONEWIRE_TEMP) {
+	if (config.deviceHardware==DEVICE_HARDWARE_ONEWIRE_TEMP
+#if BREWPI_EXTERNAL_SENSOR
+		||  config.deviceHardware==DEVICE_HARDWARE_EXTERNAL_SENSOR
+#endif	
+	) {
 		tempDiffToString(buf, temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION), 3, 8);
 		deviceString += ",\"j\":";
 		deviceString += buf;
