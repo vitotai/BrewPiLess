@@ -220,7 +220,7 @@ function checkformat(ta) {
     Q("#fmthint").innerHTML = "" + ta.value.length + "/256";
 }
 
-function method(c) {
+function cmethod(c) {
     var inputs = document.querySelectorAll('input[name$="method"]');
     for (var i = 0; i < inputs.length; i++) {
         if (inputs[i].id != c.id)
