@@ -10,7 +10,8 @@ Those images are prebuilt:
  * Two buttons as input
  * 20x4 LCD at any address
 
-## ioexpander
+## ioexpander 
+ * Default configuration as BrewShield
  * Buttons are connected to PCF8574.
  * other configurations are the same as default.
 
