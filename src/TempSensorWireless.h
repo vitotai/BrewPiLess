@@ -3,6 +3,7 @@
 
 #include "Brewpi.h"
 #include "TempSensor.h"
+#include "OneWireTempSensor.h"
 
 class WirelessTempSensor: public BasicTempSensor
 {
@@ -12,14 +13,16 @@ public:
 	WirelessTempSensor(bool connected=false,fixed4_4 cal=0,uint32_t expiryTime=300){
         setConnected(connected);
         _expiryTime = expiryTime * 1000;
-		calibrationOffset = cal;
-
+	
+		const uint8_t shift = TEMP_FIXED_POINT_BITS-ONEWIRE_TEMP_SENSOR_PRECISION; // difference in precision between DS18B20 format and temperature adt
+		//temperature i fixed7_9, calibration fixed4_4
+		_calibrationOffset =constrainTemp16(temperature(cal)<<shift);
 		if(! theWirelessTempSensor)theWirelessTempSensor=this;
 	}
 	~WirelessTempSensor(){
 		theWirelessTempSensor=NULL;
     }
-    
+     
     void setExpiryTime(uint32_t period){
         _expiryTime = period  * 1000;
     }
@@ -48,9 +51,7 @@ public:
 			this->_connected = false;
             return TEMP_SENSOR_DISCONNECTED;
         }
-		const uint8_t shift = 5; // difference in precision between DS18B20 format and temperature adt
-		temperature temp = constrainTemp(temp+calibrationOffset+(C_OFFSET>>shift), ((int) MIN_TEMP)>>shift, ((int) MAX_TEMP)>>shift)<<shift;
-
+		temperature temp = _temperature + _calibrationOffset;
 		return temp;
 	}
 
@@ -60,7 +61,7 @@ public:
 
 	private:
 	temperature _temperature;
-	fixed4_4 calibrationOffset;
+	temperature _calibrationOffset;
     bool _connected;
     uint32_t _expiryTime;
     uint32_t _updateTime;    
