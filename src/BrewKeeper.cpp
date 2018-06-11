@@ -159,9 +159,9 @@ float BrewProfile::tempByTimeGravity(unsigned long time,Gravity gravity)
 
 	DBG_PRINTF("currentStep:%d, timeEnterCurrentSTep:%ld, time:%ld\n",_status->currentStep,_status->timeEnterCurrentStep,time);
 
-	if(	_status->startingDate ==0 ||
-	   || _status->startingDate != _schedult->startDay
-		(_status->currentStep==0 && _status->timeEnterCurrentStep==0)){
+	if(	_status->startingDate ==0 
+	   || _status->startingDate != _schedule->startDay
+		|| (_status->currentStep==0 && _status->timeEnterCurrentStep==0)){
 		_estimateStep(time,gravity);
 	}
 	if(_status->currentStep >= _schedule->numberOfSteps) return INVALID_CONTROL_TEMP;

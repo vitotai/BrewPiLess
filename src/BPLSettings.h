@@ -54,7 +54,7 @@ typedef struct _GravityDeviceConfiguration{
 // datys are encoded by *100
 #define ScheduleDayFromJson(d)  ((uint16_t) ((d) * 100.0))
 #define ScheduleDayToJson(d)  ((float)(d)/100.0)
-#define ScheduleDayToTime(d) ((uint32_u)(d) * 864) //((uint32_t)((float)(d)/100.0 * 86400))
+#define ScheduleDayToTime(d) ((uint32_t)(d) * 864) //((uint32_t)((float)(d)/100.0 * 86400))
 #define ScheduleTempFromJson(t) ((int16_t)((t)*100.0))
 #define ScheduleTempToJson(t) ((float)(t)/100.0)
 
