@@ -108,7 +108,9 @@ bool BrewProfile::checkCondition(unsigned long time,Gravity gravity){
 	ScheduleStep *step = & _schedule->steps[_status->currentStep];
 
 	char condition=step->condition;
-	uint32_t csd = currentStepDuration();
+
+	uint32_t csd = ScheduleDayToTime(step->days);
+
 	bool timeCondition =(csd <= (time - _status->timeEnterCurrentStep));
 	
 	if(condition == 'r' || condition == 't'){
@@ -157,7 +159,9 @@ float BrewProfile::tempByTimeGravity(unsigned long time,Gravity gravity)
 
 	DBG_PRINTF("currentStep:%d, timeEnterCurrentSTep:%ld, time:%ld\n",_status->currentStep,_status->timeEnterCurrentStep,time);
 
-	if(	_status->startingDate ==0 ||(_status->currentStep==0 && _status->timeEnterCurrentStep==0)){
+	if(	_status->startingDate ==0 ||
+	   || _status->startingDate != _schedult->startDay
+		(_status->currentStep==0 && _status->timeEnterCurrentStep==0)){
 		_estimateStep(time,gravity);
 	}
 	if(_status->currentStep >= _schedule->numberOfSteps) return INVALID_CONTROL_TEMP;
