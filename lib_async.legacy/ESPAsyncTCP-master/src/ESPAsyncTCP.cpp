@@ -72,6 +72,13 @@ AsyncClient::AsyncClient(tcp_pcb* pcb):
     tcp_sent(_pcb, &_s_sent);
     tcp_err(_pcb, &_s_error);
     tcp_poll(_pcb, &_s_poll, 1);
+    #if FORCE_KEEPALIVE
+    _pcb->so_options |= SOF_KEEPALIVE;
+    _pcb->keep_idle = (uint32_t)1000 * 120;
+    _pcb->keep_intvl = (uint32_t)1000 * 120;
+    _pcb->keep_cnt = 3;
+    #endif
+
   }
 }
 
