@@ -82,6 +82,7 @@ function save() {
         }
     });
     var div = Q("select[name=wifi]");
+    if (window.oridata['wifi'] != div.value) reboot = true;
     json["wifi"] = div.value;
     console.log(JSON.stringify(json));
     var url = "config" + (reboot ? "" : "?nb");

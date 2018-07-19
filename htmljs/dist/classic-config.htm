@@ -1,1 +1,112 @@
-<html><head><title>Configuration</title><script>function s_ajax(e){var t=new XMLHttpRequest;t.onreadystatechange=function(){4==t.readyState&&(200==t.status?e.success(t.responseText):t.onerror(t.status))},t.ontimeout=function(){void 0!==e.timeout?e.timeout():t.onerror(-1)},t.onerror=function(t){void 0!==e.fail&&e.fail(t)},t.open(e.m,e.url,!0),void 0!==e.data?(t.setRequestHeader("Content-Type",void 0!==e.mime?e.mime:"application/x-www-form-urlencoded"),t.send(e.data)):t.send()}var Q=function(e){return document.querySelector(e)}</script><script>function formatIP(e){return"0.0.0.0"==e?"":e}function verifyIP(e){var t=this.value.split("."),a=!0;if(4==t.length)for(var n=0;n<4;n++){if(parseInt(t[n])>255){a=!1;break}}else a=""==this.value;a?(this.saved=this.value,this.value=formatIP(this.value)):this.value=formatIP(this.saved)}function loadSetting(){s_ajax({url:"config?cfg=1",m:"GET",success:function(e){var t=JSON.parse(e);window.oridata=t,Object.keys(t).map(function(e){var a=Q("input[name="+e+"]");a?a.classList.contains("iptype")?(a.value=formatIP(t[e]),a.saved=t[e],a.onchange=verifyIP):"checkbox"==a.type?a.checked=0!=t[e]:a.value=t[e]:(a=Q("select[name="+e+"]"))&&(a.value=t[e])})},fail:function(e){alert("error getting data:"+e)}})}function waitrestart(){Q("#waitprompt").style.display="block",Q("#inputform").style.display="none",setTimeout(function(){window.location.reload()},15e3)}function save(){var e=document.querySelectorAll("input"),t={},a=!1;Object.keys(e).map(function(n,i){var o;"submit"!=e[i].type&&(e[i].name&&""!=e[i].name&&(o=e[i].classList.contains("iptype")?e[i].saved:"checkbox"==e[i].type?e[i].checked?1:0:e[i].value.trim(),t[e[i].name]=o,window.oridata[e[i].name]==o||e[i].classList.contains("nb")||(a=!0)))});var n=Q("select[name=wifi]");t.wifi=n.value,console.log(JSON.stringify(t)),s_ajax({url:"config"+(a?"":"?nb"),data:"data="+encodeURIComponent(JSON.stringify(t)),m:"POST",success:function(e){a&&waitrestart()},fail:function(e){alert("error saving data:"+e)}})}function load(){Q("#verinfo")&&(Q("#verinfo").innerHTML="v"+JSVERSION),loadSetting()}</script><style>#waitprompt{display:none}</style></head><body onload=load()><div id=waitprompt>Congfiuration saved. Wait for restart.. (note: if the hostname is changed, the page won't be reloaded.)</div><div id=inputform><form action=/setconfig action=post><table><tr><td>LCD auto off</td><td><input name=aoff type=text size=5 maxlength=5 class=nb>seconds</td></tr><tr><td>Title</td><td><input name=title type=text size=12 maxlength=24></td></tr><tr><td>Host/Network Name</td><td><input name=name type=text size=12 maxlength=16></td></tr><tr><td>HTTP Port</td><td><input name=port type=text size=5 maxlength=5></td></tr><tr><td>User Name</td><td><input name=user type=text size=12 maxlength=16></td></tr><tr><td>Password</td><td><input name=pass type=password size=12 maxlength=16></td></tr><tr><td>Always need password</td><td><input type=checkbox name=protect></td></tr><tr><td>Network</td><td><select name=wifi><option value=1>Station</option><option value=2>AP</option><option value=3>Station + AP</option></select></td></tr><tr><td>Fixed IP</td><td><input type=text name=ip size=16 class=iptype></td></tr><tr><td>Gateway</td><td><input type=text name=gw size=16 class=iptype></td></tr><tr><td>Netmask</td><td><input type=text name=mask size=16 class=iptype></td></tr><tr><td>Save Change</td><td><input type=submit name=submit onclick="return save(),!1"></td></tr></table></form></div></body></html>
+<html><head><title>Configuration</title><script>var JSVERSION = "3.0";
+
+function s_ajax(b) {
+    var c = new XMLHttpRequest();
+    c.onreadystatechange = function() {
+        if (c.readyState == 4) {
+            if (c.status == 200) {
+                b.success(c.responseText)
+            } else {
+                c.onerror(c.status)
+            }
+        }
+    };
+    c.ontimeout = function() {
+        if (typeof b["timeout"] != "undefined") b.timeout();
+        else c.onerror(-1)
+    }, c.onerror = function(a) {
+        if (typeof b["fail"] != "undefined") b.fail(a)
+    };
+    c.open(b.m, b.url, true);
+    if (typeof b["data"] != "undefined") {
+        c.setRequestHeader("Content-Type", (typeof b["mime"] != "undefined") ? b["mime"] : "application/x-www-form-urlencoded");
+        c.send(b.data)
+    } else c.send()
+}
+
+var Q = function(d) {
+    return document.querySelector(d);
+};
+
+function C2F(c) {
+    return Math.round((c * 1.8 + 32) * 10) / 10
+}
+
+function F2C(f) {
+    return Math.round((f - 32) / 1.8 * 10) / 10
+}
+
+function openDlgLoading() {
+    document.getElementById('dlg_loading').style.display = "block";
+}
+
+function closeDlgLoading() {
+    document.getElementById('dlg_loading').style.display = "none";
+}
+
+var BrewMath = {
+    abv: function(og, fg) {
+        return ((76.08 * (og - fg) / (1.775 - og)) * (fg / 0.794)).toFixed(1);
+    },
+    att: function(og, fg) {
+        return Math.round((og - fg) / (og - 1) * 100);
+    },
+    sg2pla: function(sg) {
+        return -616.868 + 1111.14 * sg - 630.272 * sg * sg + 135.997 * sg * sg * sg;
+    },
+    pla2sg: function(pla) {
+        return 1 + (pla / (258.6 - ((pla / 258.2) * 227.1)));
+    },
+    tempCorrectionF(sg, t, c) {
+        var nsg = sg * ((1.00130346 - 0.000134722124 * t + 0.00000204052596 * t * t - 0.00000000232820948 * t * t * t) /
+            (1.00130346 - 0.000134722124 * c + 0.00000204052596 * c * c - 0.00000000232820948 * c * c * c));
+        return nsg;
+    },
+    tempCorrection(celsius, sg, t, c) {
+        return celsius ? BrewMath.tempCorrectionF(sg, C2F(t), C2F(c)) : BrewMath.tempCorrectionF(sg, t, c);
+    }
+};
+
+Date.prototype.shortLocalizedString = function() {
+    var y = this.getYear() + 1900;
+    var re = new RegExp('[^\d]?' + y + '[^\d]?');
+    var n = this.toLocaleDateString();
+    var ds = n.replace(re, "");
+    var HH = this.getHours();
+    var MM = this.getMinutes();
+
+    function T(x) {
+        return (x > 9) ? x : ("0" + x);
+    }
+    return ds + " " + T(HH) + ":" + T(MM);
+};
+
+function getActiveNavItem() {
+    var path = window.location.pathname.split("/").pop();
+    if (path == "") path = "index.htm";
+    var element = Q('.options>li>a[href="/' + path + '"]');
+    element.className += 'active';
+}
+
+function formatDate(dt) {
+    //	var y = dt.getFullYear();
+    //	var M = dt.getMonth() +1;
+    //	var d = dt.getDate();
+    var h = dt.getHours();
+    var m = dt.getMinutes();
+    //    var s = dt.getSeconds();
+    function dd(n) {
+        return (n < 10) ? '0' + n : n;
+    }
+    //	return dd(M) + "/" + dd(d) + "/" + y +" "+ dd(h) +":"+dd(m)+":"+dd(s);
+    //	return dd(M) + "/" + dd(d) +" "+ dd(h) +":"+dd(m);
+    return dt.toLocaleDateString() + " " + dd(h) + ":" + dd(m);
+}
+
+function formatDateForPicker(date) {
+    var h = date.getHours();
+    var m = date.getMinutes();
+
+    function dd(n) { return (n < 10) ? '0' + n : n; }
+    return date.getFullYear() + "-" + dd(date.getMonth() + 1) + "-" + dd(date.getDate()) + "T" + dd(h) + ":" + dd(m);
+}</script><script>function formatIP(a){return"0.0.0.0"==a?"":a}function verifyIP(a){var e=this.value.split("."),t=!0;if(4==e.length)for(var i=0;i<4;i++){if(parseInt(e[i])>255){t=!1;break}}else t=""==this.value;t?(this.saved=this.value,this.value=formatIP(this.value)):this.value=formatIP(this.saved)}function loadSetting(){s_ajax({url:"config?cfg=1",m:"GET",success:function(a){var e=JSON.parse(a);window.oridata=e,Object.keys(e).map(function(a){var t=Q("input[name="+a+"]");t?t.classList.contains("iptype")?(t.value=formatIP(e[a]),t.saved=e[a],t.onchange=verifyIP):"checkbox"==t.type?t.checked=0!=e[a]:t.value=e[a]:(t=Q("select[name="+a+"]"))&&(t.value=e[a])})},fail:function(a){alert("error getting data:"+a)}})}function waitrestart(){Q("#waitprompt").style.display="block",Q("#inputform").style.display="none",setTimeout(function(){window.location.reload()},15e3)}function save(){var a=document.querySelectorAll("input"),e={},t=!1;Object.keys(a).map(function(i,n){var o;"submit"!=a[n].type&&(a[n].name&&""!=a[n].name&&(o=a[n].classList.contains("iptype")?a[n].saved:"checkbox"==a[n].type?a[n].checked?1:0:a[n].value.trim(),e[a[n].name]=o,window.oridata[a[n].name]==o||a[n].classList.contains("nb")||(t=!0)))});var i=Q("select[name=wifi]");window.oridata.wifi!=i.value&&(t=!0),e.wifi=i.value,console.log(JSON.stringify(e)),s_ajax({url:"config"+(t?"":"?nb"),data:"data="+encodeURIComponent(JSON.stringify(e)),m:"POST",success:function(a){t&&waitrestart()},fail:function(a){alert("error saving data:"+a)}})}function load(){Q("#verinfo")&&(Q("#verinfo").innerHTML="v"+JSVERSION),loadSetting()}</script><style>#waitprompt{display:none}</style></head><body onload=load()><div id=waitprompt>Congfiuration saved. Wait for restart.. (note: if the hostname is changed, the page won't be reloaded.)</div><div id=inputform><form action=/setconfig action=post><table><tr><td>LCD auto off</td><td><input name=aoff type=text size=5 maxlength=5 class=nb>seconds</td></tr><tr><td>Title</td><td><input name=title type=text size=12 maxlength=24></td></tr><tr><td>Host/Network Name</td><td><input name=name type=text size=12 maxlength=16></td></tr><tr><td>HTTP Port</td><td><input name=port type=text size=5 maxlength=5></td></tr><tr><td>User Name</td><td><input name=user type=text size=12 maxlength=16></td></tr><tr><td>Password</td><td><input name=pass type=password size=12 maxlength=16></td></tr><tr><td>Always need password</td><td><input type=checkbox name=protect></td></tr><tr><td>Network</td><td><select name=wifi><option value=1>Station</option><option value=2>AP</option><option value=3>Station + AP</option></select></td></tr><tr><td>Fixed IP</td><td><input type=text name=ip size=16 class=iptype></td></tr><tr><td>Gateway</td><td><input type=text name=gw size=16 class=iptype></td></tr><tr><td>Netmask</td><td><input type=text name=mask size=16 class=iptype></td></tr><tr><td>Save Change</td><td><input type=submit name=submit onclick="return save(),!1"></td></tr></table></form></div></body></html>
