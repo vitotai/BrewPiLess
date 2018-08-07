@@ -532,7 +532,7 @@ String BPLSettings::jsonBeerProfile(void)
 				jstep["g"]= pertages[pertageIndex];
 				pertageIndex++;
 			}else{
-				jstep["g"]= s_step->gravity.sg;
+				jstep["g"]= GravityToFloat(s_step->gravity.sg);
 			}
 		}
 		if(strchr("suvbxwe",s_step->condition)){ 
