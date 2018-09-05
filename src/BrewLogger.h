@@ -51,6 +51,9 @@
 
 #define GravityEncode(g) (uint16_t)(10000.0 * (g) + 0.5)
 #define GravityDecode(a) (float)(a)/10000.0
+#define PlatoEncode(g) (uint16_t)(100.0 * (g) + 0.5)
+#define PlatoDecode(a) (float)(a)/100.0
+
 #define HighOctect(a) (uint8_t)((a)>>8) 
 #define LowOctect(a) (uint8_t)((a)&0xFF)
 
@@ -114,7 +117,8 @@ private:
 	// brewpi specific info
 	uint8_t _mode;
 	uint8_t _state;
-
+	bool _usePlato;
+	
 	uint16_t  _iTempData[5];
 	uint16_t  _extTemp;
 	uint16_t  _extGravity;

@@ -31,7 +31,7 @@ public:
 		_status =  theSettings.brewStatus();
 	}
 	void setUnit(char unit);
-	void setOriginalGravity(float gravity);
+	void setOriginalGravityPoint(uint16_t gravity);
 	float tempByTimeGravity(unsigned long time,Gravity gravity);
 	void setStableThreshold(uint8_t threshold){ _stableThreshold=threshold; }
 	void profileUpdated();
@@ -51,8 +51,8 @@ protected:
 public:
 
 	BrewKeeper(void(*puts)(const char*)):_write(puts),_lastGravity(INVALID_GRAVITY){}
-	void updateGravity(float sg){ _lastGravity=FloatToGravity(sg);}
-	void updateOriginalGravity(float sg){ _profile.setOriginalGravity(sg); }
+	void updateGravity(float sg){ _lastGravity=SG2TrackingGravity(sg);}
+	void updateOriginalGravity(float sg);
 
 	void keep(time_t now);
 

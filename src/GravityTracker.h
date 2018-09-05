@@ -4,6 +4,12 @@
 #define InvalidValue 0
 #define AveragePeriod  3600
 
+typedef uint16_t TrackingGravity;
+// 1 point in plato is 0.1
+#define Plato2TrackingGravity(p) ((TrackingGravity)((p)*10.0 + 0.5))
+// 1 point in Specific gravity is 0.001
+#define SG2TrackingGravity(p) ((TrackingGravity)((p)*1000.0 + 0.5))
+
 class GravityTracker
 {
     int _idx;
@@ -34,8 +40,7 @@ public:
         return (_record[previous] - _record[current]) <= to;
     }
 
-    void add(float fgravity,uint32_t time){
-        uint16_t gravity =round(fgravity * 1000.0);
+    void add(TrackingGravity gravity,uint32_t time){
         uint32_t timediff = time - _currentStartTime;
 
         if(timediff > AveragePeriod){

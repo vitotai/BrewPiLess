@@ -42,7 +42,8 @@ typedef struct _GravityDeviceConfiguration{
     uint8_t  ispindelCalibrationBaseTemp;
 
 	uint8_t  stableThreshold;
-    uint8_t _padding[7];
+	uint8_t  usePlato;
+    uint8_t _padding[6];
 }GravityDeviceConfiguration;
 
 //*****************************************************
@@ -63,9 +64,13 @@ typedef int16_t Gravity;
 
 #define INVALID_GRAVITY -1
 #define IsGravityValid(g) ((g)>0)
-#define FloatToGravity(f) ((Gravity)((f) * 1000.0 +0.5))
-#define GravityToFloat(g) (((float)(g) / 1000.0))
+
 #define PointToGravity(p) (1000+(Gravity)((p)+0.5))
+
+#define PlatoToGravity(p) ((uint16_t)((p)*10.0 + 0.5))
+#define SGToGravity(p) ((uint16_t)((p)*1000.0 + 0.5))
+#define GravityToSG(g) (((float)(g) / 1000.0))
+#define GravityToPlato(g) (((float)(g) / 10.0))
 
 // 12
 typedef struct _ScheduleStep{
@@ -74,14 +79,14 @@ typedef struct _ScheduleStep{
     union GravityT{
         uint16_t  sg;
         uint16_t  attenuation;
-        struct _StableT{
-            uint8_t  stableTime;
-            uint8_t  stablePoint;
-        } stable;
     } gravity;
+    struct _StableT{
+        uint8_t  stableTime;
+        uint8_t  stablePoint;
+    } stable;
     uint8_t  attSpecified;
     char     condition;
-    uint8_t _padding[4];
+    uint8_t _padding[2];
 } ScheduleStep; // 12bytes
 // 12 * 7 +12 = 96
 typedef struct _BeerTempSchedule{
@@ -96,9 +101,9 @@ typedef struct _BrewStatus{
 	time_t   startingDate;
 	time_t   timeEnterCurrentStep;
 	time_t   currentStepDuration;
-	uint8_t  OGPoints;
+	uint16_t  OGPoints;
 	uint8_t  currentStep;
-    uint8_t _padding[6];
+    uint8_t _padding[5];
 }BrewStatus;
 
 //*****************************************************

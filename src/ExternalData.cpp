@@ -4,6 +4,22 @@
 ExternalData externalData;
 
 
+float Brix2SG(float brix){
+ return (brix / (258.6-((brix / 258.2)*227.1))) + 1;
+}
+
+float SG2Brix(float SG){
+ return (((182.4601 * SG -775.6821) * SG +1262.7794) * SG -669.5622);
+}
+
+float ExternalData::plato(bool filtered){ 
+	float sg= filtered? _filteredGravity:_gravity;
+	return _cfg->usePlato? sg:SG2Brix(sg);
+}
+float ExternalData::gravity(bool filtered){ 
+	float sg= filtered? _filteredGravity:_gravity;
+	return _cfg->usePlato? Brix2SG(sg):sg;
+}
 
 void ExternalData::waitFormula(){
     _cfg->numberCalPoints =0;
@@ -42,14 +58,15 @@ void ExternalData::sseNotify(char *buf){
 		}
 
 		const char *spname=(_ispindelName)? _ispindelName:"Unknown";
-		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d,\"ctemp\":%d}",
+		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d,\"ctemp\":%d,\"plato\":%d}",
 					spname, 
 					strbattery,
 					strgravity,
 					strtilt,
 					_lastUpdate,slowpassfilter,_cfg->stableThreshold,
 					_cfg->numberCalPoints,
-                    _cfg->ispindelCalibrationBaseTemp);
+                    _cfg->ispindelCalibrationBaseTemp,
+					_cfg->usePlato);
 }
 
 
@@ -107,9 +124,11 @@ void ExternalData::setTilt(float tilt,float temp,time_t now){
 
 	// temp. correction
 	if(_cfg->ispindelTempCal){
-	    sg = temperatureCorrection(sg,C2F(temp),C2F((float)_cfg->ispindelCalibrationBaseTemp));
+		if(_cfg->usePlato){
+			sg =SG2Brix(temperatureCorrection(Brix2SG(sg),C2F(temp),C2F((float)_cfg->ispindelCalibrationBaseTemp)));
+		}else
+	    	sg = temperatureCorrection(sg,C2F(temp),C2F((float)_cfg->ispindelCalibrationBaseTemp));
 	}
-
 	// update, gravity data calculated
 	setGravity(sg,now,!_calibrating); // save only when not calibrating.
 }
@@ -120,7 +139,7 @@ void ExternalData::setGravity(float sg, time_t now,bool log){
 	
     DBG_PRINTF("setGravity:%d, saved:%d\n",(int)(sg*10000.0),log);
     // verfiy sg, even invalid value will be reported to web interface
-	if(!IsGravityInValidRange(sg)) return;
+	//if(!IsGravityInValidRange(sg)) return;
 	_gravity = sg;
 	_lastUpdate=now;
 
@@ -129,7 +148,10 @@ void ExternalData::setGravity(float sg, time_t now,bool log){
     float _filteredGravity=filter.addData(sg);
 		// use filter data as input to tracker and beer profile.
 	brewKeeper.updateGravity(_filteredGravity);
-	gravityTracker.add(_filteredGravity,now);
+	if(_cfg->usePlato)
+		gravityTracker.add(Plato2TrackingGravity(_filteredGravity),now);
+	else
+		gravityTracker.add(SG2TrackingGravity(_filteredGravity),now);
 #endif
 	// don't save it if it is cal&brew
 	if(log) brewLogger.addGravity(sg,false);
@@ -194,7 +216,14 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
   		}
 		float  gravity = root["gravity"];
 
-		if(!IsGravityInValidRange(gravity)) return true;
+		//if(!IsGravityInValidRange(gravity)) return true;
+		if(root.containsKey("plato")){
+			if(root["plato"] && !_cfg->usePlato){
+				gravity = Brix2SG(gravity);
+			}else if(!root["plato"] && _cfg->usePlato){
+				gravity = SG2Brix(gravity);
+			}
+		} 
 
 		if(root.containsKey("og")){
 				setOriginalGravity(gravity);
@@ -237,7 +266,8 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
                 ! _cfg->calculateGravity 
 				&& ! _calibrating ){
 			// gravity information directly from iSpindel
-            setGravity(root["gravity"], TimeKeeper.getTimeSeconds());
+			float sgreading=root["gravity"];
+            setGravity(sgreading, TimeKeeper.getTimeSeconds());
         }
 	}else{
 		    error = ErrorUnknownSource;

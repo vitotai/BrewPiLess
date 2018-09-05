@@ -673,10 +673,10 @@ void greeting(std::function<void(const char*)> sendFunc)
 {
 	char buf[512];
 	// gravity related info., starting from "G"
-	if(externalData.iSpindelEnabled()){
+	//if(externalData.iSpindelEnabled()){
 		externalData.sseNotify(buf);
 		sendFunc(buf);
-	}
+	//}
 
 	// misc informatoin, including
 

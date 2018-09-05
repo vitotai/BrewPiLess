@@ -161,7 +161,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 }
    
 //***************************************************************
-// Gravity configuration
+// gravity device configuration
 
 #define KeyEnableiSpindel "ispindel"
 #define KeyTempCorrection "tc"
@@ -174,7 +174,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 #define KeyLPFBeta "lpc"
 #define KeyStableGravityThreshold "stpt"
 #define KeyNumberCalPoints "npt"
-
+#define KeyUsePlato "plato"
 
  bool BPLSettings::dejsonGravityConfig(char* json)
 {
@@ -203,6 +203,7 @@ String BPLSettings::jsonSystemConfiguration(void){
         gdc->lpfBeta =root[KeyLPFBeta];
         gdc->stableThreshold=root[KeyStableGravityThreshold];
 		gdc->numberCalPoints=root[KeyNumberCalPoints];
+		gdc->usePlato = root.containsKey(KeyUsePlato)? root[KeyUsePlato]:0;
 		// debug
 		#if SerialDebug
 		Serial.print("\nCoefficient:");
@@ -236,6 +237,7 @@ String BPLSettings::jsonGravityConfig(void){
 		root[KeyCoefficientA2]=gdc->ispindelCoefficients[2];
 		root[KeyCoefficientA3]=gdc->ispindelCoefficients[3];
 		root[KeyNumberCalPoints] = gdc->numberCalPoints;
+		root[KeyUsePlato] = gdc->usePlato;
 	 String ret;
     root.printTo(ret);
     return ret;
@@ -433,24 +435,28 @@ bool BPLSettings::dejsonBeerProfile(String json)
     			    const char* attStr=entry["g"];
     			    float att=atof(attStr);
     			    if( strchr ( attStr, '%' ) > 0){
-	    			    DBG_PRINTF(" att:%s sg:%d",attStr,step->gravity.sg);
+	    			    DBG_PRINTF(" att:%s sg:%d ",attStr,step->gravity.sg);
 						step->attSpecified=true;
 						step->gravity.attenuation =(uint8_t) att;
                     }
     			}
 				if(! step->attSpecified){
     			    float fsg= entry["g"];
-	    		    step->gravity.sg = FloatToGravity(fsg);
+					if(_data.gdc.usePlato){
+	    		    	step->gravity.sg = PlatoToGravity(fsg);
+					}else{
+	    		    	step->gravity.sg = SGToGravity(fsg);
+					}
     			    DBG_PRINTF(" sg:%d",step->gravity.sg);
     		    }
 			}
 
 			if(entry.containsKey("s")){
     			int st= entry["s"];
-	    		step->gravity.stable.stableTime =st;
-	    		step->gravity.stable.stablePoint=(entry.containsKey("x"))? entry["x"]:_data.gdc.stableThreshold;
+	    		step->stable.stableTime =st;
+	    		step->stable.stablePoint=(entry.containsKey("x"))? entry["x"]:_data.gdc.stableThreshold;
 
-    			DBG_PRINTF("Stable :%d@%d",step->gravity.stable.stablePoint,step->gravity.stable.stableTime);
+    			DBG_PRINTF("Stable :%d@%d",step->stable.stablePoint,step->stable.stableTime);
 			}
 
 			DBG_PRINT(" temp:");
@@ -532,13 +538,20 @@ String BPLSettings::jsonBeerProfile(void)
 				jstep["g"]= pertages[pertageIndex];
 				pertageIndex++;
 			}else{
-				jstep["g"]= GravityToFloat(s_step->gravity.sg);
+				DBG_PRINTF("  sg:%d \n",s_step->gravity.sg);
+				if(_data.gdc.usePlato){
+					jstep["g"]= GravityToPlato(s_step->gravity.sg);
+					Serial.print("SG:");
+					Serial.println(GravityToPlato(s_step->gravity.sg));
+				}else{
+					jstep["g"]= GravityToSG(s_step->gravity.sg);
+				}
 			}
 		}
 		if(strchr("suvbxwe",s_step->condition)){ 
 			// stable.
-			jstep["s"]= s_step->gravity.stable.stableTime;
-			jstep["x"]= s_step->gravity.stable.stablePoint;
+			jstep["s"]= s_step->stable.stableTime;
+			jstep["x"]= s_step->stable.stablePoint;
 		}
 	}// end of for
 	

@@ -56,7 +56,10 @@ int DataLogger::dataSprintf(char *buffer,const char *format)
 				d += printFloat(buffer+d,roomTemp,1,IS_FLOAT_TEMP_VALID(roomTemp));
 			}else if(ch == 'g'){
 				float sg=externalData.gravity();
-				d += printFloat(buffer+d,sg,3,IsGravityValid(sg));
+				d += printFloat(buffer+d,sg,4,IsGravityValid(sg));
+			}else if(ch == 'p'){
+				float sg=externalData.plato();
+				d += printFloat(buffer+d,sg,2,IsGravityValid(sg));
 			}else if(ch == 'v'){
 				float vol=externalData.deviceVoltage();
 				d += printFloat(buffer+d,vol,1,IsVoltageValid(vol));

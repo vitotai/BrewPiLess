@@ -135,6 +135,7 @@ BrewLogger::BrewLogger(void){
 
 		if(tag == StartLogTag){
 			_calibrating = (mask & 0x20) != 0x20;
+			_usePlato = (mask & 0x40) != 0x40;
 			DBG_PRINTF("resume cal:%d\n",_calibrating);
 			processIndex += 6;
 		}else{
@@ -178,7 +179,7 @@ BrewLogger::BrewLogger(void){
                                     // dont trust the data
 //                            	if(gravityInt > 8000 && gravityInt < 12500)
 //                                    gravityTracker.add(GravityDecode(gravityInt),_resumeLastLogTime);
-				        	} // if this is Gravity data
+				        	} // if this is gravity data
 			        	} // if the field exists
 			    	} // for each bit
 		    	}else if(tag == ResumeBrewTag){
@@ -546,9 +547,11 @@ BrewLogger::BrewLogger(void){
 	void BrewLogger::addGravity(float gravity,bool isOg)
 	{
 		if(isOg){
-			_extOriginGravity = GravityEncode(gravity);
+			if(_usePlato) _extOriginGravity = PlatoEncode(gravity);
+			else _extOriginGravity = GravityEncode(gravity);
 		}else{
-			_extGravity=GravityEncode(gravity);
+			if(_usePlato) _extGravity=PlatoEncode(gravity);
+			else _extGravity=GravityEncode(gravity);
 		}
 	}
 
@@ -639,7 +642,11 @@ BrewLogger::BrewLogger(void){
 		uint8_t headerTag=5;
 		//8
 		*ptr++ = StartLogTag;
-		*ptr++ = headerTag | (fahrenheit? 0xF0:0xE0) ;
+		headerTag = headerTag | (fahrenheit? 0xF0:0xE0) ;
+		_usePlato =theSettings.GravityConfig()->usePlato;
+		if(_usePlato) headerTag = headerTag ^ 0x40;
+
+		*ptr++ = headerTag;
 		int period = _tempLogPeriod/1000;
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
@@ -664,14 +671,16 @@ BrewLogger::BrewLogger(void){
 	void BrewLogger::startLog(bool fahrenheit,bool calibrating)
 	{
 		char *ptr=_logBuffer;
+		_usePlato=theSettings.GravityConfig()->usePlato;
+
 		// F0FF  peroid   4 bytes
 		// Start system time 4bytes
 		uint8_t headerTag=5;
 		*ptr++ = StartLogTag;
 
-		headerTag = headerTag | (fahrenheit? 0xF0:0xE0) ;
-
+		headerTag = headerTag | (fahrenheit? 0xF0:0xE0) ;		
 		if(calibrating) headerTag = headerTag ^ 0x20 ;
+		if(_usePlato) headerTag = headerTag ^ 0x40;
 
 		*ptr++ = headerTag;
 		

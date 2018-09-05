@@ -83,7 +83,8 @@ public:
 	,_ispindelName(NULL),_calibrating(false)
 	{ _filteredGravity = INVALID_GRAVITY;}
 
-	float gravity(bool filtered=false){ return filtered? _filteredGravity:_gravity;}
+	float gravity(bool filtered=false);
+	float plato(bool filtered=false);
 
 	// to prevent from calculate gravity when no valid formula available.
 	void waitFormula();
