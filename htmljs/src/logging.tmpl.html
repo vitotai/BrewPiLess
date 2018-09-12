@@ -1,0 +1,264 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= log_page_title %>
+    </title>
+    <meta name="apple-mobile-web-app-title" content="BrewPiLess">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script type="text/javascript" src="js/vendor/bwf.js"></script>
+    <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/script-logging.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="style-logging.css">
+</head>
+
+<body onload="init();">
+
+    <!-- build:include partials/header.html -->
+    <!-- /build -->
+
+    <div viewport>
+        <div main flex>
+            <h4>
+                <%= log_page_title %>
+            </h4>
+            <div class="card">
+                <div layout horizontal main-justified cross-center>
+                    <h5>
+                        <%= log_remote_log %>
+                    </h5>
+                    <div>
+                        <input type="checkbox" id="enabled" name="enabled" class="switch-input" checked>
+                        <label for="enabled" class="switch-label" style="min-width: 0;"></label>
+                    </div>
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= log_method %>
+                    </h6>
+                    <div class="md-radio md-radio-inline">
+                        <input id="m_get" type="radio" name="method" checked onchange="cmethod(this);">
+                        <label for="m_get">GET</label>
+                    </div>
+                    <div class="md-radio md-radio-inline">
+                        <input id="m_post" type="radio" name="method" onchange="cmethod(this);">
+                        <label for="m_post">POST</label>
+                    </div>
+                    <div class="md-radio md-radio-inline">
+                        <input id="m_put" type="radio" name="method" onchange="cmethod(this);">
+                        <label for="m_put">PUT</label>
+                    </div>
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= log_url %>
+                    </h6>
+                    <input type="text" id="url" size="128" placeholder="input link" onchange="checkurl(this);">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">Data Type:</h6>
+                    <input type="text" id="data-type" size="42" placeholder="Content-Type">
+                </div>
+                <p class="hint">JSON:"application/json", Form Type:"application/x-www-form-urlencoded"</p>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= log_format %>
+                    </h6>
+                    <div layout vertical style="width: 100%;">
+                        <textarea id="format" rows="4" cols="64" oninput="checkformat(this)"></textarea>
+                        <div layout horizontal main-justified cross-center>
+                            <span onmouseover="showformat(this)" onmouseout="hideformat()">
+                                <u><%= log_notation %></u>
+                            </span>
+                            <span>
+                                <%= log_characters %>
+                                <span id="fmthint">0/256</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= log_time_period %>
+                    </h6>
+                    <input type="text" id="period" size="4">
+                    <%= log_seconds %>
+                </div>
+
+                <div class="card-footer">
+                    <button type="button" onclick="update();" class="btn"><%= log_update %></button>
+                </div>
+
+            </div>
+
+            <div class="card">
+                <h5>
+                    <%= log_local_log %>
+                </h5>
+
+                <div id=logstartinput>
+                    <div id=logctrl layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= log_new_log_name %>
+                        </h6>
+                        <input type="text" id="logname" size="24" maxlength="24"></input>
+                        <button id="startlogbutton"><%= log_start_logging %></button>
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= log_options %>
+                        </h6>
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= log_calibrate_ispindel %>
+                        </h6>
+                        <input type=checkbox id=calispindel>
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= log_tilt_in_water %>
+                        </h6>
+                        <input type=text id=tiltinw size=6>
+                    </div>
+                    <div layout horizontal cross-center class=tiltwatercorrect>
+                        <h6 class="inline-header">
+                            <%= log_hydrometer_reading %>
+                        </h6>
+                        <input type=text id=hydrometer size=6>
+                    </div>
+                    <div layout horizontal cross-center class=tiltwatercorrect>
+                        <h6 class="inline-header">
+                            <%= log_or_water_at %>
+                        </h6><input type=text id=watertemp size=4>&deg;
+                        <%= log_calibrated %> <input type=text id=caltemp size=4>&deg;
+                            <select id=tempunit><option vlue=C>C</option><option value=F>F</option></select>
+
+                    </div>
+                </div>
+
+                <div id=logstopinput style="display:none">
+                    <%= log_recording %> <strong id="loggingtitle"></strong>
+                        <%= log_since %> <strong id=start-log-date></strong>
+                            <button id="stoplogbutton"><%= log_stop_logging %></button>
+                </div>
+
+
+                <div id="fsinfo">
+                    <%= log_free_space %>
+                        <span id="fsfree">0</span> Bytes,
+                        <%= log_used_space %>
+                            <span id="fsused">0</span> Bytes,
+                            <%= log_total_space %>
+                                <span id="fssize">0</span> Bytes
+                </div>
+
+                <h5 class="small-heading">
+                    <%= log_recorded_log %>
+                </h5>
+
+                <table id="loglist" class="mdl-data-table">
+                    <tr>
+                        <th>
+                            <%= log_log %>
+                        </th>
+                        <th>
+                            <%= log_date %>
+                        </th>
+                        <th>
+                            <%= log_action %>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td class="logid"></td>
+                        <td class="logdate"></td>
+                        <td>
+                            <button class="dlbutton btn"><%= log_download %></button>
+                            <button class="rmbutton btn"><%= log_delete %></button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- build:include partials/footer.html -->
+    <!-- /build -->
+
+    <!-- Formatlist -->
+    <div id="formatlist">
+        <table class="mdl-data-table">
+            <tr>
+                <th>%b</th>
+                <td>
+                    <%= log_beertemp %>
+                </td>
+            </tr>
+            <tr>
+                <th>%B</th>
+                <td>
+                    <%= log_beerset %>
+                </td>
+            </tr>
+            <tr>
+                <th>%f</th>
+                <td>
+                    <%= log_fridgetemp %>
+                </td>
+            </tr>
+            <tr>
+                <th>%F</th>
+                <td>
+                    <%= log_fridgeset %>
+                </td>
+            </tr>
+            <tr>
+                <th>%r</th>
+                <td>
+                    <%= log_roomtemp %>
+                </td>
+            </tr>
+            <tr>
+                <th>%g</th>
+                <td>
+                    <%= log_gravity %>
+                </td>
+            </tr>
+            <tr>
+                <th>%a</th>
+                <td>
+                    <%= log_auxtemp %>
+                </td>
+            </tr>
+            <tr>
+                <th>%v</th>
+                <td>
+                    <%= log_voltage %>
+                </td>
+            </tr>
+            <tr>
+                <th>%t</th>
+                <td>
+                    <%= log_tilt_value %>
+                </td>
+            </tr>
+            <tr>
+                <th>%u</th>
+                <td>
+                    <%= log_timestamp %>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+
+</html>

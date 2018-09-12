@@ -2,8 +2,9 @@
             toggle: function(type) {
                 this.chart.toggleLine(type);
             },
-            init: function(id) {
+            init: function(id, y1, y2) {
                 this.chart = new BrewChart(id);
+                this.chart.setLabels(y1, y2);
             },
             setIgnoredMask: function(m) {
                 var t = this;
@@ -57,7 +58,7 @@
             if (range) {
                 window.iniRange = range.split("-");
             }
-            BChart.init("div_g");
+            BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
             Q("#div_g").oncontextmenu = function(ev) {
                 ev = ev || window.event;
 

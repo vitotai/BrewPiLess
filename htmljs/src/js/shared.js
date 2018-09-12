@@ -1,4 +1,4 @@
-var JSVERSION = "3.0";
+var JSVERSION = "3.1";
 
 function s_ajax(b) {
     var c = new XMLHttpRequest();
@@ -48,11 +48,17 @@ var BrewMath = {
     abv: function(og, fg) {
         return ((76.08 * (og - fg) / (1.775 - og)) * (fg / 0.794)).toFixed(1);
     },
+    abvP: function(og, fg) {
+        return BrewMath.abv(BrewMath.pla2sg(og), BrewMath.pla2sg(fg));
+    },
     att: function(og, fg) {
         return Math.round((og - fg) / (og - 1) * 100);
     },
+    attP: function(pog, pfg) {
+        return Math.round((pog - pfg) / pog * 100);
+    },
     sg2pla: function(sg) {
-        return -616.868 + 1111.14 * sg - 630.272 * sg * sg + 135.997 * sg * sg * sg;
+        return (((182.4601 * sg - 775.6821) * sg + 1262.7794) * sg - 669.5622);
     },
     pla2sg: function(pla) {
         return 1 + (pla / (258.6 - ((pla / 258.2) * 227.1)));
@@ -62,8 +68,14 @@ var BrewMath = {
             (1.00130346 - 0.000134722124 * c + 0.00000204052596 * c * c - 0.00000000232820948 * c * c * c));
         return nsg;
     },
+    pTempCorrectionF(sg, t, c) {
+        return BrewMath.sg2pla(BrewMath.tempCorrectionF(BrewMath.pla2sg(sg), t, c));
+    },
     tempCorrection(celsius, sg, t, c) {
         return celsius ? BrewMath.tempCorrectionF(sg, C2F(t), C2F(c)) : BrewMath.tempCorrectionF(sg, t, c);
+    },
+    pTempCorrection(celsius, sg, t, c) {
+        return celsius ? BrewMath.pTempCorrectionF(sg, C2F(t), C2F(c)) : BrewMath.tempCorrectionF(sg, t, c);
     }
 };
 

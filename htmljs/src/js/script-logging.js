@@ -89,7 +89,10 @@ var logs = {
             if (calispindel) {
                 var tilt = parseFloat(Q("#tiltinw").value.trim());
                 var reading = parseFloat(Q("#hydrometer").value.trim());
-                if (isNaN(tilt) || isNaN(reading)) {
+                if (window.plato) reading = 0;
+                if (isNaN(tilt)) {
+                    alert("tilt value is necessary!");
+                } else if (!window.plato && (isNaN(tilt) || isNaN(reading))) {
                     alert("tilt value and hydrometer reading is necessary!");
                     return;
                 }
@@ -199,6 +202,12 @@ var logs = {
                 t.ll = r.list;
                 t.list(r.list);
                 t.fsinfo(r.fs.size, r.fs.used);
+                if (typeof r["plato"] != "undefined" && r.plato) {
+                    window.plato = true;
+                    var th = document.querySelectorAll(".tiltwatercorrect");
+                    for (var i = 0; i < th.length; i++)
+                        th[i].style.display = "none";
+                } else window.plato = false;
             },
             fail: function(e) {
                 alert("failed:" + e);
@@ -317,8 +326,8 @@ function showformat(lab) {
     var f = Q("#formatlist");
     var rec = lab.getBoundingClientRect();
     f.style.display = "block";
-    f.style.left = (rec.left) + "px";
-    f.style.top = (rec.top + 100) + "px";
+    f.style.left = (rec.right + 5) + "px";
+    f.style.top = (rec.bottom + 5) + "px";
 }
 
 function hideformat() {

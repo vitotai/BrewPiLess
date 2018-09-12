@@ -1,0 +1,108 @@
+<html>
+
+<head>
+    <title>
+        <%= config_page_title %>
+    </title>
+    <script type="text/javascript" src="js/altjq.js"></script>
+    <script type="text/javascript" src="js/script-config.js"></script>
+    <style>
+        #waitprompt {
+            display: none;
+        }
+    </style>
+</head>
+
+<body onload="load();">
+    <div id="waitprompt">
+        <%= config_wait_restart %>
+    </div>
+    <div id="inputform">
+        <form action="/setconfig" action="post">
+            <table>
+                <tr>
+                    <td>
+                        <%= config_lcd_auto_off %>
+                    </td>
+                    <td><input name="aoff" type="text" size="5" maxlength="5" class="nb">
+                        <%= config_seconds %>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <%= config_title %>
+                    </td>
+                    <td><input name="title" type="text" size="12" maxlength="24"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <%= config_host_network_name %>
+                    </td>
+                    <td><input name="name" type="text" size="12" maxlength="16"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <%= config_http_port %>
+                    </td>
+                    <td><input name="port" type="text" size="5" maxlength="5"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <%= config_username %>
+                    </td>
+                    <td><input name="user" type="text" size="12" maxlength="16"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <%= config_password %>
+                    </td>
+                    <td><input name="pass" type="password" size="12" maxlength="16"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <%= config_always_password %>
+                    </td>
+                    <td><input type="checkbox" name="protect"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <%= config_network %>
+                    </td>
+                    <td><select name="wifi">
+                        <option value="1"><%= config_station %></option>
+                        <option value="2"><%= config_ap %></option>
+                        <option value="3"><%= config_stationap %></option>
+                    </select></td>
+                </tr>
+                <tr>
+                    <td>
+                        <%= config_fixedip %>
+                    </td>
+                    <td><input type="text" name="ip" size="16" class="iptype"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <%= config_gateway %>
+                    </td>
+                    <td><input type="text" name="gw" size="16" class="iptype"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <%= config_netmask %>
+                    </td>
+                    <td><input type="text" name="mask" size="16" class="iptype"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <%= config_save_change %>
+                    </td>
+                    <td><input type="submit" name="submit" onclick="save();return false;"></input>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</body>
+
+</html>

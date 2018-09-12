@@ -166,8 +166,9 @@
                 t.reqdata();
             }, t.chart.interval * 1000);
         },
-        init: function(id) {
+        init: function(id, y1, y2) {
             this.chart = new BrewChart(id);
+            this.chart.setLabels(y1, y2);
         },
         timer: null,
         start: function() {
@@ -292,10 +293,17 @@
         }
     }
 
+    function hideErrorMsgs() {
+        var msgs = document.querySelectorAll(".errormsg");
+        for (var i = 0; i < msgs.length; i++)
+            msgs[i].style.display = "none";
+    }
+
     function communicationError() {
         var div = Q('.error');
         if (div) {
-            div.innerHTML = "Failed to connect to server.";
+            hideErrorMsgs();
+            Q('#error_connect').style.display = "block";
             div.style.display = "block";
         } else displayLcdText(["Failed to", "connect to", "Server", ""]);
     }
@@ -303,7 +311,8 @@
     function controllerError() {
         var div = Q('.error');
         if (div) {
-            div.innerHTML = "Controller not updating data.";
+            hideErrorMsgs();
+            Q('#error_noupdate').style.display = "block";
             div.style.display = "block";
         } else displayLcdText(["Controller not", "updating data", "...", ""]);
     }
@@ -326,24 +335,29 @@
     }
 
     function gravityDevice(msg) {
-        if (typeof msg["name"] == "undefined") return;
-        // before iSpindel report to BPL, the name file is "unknown"
+
+        //if (typeof msg["name"] == "undefined") return;
+        if (typeof msg["plato"] != "undefined") {
+            window.plato = msg.plato;
+            if (window.plato) showPlatoUnit();
+        }
         if (typeof msg["fpt"] != "undefined") {
             window.npt = msg["fpt"];
         }
-
-        //The first report will be "unknown" if (msg.name.startsWith("iSpindel")) {
-        // iSpindel
+        // before iSpindel report to BPL, the name file is "unknown"
+        if (typeof msg["name"] == "undefined") return
+            //The first report will be "unknown" if (msg.name.startsWith("iSpindel")) {
+            // iSpindel
         if (typeof msg["lu"] == "undefined") {
             console.log("iSpindel:" + JSON.stringify(msg));
             return;
         }
-
-        if (typeof window.iSpindel == "undefined") {
-            window.iSpindel = true;
-            if (Q("#iSpindel-pane"))
-                Q("#iSpindel-pane").style.display = "block";
-        }
+        if (msg.name.startsWith("iSpindel"))
+            if (typeof window.iSpindel == "undefined") {
+                window.iSpindel = true;
+                if (Q("#iSpindel-pane"))
+                    Q("#iSpindel-pane").style.display = "block";
+            }
         var ndiv = Q("#iSpindel-name");
         if (ndiv) ndiv.innerHTML = msg.name;
 
@@ -358,8 +372,9 @@
         if (Q("#iSpindel-last"))
             Q("#iSpindel-last").innerHTML = lu.shortLocalizedString();
 
-        if (!BChart.chart.calibrating && typeof msg["sg"] != "undefined")
-            updateGravity(msg["sg"]);
+        if (!BChart.chart.calibrating && typeof msg["sg"] != "undefined" &&
+            msg.sg > 0)
+            updateGravity(msg.sg);
 
         if (typeof msg["angle"] != "undefined") {
             if (Q("#iSpindel-tilt"))
@@ -380,23 +395,25 @@
     function updateGravity(sg) {
         //if(typeof window.sg != "undefined") return;
         window.sg = sg;
-        Q("#gravity-sg").innerHTML = sg.toFixed(3);
+        Q("#gravity-sg").innerHTML = window.plato ? sg.toFixed(1) : sg.toFixed(3);
         if (typeof window.og != "undefined") {
-            Q("#gravity-att").innerHTML = BrewMath.att(window.og, sg);
-            Q("#gravity-abv").innerHTML = BrewMath.abv(window.og, sg);
+            Q("#gravity-att").innerHTML = window.plato ? BrewMath.attP(window.og, sg) : BrewMath.att(window.og, sg);
+            Q("#gravity-abv").innerHTML = BrewMath.abvP(window.og, sg);
         }
     }
 
     function updateOriginGravity(og) {
         if (typeof window.og != "undefined" && window.og == og) return;
         window.og = og;
-        Q("#gravity-og").innerHTML = og.toFixed(3);
+        Q("#gravity-og").innerHTML = window.plato ? og.toFixed(1) : og.toFixed(3);
         if (typeof window.sg != "undefined")
             updateGravity(window.sg);
     }
 
     function showgravitydlg(msg) {
-        Q('#dlg_addgravity .message').innerHTML = msg;
+        Q('#dlg_addgravity .og').style.display = "none";
+        Q('#dlg_addgravity .sg').style.display = "none";
+        Q('#dlg_addgravity .' + msg).style.display = "block";
         Q('#dlg_addgravity').style.display = "block";
         // update temp.
         if (typeof window["tempUnit"] != "undefined") {
@@ -428,20 +445,32 @@
         caltemp = window.celsius ? caltemp : C2F(caltemp);
         // calibration temperature always use celsius.
         Q("#sginput-hm-cal-temp").innerHTML = caltemp;
-        var correctedSg = BrewMath.tempCorrection(window.celsius, gravity, temp, caltemp);
-        Q("#sginput-hmc").innerHTML = correctedSg.toFixed(3);
+        if (window.plato) {
+            var correctedSg = BrewMath.pTempCorrection(window.celsius, gravity, temp, caltemp);
+            Q("#sginput-hmc").innerHTML = correctedSg.toFixed(2);
+
+        } else {
+            var correctedSg = BrewMath.tempCorrection(window.celsius, gravity, temp, caltemp);
+            Q("#sginput-hmc").innerHTML = correctedSg.toFixed(3);
+        }
         // if iSpindel info is available, or beer temp is available.
         if (typeof window.beerTemp != "undefined") {
             Q("#sginput-ispindel-temp").innerHTML = window.beerTemp;
-            var sgc = BrewMath.tempCorrection(window.celsius, gravity, temp, window.beerTemp);
-            Q("#sginput-sg-ispindel").innerHTML = sgc.toFixed(3);
+            if (window.plato) {
+                var sgc = BrewMath.pTempCorrection(window.celsius, gravity, temp, window.beerTemp);
+                Q("#sginput-sg-ispindel").innerHTML = sgc.toFixed(2);
+            } else {
+                var sgc = BrewMath.tempCorrection(window.celsius, gravity, temp, window.beerTemp);
+                Q("#sginput-sg-ispindel").innerHTML = sgc.toFixed(3);
+            }
         }
     }
 
     function inputgravity() {
         var gravity = parseFloat(Q("#sginput-hmc").innerHTML);
 
-        if (gravity < 0.8 || gravity > 1.25) return;
+        if (!window.plato && (gravity < 0.8 || gravity > 1.25)) return;
+
         dismissgravity();
         openDlgLoading();
 
@@ -452,8 +481,8 @@
             name: "webjs",
             gravity: gravity
         };
-        if (window.isog)
-            data.og = 1;
+        if (window.isog) data.og = 1;
+        if (window.plato) data.plato = 1;
         s_ajax({
             url: "gravity",
             m: "POST",
@@ -476,12 +505,12 @@
 
     function inputSG() {
         window.isog = false;
-        showgravitydlg("Add gravity Record:");
+        showgravitydlg("sg");
     }
 
     function inputOG() {
         window.isog = true;
-        showgravitydlg("Set Original Gravity:");
+        showgravitydlg("og");
     }
 
 
@@ -559,6 +588,13 @@
         }
     }
 
+    function showPlatoUnit() {
+        var units = document.querySelectorAll(".platounit");
+        for (var i = 0; i < units.length; i++) {
+            units[i].style.display = "inline-block";
+        }
+    }
+
     function BPLMsg(c) {
         if (typeof c["rssi"] != "undefined") {
             displayrssi(c["rssi"]);
@@ -571,6 +607,7 @@
         }
         if (typeof c["nn"] != "undefined") {
             Q("#hostname").innerHTML = c["nn"];
+            document.title = c.nn + document.title.replace("BrewPiLess", "");
         }
         if (typeof c["ver"] != "undefined") {
             if (JSVERSION != c["ver"]) alert("Version Mismatched!. Reload the page.");
@@ -584,6 +621,10 @@
         }
         if (typeof c["cap"] != "undefined")
             Capper.status(c["cap"]);
+        if (typeof c["plato"] != "undefined") {
+            window.plato = c["plato"];
+            if (window.plato) showPlatoUnit();
+        }
 
         ptcshow(c);
     }
@@ -651,7 +692,8 @@
     }
 
     function init_classic() {
-        BChart.init("div_g");
+        window.plato = false;
+        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
         initRssi();
         Capper.init();
         BWF.gotMsg = true;
@@ -661,6 +703,7 @@
     }
 
     function init() {
+        window.plato = false;
         BChart.init("div_g");
         initRssi();
         Capper.init();

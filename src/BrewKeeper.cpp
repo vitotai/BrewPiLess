@@ -16,12 +16,21 @@
 #define INVALID_CONTROL_TEMP -100.0
 
 #define PointToGravity(p) (1000+(Gravity)((p)+0.5))
+#define SG2Gravity(sg) (uint16_t)(((sg)-1)*1000 +0.5)
+#define Plato2Gravity(p) (uint16_t) ((p) * 10 + 0.5)
+
+void BrewKeeper::updateGravity(float sg){
+	if(theSettings.GravityConfig()->usePlato)
+	_lastGravity=Plato2Gravity(sg);
+	else
+	_lastGravity=SG2Gravity(sg);
+}
 
 void BrewKeeper::updateOriginalGravity(float sg){ 
 	if(theSettings.GravityConfig()->usePlato)
-		_profile.setOriginalGravityPoint((uint16_t) sg * 10);
+		_profile.setOriginalGravityPoint(Plato2Gravity(sg));
 	else
-		_profile.setOriginalGravityPoint((uint16_t)((sg-1)*1000 +0.5)); 
+		_profile.setOriginalGravityPoint(SG2Gravity(sg)); 
 }
 
 void BrewKeeper::keep(time_t now)
@@ -130,11 +139,11 @@ bool BrewProfile::checkCondition(unsigned long time,Gravity gravity){
 		Gravity stepSG=step->gravity.sg;
 		if(step->attSpecified) {
 			if(theSettings.GravityConfig()->usePlato)
-				stepSG =(float) _status->OGPoints/10.0 * (1.0 - (float)step->gravity.attenuation/100.0);
+				stepSG =(float) _status->OGPoints * (1.0 - (float)step->gravity.attenuation/100.0);
 			else
 				stepSG =PointToGravity(((float) _status->OGPoints * (1.0 - (float)step->gravity.attenuation/100.0)));
 		}
-		if(IsGravityValid(stepSG)) sgCondition=(stepSG <= stepSG);
+		if(IsGravityValid(stepSG)) sgCondition=(gravity <= stepSG);
 		bool stableSg = gravityTracker.stable(step->stable.stableTime,step->stable.stablePoint);
 
 		DBG_PRINTF("tempByTimeGravity: sgC:%c,gravity=%d, target=%d\n",sgCondition? 'Y':'N',

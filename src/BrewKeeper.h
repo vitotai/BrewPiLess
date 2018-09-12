@@ -51,7 +51,7 @@ protected:
 public:
 
 	BrewKeeper(void(*puts)(const char*)):_write(puts),_lastGravity(INVALID_GRAVITY){}
-	void updateGravity(float sg){ _lastGravity=SG2TrackingGravity(sg);}
+	void updateGravity(float sg);
 	void updateOriginalGravity(float sg);
 
 	void keep(time_t now);

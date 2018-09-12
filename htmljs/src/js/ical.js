@@ -18,13 +18,13 @@
             td2.innerHTML = values[0].toFixed(2);
 
             var td4 = tr.querySelector("td.pl_sg");
-            td4.innerHTML = values[1].toFixed(4); // BrewMath.brix2sg(this.points[i][1]).toFixed(3);
+            td4.innerHTML = this.plato ? values[1].toFixed(2) : values[1].toFixed(4); // BrewMath.brix2sg(this.points[i][1]).toFixed(3);
 
             var td6i = tr.querySelector("td.pl_value");
-            td6i.innerHTML = values[2].toFixed(4);
+            td6i.innerHTML = this.plato ? values[2].toFixed(2) : values[2].toFixed(4);
 
             var td6 = tr.querySelector("td.pl_error");
-            td6.innerHTML = (values[3] * 1000).toFixed(1);
+            td6.innerHTML = this.plato ? values[3].toFixed(2) : (values[3] * 1000).toFixed(1);
 
             var ig_input = tr.querySelector("input.pl_ignored_cb");
             ig_input.checked = values[4];
@@ -164,6 +164,7 @@
         Q("#polynomialpane").style.display = "block";
         PolyRegression.allpoints = BChart.chart.calibrationPoints;
         PolyRegression.cal_igmask = BChart.chart.cal_igmask;
+        PolyRegression.plato = BChart.chart.plato;
         PolyRegression.show();
     }
 

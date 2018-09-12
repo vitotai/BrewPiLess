@@ -41,8 +41,8 @@
                 this.curerntStart = 0;
                 this.lastValue = 0;
             },
-            add: function(fgravity, time) {
-                gravity = Math.round(fgravity * 1000, 1);
+            add: function(gravity, time) {
+                //gravity = Math.round(fgravity * 1000, 1);
                 var timediff = time - this.curerntStart;
 
                 if (timediff > this.Period) {
@@ -230,9 +230,9 @@
             Q(".chart-legend-row.aux-temp .legend-value").innerHTML = this.tempFormat(this.chart.getValue(row, AuxTempLine));
 
             var g = this.chart.getValue(row, GravityLine);
-            Q(".chart-legend-row.gravity .legend-value").innerHTML = (!g || isNaN(g)) ? "--" : g.toFixed(4);
+            Q(".chart-legend-row.gravity .legend-value").innerHTML = (!g || isNaN(g)) ? "--" : (this.plato ? g.toFixed(2) + "&deg;P" : g.toFixed(4));
             var filteredG = this.chart.getValue(row, FilteredSgLine);
-            Q(".chart-legend-row.filtersg .legend-value").innerHTML = (!filteredG || isNaN(filteredG)) ? "--" : filteredG.toFixed(4);
+            Q(".chart-legend-row.filtersg .legend-value").innerHTML = (!filteredG || isNaN(filteredG)) ? "--" : (this.plato ? filteredG.toFixed(2) + "&deg;P" : filteredG.toFixed(4));
 
             var state = parseInt(this.state[row]);
             if (!isNaN(state)) {
@@ -252,7 +252,7 @@
         BrewChart.prototype.tempFormat = function(y) {
             var v = parseFloat(y);
             if (isNaN(v)) return "--";
-            var DEG = this.celius ? "°C" : "°F";
+            var DEG = this.celius ? "&deg;C" : "&deg;F";
             return parseFloat(v).toFixed(2) + DEG;
         };
         BrewChart.prototype.initLegend = function() {
@@ -277,7 +277,10 @@
                 this.chart.setVisibility(line - 1, false);
             }
         };
-
+        BrewChart.prototype.setLabels = function(y1, y2) {
+            this.ylabel = y1;
+            this.y2label = y2;
+        };
         BrewChart.prototype.createChart = function() {
             var t = this;
             t.initLegend();
@@ -285,13 +288,15 @@
 
             var ldiv = document.createElement("div");
             ldiv.className = "hide";
+            var ylabel = (t.ylabel ? t.ylabel : 'Temperature') + '(&deg;' + (t.celius ? 'C' : 'F') + ')';
+            var y2label = t.y2label ? t.y2label : 'Gravity';
             document.body.appendChild(ldiv);
             var opt = {
                 labels: BrewChart.Labels,
                 colors: BrewChart.Colors,
                 connectSeparatedPoints: true,
-                ylabel: 'Temperature',
-                y2label: 'Gravity',
+                ylabel: ylabel,
+                y2label: y2label,
                 series: {
                     'gravity': {
                         axis: 'y2',
@@ -322,10 +327,12 @@
                     },
                     y2: {
                         valueFormatter: function(y) {
-                            return y.toFixed(3);
+                            return t.plato ? y.toFixed(1) : y.toFixed(3);
                         },
                         axisLabelFormatter: function(y) {
                             var range = this.yAxisRange(1);
+                            if (t.plato) return (range[1] - range[0] > 1) ? y.toFixed(1) : y.toFixed(2);
+
                             if (range[1] - range[0] > 0.002)
                                 return y.toFixed(3).substring(1);
                             else
@@ -512,7 +519,11 @@
                     // corrected the reading into current beer data
                     if (data) {
                         var beerTemp = this.celius ? C2F(data[1]) : data[1];
-                        var converted = BrewMath.tempCorrectionF(this.data[i][GravityLine], C2F(this.coTemp), beerTemp);
+                        var gravity = this.data[i][GravityLine];
+                        var converted;
+                        if (this.plato)
+                            converted = BrewMath.sg2pla(BrewMath.tempCorrectionF(BrewMath.pla2sg(gravity), C2F(this.coTemp), beerTemp));
+                        else converted = BrewMath.tempCorrectionF(gravity, C2F(this.coTemp), beerTemp);
                         pairs.push([data[0], converted]);
                     }
                 }
@@ -569,16 +580,6 @@
                 ((cpoints.length > 2) ? [poly.equation[0], poly.equation[1], poly.equation[2], 0] : [poly.equation[0], poly.equation[1], 0, 0]);
             this.npt = points.length;
         };
-        /*
-                BrewChart.prototype.tempCorrected = function(sg, T, ct) {
-                    var F = (this.celius) ? C2F(T) : T;
-                    var c = C2F(ct);
-                    var nsg = sg * ((1.00130346 - 0.000134722124 * F + 0.00000204052596 * F * F -
-                            0.00000000232820948 * F * F * F) /
-                        (1.00130346 - 0.000134722124 * c + 0.00000204052596 * c * c - 0.00000000232820948 * c * c * c));
-                    return nsg;
-                };
-        */
         BrewChart.prototype.process = function(data) {
             var newchart = false;
             var sgPoint = false;
@@ -596,6 +597,7 @@
                     //console.log(""+t.ctime/t.interval +" header");
                     t.celius = (d1 & 0x10) ? false : true;
                     t.calibrating = (d1 & 0x20) ? false : true;
+                    t.plato = (d1 & 0x40) ? false : true;
 
                     var p = data[i++];
                     p = p * 256 + data[i++];
@@ -659,7 +661,7 @@
                     var hh = data[i++];
                     var ll = data[i++];
                     var v = (hh & 0x7F) * 256 + ll;
-                    t.og = v / 10000;
+                    t.og = t.plato ? v / 100 : v / 10000;
                 } else if (d0 == 0xFA) { //Ignored mask
                     var b2 = data[i++];
                     var b3 = data[i++];
@@ -669,8 +671,9 @@
                     var ll = data[i++];
                     var v = (hh & 0x7F) * 256 + ll;
                     t.tiltInWater = v / 100;
-                    // 
-                    t.readingInWater = (d1 == 0) ? 1.0 : (0.9 + d1 / 1000);
+                    //
+                    if (t.plato) t.readingInWater = 0;
+                    else t.readingInWater = (d1 == 0) ? 1.0 : (0.9 + d1 / 1000);
                 } else if (d0 == 0xF0) { // record
                     t.changes = d1;
                     t.lidx = 0;
@@ -681,7 +684,7 @@
                 } else if (d0 < 128) { // temp. or gravity
                     var tp = d0 * 256 + d1;
                     if (t.lidx == GravityIndex) {
-                        tp = (tp == 0x7FFF) ? NaN : ((tp > 8000) ? tp / 10000 : tp / 1000);
+                        tp = (tp == 0x7FFF) ? NaN : (t.plato ? tp / 100 : ((tp > 8000) ? tp / 10000 : tp / 1000));
                         sgPoint = true;
                         // gravity tracking
                     } else if (t.lidx == TiltAngleIndex) {
@@ -734,23 +737,31 @@
             }
             if (t.lidx >= t.numData) {
                 var dataset = t.dataset.slice(0, 8);
-                var rawSG = t.dataset[7];
+                var rawSG = t.dataset[GravityLine];
                 // gravity tracking
                 var sg = NaN;
-                if (!t.calculateSG && t.dataset[7] != null) {
-                    sg = t.dataset[7];
+                if (!t.calculateSG && t.dataset[GravityLine] != null) {
+                    sg = t.dataset[GravityLine];
                 } else if (t.calculateSG) {
-                    if (t.dataset[8] == null) dataset[7] = null;
+                    // data field #8 is tilt in source data
+                    if (t.dataset[8] == null) dataset[GravityLine] = null;
                     else {
                         var temp = (this.celius) ? C2F(dataset[AuxTempLine]) : dataset[AuxTempLine];
-                        sg = BrewMath.tempCorrectionF(t.sgByTilt(t.dataset[8]), temp, C2F(t.coTemp));
-                        dataset[7] = sg;
+                        sg = t.sgByTilt(t.dataset[8]);
+
+                        if (t.plato) {
+                            sg = BrewMath.sg2pla(BrewMath.tempCorrectionF(BrewMath.pla2sg(sg), temp, C2F(t.coTemp)));
+                        }
+                        dataset[GravityLine] = sg;
                     }
                 }
                 if (!isNaN(sg)) {
                     t.sg = sg;
                     t.filterSg = GravityFilter.add(sg);
-                    GravityTracker.add(t.filterSg, t.ctime);
+                    if (t.plato)
+                        GravityTracker.add(Math.round(t.filterSg * 10), t.ctime);
+                    else
+                        GravityTracker.add(Math.round(t.filterSg * 1000), t.ctime);
                 }
 
                 if (!isNaN(t.sg)) dataset.push(t.filterSg);

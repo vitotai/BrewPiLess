@@ -60,6 +60,9 @@ BrewLogger::BrewLogger(void){
 			ret += "0";
 		}
 		ret += ",\"fs\":" + fsinfo();
+
+		ret += ",\"plato\":" + String(theSettings.GravityConfig()->usePlato? "1":"0");
+
 		ret += ",\"list\":[";
 
 		for(int i=0;i<MAX_LOG_FILE_NUMBER;i++){

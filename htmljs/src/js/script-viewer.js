@@ -2,8 +2,9 @@
             toggle: function(type) {
                 this.chart.toggleLine(type);
             },
-            init: function(id) {
+            init: function(id, y1, y2) {
                 this.chart = new BrewChart(id);
+                this.chart.setLabels(y1, y2);
             },
             setIgnoredMask: function(m) {
                 var t = this;
@@ -52,7 +53,7 @@
                 }
             }
 
-            BChart.init("div_g");
+            BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
 
             if (Q('#dropfile')) {
                 Q('#dropfile').ondragover = function(e) {
@@ -127,9 +128,16 @@
             download(blob, window.file.name + ".csv");
         }
 
-        function cutrange() {
+        function _cutrange() {
             if (typeof window.file == "undefined") return;
             var ranges = BChart.chart.chart.xAxisRange();
             var data = BChart.chart.partial(ranges[0], ranges[1]);
+            download(new Blob(data, { type: 'octet/stream' }), window.file.name + "-partial");
+        }
+
+        function cutrange() {
+            if (typeof window.file == "undefined") return;
+            var ranges = BChart.chart.chart.xAxisRange();
+            var data = BChart.chart.partial2Plato(ranges[0], ranges[1]);
             download(new Blob(data, { type: 'octet/stream' }), window.file.name + "-partial");
         }
