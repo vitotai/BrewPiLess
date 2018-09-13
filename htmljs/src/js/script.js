@@ -607,7 +607,7 @@
         }
         if (typeof c["nn"] != "undefined") {
             Q("#hostname").innerHTML = c["nn"];
-            document.title = c.nn + document.title.replace("BrewPiLess", "");
+            document.title = c.nn; // + document.title.replace("BrewPiLess", "");
         }
         if (typeof c["ver"] != "undefined") {
             if (JSVERSION != c["ver"]) alert("Version Mismatched!. Reload the page.");
