@@ -57,14 +57,14 @@
     "control_sgostable": "SG OR Stable",
     "control_sgstable": "SG & Stable",
     "control_all": "All",
-    "control_either": "Ether",
+    "control_either": "Either",
     "control_delete": "Delete",
     "control_clear": "Clear",
     "control_saveas": "Save As",
     "control_save": "Save",
     "control_setbeertemp": "Set Beer Temp:",
     "control_setfridgetemp": "Set Fridge temp:",
-    "control_setoff": "Turning temperature controll {B}off{/B}.",
+    "control_setoff": "Turning temperature control {B}off{/B}.",
     "control_capstate": "Capping Status:",
     "control_open": "Open",
     "control_capped": "Capped",
@@ -75,7 +75,7 @@
     "control_capgravity": "Cap when gravity is less than",
     "control_capafter": "Cap after",
 
-    "dlg_connecting": "Communicating with BrewPiLess controller..",
+    "dlg_connecting": "Communicating with BrewPiLess controller...",
 
     "dlg_startprofile": "{P}Note:{/P} {P}For Beer Profoile to work properly,{/P} {P} {B} Original Gravity Must be specified {/B} if SG is specified as percentage(%), and {B} Local logging must be activated {/B} if stability of gravity reading is used. {/P} Original Gravity:",
 
@@ -144,7 +144,7 @@
 
     "__config_html__": "config.html",
     "config_page_title": "BrewPiLess Configuration",
-    "config_wait_restart": "Congfiuration saved. Wait for restart.. (note: if the hostname is changed, the page won't be reloaded.)",
+    "config_wait_restart": "Congfiuration saved. Wait for restart... (note: if the hostname is changed, the page won't be reloaded.)",
     "config_lcd_auto_off": "LCD auto off",
     "config_seconds": "seconds",
     "config_title": "Title",
@@ -190,7 +190,7 @@
     "log_local_log": "Local Log",
     "log_new_log_name": "New Log Name:",
     "log_start_logging": "Start Logging",
-    "log_options": "Optoins:",
+    "log_options": "Options:",
     "log_calibrate_ispindel": "Calibrate iSpindel",
     "log_tilt_in_water": "Tilt value in water",
     "log_hydrometer_reading": "Hydrometer reading:",
