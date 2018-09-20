@@ -141,7 +141,7 @@ module.exports = (grunt) ->
         expand: true
         files: [{
           expand: true
-          src: ['dist/english/*.htm','dist/chinese/*.htm']
+          src: ['dist/english/*.htm','dist/chinese/*.htm','dist/spainish/*.htm']
           dest: '.'
           ext: '.htm.gz'
         }]
@@ -167,7 +167,7 @@ module.exports = (grunt) ->
     multi_lang_site_generator:
       default:
           options:
-            vocabs:           ['english','chinese']
+            vocabs:           ['english','chinese','spainish']
             vocab_directory:  'src/locales'
             output_directory: 'dist'
             template_directory: 'dist'

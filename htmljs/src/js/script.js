@@ -704,7 +704,7 @@
 
     function init() {
         window.plato = false;
-        BChart.init("div_g");
+        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
         initRssi();
         Capper.init();
         BWF.gotMsg = true;
