@@ -94,7 +94,7 @@
     "dlg_profilelist_del": "Borrar",
     "dlg_poly_tilt": "Inclinación",
     "dlg_poly_sg": "SG",
-    "dlg_poly_cal": "Calibrado", 
+    "dlg_poly_cal": "Calculado",
     "dlg_poly_error": "Error",
     "dlg_poly_ignored": "Ignorado",
 
@@ -116,7 +116,7 @@
     "glycol_temp_control": "Control Temp. Glicol:",
     "ptc_idle": "DESOCUPADO",
     "ptc_running": "ACTIVO",
-    "ptc_for": "durante",       
+    "ptc_for": "durante",
     "ptc_range": "Rango:",
 
     "cap_condition": "Condici&oacute;n:",
@@ -129,7 +129,7 @@
 
     "menu2_graph": "gr&oacute;fico",
     "menu2_control": "control",
-    "menu2_logs": "registros",  
+    "menu2_logs": "registros",
     "menu2_setup": "ajustes",
     "menu2_config": "configuraci&oacute;n",
     "menu2_gravity": "densidad",
@@ -252,7 +252,7 @@
     "setup_chamber_light": "Luz  C&aacute;mara",
     "setup_chamber_fan": "Ventilaci&oacute;n C&aacute;mara",
     "setup_capper": "Tap&oacute;n",
-    "setup_ptc_cooler": "Enfriador PTC" ,
+    "setup_ptc_cooler": "Enfriador PTC",
     "setup_1wire_actuator": "Actuador 1-wire",
     "setup_channel": "Canal",
 
