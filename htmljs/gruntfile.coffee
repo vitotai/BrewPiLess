@@ -141,7 +141,7 @@ module.exports = (grunt) ->
         expand: true
         files: [{
           expand: true
-          src: ['dist/english/*.htm','dist/chinese/*.htm','dist/spainish/*.htm']
+          src: ['dist/english/*.htm','dist/chinese/*.htm','dist/spanish/*.htm']
           dest: '.'
           ext: '.htm.gz'
         }]
