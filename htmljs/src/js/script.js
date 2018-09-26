@@ -28,7 +28,7 @@
                 m: "GET",
                 success: function(d) { window.npt = npt; },
                 fail: function(d) {
-                    alert("failed sending formula:" + d);
+                    alert("<%= fail_update_formula %>" + d);
                 }
             });
         },
@@ -496,7 +496,7 @@
                 }, T_CHART_REFRESH);
             },
             fail: function(d) {
-                alert("failed:" + d);
+                alert("<%= general_failed %>" + d);
                 closeDlgLoading();
             }
         });
@@ -610,7 +610,7 @@
             document.title = c.nn; // + document.title.replace("BrewPiLess", "");
         }
         if (typeof c["ver"] != "undefined") {
-            if (JSVERSION != c["ver"]) alert("Version Mismatched!. Reload the page.");
+            if (JSVERSION != c["ver"]) alert("<%= version_mismatched_reload %>");
             Q("#verinfo").innerHTML = "v" + c["ver"];
         }
         if (typeof c["tm"] != "undefined" && typeof c["off"] != "undefined") {

@@ -245,7 +245,7 @@ var profileEditor = {
         var rowlist = tb.getElementsByTagName("tr");
 
         if (rowlist.length >= MAX_STEP) {
-            alert("Too many steps!");
+            alert("<%= profile_over_steps %>");
             return;
         }
         var stage;
@@ -492,7 +492,7 @@ var PL = {
                 f.list(f.plist)
             },
             fail: function(a) {
-                alert("failed:" + a)
+                alert("<%= general_failed %>" + a)
             }
         })
     },
@@ -560,7 +560,7 @@ var PL = {
                 a.list(a.plist)
             },
             fail: function(b) {
-                alert("failed:" + b)
+                alert("<%= general_failed %>" + b)
             }
         })
     },
@@ -591,7 +591,7 @@ var PL = {
         }
         var g = profileEditor.getProfile();
         if (g === false) {
-            alert("invalid value. check again");
+            alert("<%= profile_invalid_value %>");
             return
         }
         var f = this;
@@ -606,7 +606,7 @@ var PL = {
                 f.cancelSave()
             },
             fail: function(a) {
-                alert("failed:" + a)
+                alert("<%= general_failed %>" + a)
             }
         })
     }
@@ -730,13 +730,13 @@ var modekeeper = {
     },
     apply: function() {
         if (!BrewPiSetting.valid) {
-            alert("Not connected to controller.");
+            alert("<%= control_not_connected %>");
             //		return;
         }
         if ((this.cmode == "beer") || (this.cmode == "fridge")) {
             var v = document.getElementById(this.cmode + "-t").value;
             if (v == '' || isNaN(v) || (v > BrewPiSetting.maxDegree || v < BrewPiSetting.minDegree)) {
-                alert("Invalid Temperature:" + v);
+                alert("<%= invalid_temperature %>" + v);
                 return;
             }
             if (this.cmode == "beer") {
@@ -752,7 +752,7 @@ var modekeeper = {
         } else {
             // should save first.
             if (profileEditor.dirty) {
-                alert("save the profile first before apply");
+                alert("<%= save_profile_first %>");
                 return;
             }
             //console.log("j{mode:p}");
@@ -775,7 +775,7 @@ var modekeeper = {
                         BWF.send("j{mode:p}");
                     },
                     fail: function(d) {
-                        alert("failed:" + d);
+                        alert("<%= general_failed %>" + d);
                     }
                 });
             };
@@ -794,7 +794,7 @@ function saveprofile() {
     //console.log("save");
     var r = profileEditor.getProfile();
     if (r === false) {
-        alert("invalid value. check again");
+        alert("<%= profile_invalid_value %>");
         return;
     }
     var json = JSON.stringify(r);
@@ -807,10 +807,10 @@ function saveprofile() {
         data: "data=" + encodeURIComponent(json),
         success: function(d) {
             profileEditor.markdirty(false);
-            alert("Done.")
+            alert("<%= profile_saved %>")
         },
         fail: function(d) {
-            alert("failed to save.");
+            alert("<%= profile_failed2save %>");
         }
     });
 }
@@ -879,7 +879,7 @@ function initctrl() {
                     Q("#hostname").innerHTML = c["nn"];
                 }
                 if (typeof c["ver"] != "undefined") {
-                    if (JSVERSION != c["ver"]) alert("Version Mismatched!. Reload the page.");
+                    if (JSVERSION != c["ver"]) alert("<%= version_mismatched_reload %>");
                     Q("#verinfo").innerHTML = "v" + c["ver"];
                 }
                 if (typeof c["cap"] != "undefined")

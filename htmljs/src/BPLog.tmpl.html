@@ -5,7 +5,7 @@
 <head>
     <meta http-equiv=content-type content="text/html; charset=utf-8">
     <meta name=viewport content="width=device-width,initial-scale=1">
-    <title>BrewPiLess Log Viewer v3.0</title>
+    <title>BPL Log Viewer v3.0 - online</title>
     <meta name=apple-mobile-web-app-title content=BrewPiLess>
     <meta name=apple-mobile-web-app-capable content=yes>
     <script type="text/javascript" src="js/vendor/dygraph-combined.js"></script>
@@ -14,8 +14,8 @@
     <script type="text/javascript" src="js/shared.js"></script>
     <script type="text/javascript" src="js/ical.js"></script>
     <script type="text/javascript" src="js/vendor/chart.js"></script>
-    <script type="text/javascript" src="js/script-viewer.js"></script>
-    <script type="text/javascript" src="js/chart-edit.js"></script>
+    <script type="text/javascript" src="js/script-webviewer.js"></script>
+
 
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel=stylesheet>
     <style>
@@ -849,8 +849,6 @@
             float: right;
             display: none;
             font-style: italic;
-            text-decoration: underline;
-            cursor: pointer;
         }
         
         #polynomialpane .modal-content {
@@ -878,66 +876,97 @@
         
         header a {
             color: #fff;
-            text-transform: uppercase;
+            font-style: italic;
             height: 100%;
             padding: 8px;
             display: inline-block;
             line-height: 48px;
+            float: right;
+        }
+        /* dropdown menu */
+        
+        .dropdown {
+            position: absolute;
+            left: 2px;
+            top: 2px;
+            display: inline-block;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            overflow: auto;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        }
+        
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            border: 1px solid;
+        }
+        
+        .dropdown a:hover {
+            background-color: #f1f1f1
+        }
+        
+        .show {
+            display: block;
+        }
+        
+        .platounit {
+            display: none;
         }
     </style>
 </head>
 
 <body onload=loaded()>
-    <header layout horizontal main-justified cross-center relative class=header>
-        <h1 class=header_title><span id=hostname>BPL LogViewer</span> <span id=verinfo class=header_version-display>v3.0</span></h1>
-        <div id="fileinputgrp">
-            <input type="file" id="fileinput" />
-        </div>
-        <a href="#" onclick="cutrange();return false;">Crop to</a>
-        <a href="#" onclick="exportcsv();return false;">Export</a>
-    </header>
+    <div style="display:none">
+        <span id="ylabel"><%= chart_temperature %></span>
+        <span id="y2label"><%= chart_gravity %></span>
+    </div>
+
     <div viewport layout horizontal>
         <div main flex>
+            <span id="viewlogname"></span>
             <div layout horizontal>
-                <div style="display:none">
-                    <span id="ylabel">Temperature</span>
-                    <span id="y2label">Gravity</span>
-                </div>
                 <div id=div_g class=chart></div>
                 <ul flex class=chart-legend>
-                    <li layout horizontal main-justified class="chart-legend-row time"><span class=beer-chart-legend-time>Date/Time</span> <span class=beer-chart-state>state</span></li>
-                    <li layout horizontal main-justified class="chart-legend-row"><label>Since</label><span id="log-start"></span></li>
-                    <li layout horizontal main-justified class="chart-legend-row elapse"><label>Elapsed</label><span class="beer-chart-legend-elapse legend-value">--</span></li>
-                    <li layout horizontal main-justified class="chart-legend-row beer-temp"><input type=checkbox id=beer-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(BeerTempLine)' for=beer-temp class=switch-label>Beer Temp:</label>
+                    <li layout horizontal main-justified class="chart-legend-row time"><span class=beer-chart-legend-time><%= legend_date %></span> <span class=beer-chart-state><%= legend_state %></span></li>
+                    <li layout horizontal main-justified class="chart-legend-row"><label><%= log_start_since %></label><span id="log-start"></span></li>
+                    <li layout horizontal main-justified class="chart-legend-row elapse"><label><%= log_elapsed %></label><span class="beer-chart-legend-elapse legend-value">--</span></li>
+                    <li layout horizontal main-justified class="chart-legend-row beer-temp"><input type=checkbox id=beer-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(BeerTempLine)' for=beer-temp class=switch-label><%= legend_beertemp %></label>
                         <div class=legend-value>--</div>
                     </li>
-                    <li layout horizontal main-justified class="chart-legend-row beer-set"><input type=checkbox id=beer-set name=set-name class=switch-input checked><label onclick='BChart.toggle(BeerSetLine)' for=beer-set class=switch-label>Beer Set:</label>
+                    <li layout horizontal main-justified class="chart-legend-row beer-set"><input type=checkbox id=beer-set name=set-name class=switch-input checked><label onclick='BChart.toggle(BeerSetLine)' for=beer-set class=switch-label><%= legend_beerset %></label>
                         <div class=legend-value>--</div>
                     </li>
-                    <li layout horizontal main-justified class="chart-legend-row fridge-temp"><input type=checkbox id=fridge-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(FridgeTempLine)' for=fridge-temp class=switch-label>Fridge Temp:</label>
+                    <li layout horizontal main-justified class="chart-legend-row fridge-temp"><input type=checkbox id=fridge-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(FridgeTempLine)' for=fridge-temp class=switch-label><%= legend_fridgetemp %></label>
                         <div class=legend-value>--</div>
                     </li>
-                    <li layout horizontal main-justified class="chart-legend-row fridge-set"><input type=checkbox id=fridge-set name=set-name class=switch-input checked><label onclick='BChart.toggle(FridgeSetLine)' for=fridge-set class=switch-label>Fridge Set:</label>
+                    <li layout horizontal main-justified class="chart-legend-row fridge-set"><input type=checkbox id=fridge-set name=set-name class=switch-input checked><label onclick='BChart.toggle(FridgeSetLine)' for=fridge-set class=switch-label><%= legend_fridgeset %></label>
                         <div class=legend-value>--</div>
                     </li>
-                    <li layout horizontal main-justified class="chart-legend-row room-temp"><input type=checkbox id=room-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(RoomTempLine)' for=room-temp class=switch-label>Room Temp:</label>
+                    <li layout horizontal main-justified class="chart-legend-row room-temp"><input type=checkbox id=room-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(RoomTempLine)' for=room-temp class=switch-label><%= legend_roomtemp %></label>
                         <div class=legend-value>--</div>
                     </li>
-                    <li layout horizontal main-justified class="chart-legend-row aux-temp"><input type=checkbox id=aux-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(AuxTempLine)' for=aux-temp class=switch-label>Aux Temp:</label>
+                    <li layout horizontal main-justified class="chart-legend-row aux-temp"><input type=checkbox id=aux-temp name=set-name class=switch-input checked><label onclick='BChart.toggle(AuxTempLine)' for=aux-temp class=switch-label><%= legend_auxtemp %></label>
                         <div class=legend-value>--</div>
                     </li>
-                    <li layout horizontal main-justified class="chart-legend-row gravity"><input type=checkbox id=gravity name=set-name class=switch-input checked><label onclick='BChart.toggle(GravityLine)' for=gravity class=switch-label>Gravity:</label>
+                    <li layout horizontal main-justified class="chart-legend-row gravity"><input type=checkbox id=gravity name=set-name class=switch-input checked><label onclick='BChart.toggle(GravityLine)' for=gravity class=switch-label><%= legend_gravity %><span class=platounit>&deg;P</span></label>
                         <div class=legend-value>--</div>
                     </li>
-                    <li layout horizontal main-justified class="chart-legend-row filtersg"><input type=checkbox id=filtersg name=set-name class=switch-input checked><label onclick='BChart.toggle(FilteredSgLine)' for=filtersg class=switch-label>Filter SG:</label>
+                    <li layout horizontal main-justified class="chart-legend-row filtersg"><input type=checkbox id=filtersg name=set-name class=switch-input checked><label onclick='BChart.toggle(FilteredSgLine)' for=filtersg class=switch-label><%= legend_filteredsg %><span class=platounit>&deg;P</span></label>
                         <div class=legend-value>--</div>
                     </li>
-                    <li layout horizontal main-justified class="chart-legend-row" id="formula-btn" onclick="openpolynomialpane()">formula</li>
+                    <li layout horizontal main-justified class="chart-legend-row" id="formula-btn" onclick="openpolynomialpane()">f</li>
                 </ul>
             </div>
         </div>
     </div>
-
     <div id="polynomialpane" class="modal">
         <div class="modal-content">
             <div id="xclose" onclick="closepolynomialpane()">X</div>
@@ -946,13 +975,20 @@
                     <td>
                         <table id="pointlist">
                             <thead>
-                                <tr>
-                                    <th>Tilt</th>
-                                    <th>Gravity</th>
-                                    <th>Cal'ed</th>
-                                    <th>Error</th>
-                                    <th>Ignored</th>
-                                </tr>
+                                <th>
+                                    <%= dlg_poly_tilt %>
+                                </th>
+                                <th>
+                                    <%= dlg_poly_sg %> <span class=platounit>&deg;P</span></th>
+                                <th>
+                                    <%= dlg_poly_cal %>
+                                </th>
+                                <th>
+                                    <%= dlg_poly_error %>
+                                </th>
+                                <th>
+                                    <%= dlg_poly_ignored %>
+                                </th>
                             </thead>
                             <tobdy>
                                 <tr class="pl_calpoint">
@@ -964,7 +1000,7 @@
                                 </tr>
                             </tobdy>
                         </table>
-                        <div style="float:right;"><button onclick="applyIgnoreMask()">Apply</button></div>
+                        <div style="float:right;"><button onclick="applyIgnoreMask()"><%= control_apply %></button></div>
                     </td>
                     <td>
                         <div id="graph"></div>
@@ -974,6 +1010,14 @@
             </table>
         </div>
     </div>
+
+    <div class="dropdown">
+        <div id="myDropdown" class="dropdown-content">
+            <a href="" id="open-selection">Open Selection</a>
+        </div>
+    </div>
+
+
 </body>
 
 </html>

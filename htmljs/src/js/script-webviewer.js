@@ -52,6 +52,13 @@
             return log;
         }
 
+        function showPlatoUnit() {
+            var units = document.querySelectorAll(".platounit");
+            for (var i = 0; i < units.length; i++) {
+                units[i].style.display = "inline-block";
+            }
+        }
+
         function loaded() {
             // get range, if any
             var range = getParameterByName("r");
@@ -92,7 +99,7 @@
             xhr.responseType = 'arraybuffer';
             xhr.onload = function(e) {
                 if (this.status == 404) {
-                    console.log("Error getting log data");
+                    //console.log("Error getting log data");
                     return;
                 }
                 // response is unsigned 8 bit integer
@@ -111,8 +118,9 @@
                     var date = new Date(BChart.chart.starttime * 1000);
                     Q("#log-start").innerHTML = BChart.chart.formatDate(date);
                     if (typeof window.iniRange !== "undefined") BChart.chart.setXRange(window.iniRange);
+                    if (BChart.chart.plato) showPlatoUnit();
                 } else {
-                    alert("Invalid log!");
+                    alert("<%= viewer_invalid_log %>");
                 }
             };
             xhr.ontimeout = function(e) {

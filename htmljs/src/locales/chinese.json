@@ -258,5 +258,72 @@
     "setup_1wire_actuator": "1-wire actuator",
     "setup_channel": "Channel",
 
+    "_viewers": "For log viewers",
+
+    "crop_log_to": "截取",
+    "export_log": "輸出",
+    "log_start_since": "開始時間",
+    "log_elapsed": "經過時間",
+
+    "_alerts": "Do not use double quote(\")  or add a backslash before it",
+
+    "log_version_mismatched": "記錄檔版本不符合。",
+    "incompatiable_browser": "瀏覽器不支援WebSocket!",
+    "version_mismatched_reload": "版本不合!請重新載入。",
+    "capper_invalid_time": "時間輸入錯誤!",
+    "capper_set_done": "完成。",
+    "capper_set_failed": "設定失敗。",
+    "config_error_data": "無法取得資料:",
+    "config_error_save": "無法儲存:",
+
+    "profile_over_steps": "超出溫度階段最大數目!",
+    "profile_invalid_value": "輸入錯誤.再次檢查!",
+    "control_not_connected": "沒有連線.",
+    "general_failed": "失敗:",
+    "invalid_temperature": "溫度輸入不合理:",
+    "save_profile_first": "套用前請先儲存.",
+    "profile_saved": "Profile己儲存.",
+    "profile_failed2save": "儲存失敗.",
+
+    "gdc_save_done": "設定己更新.",
+    "gdc_save_failed": "設定更新失敗:",
+
+    "confirm_stop_logging": "停止目前記錄?",
+    "fail_stop_logging": "停止記錄指令失敗:",
+
+    "log_too_many": "記錄檔太多，請先刪除。",
+    "log_no_space": "剩餘空間不夠!",
+    "log_invalid_name": "檔名不合法,不能使用特殊字元。",
+    "log_duplicated_name": "檔名重複。",
+    "tilt_value_needed": "tilt值是必要的!",
+    "tilt_hydrometer_needed": "tilt值及比重計讀數是必要的!",
+    "confirm_start_logging": "開始記錄?",
+    "log_fail_start": "無法開始記錄:",
+    "log_fail_delete": "無法刪除:",
+    "log_fail_get_setting": "無法取得設定:",
+    "no_https": "不支援HTTPS",
+    "http_method_needed": "請選擇Method!",
+    "no_space_allowed": "不能使用空白。",
+    "log_setting_saved": "設定己儲存。",
+    "log_save_fail": "設定儲存失敗:",
+
+    "setup_updating_device": "設定中 ...",
+    "setup_no_device": "沒有己安裝的設備!",
+    "setup_fail_update": "設定失敗!",
+    "setup_backup_done": "備份完成。",
+    "setup_backup_fail": "儲存備份失敗。",
+    "error_load_backup": "載入備份失敗。",
+    "setup_retrieving": "取得設定中...",
+    "setup_restoring": "回復設定中...",
+
+    "viewer_invalid_log": "記錄檔有誤!",
+    "viewer_fail_load_file": "無法載入檔案！",
+    "viewer_no_downloading": "瀏覽器不支援下載功能！",
+
+    "fail_update_formula": "更新比重公式失敗:",
+
+    "confirm_erase_settings": "刪除所有設定?",
+
+
     "end": "***END***"
 }

@@ -257,5 +257,70 @@
     "setup_1wire_actuator": "1-wire actuator",
     "setup_channel": "Channel",
 
+    "_viewers": "For log viewers",
+    "crop_log_to": "Crop to",
+    "export_log": "Export",
+    "log_start_since": "Since",
+    "log_elapsed": "Elapsed",
+
+    "_alerts": "Do not use double quote(\")  or add a backslash before it",
+
+    "log_version_mismatched": "log version mismatched!",
+    "incompatiable_browser": "The browser doesn't support WebSocket!",
+    "version_mismatched_reload": "Version Mismatched!. Reload the page.",
+    "capper_invalid_time": "Invalid time!",
+    "capper_set_done": "Done!",
+    "capper_set_failed": "Failed to update capper setting.",
+    "config_error_data": "Error getting data:",
+    "config_error_save": "Error saving setting:",
+
+    "profile_over_steps": "Too many steps!",
+    "profile_invalid_value": "Invalid value. Check again!",
+    "control_not_connected": "Not connected to controller.",
+    "general_failed": "Failed:",
+    "invalid_temperature": "Invalid Temperature:",
+    "save_profile_first": "Save the profile first before applying it.",
+    "profile_saved": "Profile saved.",
+    "profile_failed2save": "failed to save.",
+
+    "gdc_save_done": "Setting updated.",
+    "gdc_save_failed": "Failed updating setting:",
+
+    "confirm_stop_logging": "Stop current logging?",
+    "fail_stop_logging": "Failed to stop for:",
+
+    "log_too_many": "Too many logs. Delete some before creating new.",
+    "log_no_space": "Not enough free space!",
+    "log_invalid_name": "Invalid file name, no special characters allowed.",
+    "log_duplicated_name": "Duplicated name.",
+    "tilt_value_needed": "tilt value is necessary!",
+    "tilt_hydrometer_needed": "tilt value and hydrometer reading is necessary!",
+    "confirm_start_logging": "Start new logging?",
+    "log_fail_start": "Failed to start for:",
+    "log_fail_delete": "Failed to delete for:",
+    "log_fail_get_setting": "Failed to get settings:",
+    "no_https": "HTTPS is not supported",
+    "http_method_needed": "select Method!",
+    "no_space_allowed": "space is not allowed",
+    "log_setting_saved": "Setting saved.",
+    "log_save_fail": "Fail to save settings:",
+
+    "setup_updating_device": "Updating ...",
+    "setup_no_device": "No installed devices!",
+    "setup_fail_update": "Fail to set device!",
+    "setup_backup_done": "Backup done.",
+    "setup_backup_fail": "Fail to save backup",
+    "error_load_backup": "Error loading backup",
+    "setup_retrieving": "Retrieving device setup...",
+    "setup_restoring": "Restoring device setting..",
+
+    "viewer_invalid_log": "Invalid log!",
+    "viewer_fail_load_file": "Failed to load file",
+    "viewer_no_downloading": "Brower doesn't support downloading file.",
+
+    "fail_update_formula": "Failed updating formula:",
+
+    "confirm_erase_settings": "Erase All Setting?",
+
     "__end__": "END"
 }

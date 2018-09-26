@@ -23,6 +23,13 @@
             }
         };
 
+        function showPlatoUnit() {
+            var units = document.querySelectorAll(".platounit");
+            for (var i = 0; i < units.length; i++) {
+                units[i].style.display = "inline-block";
+            }
+        }
+
         function loaded() {
             function openfile(f) {
                 if (f) {
@@ -43,13 +50,14 @@
                             BChart.chart.updateChart();
                             var date = new Date(BChart.chart.starttime * 1000);
                             Q("#log-start").innerHTML = BChart.chart.formatDate(date);
+                            if (BChart.chart.plato) showPlatoUnit();
                         } else {
-                            alert("Invalid log!");
+                            alert("<%= viewer_invalid_log %>");
                         }
                     };
                     r.readAsArrayBuffer(f);
                 } else {
-                    alert("Failed to load file");
+                    alert("<%= viewer_fail_load_file %>");
                 }
             }
 
@@ -82,7 +90,7 @@
             var link = document.createElement("a");
 
             if (link.download === undefined) { // feature detection
-                alert("Brower doesn't support downloading file.");
+                alert("<%= viewer_no_downloading %>");
                 return;
             }
 

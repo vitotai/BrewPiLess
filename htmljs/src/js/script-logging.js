@@ -48,7 +48,7 @@ var logs = {
         var t = this;
         if (t.logging) {
             // stop
-            if (confirm("Stop current logging?")) {
+            if (confirm("<%= confirm_stop_logging %>")) {
                 //console.log("Stop logging");
                 var n = Q("#logname").value.trim();
                 s_ajax({
@@ -58,7 +58,7 @@ var logs = {
                         location.reload();
                     },
                     fail: function(d) {
-                        alert("Failed to stop for:" + d);
+                        alert("<%= fail_stop_logging %>" + d);
                     }
                 });
             }
@@ -68,20 +68,20 @@ var logs = {
         var t = this;
         if (!t.logging) {
             if (t.ll.length >= 10) {
-                alert("Too many logs. Delete some before creating new.");
+                alert("<%= log_too_many %>");
                 return;
             }
             if ((t.fs.size - t.fs.used) <= t.fs.block * 2) {
-                alert("Not enough free space!");
+                alert("<%= log_no_space %>");
                 return;
             }
             var name = Q("#logname").value.trim();
             if (t.vname(name) === false) {
-                alert("Invalid file name, no special characters allowed.");
+                alert("<%= log_invalid_name %>");
                 return;
             }
             if (t.dupname(name)) {
-                alert("Duplicated name.");
+                alert("<%= log_duplicated_name %>");
                 return;
             }
             var arg = "";
@@ -91,15 +91,15 @@ var logs = {
                 var reading = parseFloat(Q("#hydrometer").value.trim());
                 if (window.plato) reading = 0;
                 if (isNaN(tilt)) {
-                    alert("tilt value is necessary!");
+                    alert("<%= tilt_value_needed %>");
                 } else if (!window.plato && (isNaN(tilt) || isNaN(reading))) {
-                    alert("tilt value and hydrometer reading is necessary!");
+                    alert("<%= tilt_hydrometer_needed %>");
                     return;
                 }
                 arg = "&tw=" + tilt + "&hr=" + reading;
             }
 
-            if (confirm("Start new logging?")) {
+            if (confirm("<%= confirm_start_logging %>")) {
                 //console.log("Start logging");
                 s_ajax({
                     url: t.starturl + name + arg,
@@ -108,7 +108,7 @@ var logs = {
                         location.reload();
                     },
                     fail: function(d) {
-                        alert("Failed to start for:" + d);
+                        alert("<%= log_fail_start %>" + d);
                     }
                 });
             }
@@ -146,7 +146,7 @@ var logs = {
                     t.list(t.ll);
                 },
                 fail: function(d) {
-                    alert("Failed to delete for:" + d);
+                    alert("<%= log_fail_delete %>" + d);
                 }
             });
         }
@@ -210,7 +210,7 @@ var logs = {
                 } else window.plato = false;
             },
             fail: function(e) {
-                alert("failed:" + e);
+                alert("<%= log_fail_get_setting %>:" + e);
             }
         });
     },
@@ -218,7 +218,7 @@ var logs = {
 
 function checkurl(t) {
     if (t.value.trim().startsWith("https")) {
-        alert("HTTPS is not supported");
+        alert("<%= no_https %>");
     }
 }
 
@@ -241,7 +241,7 @@ function cmethod(c) {
 function update() {
 
     if (typeof window.selectedMethod == "undefined") {
-        alert("select Method!");
+        alert("<%= http_method_needed %>");
         return;
     }
     var format = Q("#format").value.trim();
@@ -249,7 +249,7 @@ function update() {
     if (window.selectedMethod == "GET") {
         var myRe = new RegExp("\s", "g");
         if (myRe.exec(format)) {
-            alert("space is not allowed");
+            alert("<%= no_space_allowed %>");
             return;
         }
     }
@@ -266,10 +266,10 @@ function update() {
         m: "POST",
         data: "data=" + JSON.stringify(r),
         success: function(d) {
-            alert("done");
+            alert("<%= log_setting_saved %>");
         },
         fail: function(e) {
-            alert("failed:" + e);
+            alert("<%= log_save_fail %>:" + e);
         }
     });
 

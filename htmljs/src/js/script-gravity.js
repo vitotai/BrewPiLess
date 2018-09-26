@@ -28,17 +28,17 @@ function save() {
         if (ele.type == "checkbox") setting[ele.name] = ele.checked;
         else if (ele.type == "text") setting[ele.name] = ele.value;
     }
-    console.log("result=" + setting);
+    //    console.log("result=" + setting);
     s_ajax({
         url: gdcurl,
         m: "POST",
         mime: "aplication/json",
         data: JSON.stringify(setting),
         success: function(a) {
-            alert("done.");
+            alert("<%= gdc_save_done %>");
         },
         fail: function(a) {
-            alert("failed updating data:" + a)
+            alert("<%= gdc_save_failed %>" + a)
         }
     });
 }

@@ -47,8 +47,8 @@ module.exports = (grunt) ->
           'dist/classic-gdc.tmpl.htm': 'dist/classic-gdc.tmpl.htm',
           'dist/classic-log.tmpl.htm': 'dist/classic-log.tmpl.htm',
           'dist/classic-config.tmpl.htm': 'dist/classic-config.tmpl.htm',
-          'dist/BPLLogViewer.htm': 'dist/BPLLogViewer.htm',
-          'dist/BPLog.htm': 'dist/BPLog.htm'
+          'dist/BPLLogViewer.tmpl.htm': 'dist/BPLLogViewer.tmpl.htm',
+          'dist/BPLog.tmpl.htm': 'dist/BPLog.tmpl.htm'
         }]
       dev:
         options:
@@ -72,8 +72,8 @@ module.exports = (grunt) ->
           'build/classic-gdc.tmpl.html': 'build/classic-gdc.tmpl.html',
           'build/classic-log.tmpl.html': 'build/classic-log.tmpl.html',
           'build/classic-config.tmpl.html': 'build/classic-config.tmpl.html',
-          'build/BPLLogViewer.html': 'build/BPLLogViewer.html',
-          'build/BPLog.html': 'build/BPLog.html'
+          'build/BPLLogViewer.tmpl.html': 'build/BPLLogViewer.tmpl.html',
+          'build/BPLog.tmpl.html': 'build/BPLog.tmpl.html'
         }]
 
     comboall:
@@ -90,8 +90,8 @@ module.exports = (grunt) ->
             { 'dist/classic-gdc.tmpl.htm': ['build/classic-gdc.tmpl.html'] },
             { 'dist/classic-log.tmpl.htm': ['build/classic-log.tmpl.html'] },
             { 'dist/classic-config.tmpl.htm': ['build/classic-config.tmpl.html'] },
-            { 'dist/BPLLogViewer.htm': ['build/BPLLogViewer.html'] },
-            { 'dist/BPLog.htm': ['build/BPLog.html'] }
+            { 'dist/BPLLogViewer.tmpl.htm': ['build/BPLLogViewer.tmpl.html'] },
+            { 'dist/BPLog.tmpl.htm': ['build/BPLog.tmpl.html'] }
         ]
 
     jshint:
@@ -160,8 +160,8 @@ module.exports = (grunt) ->
           'build/classic-gdc.tmpl.html': ['src/classic-gdc.tmpl.html']
           'build/classic-log.tmpl.html': ['src/classic-log.tmpl.html']
           'build/classic-config.tmpl.html': ['src/classic-config.tmpl.html']
-          'build/BPLLogViewer.html': ['src/BPLLogViewer.html']
-          'build/BPLog.html': ['src/BPLog.html']
+          'build/BPLLogViewer.tmpl.html': ['src/BPLLogViewer.tmpl.html']
+          'build/BPLog.tmpl.html': ['src/BPLog.tmpl.html']
         ]
   
     multi_lang_site_generator:
@@ -183,6 +183,8 @@ module.exports = (grunt) ->
             'classic-gdc.htm': ['classic-gdc.tmpl.htm']
             'classic-log.htm': ['classic-log.tmpl.htm']
             'classic-config.htm': ['classic-config.tmpl.htm']
+            'BPLog.htm': ['BPLog.tmpl.htm']
+            'BPLLogViewer.htm': ['BPLLogViewer.tmpl.htm']
           ]
 
 
