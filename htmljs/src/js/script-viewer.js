@@ -44,12 +44,12 @@
                             var date = new Date(BChart.chart.starttime * 1000);
                             Q("#log-start").innerHTML = BChart.chart.formatDate(date);
                         } else {
-                            alert("Invalid log!");
+                            alert("<%= script_viewer_invalid_log %>");
                         }
                     };
                     r.readAsArrayBuffer(f);
                 } else {
-                    alert("Failed to load file");
+                    alert("<%= script_viewer_failed_load_file %>");
                 }
             }
 
@@ -82,7 +82,7 @@
             var link = document.createElement("a");
 
             if (link.download === undefined) { // feature detection
-                alert("Brower doesn't support downloading file.");
+                alert("<%= script_viewer_not_downloading_file %>");
                 return;
             }
 

@@ -84,7 +84,7 @@ function cmdfrom(b) {
 }
 
 function device_apply(a) {
-    blockscreen("Updating....");
+    blockscreen("<%= script_setup_updating %>");
     var b = cmdfrom(a);
     var c = "U" + JSON.stringify(b);
     console.log(c);
@@ -96,7 +96,7 @@ function device_apply(a) {
 
 function backup() {
     if (installed_list.length == 0) {
-        alert("No installed devices!");
+        alert("<%= script_setup_no_installed_devices %>");
         return
     }
     var c = [];
@@ -120,14 +120,14 @@ function backup() {
     var b = JSON.stringify(c);
     console.log(b);
     BWF.save(BackupFile, b, function() {
-        alert("done")
+        alert("<%= done %>")
     }, function(d) {
-        alert("error saving:" + d)
+        alert("<%= script_setup_error_saving %>" + d)
     })
 }
 
 function restore() {
-    blockscreen("restoring...");
+    blockscreen("<%= script_setup_restoring %>");
     BWF.load(BackupFile, function(c) {
         var b = JSON.parse(c);
         var a = 0;
@@ -141,13 +141,13 @@ function restore() {
         });
         BWF.send("U" + JSON.stringify(b[a]))
     }, function(a) {
-        alert("error load:" + a);
+        alert("<%= script_setup_error_load %>" + a);
         unblockscreen()
     })
 }
 
 function list() {
-    blockscreen("Retrieving...");
+    blockscreen("<%= script_setup_retrieving %>");
     installed_list = [];
     available_list = [];
     document.getElementById("detected-list").innerHTML = "";
@@ -157,7 +157,7 @@ function list() {
 }
 
 function erase() {
-    if (confirm("Erase All Setting?")) BWF.send("E");
+    if (confirm("<%= script_setup_erase_all_setting %>")) BWF.send("E");
 }
 
 function listGot() {

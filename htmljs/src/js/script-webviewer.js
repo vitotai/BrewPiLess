@@ -92,7 +92,7 @@
             xhr.responseType = 'arraybuffer';
             xhr.onload = function(e) {
                 if (this.status == 404) {
-                    console.log("Error getting log data");
+                    console.log("error getting log data.");
                     return;
                 }
                 // response is unsigned 8 bit integer
@@ -112,11 +112,11 @@
                     Q("#log-start").innerHTML = BChart.chart.formatDate(date);
                     if (typeof window.iniRange !== "undefined") BChart.chart.setXRange(window.iniRange);
                 } else {
-                    alert("Invalid log!");
+                    alert("<%= script_viewer_invalid_log %>");
                 }
             };
             xhr.ontimeout = function(e) {
-                console.error("Timeout!!");
+                console.error("Timeout!");
             };
             xhr.onerror = function() {
                 console.log("error getting data.");

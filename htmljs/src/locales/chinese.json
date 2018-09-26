@@ -258,5 +258,68 @@
     "setup_1wire_actuator": "1-wire actuator",
     "setup_channel": "Channel",
 
+    "__capper_js": "capper.js",
+    "capper_invalid_gravity": "Invalid Gravity",
+    "capper_failed_set_capper": "failed to set capper",
+
+    "__script-config_js": "script-config.js",
+    "script-config_error_getting_data": "error getting data:",
+
+  "__capper_js": "capper.js",
+    "capper_invalid_gravity": "Invalid Gravity",
+    "capper_failed_set_capper": "failed to set capper",
+    "capper_invalid_time": "Invalid Time",
+    "done": "Done",
+
+    "__script_config_js": "script-config.js",
+    "script_config_error_getting_data": "error getting data",
+    "script_config_error_saving_data": "error saving data",
+    
+    "__script_control_js": "script-control.js",
+    "failed": "failed",
+    "error": "error!",
+    
+    "script_control_invalid_value_check_again": "Invalid value. Check again",
+    "script_control_not_conected_to_controller": "Not connected to controller.",
+    "script_control_invalid_temperature": "Invalid Temperature:",
+    "script_control_save_profile_before_applay": "save the profile first before apply",
+    "script_control_failed_to_save": "failed to save.",
+    "script_control_version_mismatched": "Version Mismatched!. Reload the page.",
+    "script_control_too_many_steps": " Too many steps!",
+
+    "__script_gravity_js": "script-gravity.js",
+    "script_control_failed_updating_data" : "failed updating data:",
+   
+    "__script_logging_js": "script-logging.js",
+    "script_logging_failed_stop_for" : "Failed to stop for:",
+    "script_logging_too_many_logs" : "Too many logs. Delete some before creating new.",
+    "script_logging_not_free_space" : "Not enough free space!",
+    "script_logging_invalid_file_name" : "Invalid file name, no special characters allowed.",
+    "script_logging_duplicated_name" : "Duplicated name.",
+    "script_logging_tilt_value_necessary" : "tilt value is necessary!",
+    "script_logging_tilt_value_and_hydrometer_necessary" : "tilt value and hydrometer reading is necessary!",
+    "script_logging_failed_start_for" : "Failed to start for:",
+    "script_logging_failed_delete_for" : "Failed to delete for:",
+    "script_logging_https_not_supported" : "HTTPS is not supported",
+    "script_logging_select_method" : "select Method!",
+    "script_logging_space_not_allowed" : "space is not allowed",
+    "script_logging_delete_the_log" : "Delete the log",
+    "script_logging_stop_current_logging" : "Stop current logging?",
+    "script_logging_start_new_log" : "Start new logging?",
+
+    "__script_setup_js": "script-setup.js",
+    "script_setup_no_installed_devices" : "No installed devices!",
+    "script_setup_error_saving" : "error saving:",
+    "script_setup_error_load" : "error load:",
+    "script_setup_updating" : "Updating...",
+    "script_setup_restoring" : "Restoring...",
+    "script_setup_retrieving" : "Retrieving...",
+    "script_setup_erase_all_setting" : "Erase All Setting?",
+
+    "__script_viewer_js": "script-viewer.js",
+    "script_viewer_invalid_log" : "Invalid log!",
+    "script_viewer_failed_load_file" : "Failed to load file",
+    "script_viewer_not_downloading_file" : "Browser doesn't support downloading file.",
+
     "end": "***END***"
 }

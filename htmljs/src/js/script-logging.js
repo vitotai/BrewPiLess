@@ -48,7 +48,7 @@ var logs = {
         var t = this;
         if (t.logging) {
             // stop
-            if (confirm("Stop current logging?")) {
+            if (confirm("<%= script_logging_stop_current_logging %>")) {
                 //console.log("Stop logging");
                 var n = Q("#logname").value.trim();
                 s_ajax({
@@ -58,7 +58,7 @@ var logs = {
                         location.reload();
                     },
                     fail: function(d) {
-                        alert("Failed to stop for:" + d);
+                        alert("<%= script_logging_failed_stop_for %>" + d);
                     }
                 });
             }
@@ -68,20 +68,20 @@ var logs = {
         var t = this;
         if (!t.logging) {
             if (t.ll.length >= 10) {
-                alert("Too many logs. Delete some before creating new.");
+                alert("<%= script_logging_too_many_logs %>");
                 return;
             }
             if ((t.fs.size - t.fs.used) <= t.fs.block * 2) {
-                alert("Not enough free space!");
+                alert("<%= script_logging_not_free_space %>");
                 return;
             }
             var name = Q("#logname").value.trim();
             if (t.vname(name) === false) {
-                alert("Invalid file name, no special characters allowed.");
+                alert("<%= script_logging_invalid_file_name %>");
                 return;
             }
             if (t.dupname(name)) {
-                alert("Duplicated name.");
+                alert("<%= script_logging_duplicated_name %>");
                 return;
             }
             var arg = "";
@@ -91,15 +91,15 @@ var logs = {
                 var reading = parseFloat(Q("#hydrometer").value.trim());
                 if (window.plato) reading = 0;
                 if (isNaN(tilt)) {
-                    alert("tilt value is necessary!");
+                    alert("<%= script_logging_tilt_value_necessary %>");
                 } else if (!window.plato && (isNaN(tilt) || isNaN(reading))) {
-                    alert("tilt value and hydrometer reading is necessary!");
+                    alert("<%= script_logging_tilt_value_and_hydrometer_necessary %>");
                     return;
                 }
                 arg = "&tw=" + tilt + "&hr=" + reading;
             }
 
-            if (confirm("Start new logging?")) {
+            if (confirm("<%= script_logging_start_new_log %>")) {
                 //console.log("Start logging");
                 s_ajax({
                     url: t.starturl + name + arg,
@@ -108,7 +108,7 @@ var logs = {
                         location.reload();
                     },
                     fail: function(d) {
-                        alert("Failed to start for:" + d);
+                        alert("<%= script_logging_failed_start_for %>" + d);
                     }
                 });
             }
@@ -133,7 +133,7 @@ var logs = {
     //},
     rm: function(n) {
         var t = this;
-        if (confirm("Delete the log " + t.ll[n].name)) {
+        if (confirm("<%= script_logging_delete_the_log %> " + t.ll[n].name)) {
             console.log("rm " + t.ll[n].name);
             s_ajax({
                 url: t.rmurl + n,
@@ -146,7 +146,7 @@ var logs = {
                     t.list(t.ll);
                 },
                 fail: function(d) {
-                    alert("Failed to delete for:" + d);
+                    alert("<%= script_logging_failed_delete_for %>" + d);
                 }
             });
         }
@@ -210,7 +210,7 @@ var logs = {
                 } else window.plato = false;
             },
             fail: function(e) {
-                alert("failed:" + e);
+                alert("<%= failed %>:" + e);
             }
         });
     },
@@ -218,7 +218,7 @@ var logs = {
 
 function checkurl(t) {
     if (t.value.trim().startsWith("https")) {
-        alert("HTTPS is not supported");
+        alert("<%= script_logging_https_not_supported %>");
     }
 }
 
@@ -241,7 +241,7 @@ function cmethod(c) {
 function update() {
 
     if (typeof window.selectedMethod == "undefined") {
-        alert("select Method!");
+        alert("<%= script_logging_select_method %>");
         return;
     }
     var format = Q("#format").value.trim();
@@ -249,7 +249,7 @@ function update() {
     if (window.selectedMethod == "GET") {
         var myRe = new RegExp("\s", "g");
         if (myRe.exec(format)) {
-            alert("space is not allowed");
+            alert("<%= script_logging_space_not_allowed %>");
             return;
         }
     }
@@ -266,10 +266,10 @@ function update() {
         m: "POST",
         data: "data=" + JSON.stringify(r),
         success: function(d) {
-            alert("done");
+            alert("<%= done %>");
         },
         fail: function(e) {
-            alert("failed:" + e);
+            alert("<%= failed %>:" + e);
         }
     });
 

@@ -35,10 +35,10 @@ function save() {
         mime: "aplication/json",
         data: JSON.stringify(setting),
         success: function(a) {
-            alert("done.");
+            alert("<%= done %>");
         },
         fail: function(a) {
-            alert("failed updating data:" + a)
+            alert("<%= script_control_failed_updating_data %>" + a)
         }
     });
 }

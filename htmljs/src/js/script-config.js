@@ -49,7 +49,7 @@ function loadSetting() {
             });
         },
         fail: function(d) {
-            alert("error getting data:" + d);
+           alert("<%= script_config_error_getting_data %>:" + d);
         }
     });
 }
@@ -94,7 +94,7 @@ function save() {
             if (reboot) waitrestart();
         },
         fail: function(d) {
-            alert("error saving data:" + d);
+            alert("<%= script_config_error_saving_data %>:" + d);
         }
     });
 }

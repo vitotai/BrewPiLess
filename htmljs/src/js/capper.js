@@ -73,12 +73,12 @@ var Capper = {
             var mode = t.tabs.cmode;
             if (mode == "tab-gravity") {
                 var sg = Q("#capgravityinput").value;
-                if (isNaN(sg) || sg > 2 || sg < 0.8) alert("Invalid Gravity");
+                if (isNaN(sg) || sg > 2 || sg < 0.8) alert("<%= capper_invalid_gravity %>"); 
                 else t.send("sg=" + sg);
             } else if (mode == "tab-time") {
                 var time = new Date(Q("#captimeinput").value);
                 if (isNaN(time.getTime())) {
-                    alert("Invalid Time");
+                    alert("<%= capper_invalid_time %>");
                     return;
                 } else t.send("at=" + (time.getTime() / 1000));
             } else {
@@ -93,10 +93,10 @@ var Capper = {
             url: "cap?" + arg,
             m: "GET",
             success: function(b) {
-                alert("done!");
+                alert("<%= done %>!");
             },
             fail: function(a) {
-                alert("failed to set capper");
+                 alert("<%= capper_failed_set_capper %>");
             }
         })
 
