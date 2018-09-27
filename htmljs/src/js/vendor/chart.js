@@ -110,53 +110,53 @@
         var STATES = [{
             name: "IDLE",
             color: colorIdle,
-            text: "Idle"
+            text: "<%= chart_state_idle %>"
         }, {
             name: "STATE_OFF",
             color: colorIdle,
-            text: "Off"
+            text: "<%= chart_state_off %>"
         }, {
             name: "DOOR_OPEN",
             color: "#eee",
-            text: "Door Open",
+            text: "<%= chart_state_door_Open %>",
             doorOpen: true
         }, {
             name: "HEATING",
             color: colorHeat,
-            text: "Heating"
+            text: "<%= chart_state_heating %>"
         }, {
             name: "COOLING",
             color: colorCool,
-            text: "Cooling"
+            text: "<%= chart_state_cooling %>"
         }, {
             name: "WAITING_TO_COOL",
             color: colorWaitingCool,
-            text: "Waiting to Cool",
+            text: "<%= chart_state_wait_to_cool %>",
             waiting: true
         }, {
             name: "WAITING_TO_HEAT",
             color: colorWaitingHeat,
-            text: "Waiting to Heat",
+            text: "<%= chart_state_wait_to_heat %>",
             waiting: true
         }, {
             name: "WAITING_FOR_PEAK_DETECT",
             color: colorWaitingPeakDetect,
-            text: "Waiting for Peak",
+            text: "<%= chart_state_wait_for_peak %>",
             waiting: true
         }, {
             name: "COOLING_MIN_TIME",
             color: colorCoolingMinTime,
-            text: "Cooling Min Time",
+            text: "<%= chart_state_cooling_min_time %>",
             extending: true
         }, {
             name: "HEATING_MIN_TIME",
             color: colorHeatingMinTime,
-            text: "Heating Min Time",
+            text: "<%= chart_state_heating_min_time %>",
             extending: true
         }, {
             name: "INVALID",
             color: colorHeatingMinTime,
-            text: "Invalid State"
+            text: "<%= chart_state_invalid %>"
         }];
         BrewChart.Mode = {
             b: "Beer Constant",
@@ -246,7 +246,7 @@
                 val.innerHTML = "--";
             });
             Q(".beer-chart-legend-time").innerHTML = this.dateLabel; //"Date/Time";
-            Q('.beer-chart-state').innerHTML = "state";
+            Q('.beer-chart-state').innerHTML = "<%= chart_state_label %>";
         };
 
         BrewChart.prototype.tempFormat = function(y) {

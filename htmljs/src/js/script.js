@@ -220,7 +220,7 @@
                 break;
             }
         }
-        status.ControlState = i;
+        //status.ControlState = i;
         var tempRE = /\s*([a-zA-Z]+)\s*([-\d\.]+)\s+([-\d\.]+)\s+(\S+[CF])\s*$/i;
         for (var i = 1; i < 3; i++) {
             var temps = tempRE.exec(lines[i]);
@@ -260,17 +260,45 @@
 
         var status = parseLcdText(lines);
         var ModeString = {
-            o: "OFF",
-            b: "Beer Constant",
-            f: "Fridge Const",
-            p: "Beer Profile",
+            o: "<%= mode_off %>",
+            b: "<%= mode_beer_const %>",
+            f: "<%= mode_fridge_const %>",
+            p: "<%= mode_beer_profile %>",
             i: "Invalid"
         };
+        var StateText = [
+            "<%= state_text_idle %>",
+            "<%= state_text_off %>",
+            "<%= state_text_door_Open %>",
+            "<%= state_text_heating %>",
+            "<%= state_text_cooling %>",
+            "<%= state_text_wait_to_cool %>",
+            "<%= state_text_wait_to_heat %>",
+            "<%= state_text_wait_for_peak %>",
+            "<%= state_text_cooling_min_time %>",
+            "<%= state_text_heating_min_time %>",
+            "<%= state_text_invalid %>"
+        ];
+
+        function genStateText(state, duration) {
+            if (typeof duration == "undefined") return StateText[state];
+
+            var match;
+            var timestr = "";
+            if (match = /(\d+)h(\d\d)m(\d\d)/.exec(duration)) {
+                timestr = "<%= time_format_long %>".replace("{SS}", match[3]).replace("{MM}", match[2]).replace("{HH}", match[1]);
+            } else if (match = /(\d+)m(\d\d)/.exec(duration)) {
+                // short
+                timestr = "<%= time_format_short %>".replace("{SS}", match[2]).replace("{MM}", match[1]);
+            }
+            return StateText[state].replace("{time}", timestr);
+        }
+
         Object.keys(status).map(function(key, i) {
             var div = Q("#lcd" + key);
             if (div) {
                 if (key == "ControlMode") div.innerHTML = ModeString[status[key]];
-                else if (key == "ControlState") div.innerHTML = (status[key] < STATES.length) ? STATES[status[key]].text : "Unknown State";
+                else if (key == "ControlState") div.innerHTML = genStateText(status[key], status.ControlStateSince);
                 else div.innerHTML = status[key];
             }
         });

@@ -323,5 +323,44 @@
     "log_crop_to": "Crop to",
     "log_export": "Export",
 
+    "__chart_js": "chart.js",
+    "chart_state_label": "state",
+    "chart_state_idle": "Idle",
+    "chart_state_off": "Off",
+    "chart_state_door_Open": "Door Open",
+    "chart_state_heating": "Heating",
+    "chart_state_cooling": "Cooling",
+    "chart_state_wait_to_cool": "Waiting to Cool",
+    "chart_state_wait_to_heat": "Waiting to Heat",
+    "chart_state_wait_for_peak": "Waiting for Peak",
+    "chart_state_cooling_min_time": "Cooling Min Time",
+    "chart_state_heating_min_time": "Heating Min Time",
+    "chart_state_invalid": "Invalid State",
+
+    "__mode_string": "Mode Strings, in script.js",
+
+    "mode_off": "OFF",
+    "mode_beer_const": "Beer Constant",
+    "mode_fridge_const": "Fridge Const",
+    "mode_beer_profile": "Beer Profile",
+    "mode_invalide": "Invalid",
+
+    "__state_text": "in script.js, do not translate {time} {HH}, {MM},{SS}",
+
+    "state_text_idle": "Idling for {time}",
+    "state_text_off": "Temp. Control Off",
+    "state_text_door_Open": "Door Open",
+    "state_text_heating": "Heating for {time}",
+    "state_text_cooling": "Cooling for {time}",
+    "state_text_wait_to_cool": "Waiting to Cool {time}",
+    "state_text_wait_to_heat": "Waiting to Heat {time}",
+    "state_text_wait_for_peak": "Waiting for Peak",
+    "state_text_cooling_min_time": "Cool Time left {time}",
+    "state_text_heating_min_time": "Heat Time left {time}",
+    "state_text_invalid": "Invalid State",
+
+    "time_format_short": "{MM}m{SS}",
+    "time_format_long": "{HH}h{MM}m{SS}",
+
     "__end__": "END"
 }

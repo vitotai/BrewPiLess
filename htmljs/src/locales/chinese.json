@@ -323,5 +323,44 @@
     "log_crop_to": "Crop to",
     "log_export": "Export",
 
+    "__chart_js": "chart.js",
+    "chart_state_label": "狀態",
+    "chart_state_idle": "閒置",
+    "chart_state_off": "關閉",
+    "chart_state_door_Open": "門打開",
+    "chart_state_heating": "加熱",
+    "chart_state_cooling": "冷卻",
+    "chart_state_wait_to_cool": "等待冷卻",
+    "chart_state_wait_to_heat": "等待加熱",
+    "chart_state_wait_for_peak": "等待峰值",
+    "chart_state_cooling_min_time": "最短冷卻運行",
+    "chart_state_heating_min_time": "最短加熱運行",
+    "chart_state_invalid": "錯誤狀態",
+
+    "__mode_string": "Mode Strings, in script.js",
+
+    "mode_off": "關閉",
+    "mode_beer_const": "啤酒定溫",
+    "mode_fridge_const": "冰箱定溫",
+    "mode_beer_profile": "溫度行程",
+    "mode_invalide": "無效",
+
+    "__state_text": "in script.js, do not translate {time} {HH}, {MM},{SS}",
+
+    "state_text_idle": "無動作{time}",
+    "state_text_off": "溫控關閉",
+    "state_text_door_Open": "Door Open",
+    "state_text_heating": "加熱持續 {time}",
+    "state_text_cooling": "冷卻持續 {time}",
+    "state_text_wait_to_cool": "等待冷卻 {time}",
+    "state_text_wait_to_heat": "等待加熱 {time}",
+    "state_text_wait_for_peak": "等待峰值",
+    "state_text_cooling_min_time": "冷卻時間剩下 {time}",
+    "state_text_heating_min_time": "加熱時間剩下 {time}",
+    "state_text_invalid": "不正確的狀態",
+
+    "time_format_short": "{MM}分{SS}",
+    "time_format_long": "{HH}時{MM}分{SS}",
+
     "end": "***END***"
 }
