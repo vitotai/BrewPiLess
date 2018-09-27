@@ -245,7 +245,7 @@ var profileEditor = {
         var rowlist = tb.getElementsByTagName("tr");
 
         if (rowlist.length >= MAX_STEP) {
-            alert("<%= profile_over_steps %>");
+            alert("<%= script_control_too_many_steps %>");
             return;
         }
         var stage;
@@ -333,7 +333,7 @@ var profileEditor = {
     },
     renderRows: function(g) {
         if (typeof g.length == "undefined")
-            console.log("error!!");
+            console.log("error!");
         var e = document.getElementById("profile_t").getElementsByTagName("tbody")[0];
         for (var f = 0; f < g.length; f++) {
             var c = this.row.cloneNode(true);
@@ -492,7 +492,7 @@ var PL = {
                 f.list(f.plist)
             },
             fail: function(a) {
-                alert("<%= general_failed %>" + a)
+                alert("<%= failed %>:" + a);
             }
         })
     },
@@ -560,7 +560,7 @@ var PL = {
                 a.list(a.plist)
             },
             fail: function(b) {
-                alert("<%= general_failed %>" + b)
+                alert("<%= failed %>:" + b);
             }
         })
     },
@@ -591,7 +591,7 @@ var PL = {
         }
         var g = profileEditor.getProfile();
         if (g === false) {
-            alert("<%= profile_invalid_value %>");
+            alert("<%= script_control_invalid_value_check_again %>");
             return
         }
         var f = this;
@@ -606,7 +606,7 @@ var PL = {
                 f.cancelSave()
             },
             fail: function(a) {
-                alert("<%= general_failed %>" + a)
+                alert("<%= failed %>:" + a);
             }
         })
     }
@@ -730,13 +730,13 @@ var modekeeper = {
     },
     apply: function() {
         if (!BrewPiSetting.valid) {
-            alert("<%= control_not_connected %>");
+            alert("<%= script_control_not_conected_to_controller %>");
             //		return;
         }
         if ((this.cmode == "beer") || (this.cmode == "fridge")) {
             var v = document.getElementById(this.cmode + "-t").value;
             if (v == '' || isNaN(v) || (v > BrewPiSetting.maxDegree || v < BrewPiSetting.minDegree)) {
-                alert("<%= invalid_temperature %>" + v);
+                alert("<%= script_control_invalid_temperature %>" + v);
                 return;
             }
             if (this.cmode == "beer") {
@@ -752,7 +752,7 @@ var modekeeper = {
         } else {
             // should save first.
             if (profileEditor.dirty) {
-                alert("<%= save_profile_first %>");
+                alert("<%= script_control_save_profile_before_applay %>");
                 return;
             }
             //console.log("j{mode:p}");
@@ -775,7 +775,7 @@ var modekeeper = {
                         BWF.send("j{mode:p}");
                     },
                     fail: function(d) {
-                        alert("<%= general_failed %>" + d);
+                        alert("<%= failed %>:" + d);
                     }
                 });
             };
@@ -794,7 +794,7 @@ function saveprofile() {
     //console.log("save");
     var r = profileEditor.getProfile();
     if (r === false) {
-        alert("<%= profile_invalid_value %>");
+        alert("<%= script_control_invalid_value_check_again %>");
         return;
     }
     var json = JSON.stringify(r);
@@ -807,10 +807,10 @@ function saveprofile() {
         data: "data=" + encodeURIComponent(json),
         success: function(d) {
             profileEditor.markdirty(false);
-            alert("<%= profile_saved %>")
+            alert("<%= done %>")
         },
         fail: function(d) {
-            alert("<%= profile_failed2save %>");
+            alert("<%= script_control_failed_to_save %>");
         }
     });
 }
@@ -879,7 +879,7 @@ function initctrl() {
                     Q("#hostname").innerHTML = c["nn"];
                 }
                 if (typeof c["ver"] != "undefined") {
-                    if (JSVERSION != c["ver"]) alert("<%= version_mismatched_reload %>");
+                    if (JSVERSION != c["ver"]) alert("<%= script_control_version_mismatched %>");
                     Q("#verinfo").innerHTML = "v" + c["ver"];
                 }
                 if (typeof c["cap"] != "undefined")

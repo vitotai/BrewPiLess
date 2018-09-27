@@ -52,12 +52,12 @@
                             Q("#log-start").innerHTML = BChart.chart.formatDate(date);
                             if (BChart.chart.plato) showPlatoUnit();
                         } else {
-                            alert("<%= viewer_invalid_log %>");
+                            alert("<%= script_viewer_invalid_log %>");
                         }
                     };
                     r.readAsArrayBuffer(f);
                 } else {
-                    alert("<%= viewer_fail_load_file %>");
+                    alert("<%= script_viewer_failed_load_file %>");
                 }
             }
 
@@ -90,7 +90,7 @@
             var link = document.createElement("a");
 
             if (link.download === undefined) { // feature detection
-                alert("<%= viewer_no_downloading %>");
+                alert("<%= script_viewer_not_downloading_file %>");
                 return;
             }
 

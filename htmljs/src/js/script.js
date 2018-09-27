@@ -28,7 +28,7 @@
                 m: "GET",
                 success: function(d) { window.npt = npt; },
                 fail: function(d) {
-                    alert("<%= fail_update_formula %>" + d);
+                    alert("<%= script_fail_update_formula %>" + d);
                 }
             });
         },
@@ -79,7 +79,7 @@
             xhr.responseType = 'arraybuffer';
             xhr.onload = function(e) {
                 if (this.status == 404) {
-                    console.log("Error getting log data");
+                    console.log(" Error getting log data");
                     return;
                 }
                 // response is unsigned 8 bit integer
@@ -151,7 +151,7 @@
                 }, T_CHART_RETRYTO);
             };
             xhr.onerror = function() {
-                console.log("error getting data.");
+                console.log("Error getting data");
                 if (t.timer == null) setTimeout(function() {
                     t.reqdata();
                 }, T_CHART_RETRY);
@@ -496,7 +496,7 @@
                 }, T_CHART_REFRESH);
             },
             fail: function(d) {
-                alert("<%= general_failed %>" + d);
+                alert("<%= failed %>:" + d);
                 closeDlgLoading();
             }
         });
@@ -600,7 +600,7 @@
             displayrssi(c["rssi"]);
         }
         if (typeof c["reload"] != "undefined") {
-            console.log("forced reload chart");
+            console.log("Forced reload chart");
             BChart.reqnow();
             if (!Q("#recording").innerHTML || Q("#recording").innerHTML != c.log)
                 window.npt = 0; // delete formula to force update to BPL.                
@@ -610,7 +610,7 @@
             document.title = c.nn; // + document.title.replace("BrewPiLess", "");
         }
         if (typeof c["ver"] != "undefined") {
-            if (JSVERSION != c["ver"]) alert("<%= version_mismatched_reload %>");
+            if (JSVERSION != c["ver"]) alert("<%= script_control_version_mismatched %>");
             Q("#verinfo").innerHTML = "v" + c["ver"];
         }
         if (typeof c["tm"] != "undefined" && typeof c["off"] != "undefined") {

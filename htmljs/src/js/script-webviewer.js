@@ -99,7 +99,7 @@
             xhr.responseType = 'arraybuffer';
             xhr.onload = function(e) {
                 if (this.status == 404) {
-                    //console.log("Error getting log data");
+                    console.log("error getting log data.");
                     return;
                 }
                 // response is unsigned 8 bit integer
@@ -120,11 +120,11 @@
                     if (typeof window.iniRange !== "undefined") BChart.chart.setXRange(window.iniRange);
                     if (BChart.chart.plato) showPlatoUnit();
                 } else {
-                    alert("<%= viewer_invalid_log %>");
+                    alert("<%= script_viewer_invalid_log %>");
                 }
             };
             xhr.ontimeout = function(e) {
-                console.error("Timeout!!");
+                console.error("Timeout!");
             };
             xhr.onerror = function() {
                 console.log("error getting data.");

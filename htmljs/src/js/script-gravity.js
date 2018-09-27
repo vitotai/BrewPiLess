@@ -35,10 +35,10 @@ function save() {
         mime: "aplication/json",
         data: JSON.stringify(setting),
         success: function(a) {
-            alert("<%= gdc_save_done %>");
+            alert("<%= done %>");
         },
         fail: function(a) {
-            alert("<%= gdc_save_failed %>" + a)
+            alert("<%= script_control_failed_updating_data %>" + a)
         }
     });
 }

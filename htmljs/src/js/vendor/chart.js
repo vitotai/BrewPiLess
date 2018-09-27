@@ -591,7 +591,7 @@
                 var d1 = data[i++];
                 if (d0 == 0xFF) { // header. 
                     if ((d1 & 0xF) != 5) {
-                        alert("<%= log_version_mismatched %>");
+                        alert("<%= script_log_version_mismatched %>");
                         return;
                     }
                     //console.log(""+t.ctime/t.interval +" header");
