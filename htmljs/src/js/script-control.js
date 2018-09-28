@@ -649,7 +649,7 @@ var ControlChart = {
                 axisLabelFontSize: 12,
                 gridLineColor: '#ccc',
                 gridLineWidth: '0.1px',
-                labels: ["Time", "Temperature"],
+                labels: ["<%= script_control_time %>", "<%= script_control_temperature %>"],
                 labelsDiv: document.getElementById(div + "-label"),
                 legend: 'always',
                 labelsDivStyles: {
