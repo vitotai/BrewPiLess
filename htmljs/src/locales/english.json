@@ -314,7 +314,7 @@
     "script_viewer_failed_load_file": "Failed to load file",
     "script_viewer_not_downloading_file": "Browser doesn't support downloading file.",
 
-    "script_log_version_mismatched": "Log version matched!",
+    "script_log_version_mismatched": "Log version mismatched!",
     "script_fail_update_formula": "Failed to update formula.",
 
     "__BPLLogViewer_htm": "BPLLogViewer.htm",
