@@ -775,7 +775,7 @@ var modekeeper = {
                         BWF.send("j{mode:p}");
                     },
                     fail: function(d) {
-                         alert("<%= failed %>:" + d);
+                        alert("<%= failed %>:" + d);
                     }
                 });
             };

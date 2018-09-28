@@ -28,7 +28,7 @@ function save() {
         if (ele.type == "checkbox") setting[ele.name] = ele.checked;
         else if (ele.type == "text") setting[ele.name] = ele.value;
     }
-    console.log("result=" + setting);
+    //    console.log("result=" + setting);
     s_ajax({
         url: gdcurl,
         m: "POST",

@@ -88,8 +88,14 @@ function device_apply(a) {
     var b = cmdfrom(a);
     var c = "U" + JSON.stringify(b);
     console.log(c);
+    var tout = setTimeout(function() {
+        alert("<%= setup_update_timeout %>")
+        unblockscreen();
+    }, 5000);
+
     BWF.on("U", function(d) {
-        unblockscreen()
+        if (tout) clearTimeout(tout);
+        unblockscreen();
     });
     BWF.send(c)
 }

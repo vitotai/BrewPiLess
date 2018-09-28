@@ -76,8 +76,8 @@ var BWF = {
                 me.process(e.data);
             };
         } else {
-            console.log("not support WebSocket");
-            alert("The browser doesn't support WebSocket!");
+            //console.log("not support WebSocket");
+            alert("<%= incompatiable_browser %>");
         }
     },
     reconnect: function(forced) {

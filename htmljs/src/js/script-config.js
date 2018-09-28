@@ -49,7 +49,7 @@ function loadSetting() {
             });
         },
         fail: function(d) {
-           alert("<%= script_config_error_getting_data %>:" + d);
+            alert("<%= script_config_error_getting_data %>:" + d);
         }
     });
 }

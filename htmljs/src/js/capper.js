@@ -73,8 +73,9 @@ var Capper = {
             var mode = t.tabs.cmode;
             if (mode == "tab-gravity") {
                 var sg = Q("#capgravityinput").value;
-                if (isNaN(sg) || sg > 2 || sg < 0.8) alert("<%= capper_invalid_gravity %>"); 
-                else t.send("sg=" + sg);
+                /*if (isNaN(sg) || sg > 2 || sg < 0.8) alert("<%= capper_invalid_gravity %>");
+                else*/
+                t.send("sg=" + sg);
             } else if (mode == "tab-time") {
                 var time = new Date(Q("#captimeinput").value);
                 if (isNaN(time.getTime())) {
@@ -96,7 +97,7 @@ var Capper = {
                 alert("<%= done %>!");
             },
             fail: function(a) {
-                 alert("<%= capper_failed_set_capper %>");
+                alert("<%= capper_failed_set_capper %>");
             }
         })
 
