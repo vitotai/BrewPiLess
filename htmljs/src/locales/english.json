@@ -270,6 +270,8 @@
     "__script_control_js": "script-control.js",
     "failed": "failed",
     "error": "error!",
+    "script_control_temperature": "Temperature",
+    "script_control_time": "Time",
 
     "script_control_invalid_value_check_again": "Invalid value. Check again",
     "script_control_not_conected_to_controller": "Not connected to controller.",
