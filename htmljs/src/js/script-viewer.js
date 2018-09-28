@@ -136,14 +136,14 @@
             download(blob, window.file.name + ".csv");
         }
 
-        function _cutrange() {
+        function cutrange() {
             if (typeof window.file == "undefined") return;
             var ranges = BChart.chart.chart.xAxisRange();
             var data = BChart.chart.partial(ranges[0], ranges[1]);
             download(new Blob(data, { type: 'octet/stream' }), window.file.name + "-partial");
         }
 
-        function cutrange() {
+        function cutrange2p() {
             if (typeof window.file == "undefined") return;
             var ranges = BChart.chart.chart.xAxisRange();
             var data = BChart.chart.partial2Plato(ranges[0], ranges[1]);
