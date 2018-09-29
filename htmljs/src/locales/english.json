@@ -270,6 +270,8 @@
     "__script_control_js": "script-control.js",
     "failed": "failed",
     "error": "error!",
+    "script_control_temperature": "Temperature",
+    "script_control_time": "Time",
 
     "script_control_invalid_value_check_again": "Invalid value. Check again",
     "script_control_not_conected_to_controller": "Not connected to controller.",
@@ -314,7 +316,7 @@
     "script_viewer_failed_load_file": "Failed to load file",
     "script_viewer_not_downloading_file": "Browser doesn't support downloading file.",
 
-    "script_log_version_mismatched": "Log version matched!",
+    "script_log_version_mismatched": "Log version mismatched!",
     "script_fail_update_formula": "Failed to update formula.",
 
     "__BPLLogViewer_htm": "BPLLogViewer.htm",
