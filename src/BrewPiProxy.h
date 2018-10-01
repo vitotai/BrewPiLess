@@ -11,7 +11,7 @@
 
 class BrewPiProxy{
 public:
-	BrewPiProxy(void):_lastLineLength(0),_readPtr(0),_unit('C'){_lastLineBuff[0]='\0';}
+	BrewPiProxy(void):_unit('C'),_lastLineLength(0),_readPtr(0){_lastLineBuff[0]='\0';}
 	void begin(void (*readString)(const char*));
 
 	void loop(void);

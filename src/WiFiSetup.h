@@ -25,7 +25,7 @@ public:
 	void begin(char const *ssid,const char *passwd=NULL);
 	void beginAP(char const *ssid,const char *passwd=NULL);
 
-	bool settingChanged(NetcfgHandler func){_configHandler=func; }
+	void settingChanged(NetcfgHandler func){_configHandler=func; }
 
 	void stayConnected(void);
 	bool isApMode(void) {return _apMode;}

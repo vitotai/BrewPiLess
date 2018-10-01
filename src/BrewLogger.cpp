@@ -119,7 +119,7 @@ BrewLogger::BrewLogger(void){
 			return false;
 		}
 */
-		size_t dataRead;
+		int dataRead;
 		size_t offset=0;
 		int    processIndex;
 		uint8_t tag, mask;
@@ -158,7 +158,7 @@ BrewLogger::BrewLogger(void){
 
 					//TODO: check available data?
 		       		// int numberInRecord=0;
-					int recordSize;
+					size_t recordSize;
 					recordSize =0; 
 		        	uint8_t bitmask;
 					bitmask=1;
@@ -173,12 +173,16 @@ BrewLogger::BrewLogger(void){
 					bitmask=1;
         			for(int i=0;i<NumberDataBitMask;i++, bitmask=bitmask<<1){
 	        			if(mask & bitmask){
+								#if SerialDebug
 							int d0=_logBuffer[processIndex++];
     			    	   	int d1=_logBuffer[processIndex++];
-							// get gravity data that we need
+							   #endif
+							// get gravity data that we need							
 		        			if( i == OrderGravity){        
+								#if SerialDebug
 								int gravityInt = (d0 << 8) | d1;
                             	DBG_PRINTF("resume@%ld, SG:%d\n",_resumeLastLogTime,gravityInt);
+								#endif
                                     // dont trust the data
 //                            	if(gravityInt > 8000 && gravityInt < 12500)
 //                                    gravityTracker.add(GravityDecode(gravityInt),_resumeLastLogTime);

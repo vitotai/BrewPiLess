@@ -92,4 +92,5 @@ bool ParasiteTempController::checkSettings(void)
     if((_settings->setTemp + MIN_TEM_DIFF) > _settings->maxIdleTemp) return false;
     if(_settings->minCoolingTime < MIN_COOL_TIME ) return false;
     if(_settings->minIdleTime < MIN_IDLE_TIME ) return false;
+    return true;
 }

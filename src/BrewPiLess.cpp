@@ -399,7 +399,7 @@ public:
   			}
 	 	}else if(request->method() == HTTP_GET &&  request->url() == TIME_PATH){
 			AsyncResponseStream *response = request->beginResponseStream("application/json");
-			response->printf("{\"t\":\"%s\",\"e\":%lu,\"o\":%ld}",TimeKeeper.getDateTimeStr(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset());
+			response->printf("{\"t\":\"%s\",\"e\":%lu,\"o\":%d}",TimeKeeper.getDateTimeStr(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset());
 			request->send(response);
 		}else if(request->method() == HTTP_POST &&  request->url() == TIME_PATH){
 			if(request->hasParam("time", true)){

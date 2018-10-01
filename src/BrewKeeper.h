@@ -50,7 +50,7 @@ protected:
 	void _loadProfile(void);
 public:
 
-	BrewKeeper(void(*puts)(const char*)):_write(puts),_lastGravity(INVALID_GRAVITY){}
+	BrewKeeper(void(*puts)(const char*)):_lastGravity(INVALID_GRAVITY),_write(puts){}
 	void updateGravity(float sg);
 	void updateOriginalGravity(float sg);
 
