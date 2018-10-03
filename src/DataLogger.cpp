@@ -37,7 +37,7 @@ int DataLogger::dataSprintf(char *buffer,const char *format)
 
 	int i=0;
 	int d=0;
-	for(i=0;i< strlen(format);i++){
+	for(i=0;i< (int) strlen(format);i++){
 		char ch=format[i];
 		if( ch == '%'){
 			i++;

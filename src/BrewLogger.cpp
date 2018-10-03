@@ -121,7 +121,7 @@ BrewLogger::BrewLogger(void){
 */
 		int dataRead;
 		size_t offset=0;
-		int    processIndex;
+		int    processIndex=0;
 		uint8_t tag, mask;
 
 
@@ -166,7 +166,7 @@ BrewLogger::BrewLogger(void){
 						if(mask & bitmask)
 							recordSize +=2;
 
-					if (dataRead-processIndex < recordSize ){
+					if (dataRead-processIndex < (int) recordSize ){
 						processIndex -= 2;
 						break;
 					}
@@ -497,7 +497,7 @@ BrewLogger::BrewLogger(void){
 	size_t BrewLogger::volatileDataAvailable(size_t start,size_t offset)
 	{
 		// get size;
-		size_t dataAvail=(_logHead <= _logIndex)? (_logIndex-_logHead):(LogBufferSize + _logIndex - _logHead);
+		size_t dataAvail=(_logHead <= (int)_logIndex)? (_logIndex-_logHead):(LogBufferSize + _logIndex - _logHead);
 		dataAvail += VolatileHeaderSize; // for make-up header
 		//DBG_PRINTF("volatileDataAvailable,start:%d, offset:%d, _logHead %d _logIndex %d, _startOffset:%d, dataAvail:%d\n",start, offset,_logHead,_logIndex,_startOffset, dataAvail);
 		if( ((start + offset) == 0)
@@ -723,7 +723,7 @@ BrewLogger::BrewLogger(void){
 	int BrewLogger::freeBufferSpace(void)
 	{
 		//DBG_PRINTF("_logHead:%d, _logIndex: %d\n",_logHead,_logIndex);
-		if(_logIndex >= _logHead){
+		if(_logIndex >= (size_t)_logHead){
 			return LogBufferSize - _logIndex -1 + _logHead;
 		}else {
 			// _logIndex < _logHead

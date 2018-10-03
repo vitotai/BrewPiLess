@@ -689,7 +689,7 @@ void greeting(std::function<void(const char*)> sendFunc)
 	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
 				\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s}}"
 		,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
-		TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset(),
+		TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
 		logname, capstate.c_str());
 	
 #else

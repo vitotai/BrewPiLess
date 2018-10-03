@@ -93,8 +93,9 @@ void IIClcd::init(){
 
 void IIClcd::init_priv()
 {
-#ifdef ESP8266
-	Wire.begin();
+	#ifdef ESP8266
+
+	Wire.begin(PIN_SDA,PIN_SCL);
 	#if LCD_AUTO_ADDRESSING == true
 	scanForAddress();
 	#endif
