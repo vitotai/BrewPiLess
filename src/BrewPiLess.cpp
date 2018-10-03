@@ -5,13 +5,19 @@
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #endif
+
 #include <ArduinoOTA.h>
 #include <FS.h>
 
 //#include <Hash.h>
-
+#if defined(ESP32)
+#include <AsyncTCP.h>
+#include <SPIFFS.h>
+#else
 #include <ESPAsyncTCP.h>
+#endif
 #include <ESPAsyncWebServer.h>
+
 #include <ArduinoJson.h>
 //{ brewpi
 #include <OneWire.h>
@@ -52,7 +58,11 @@
 #endif
 
 extern "C" {
+#if defined(ESP32)
+//#include "lwip/apps/sntp.h"
+#else
 #include <sntp.h>
+#endif
 }
 
 #include "BPLSettings.h"
@@ -194,6 +204,30 @@ class BrewPiWebHandler: public AsyncWebHandler
 	void handleFileList(AsyncWebServerRequest *request) {
 		if(request->hasParam("dir",true)){
         	String path = request->getParam("dir",true)->value();
+			#if defined(ESP32)
+			File dir = SPIFFS.open(path);
+          	String output = "[";
+			if(dir.isDirectory()){
+				File entry = dir.openNextFile();
+          		while(entry){
+            		
+            		if (output != "[") output += ',';
+            		bool isDir = false;
+            		output += "{\"type\":\"";
+            		output += (isDir)?"dir":"file";
+            		output += "\",\"name\":\"";
+            		output += String(entry.name()).substring(1);
+            		output += "\"}";
+            		entry.close();
+					entry = dir.openNextFile();
+          		}
+			  }
+          	output += "]";
+          	request->send(200, "text/json", output);
+          	output = String();
+
+
+			#else
           	Dir dir = SPIFFS.openDir(path);
           	path = String();
           	String output = "[";
@@ -211,6 +245,7 @@ class BrewPiWebHandler: public AsyncWebHandler
           	output += "]";
           	request->send(200, "text/json", output);
           	output = String();
+			#endif
         }
         else
           request->send(400);
@@ -218,7 +253,13 @@ class BrewPiWebHandler: public AsyncWebHandler
 
 	void handleFileDelete(AsyncWebServerRequest *request){
 		if(request->hasParam("path", true)){
-        	ESP.wdtDisable(); SPIFFS.remove(request->getParam("path", true)->value()); ESP.wdtEnable(10);
+			#if !defined(ESP32)
+        	ESP.wdtDisable(); 
+			#endif
+			SPIFFS.remove(request->getParam("path", true)->value()); 
+			#if !defined(ESP32)
+			ESP.wdtEnable(10);
+			#endif
             request->send(200, "", "DELETE: "+request->getParam("path", true)->value());
         } else
           request->send(404);
@@ -227,7 +268,9 @@ class BrewPiWebHandler: public AsyncWebHandler
 	void handleFilePuts(AsyncWebServerRequest *request){
 		if(request->hasParam("path", true)
 			&& request->hasParam("content", true)){
+			#if !defined(ESP32)
         	ESP.wdtDisable();
+			#endif
     		String file=request->getParam("path", true)->value();
     		File fh= SPIFFS.open(file, "w");
     		if(!fh){
@@ -237,7 +280,9 @@ class BrewPiWebHandler: public AsyncWebHandler
     		String c=request->getParam("content", true)->value();
       		fh.print(c.c_str());
       		fh.close();
+			#if !defined(ESP32)
         	ESP.wdtEnable(10);
+			#endif
             request->send(200,"application/json","{}");
             DBG_PRINTF("fputs path=%s\n",file.c_str());
         } else
@@ -1148,7 +1193,7 @@ DelayImpl wait = DelayImpl(DELAY_IMPL_CONFIG);
 DisplayType realDisplay;
 DisplayType DISPLAY_REF display = realDisplay;
 
-ValueActuator alarm;
+ValueActuator alarmActuator;
 
 #ifdef ESP8266_WiFi
 
@@ -1158,7 +1203,7 @@ WiFiClient serverClient;
 #endif
 void handleReset()
 {
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
 	// The asm volatile method doesn't work on ESP8266. Instead, use ESP.restart
 	ESP.restart();
 #else
@@ -1217,7 +1262,7 @@ void brewpiLoop(void)
 		lastUpdate = ticks.millis();
 
 #if BREWPI_BUZZER
-		buzzer.setActive(alarm.isActive() && !buzzer.isActive());
+		buzzer.setActive(alarmActuator.isActive() && !buzzer.isActive());
 #endif
 
 		tempControl.updateTemperatures();
@@ -1353,8 +1398,11 @@ void setup(void){
 
 	// get time
 	initTime(WiFiSetup.isApMode());
-
+	#if defined(ESP32)
+	if (!MDNS.begin(syscfg->hostnetworkname)) {
+	#else
 	if (!MDNS.begin(syscfg->hostnetworkname,WiFi.localIP())) {
+	#endif
 			DBG_PRINTF("Error setting mDNS responder\n");
 	}else{
 		MDNS.addService("http", "tcp", 80);
@@ -1397,7 +1445,14 @@ void setup(void){
 	//3.1.2 SPIFFS is part of the serving pages
 	//server.serveStatic("/", SPIFFS, "/","public, max-age=259200"); // 3 days
 
-
+#if defined(ESP32)
+	webServer->on("/fs",[](AsyncWebServerRequest *request){
+		request->send(200,"","totalBytes:" +String(SPIFFS.totalBytes()) +
+		" usedBytes:" + String(SPIFFS.usedBytes()) +
+		" heap:"+String(ESP.getFreeHeap()));
+		//testSPIFFS();
+	});
+#else
 	webServer->on("/fs",[](AsyncWebServerRequest *request){
 		FSInfo fs_info;
 		SPIFFS.info(fs_info);
@@ -1408,7 +1463,7 @@ void setup(void){
 		+" heap:"+String(ESP.getFreeHeap()));
 		//testSPIFFS();
 	});
-
+#endif
 	// 404 NOT found.
   	//called when the url is not defined here
 	webServer->onNotFound([](AsyncWebServerRequest *request){

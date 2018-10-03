@@ -1,9 +1,22 @@
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266HTTPUpdateServer.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266WebServer.h>
+//#include <ESP8266HTTPUpdateServer.h>
+
 #include <FS.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <WebServer.h>
+
+#include <FS.h>
+#include <SPIFFS.h>
+#endif
+
+
+#include <WiFiClient.h>
+
 #include <ArduinoJson.h>
 #include "Config.h"
 #include "ExternalData.h"
@@ -19,7 +32,11 @@
 #endif
 
 #if (DEVELOPMENT_OTA == true) || (DEVELOPMENT_FILEMANAGER == true)
+#if defined(ESP32)
+static WebServer server(UPDATE_SERVER_PORT);
+#else
 static ESP8266WebServer server(UPDATE_SERVER_PORT);
+#endif
 #endif
 
 #if DEVELOPMENT_OTA == true

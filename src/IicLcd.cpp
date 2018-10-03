@@ -16,7 +16,7 @@
 #include <inttypes.h>
 #include "Arduino.h"
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 #include <Wire.h>
 #else
 extern "C" {
@@ -93,7 +93,7 @@ void IIClcd::init(){
 
 void IIClcd::init_priv()
 {
-	#ifdef ESP8266
+	#if defined(ESP8266) || defined(ESP32)
 
 	Wire.begin(PIN_SDA,PIN_SCL);
 	#if LCD_AUTO_ADDRESSING == true
@@ -314,7 +314,7 @@ void IIClcd::write4bits(uint8_t value) {
 }
 
 void IIClcd::expanderWrite(uint8_t _data) {
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 #ifdef RotaryViaPCF8574
 	noInterrupts();
 #endif

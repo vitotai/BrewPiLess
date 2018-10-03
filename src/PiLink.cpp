@@ -45,7 +45,7 @@
 #endif
 
 #ifdef ARDUINO
-#ifndef ESP8266
+#if !defined(ESP8266) && !defined(ESP32)
 #include "util/delay.h"
 #endif
 #endif
@@ -737,7 +737,7 @@ inline void PiLink::printJsonSeparator() {
 void PiLink::sendJsonPair(const char * name, const char * val){
 	printJsonName(name);
 	// TODO - Fix this to use PiLink.print in all cases
-#ifndef ESP8266
+#if !defined(ESP8266) && !defined(ESP32)
 	piStream.print(val);
 #else
 	print_P(val);
@@ -1061,5 +1061,5 @@ void PiLink::processJsonPair(const char * key, const char * val, void* pv){
 
 void PiLink::soundAlarm(bool active)
 {
-	alarm.setActive(active);
+	alarmActuator.setActive(active);
 }

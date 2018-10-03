@@ -1,8 +1,14 @@
-#include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#include <WebServer.h>
+#endif
+
 //needed for library
 #include <DNSServer.h>
-#include <ESP8266WebServer.h>
-#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
+//#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
 #include <FS.h>
 #include "Config.h"
 #include "WiFiSetup.h"
@@ -59,6 +65,7 @@ IPAddress scanIP(const char *str)
 
 bool WiFiSetupClass::startSetupPortal(void)
 {
+	/*
 	WiFiManager wifiManager;
 
 	#if SerialDebug != true
@@ -86,6 +93,8 @@ bool WiFiSetupClass::startSetupPortal(void)
         DBG_PRINTF("Save IP:%s, GW:%s, SM:%s\n",ipAddress.getValue(),gateway.getValue(),netmask.getValue());
     }
   	return wifiManager.softAPModeSelected();
+	*/
+return true;
 }
 
 
@@ -101,7 +110,11 @@ void WiFiSetupClass::startWiFiManager(bool portal)
 {
 	DBG_PRINTF("AP SSID:%s  pass:%s\n",_apName,_apPassword);
 	bool _enterPortal=false;
+	#ifdef ESP32
+	WiFi.setHostname(_apName);
+	#else
 	WiFi.hostname(_apName);
+	#endif
 	bool _userApMode=false;
     if(portal){
 		// force to start Portal

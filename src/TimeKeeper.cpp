@@ -4,7 +4,9 @@
 #include "Config.h"
 #include "BPLSettings.h"
 extern "C" {
+#if !defined(ESP32)
 #include <sntp.h>
+#endif
 }
 #include "TimeKeeper.h"
 
@@ -39,18 +41,27 @@ void TimeKeeperClass::begin(void)
 void TimeKeeperClass::begin(char* server1,char* server2,char* server3)
 {
 	_online=true;
+#ifdef ESP32
+	if(! server1) configTime(0,0,"time.nist.gov");
+	else configTime(0,0,server1,server2,server3);
+
+#else
   	if(server1) sntp_setservername(0,server1);
   	else sntp_setservername(0,(char*)"time.nist.gov");
   	if(server2) sntp_setservername(1,server2);
   	if(server3) sntp_setservername(2,server3);
   	sntp_set_timezone(0);
 	sntp_init();
-
-  	unsigned long secs=0;
+#endif
+  	time_t secs=0;
 	int trial;
 	for(trial=0;trial< 50;trial++)
   	{
+		#ifdef ESP32
+		time(&secs);
+		#else
     	secs = sntp_get_current_timestamp();
+		#endif
     	if(secs) break;
     	delay(200);
   	}
@@ -69,7 +80,12 @@ time_t TimeKeeperClass::getTimeSeconds(void) // get Epoch time
 
 	if(diff > RESYNC_TIME){
 		if( _online){
-			unsigned long newtime=sntp_get_current_timestamp();
+			time_t newtime;
+			#ifdef ESP32
+			time(&newtime);
+			#else
+			 newtime=sntp_get_current_timestamp();
+			#endif
 			if(newtime){
   				_referenceSystemTime = millis();
 	  			_referenceSeconds = newtime;
