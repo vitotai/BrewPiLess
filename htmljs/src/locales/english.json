@@ -162,6 +162,10 @@
     "config_gateway": "Gateway",
     "config_netmask": "Netmask",
     "config_save_change": "Save Change",
+    "config_network_mode": "Network Mode",
+    "config_ip": "IP",
+    "config_network_selection": "Network Selection",
+    "config_scan": "Scan",
 
     "__gdc_html": "gdc.html",
     "gravity_title": "Gravity Device",

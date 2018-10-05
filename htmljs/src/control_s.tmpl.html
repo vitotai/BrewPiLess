@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html lang="<%= page_lang %>">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= control_page_title %>
+    </title>
+    <meta name="apple-mobile-web-app-title" content="BrewPiLess">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script src="/dygraph-combined.js" ignore></script>
+    <script type="text/javascript" src="js/vendor/bwf.js"></script>
+    <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/capper.js"></script>
+    <script type="text/javascript" src="js/script-control.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="style-control.css">
+</head>
+
+<body onload="initctrl()">
+
+    <!-- build:include partials/header.html -->
+    <!-- /build -->
+
+    <div viewport layout vertical>
+        <div main>
+
+            <div class="navbar" horizontal layout main-justified cross-center>
+                <div class="navitems">
+                    <a class="navitem" id="profile-m" href="#profile-s">
+                        <%= control_beerprofile %>
+                    </a>
+                    <a class="navitem" id="beer-m" href="#beer-s">
+                        <%= control_beerconst %>
+                    </a>
+                    <a class="navitem" id="fridge-m" href="#fridge-s">
+                        <%= control_fridgeconst %>
+                    </a>
+                    <a class="navitem" id="off-m" href="#off-s">
+                        <%= control_off %>
+                    </a>
+                </div>
+                <button id="modekeeper-apply" class="btn btn--raised" style="max-width: 200px;" onclick="modekeeper.apply()"><%= control_apply %></button>
+            </div>
+
+            <div id="profile-s" layout horizontal>
+                <div style="display:inline-flex">
+                    <div id="profile-edit">
+                        <div layout horizontal main-justified cross-center>
+                            <div layout horizontal cross-center>
+                                <span class="start-date"><%= control_startdate %></span>
+                                <input type="datetime-local" style="max-width: 200px;margin: 8px 0 16px;" id="startdate" onchange="profileEditor.startDayChange();">
+                            </div>
+                        </div>
+                        <div layout horizontal main-justified cross-center class="spacing">
+                            <button id="addbutton" onclick="profileEditor.addRow();" class="btn btn--raised"><%= control_add %></button>
+                            <div layout horizontal>
+                                <button id="delbtn" class="btn" onclick="profileEditor.delRow();"><%= control_del_last_item %></button>
+                                <button id="clearbtn" class="btn" onclick="profileEditor.clear()"><%= control_clear_all %></button>
+                            </div>
+                        </div>
+                        <table class="profileTable" id="profile_t">
+                            <thead>
+                                <tr>
+                                    <th>&deg;<span class="t_unit">C</span></th>
+                                    <th>
+                                        <%= control_condition %>
+                                    </th>
+                                    <th>
+                                        <%= control_days %>
+                                    </th>
+                                    <th>
+                                        <%= control_sg %>
+                                    </th>
+                                    <th>
+                                        <%= control_stable %>
+                                    </th>
+                                    <th>
+                                        <%= control_starttime %>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="stage-temp">19</td>
+                                    <td>
+                                        <div class="for-time">
+                                            <%= control_ramp %>
+                                        </div>
+                                        <div class="condition-con">
+                                            <select class="condition md">
+                                                <option value="t"><%= control_time %></option>
+                                                <option value="g"><%= control_sg %></option>
+                                                <option value="s"><%= control_stable %></option>
+                                                <option value="a"><%= control_timesg %></option>
+                                                <option value="o"><%= control_timeosg %></option>
+                                                <option value="u"><%= control_timeostable %></option>
+                                                <option value="v"><%= control_timestable %></option>
+                                                 <option value="b"><%= control_sgostable %></option>
+                                                 <option value="x"><%= control_sgstable %></option>
+                                                 <option value="w"><%= control_all %></option>
+                                                 <option value="e"><%= control_either %></option>
+                                                                 </select>
+                                        </div>
+                                    </td>
+                                    <td class="stage-time">7</td>
+                                    <td class="stage-sg">1.01</td>
+                                    <td class="stage-stabletime"></td>
+                                    <td class="diaplay-time"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div layout horizontal main-justified cross-center class="spacing">
+                            <div layout horizontal>
+                                <button id="savebtn" class="btn btn--raised" onclick="saveprofile()"><%= control_save %></button>
+                                <button id="saveasbtn" class="btn" onclick="PL.saveas()"><%= control_saveas %></button>
+                            </div>
+                            <button id="loadbtn" class="btn" onclick="PL.toggle()"><%= control_load %></button>
+                        </div>
+                    </div>
+                    <div id="tc_chart"></div>
+                </div>
+            </div>
+
+            <div id="beer-s" class="detail" style="margin: 16px 0;" layout horizontal cross-center>
+                <span><%= control_setbeertemp %></span>
+                <input type="number" size="6" id="beer-t" style="max-width: 200px"></input>&deg;<span class="t_unit">C</span>
+            </div>
+
+            <div id="fridge-s" class="detail" style="margin: 16px 0;" layout horizontal cross-center>
+                <span> <%= control_setfridgetemp %></span>
+                <input type="number" size="6" id="fridge-t" style="max-width: 200px"></input>&deg;<span class="t_unit">C</span>
+            </div>
+
+            <div id="off-s" class="detail">
+                <span style="margin: 16px 0;"><%= control_setoff %></span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- capper -->
+
+    <div class="frame" id="capper-frame">
+        <hr>
+
+        <div layout horizontal main-justified cross-center>
+            <div layout horizontal cross-center>
+                <%= control_cap_control %>
+            </div>
+        </div>
+
+        <div class=navbar horizontal layout main-justified cross-center id="cap-header">
+            <div class=navitems>
+                <a href=#tab-gravity-m class="navitem" id="tab-gravity-m">
+                    <%= control_gravity %>
+                </a>
+                <a href=#tab-time-m class="navitem" id="tab-time-m">
+                    <%= control_time %>
+                </a>
+                <a href=#tab-manual-m class="navitem" id="tab-manual-m">
+                    <%= control_manual %>
+                </a>
+                <button id="cap-apply" class="btn btn--raised" style=max-width:200px><%= control_apply %></button>
+            </div>
+        </div>
+
+        <div class="tab-containter" layout horizontal>
+            <div id="tab-gravity-s" class="detail spacing" main-justified cross-center>
+                <span style="margin:16px" class=detail> <%= control_capgravity %> 
+                            <input type=number step="0.001" size=6  id="capgravityinput" style="max-width:100px;margin:16px"> </span>
+            </div>
+            <div id="tab-time-s" class="detail">
+                <span style="margin:16px" class=detail>   <%= control_capafter %>
+                                <input type=datetime-local style="max-width:200px;margin:16px" id=captimeinput>
+                             </span>
+            </div>
+            <div id="tab-manual-s" class="detail">
+                <span style="margin:16px" class=detail>  <%= control_capped %>
+                                <input type=checkbox  checked id="capswitch">
+                                                  </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- build:include partials/footer.html -->
+    <!-- /build -->
+
+    <!-- Notification -->
+    <div class=error></div>
+
+    <!-- Modals -->
+    <div id="dlg_loading" class="modal">
+        <div class="modal-content">
+            <p>
+                <%= dlg_connecting %>
+            </p>
+        </div>
+    </div>
+
+    <div id="profile-list-pane" class="modal">
+        <div class="modal-content">
+            <h2 class="profile-load-heading">
+                <%= dlg_profilelist_load %>
+            </h2>
+            <ul class="profile-list" style="margin: 16px 0;">
+                <li layout horizontal main-justified cross-center style="margin: 8px 0;">
+                    <a href="#" class="profile-name"></a>
+                    <span class="btn--delete rmbutton"></span>
+                </li>
+            </ul>
+            <button class="btn" onclick="PL.toggle()"><%= dlg_cancel %></button>
+        </div>
+    </div>
+
+    <div id="dlg_beerprofilereminder" class="modal">
+        <div class="modal-content">
+            <%= dlg_startprofile %>
+                <input type="text" size="6" value="1.0">
+                <div class="dialog-buttons">
+                    <button class="oknog"><%= dlg_startprofile_oknog %></button>
+                    <button class="ok"><%= dlg_startprofile_ok %></button>
+                    <button class="cancel"><%= dlg_cancel %></button>
+                </div>
+        </div>
+    </div>
+
+    <div id="dlg_saveas" class="modal">
+        <div class="modal-content">
+            <span class="msg"><%= dlg_saveas_1 %></span>
+            <br><input type="text" size="32">
+            <br>
+            <%= dlg_saveas_2 %>
+                <button onclick="PL.cancelSave()"><%= dlg_cancel %></button>
+                <button onclick="PL.doSave()"><%= dlg_ok %></button>
+        </div>
+    </div>
+
+</body>
+
+</html>

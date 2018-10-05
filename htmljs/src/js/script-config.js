@@ -3,27 +3,18 @@ function formatIP(ip) {
     return ip;
 }
 
-function verifyIP(t) {
-    var digits = this.value.split(".");
-    var valid = true;
-    var val = 0;
-    if (digits.length == 4) {
-        for (var i = 0; i < 4; i++) {
-            var di = parseInt(digits[i]);
-            if (di > 255) {
-                valid = false;
-                break;
-            }
-        }
-    } else if (this.value == "") valid = true;
-    else valid = false;
-    if (valid) {
-        this.saved = this.value;
-        this.value = formatIP(this.value);
-    } else {
-        this.value = formatIP(this.saved);
+function showStaConfig() {
+    var units = document.querySelectorAll(".staconfig");
+    for (var i = 0; i < units.length; i++) {
+        units[i].style.display = "";
     }
+}
 
+function hideStaConfig() {
+    var units = document.querySelectorAll(".staconfig");
+    for (var i = 0; i < units.length; i++) {
+        units[i].style.display = "none";
+    }
 }
 
 function loadSetting() {
@@ -38,13 +29,17 @@ function loadSetting() {
                 if (div) {
                     if (div.classList.contains("iptype")) {
                         div.value = formatIP(j[key]);
-                        div.saved = j[key];
-                        div.onchange = verifyIP;
                     } else if (div.type == "checkbox") div.checked = (j[key] != 0);
                     else div.value = j[key];
                 } else {
+                    // wifi mode
                     div = Q("select[name=" + key + "]");
-                    if (div) div.value = j[key];
+                    if (div) {
+                        var v = (j[key] == 1) ? 3 : j[key];
+                        div.value = v;
+                        if (v == 3) showStaConfig();
+                        else hideStaConfig();
+                    }
                 }
             });
         },
@@ -72,8 +67,7 @@ function save() {
         if (ins[i].type != "submit") {
             if (ins[i].name && ins[i].name != "") {
                 var val;
-                if (ins[i].classList.contains("iptype")) val = ins[i].saved;
-                else if (ins[i].type == "checkbox") val = (ins[i].checked ? 1 : 0);
+                if (ins[i].type == "checkbox") val = (ins[i].checked ? 1 : 0);
                 else val = ins[i].value.trim();
                 json[ins[i].name] = val;
                 if (window.oridata[ins[i].name] != val && !ins[i].classList.contains("nb"))
@@ -82,7 +76,6 @@ function save() {
         }
     });
     var div = Q("select[name=wifi]");
-    if (window.oridata['wifi'] != div.value) reboot = true;
     json["wifi"] = div.value;
     console.log(JSON.stringify(json));
     var url = "config" + (reboot ? "" : "?nb");
@@ -102,4 +95,123 @@ function save() {
 function load() {
     if (Q("#verinfo")) Q("#verinfo").innerHTML = "v" + JSVERSION;
     loadSetting();
+    Net.init();
+
+    Q("#submitsave").onclick = function(e) {
+        e.preventDefault();
+        save();
+        return false;
+    };
 }
+
+
+function validIP(t) {
+    var digits = t.split(".");
+    var value = 0;
+    if (digits.length != 4) return false;
+    for (var i = 0; i < 4; i++) {
+        var di = parseInt(digits[i]);
+        value = (value << 8) + di;
+        if (di > 255) {
+            return false;
+        }
+    }
+    return value;
+}
+
+function modechange(sel) {
+    if (sel.value == 2) hideStaConfig();
+    else showStaConfig();
+}
+
+var Net = {
+    select: function(l) {
+        document.getElementById('ssid').value = l.innerText || l.textContent;
+        document.getElementById('nwpass').focus();
+        return false;
+    },
+    init: function() {
+        this.litem = Q(".nwlist");
+        this.litem.parentNode.removeChild(this.litem);
+        this.setupEvent();
+        this.hide();
+    },
+    nwevent: function(data) {
+        var me = this;
+        //console.log("ws:" + data);
+        if (typeof data["list"] != "undefined") {
+            me.list(data.list);
+        } else if (typeof data["ssid"] != "undefined") {
+            if (data.ssid != "") {
+                Q("#connnected-ssid").innerHTML = data.ssid;
+            }
+            if (typeof data["ip"] != "undefined")
+                if (data.ip != "") {
+                    Q("#sta-ip").innerHTML = data.ip;
+
+                }
+        }
+    },
+    rssi: function(x) {
+        return (x > 0) ? "?" : Math.min(Math.max(2 * (x + 100), 0), 100);
+    },
+    list: function(nwlist) {
+        var nws = Q("#networks");
+        nws.innerHTML = "";
+        for (var i = 0; i < nwlist.length; i++) {
+            var nl = this.litem.cloneNode(true);
+            nl.getElementsByTagName("a")[0].innerHTML = nwlist[i].ssid;
+            var signal = nl.getElementsByTagName("span")[0];
+            signal.innerHTML = "" + this.rssi(nwlist[i].rssi) + "%";
+            if (nwlist[i].enc) signal.className = signal.className + " l";
+            nws.appendChild(nl);
+        }
+    },
+    setupEvent: function() {
+        var b = this;
+
+        BWF.init({
+            handlers: {
+                W: function(ev) {
+                    b.nwevent(ev);
+                }
+            }
+        });
+    },
+    scan: function() {
+        var lists = Q("#networks");
+        lists.innerHTML = "Scanning...";
+
+        s_ajax({
+            m: "GET",
+            url: "/wifiscan",
+            success: function() {}
+        });
+        return false;
+    },
+    save: function() {
+        var data = "nw=" + encodeURIComponent(Q("#ssid").value);
+        if (Q("#nwpass").value != "") data = data + "&pass=" + encodeURIComponent(Q("#nwpass").value);
+        var ip = validIP(Q("#staticip").value);
+        var gw = validIP(Q("#gateway").value);
+        var nm = validIP(Q("#netmask").value);
+        if (ip && gw && nm) {
+            data = data + "&ip=" + Q("#staticip").value.trim() +
+                "&gw=" + Q("#gateway").value.trim() + "&nm=" + Q("#netmask").value.trim();
+        }
+        s_ajax({
+            m: "POST",
+            url: "/wificon",
+            data: data,
+            success: function() {}
+        });
+        this.hide();
+        return false;
+    },
+    show: function() {
+        Q("#networkselection").style.display = "block";
+    },
+    hide: function() {
+        Q("#networkselection").style.display = "none";
+    }
+};

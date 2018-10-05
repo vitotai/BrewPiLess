@@ -163,6 +163,10 @@
     "config_gateway": "Gateway",
     "config_netmask": "Netmask",
     "config_save_change": "儲存變更",
+    "config_network_mode": "網路模式",
+    "config_ip": "IP",
+    "config_network_selection": "選擇網路",
+    "config_scan": "搜尋可用網路",
 
     "__gdc_html": "gdc.html",
     "gravity_title": "比重計",

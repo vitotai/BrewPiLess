@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html lang="<%= page_lang %>">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= page_title %>
+    </title>
+    <meta name="apple-mobile-web-app-title" content="BrewPiLess">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script src="/dygraph-combined.js" ignore></script>
+    <script type="text/javascript" src="js/vendor/bwf.js"></script>
+    <script type="text/javascript" src="js/vendor/chart.js"></script>
+    <script type="text/javascript" src="js/vendor/regression.js"></script>
+    <script type="text/javascript" src="js/ical.js"></script>
+    <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/capper.js"></script>
+    <script type="text/javascript" src="js/script.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body onload=init()>
+
+    <!-- build:include partials/header.html -->
+    <!-- /build -->
+    <div style="display:none">
+        <span id="ylabel"><%= chart_temperature %></span>
+        <span id="y2label"><%= chart_gravity %></span>
+    </div>
+
+    <div viewport layout horizontal>
+        <div side>
+            <div id="status" class="status-display">
+                <ul id="status-pane" class="data-pane status-pane">
+                    <li class="heading" layout horizontal main-justified><strong><%= status %></strong>
+                        <div style="display: inline-block"><strong id="lcdControlState"></strong></div>
+                    </li>
+                    <li layout horizontal main-justified><span class="descriptor"><%= status_mode %></span><span id="lcdControlMode"></span></li>
+                    <li layout horizontal main-justified><span class="descriptor"><%= status_beertemp %></span><span id="lcdBeerTemp"></span></li>
+                    <li layout horizontal main-justified><span class="descriptor"><%= status_beerset %></span><span id="lcdBeerSet"></span></li>
+                    <li layout horizontal main-justified><span class="descriptor"><%= status_fridgetemp %></span><span id="lcdFridgeTemp"></span></li>
+                    <li layout horizontal main-justified><span class="descriptor"><%= status_fridgeset %></span><span id="lcdFridgeSet"></span></li>
+                    <li layout horizontal main-justified><span class="descriptor"><%= status_roomtemp %></span><span id="lcdRoomTemp"></span></li>
+                </ul>
+            </div>
+
+            <ul id="gravity-pane" class="data-pane gravity-pane">
+                <li class="heading"><strong><%= gravity_data %></strong></li>
+                <li layout horizontal main-justified><span class="descriptor"><%= original_gravity %></span><span> <span id="gravity-og" onclick="inputOG()">--</span><span class=platounit>&deg;P</span></span>
+                </li>
+                <li layout horizontal main-justified><span class="descriptor"><%= specific_gravity %></span><span> <span id="gravity-sg" onclick="inputSG()">--</span><span class=platounit>&deg;P</span></span>
+                </li>
+                <li layout horizontal main-justified><span class="descriptor"><%= final_gravity_state %></span>
+                    <div id="fgstate"></div>
+                </li>
+                <li layout horizontal main-justified><span class="descriptor"><%= gravity_att %></span><span><span id="gravity-att"> --</span>%</span>
+                </li>
+                <li layout horizontal main-justified><span class="descriptor"><%= gravity_abv %></span><span><span id="gravity-abv"> --</span>%</span>
+                </li>
+
+            </ul>
+            <ul class="data-pane ispindle-pane">
+                <li class="heading"><strong><%= ispindel_data %></strong></li>
+                <li layout horizontal main-justified><span class="descriptor"><%= ispindel_tilt %></span> <span id="iSpindel-tilt">--</span></li>
+                <li layout horizontal main-justified><span class="descriptor"><%= ispindel_battery %></span> <span id="iSpindel-battery">--</span></li>
+                <li layout horizontal main-justified><span class="descriptor"><%= ispindel_lastupdate %></span> <span id="iSpindel-last">--</span></li>
+            </ul>
+
+            <ul class="data-pane ptc-pane" id="ptc-pane" style="display:none">
+                <li class="heading" layout horizontal main-justified><strong><%= glycol_temp_control %></strong>
+                    <div style="display: inline-block"><strong><span id="ptc-state-idle"><%= ptc_idle %></span><span id="ptc-state-run" style="display:none"><%= ptc_running %></span></strong></div>
+                </li>
+                <li layout horizontal main-justified><span class="descriptor"></span>
+                    <%= ptc_for %> <span id="ptc-time"></span></li>
+                <li layout horizontal main-justified><span class="descriptor"><%= ptc_range %></span> <span id="ptc-set"></span></li>
+            </ul>
+
+            <ul class="data-pane capping-info-pane">
+                <li class="heading" layout horizontal main-justified><strong> <%= control_capstate %> </strong>
+                    <div style="display: inline-block">
+                        <strong><span id="capstate-open" class="capstate"><%= control_open %></span>
+                        <span id="capstate-close" class="capstate"><%= control_capped %></span></strong> </div>
+                </li>
+                <li layout horizontal main-justified>
+                    <span class="descriptor"><%= cap_condition %></span>
+                    <div style="display: inline-block">
+                        <span id="cs-sgcon" class="capstate">gravity &lt;= <span id="capgravityset"></span></span>
+                        <span id="cs-timecon" class="capstate">after <span id="captimeset"></span></span>
+                        <span id="cs-mancap" class="capstate"><%= control_manualcapped  %></span>
+                        <span id="cs-manopen" class="capstate"><%= control_manualopen %></span>
+                    </div>
+                </li>
+            </ul>
+
+            <ul class="data-pane">
+                <li class="heading"><strong><%= system %></strong></li>
+                <li layout horizontal main-justified><span class="descriptor"><%= writing_log %></span><span id="recording"></span></li>
+                <li layout horizontal main-justified>
+                    <span class="descriptor"><%= wifi %></span>
+                    <div id="rssi">
+                        <div class="rssi-bar rssi-bar1"></div>
+                        <div class="rssi-bar rssi-bar2"></div>
+                        <div class="rssi-bar rssi-bar3"></div>
+                        <div class="rssi-bar rssi-bar4"></div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div main flex>
+            <div layout horizontal>
+                <div id="div_g" class="chart"></div>
+                <ul flex class="chart-legend">
+                    <li layout horizontal main-justified class="chart-legend-row time">
+                        <span class="beer-chart-legend-time"><%= legend_date %></span>
+                        <span class="beer-chart-state"><%= legend_state %></span>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row beer-temp">
+                        <input type="checkbox" id="beer-temp" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(BeerTempLine)" for="beer-temp" class="switch-label"><%= legend_beertemp %></label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row beer-set">
+                        <input type="checkbox" id="beer-set" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(BeerSetLine)" for="beer-set" class="switch-label"><%= legend_beerset %></label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row fridge-temp">
+                        <input type="checkbox" id="fridge-temp" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(FridgeTempLine)" for="fridge-temp" class="switch-label"><%= legend_fridgetemp %></label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row fridge-set">
+                        <input type="checkbox" id="fridge-set" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(FridgeSetLine)" for="fridge-set" class="switch-label"><%= legend_fridgeset %></label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row room-temp">
+                        <input type="checkbox" id="room-temp" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(RoomTempLine)" for="room-temp" class="switch-label"><%= legend_roomtemp %></label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row aux-temp">
+                        <input type="checkbox" id="aux-temp" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(AuxTempLine)" for="aux-temp" class="switch-label"><%= legend_auxtemp %></label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row gravity">
+                        <input type="checkbox" id="gravity" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(GravityLine)" for="gravity" class="switch-label"><%= legend_gravity %><span class=platounit>&deg;P</span></label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row filtersg">
+                        <input type="checkbox" id="filtersg" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(FilteredSgLine)" for="filtersg" class="switch-label"><%= legend_filteredsg %><span class=platounit>&deg;P</span></label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row" id="formula-btn" onclick="openpolynomialpane()">f</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- build:include partials/footer.html -->
+    <!-- /build -->
+
+    <!-- Notification -->
+    <div class=error>
+        <div class=errormsg id=error_waitbpl>
+            <%= error_waitscript %>
+        </div>
+        <div class=errormsg id=error_connect>
+            <%= error_connect %>
+        </div>
+        <div class=errormsg id=error_noupdate>
+            <%= error_conrtollerupdate %>
+        </div>
+    </div>
+
+
+    <!-- Modals -->
+    <div id="dlg_loading" class="modal">
+        <div class="modal-content">
+            <p>
+                <%= dlg_connecting %>
+            </p>
+        </div>
+    </div>
+
+
+    <div id="dlg_addgravity" class="modal">
+        <div class="modal-content">
+            <span class="message sg">
+                <%= dlg_addgravity_sg %>
+            </span>
+            <span class="message og">
+                <%= dlg_addgravity_og %>
+            </span>
+            <p>
+                <%= dlg_addgravity_1 %>
+            </p>
+            <ul style="list-style-type: none">
+                <li>
+                    <input class=sginput type="text" size="6" onchange=inputsg_change()><span class=platounit>&deg;P</span> @
+                    <input class=tempinput type="text" size="6" value="20" onchange=inputsg_change()>
+                    <sapn class=temp-unit>&deg;C</sapn>
+                </li>
+                <li>
+                    ~ <span id="sginput-hmc"></span> @ <span id="sginput-hm-cal-temp"></span>
+                    <sapn class=temp-unit>&deg;C</sapn>
+                </li>
+                <li>
+                    ~ <span id="sginput-sg-ispindel"></span><span class=platounit>&deg;P</span> @ <span id="sginput-ispindel-temp"></span>
+                    <sapn class=temp-unit>&deg;C</sapn>
+                </li>
+            </ul>
+
+            <div class="dialog-buttons">
+                <button onclick="dismissgravity()"><%= dlg_cancel %></button>
+                <button onclick="inputgravity()"><%= dlg_ok %></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="polynomialpane" class="modal">
+        <div class="modal-content">
+            <div id="xclose" onclick="closepolynomialpane()">X</div>
+            <table>
+                <tr>
+                    <td>
+                        <table id="pointlist">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <%= dlg_poly_tilt %>
+                                    </th>
+                                    <th>
+                                        <%= dlg_poly_sg %><span class=platounit>&deg;P</span>
+                                    </th>
+                                    <th>
+                                        <%= dlg_poly_cal %>
+                                    </th>
+                                    <th>
+                                        <%= dlg_poly_error %>
+                                    </th>
+                                    <th>
+                                        <%= dlg_poly_ignored %>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tobdy>
+                                <tr class="pl_calpoint">
+                                    <td class="pl_tilt"></td>
+                                    <td class="pl_sg"></td>
+                                    <td class="pl_value"></td>
+                                    <td class="pl_error"></td>
+                                    <td><input class="pl_ignored_cb" type="checkbox"></td>
+                                </tr>
+                            </tobdy>
+                        </table>
+                        <div style="float:right;"><button onclick="applyIgnoreMask()"><%= control_apply %></button></div>
+                    </td>
+                    <td>
+                        <div id="graph"></div>
+                        <span id="polynormial"></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+</body>
+
+</html>

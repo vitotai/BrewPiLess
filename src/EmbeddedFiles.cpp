@@ -22,6 +22,9 @@ typedef struct _EmbeddedFileMapEntry{
 	bool  gzipped;
 } EmbeddedFileMapEntry;
 
+#include "data_bwf_js.h"
+const char file_bwf_js [] PROGMEM="/bwf.js";
+
 #include "data_testcmd_htm.h"
 const char file_testcmd_htm [] PROGMEM="/testcmd.htm";
 
@@ -49,6 +52,7 @@ const char file_gravitydevice [] PROGMEM="/gravity.htm";
 const char file_config [] PROGMEM="/config.htm";
 
 EmbeddedFileMapEntry fileMaps[]={
+{file_bwf_js,data_bwf_min_js_gz,sizeof(data_bwf_min_js_gz),true},
 {file_index_htm,data_index_htm_gz,sizeof(data_index_htm_gz),true},
 {file_dygraph_js,dygraph_combined_js_gz,sizeof(dygraph_combined_js_gz),true},
 {file_control_htm,control_htm_gz,sizeof(control_htm_gz),true},
@@ -61,8 +65,6 @@ EmbeddedFileMapEntry fileMaps[]={
 
 #else
 // classic front end
-#include "data_bwf_js.h"
-const char file_bwf_js [] PROGMEM="/bwf.js";
 
 #include "data_c_index_htm.h"
 const char file_index_htm [] PROGMEM="/index.htm";
