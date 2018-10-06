@@ -401,10 +401,12 @@ public:
 					}
 				}else{
   					request->send(500);
+					DBG_PRINTF("json format error\n");
   					return;
   				}			
 			}else{
 	  			request->send(400);
+				DBG_PRINTF("no data in post\n");
   			}
 	 	}else if(request->method() == HTTP_GET &&  request->url() == TIME_PATH){
 			AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -1233,7 +1235,7 @@ public:
 				WiFiSetup.connect(ssid.c_str(),pass);
 				DBG_PRINTF("dynamic IP\n");
 			}
-			MDNS.notifyAPChange();
+			//MDNS.notifyAPChange();
 			syscfg->wifiMode  = WIFI_AP_STA;
 		}
 		theSettings.save();
@@ -1249,9 +1251,9 @@ public:
 	 	return false;
 	}
 
-	
+	#if !LegacyEspAsyncLibraries
 	virtual bool isRequestHandlerTrivial() override final {return false;}
-
+	#endif
 };
 
 NetworkConfig networkConfig;

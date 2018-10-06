@@ -36,6 +36,6 @@ srcdir="dist/$lang"
    xxd -i  "$input" >> $output 
    echo "#endif" >> $output
 done
-    echo "replaceing $variable"
+    echo "processing $variable"
     sed -i "s/unsigned char .\+\[\]/const unsigned char $variable\[\] PROGMEM/" $output
 done
