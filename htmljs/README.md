@@ -29,6 +29,12 @@ If you want to build the project run:
 grunt build
 ```
 
+After v3.1, run:
+```
+grunt i18n
+```
+
+
 ## ToDo
 
 - the "Waiting to Cool, Cooling, Heating"-text, etc on the STATUS could be color coded to match the colors that used to show under the graph
