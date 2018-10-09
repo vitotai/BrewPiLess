@@ -10,6 +10,7 @@
     </title>
     <meta name="apple-mobile-web-app-title" content="BrewPiLess">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <script type="text/javascript" src="js/vendor/bwf.js"></script>
     <script type="text/javascript" src="js/shared.js"></script>
     <script type="text/javascript" src="js/script-config.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
@@ -76,40 +77,61 @@
 
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
-                            <%= config_network %>
+                            <%= config_network_mode %>
                         </h6>
                         <select name="wifi">
-                            <option value="1"><%= config_station %></option>
                             <option value="2"><%= config_ap %></option>
                             <option value="3"><%= config_stationap %></option>
                         </select>
                     </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
-                            <%= config_fixedip %>
+                            <%= config_network %>
                         </h6>
-                        <input type="text" name="ip" size="16" class="iptype">
+                        <button id="connnected-ssid" class="btn" onclick="Net.show();return false;">...</button>
                     </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
-                            <%= config_gateway %>
+                            <%= config_ip %>
                         </h6>
-                        <input type="text" name="gw" size="16" class="iptype">
-                    </div>
-                    <div layout horizontal cross-center>
-                        <h6 class="inline-header">
-                            <%= config_netmask %>
-                        </h6>
-                        <input type="text" name="mask" size="16" class="iptype">
+                        <span id="sta-ip"></span>
                     </div>
 
                     <div class="card-footer">
-                        <input type="submit" name="submit" class="btn" onclick="save();return false;"></input>
+                        <input type="submit" id="submitsave" name="submit" class="btn"></input>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    <!-- network selection -->
+    <div id="networkselection" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <%= config_network_selection %>
+            </div>
+            <div id="networks">
+                <div class="nwlist">
+                    <a href="#" onclick="Net.select(this)" class="ssid">N</a>&nbsp;<span class="scannednetwork"></span></div>
+            </div>
+            <div class="center">
+                <a href="#" onclick="return Net.scan();">
+                    <%= config_scan %>
+                </a>
+            </div>
+            <form method="get" action="#">
+                <input id="ssid" name="ssid" length="32" placeholder="SSID"><br>
+                <input id="nwpass" name="nwpass" length="64" type="password" placeholder="password"><br><br>
+                <input id="staticip" name="ip" length="1" placeholder="<%= config_fixedip %>" class="nb iptype"><br>
+                <input id="gateway" name="gw" length="1" placeholder="<%= config_gateway %>" class="nb iptype"><br>
+                <input id="netmask" name="mask" length="1" placeholder="<%= config_netmask %>" class="nb iptype"><br><br>
+                <button type="button" onclick="return Net.save()"><%= config_save_change %></button>
+                <button onclick="Net.hide();return false;"><%= dlg_cancel %></button>
+            </form>
+        </div>
+    </div>
+
     <!-- build:include partials/footer.html -->
     <!-- /build -->
 

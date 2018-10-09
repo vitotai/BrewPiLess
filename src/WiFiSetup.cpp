@@ -1,200 +1,173 @@
 #include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
 //needed for library
 #include <DNSServer.h>
-#include <ESP8266WebServer.h>
-#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
-#include <FS.h>
-#include "Config.h"
+#include "config.h"
 #include "WiFiSetup.h"
-
-#define IPConfigFileName "ip.cfg"
 
 WiFiSetupClass WiFiSetup;
 
+#if SerialDebug == true
+#define DebugOut(a) DebugPort.print(a)
+#define DBG_PRINTF(...) DebugPort.printf(__VA_ARGS__)
+#define DBG_PRINTLN(a) DebugPort.println(a)
+#else
+#define DebugOut(a)
+#define DBG_PRINTF(...)
+#define DBG_PRINTLN(a) 
+#endif
+
+#if SerialDebug
+#define wifi_info(a)	DBG_PRINTF("%s,SSID:%s pass:%s IP:%s, gw:%s\n",(a),WiFi.SSID().c_str(),WiFi.psk().c_str(),WiFi.localIP().toString().c_str(),WiFi.gatewayIP().toString().c_str())
+#else
+#define wifi_info(a)
+#endif
+
+void WiFiSetupClass::staConfig(bool apMode,IPAddress ip,IPAddress gw, IPAddress nm){
+	_settingApMode = apMode;
+	_ip=ip;
+	_gw=gw;
+	_nm=nm;
+}
+
 void WiFiSetupClass::enterApMode(void)
 {
+	WiFi.mode(WIFI_AP);
+	_apMode=true;
+}
 
-	WiFi.disconnect();
-	WiFi.mode(WIFI_OFF); // fixes D1 mini not entering initial AP mode without hard reset
-
-	DBG_PRINTF("AP Mode\n");
-    _apMode=true;
-	
-	WiFi.mode(WIFI_AP);	// fixes Error setting mDNS responder
-	if (_apPassword != NULL) {
-   		WiFi.softAP(_apName, _apPassword);
-	} else {
-    	WiFi.softAP(_apName);
-	}
-
+void WiFiSetupClass::setupApService(void)
+{
 	dnsServer.reset(new DNSServer());
 	dnsServer->setErrorReplyCode(DNSReplyCode::NoError);
 	dnsServer->start(DNS_PORT, "*", WiFi.softAPIP());
 	delay(500);
 }
 
-IPAddress scanIP(const char *str)
-{
-    // DBG_PRINTF("Scan IP length=%d :\"%s\"\n",len,buffer);
-    // this doesn't work. the last byte always 0: ip.fromString(buffer);
-
-    int Parts[4] = {0,0,0,0};
-    int Part = 0;
-	char* ptr=(char*)str;
-    for ( ; *ptr; ptr++)
-    {
-	    char c = *ptr;
-	    if ( c == '.' )
-	    {
-		    Part++;
-		    continue;
-	    }
-	    Parts[Part] *= 10;
-	    Parts[Part] += c - '0';
-    }
-
-    IPAddress sip( Parts[0], Parts[1], Parts[2], Parts[3] );
-    return sip;
-}
-
-bool WiFiSetupClass::startSetupPortal(void)
-{
-	WiFiManager wifiManager;
-
-	#if SerialDebug != true
-	wifiManager.setDebugOutput(false);
-	#endif
-    //reset saved settings
-    //wifiManager.resetSettings();
-    if(_apTimeout !=0) wifiManager.setTimeout(_apTimeout);
-    //set custom ip for portal
-    //and goes into a blocking loop awaiting configuration
-    WiFiManagerParameter ipAddress("staticip", "Static IP", _staticIP.toString().c_str(), 16);
-    WiFiManagerParameter gateway("gateway", "Gateway", _staticGateway.toString().c_str(), 16);
-    WiFiManagerParameter netmask("netmask", "Net Mask", _staticMask.toString().c_str(), 16);
-
-    wifiManager.addParameter(&ipAddress);
-    wifiManager.addParameter(&gateway);
-    wifiManager.addParameter(&netmask);
-
-  	bool connected= wifiManager.startConfigPortal(_apName,_apPassword);
-    if(connected){
-        //SAVE configuration.
-        _staticIP=scanIP(ipAddress.getValue());
-        _staticGateway=scanIP(gateway.getValue());
-        _staticMask=scanIP(netmask.getValue());
-        DBG_PRINTF("Save IP:%s, GW:%s, SM:%s\n",ipAddress.getValue(),gateway.getValue(),netmask.getValue());
-    }
-  	return wifiManager.softAPModeSelected();
-}
-
-
-void WiFiSetupClass::setNetwork(WiFiMode mode,IPAddress ip,IPAddress gw,IPAddress mask)
-{
-	_desiredWiFiMode = mode;
-	_staticIP = ip;
-	_staticGateway = gw;
-	_staticMask = mask;
-}
-
-void WiFiSetupClass::startWiFiManager(bool portal)
-{
-	DBG_PRINTF("AP SSID:%s  pass:%s\n",_apName,_apPassword);
-	bool _enterPortal=false;
-	WiFi.hostname(_apName);
-	bool _userApMode=false;
-    if(portal){
-		// force to start Portal
-        _userApMode=startSetupPortal();
-		_enterPortal=true;
-    }else if(_desiredWiFiMode == WIFI_AP_STA || _desiredWiFiMode == WIFI_STA) {
-	    // try to connect
-		if(_staticIP != IPADDR_ANY){
-			DBG_PRINTF("Fixed IP:%s, gw:%s, mask:%s\n",_staticIP.toString().c_str(),_staticGateway.toString().c_str(),_staticMask.toString().c_str());
-			WiFi.config(_staticIP,_staticGateway,_staticMask);
-			delay(100);
-		}
-
-		WiFi.mode(_desiredWiFiMode);
- 		if( WiFi.status() == WL_CONNECTED){
- 			DBG_PRINTF("Already connected!!! who did it?\n");
- 		}else{
-			WiFi.begin();
-			bool timeout = false;
-			int i=0;
-			while(WiFi.status() != WL_CONNECTED && !timeout) {
-        		delay(200);
-    			timeout = i++ > 100;
-   				DBG_PRINTF(".");
-    		}
- 		}
- 		// Somehow, it connected or not.
-		if(WiFi.status()==WL_CONNECTED){
-			if( _desiredWiFiMode == WIFI_AP_STA){
-				// start a AP.
-				DBG_PRINTF("Start SoftAP\n");
-				WiFi.softAP(_apName,_apPassword);
-			}
-		}else{
-			// previous network not available. start portal
-	    	_userApMode=startSetupPortal();
-			_enterPortal=true;
-	    }
-    }else{ // AP MODE
-		// run in AP mode directly
-		enterApMode();
-	}
-
- 	if(_desiredWiFiMode == WIFI_AP_STA || _desiredWiFiMode == WIFI_STA) {
-	    if(WiFi.status()!=WL_CONNECTED){	// not connected, timeout or user select AP mdoe
-			if(_userApMode){
-				// user select APmode
-				if(_configHandler) _configHandler(true,_staticIP,_staticGateway,_staticMask);
-				delay(200);
-				ESP.restart();
-			}else{
-				DBG_PRINTF("Portal Timeout user action.\n");
-			}
-	    	enterApMode();
-   		 }else{
-    		// onced it enter AP mode, tcp_bind() lf lwip will return failure.
-    		// thereore, restart the system.
-    		if(_enterPortal){
-				_configHandler(false,_staticIP,_staticGateway,_staticMask);
-				delay(200);
-				ESP.restart();
-			} 
-	    }
- 	}
-}
 
 void WiFiSetupClass::begin(char const *ssid,const char *passwd)
 {
+	wifi_info("begin:");
+
 	_apName=ssid;
 	_apPassword=passwd;
-	startWiFiManager(false);
-}
 
-void WiFiSetupClass::beginAP(char const *ssid,const char *passwd)
-{
-	_apName=ssid;
-	_apPassword=passwd;
-    startWiFiManager(true);
-}
-
-
-void WiFiSetupClass::stayConnected(void)
-{
-	if(_apMode){
-		dnsServer->processNextRequest();
+	if( _settingApMode){
+		DBG_PRINTF("\nAP mode\n");
+		WiFi.mode(WIFI_AP);
+		_apMode=true;
 	}else{
- 		if(WiFi.status() != WL_CONNECTED)
- 		{
+		DBG_PRINTF("\nAP_STA mode\n");
+		WiFi.mode(WIFI_AP_STA);
+		_apMode=false;
+		if(_ip !=INADDR_NONE){
+			WiFi.config(_ip,_gw,_nm);
+		}
+		WiFi.begin();
+	}
+	WiFi.softAP(_apName, _apPassword);
+	setupApService();
+	DBG_PRINTF("\ncreate network:%s pass:%s\n",ssid, passwd);
+	
+}
+
+bool WiFiSetupClass::connect(char const *ssid,const char *passwd,IPAddress ip,IPAddress gw, IPAddress nm){
+	DBG_PRINTF("Connect to %s pass:%s, ip=%s\n",ssid, passwd,ip.toString().c_str());
+
+	if(_targetSSID) free((void*)_targetSSID);
+	_targetSSID=strdup(ssid);
+	if(_targetPass) free((void*)_targetPass);
+	_targetPass=(passwd)? strdup(passwd):NULL;
+
+	//if((ip !=INADDR_NONE) && (gw!=INADDR_NONE) & (nm!=INADDR_NONE)){
+		_ip=ip;
+		_gw=gw;
+		_nm=nm;
+	//}
+
+	_wifiState = WiFiStateChangeConnectPending;
+	if(_apMode){
+		_apMode =false;
+	}
+	return true;
+}
+
+bool WiFiSetupClass::disconnect(void){
+	DBG_PRINTF("Disconnect Request\n");
+	_settingApMode =true;
+	_wifiState = WiFiStateDisconnectPending;
+	return true;
+}
+
+bool WiFiSetupClass::isConnected(void){
+	return WiFi.status() == WL_CONNECTED;
+}
+
+void WiFiSetupClass::onConnected(){
+	if(_eventHandler){
+		_eventHandler(status().c_str());
+	}
+}
+
+String WiFiSetupClass::status(void){
+	String ret;
+	ret  = String("{\"ap\":") + String(_settingApMode? 1:0) + String(",\"con\":") + String((WiFi.status() == WL_CONNECTED)? 1:0);
+
+	if(!_settingApMode){
+		ret += String(",\"ssid\":\"") + WiFi.SSID() 
+			 + String("\",\"ip\":\"") + WiFi.localIP().toString()
+			 + String("\",\"gw\":\"") + WiFi.gatewayIP().toString()
+			 + String("\",\"nm\":\"") + WiFi.subnetMask().toString() + String("\"");
+	}
+
+	ret += String("}");
+	return ret;
+}
+
+bool WiFiSetupClass::stayConnected(void)
+{
+	dnsServer->processNextRequest();
+	if(! _apMode){
+		if(_wifiState==WiFiStateChangeConnectPending){
+			DBG_PRINTF("Change Connect\n");
+			if(WiFi.getMode() == WIFI_AP){
+				WiFi.mode(WIFI_AP_STA);
+			}
+			//if(WiFi.status() == WL_CONNECTED){
+			WiFi.disconnect();
+			//DBG_PRINTF("Disconnect\n");
+			//}
+			if(_ip != INADDR_NONE){
+				WiFi.config(_ip,_gw,_nm);
+			}
+			WiFi.begin(_targetSSID,_targetPass);
+			_time=millis();
+			_reconnect =0;
+			_wifiState = WiFiStateConnecting;
+
+			wifi_info("**try:");
+
+		}else if(_wifiState==WiFiStateDisconnectPending){
+			WiFi.disconnect();
+			WiFi.mode(WIFI_OFF);
+			DBG_PRINTF("Enter AP Mode\n");
+    		_apMode=true;
+			WiFi.mode(WIFI_AP);	
+			_wifiState =WiFiStateDisconnected;
+			return true;
+			
+		}else if(WiFi.status() != WL_CONNECTED){
  			if(_wifiState==WiFiStateConnected)
  			{
+				wifi_info("**disc:");
+
 				_time=millis();
-				_wifiState = WiFiStateWaitToConnect;
-				DBG_PRINTF("Lost Network. Wait to connect.\n");
+				DBG_PRINTF("Lost Network. auto reconnect %d\n",_autoReconnect);
+				if(_autoReconnect){
+					_wifiState = WiFiStateWaitToConnect;
+				}else{
+					_wifiState = WiFiStateDisconnected;
+				}
+				return true;
 			}
 			else if(_wifiState==WiFiStateWaitToConnect)
 			{
@@ -214,17 +187,104 @@ void WiFiSetupClass::stayConnected(void)
 					_reconnect++;
 					DBG_PRINTF("Reconnect fail\n");
 
-					if(_maxReconnect !=0 && _reconnect>=_maxReconnect){
-						DBG_PRINTF("Fail to reconnect. Setup AP mode.\n");
- 						enterApMode();
+					if(_switchToAp){
+						if(_maxReconnect !=0 && _reconnect>=_maxReconnect){
+							DBG_PRINTF("Fail to reconnect. Setup AP mode.\n");
+ 							enterApMode();
+ 							return true;
+						}
 					}
 				}
 			}
+			// WiFiStateDisconnected else do nothing.
  		}
  		else
  		{
+ 			byte oldState=_wifiState;
  			_wifiState=WiFiStateConnected;
  			_reconnect=0;
+ 			if(oldState != _wifiState){
+				onConnected();
+				return true;
+			}
   		}
 	}
+	
+	if(_wifiScanState == WiFiScanStatePending){
+		String nets=scanWifi();
+		_wifiScanState = WiFiScanStateNone;
+		if(_eventHandler) _eventHandler(nets.c_str());
+	}
+
+	return false;
+}
+
+bool WiFiSetupClass::requestScanWifi(void) {
+	if(_wifiScanState == WiFiScanStateNone){
+		_wifiScanState = WiFiScanStatePending;
+		return true;
+	}
+	return false;
+}
+
+String WiFiSetupClass::scanWifi(void) {
+	
+	String rst="{\"list\":[";
+	
+	DBG_PRINTF("Scan Networks...\n");
+	int n = WiFi.scanNetworks();
+    DBG_PRINTF("Scan done");
+    if (n == 0) {
+    	DBG_PRINTF("No networks found");
+    } else {
+      	//sort networks by RSSI
+      	int indices[n];
+      	for (int i = 0; i < n; i++) {
+        	indices[i] = i;
+    	}
+      	// bubble sort
+      	for (int i = 0; i < n; i++) {
+        	for (int j = i + 1; j < n; j++) {
+          		if (WiFi.RSSI(indices[j]) > WiFi.RSSI(indices[i])) {
+            		std::swap(indices[i], indices[j]);
+          		}	
+        	}
+      	}
+
+	    // remove duplicates ( must be RSSI sorted )
+        String cssid;
+        for (int i = 0; i < n; i++) {
+        	if (indices[i] == -1) continue;
+          	cssid = WiFi.SSID(indices[i]);
+          	for (int j = i + 1; j < n; j++) {
+            	if (cssid == WiFi.SSID(indices[j])) {
+              		DBG_PRINTF("DUP AP: ");
+					DBG_PRINTF(WiFi.SSID(indices[j]).c_str());
+              		indices[j] = -1; // set dup aps to index -1
+            	}
+          	}
+        }
+		
+      	//display networks in page
+		bool comma=false; // i==0 might not the "first", might be duplicated.
+      	for (int i = 0; i < n; i++) {
+        	if (indices[i] == -1) continue; // skip dups
+        	DBG_PRINTLN(WiFi.SSID(indices[i]));
+	        DBG_PRINTLN(WiFi.RSSI(indices[i]));
+        	//int quality = getRSSIasQuality(WiFi.RSSI(indices[i]));
+			String item=String("{\"ssid\":\"") + WiFi.SSID(indices[i]) + 
+			String("\",\"rssi\":") + WiFi.RSSI(indices[i]) +
+			String(",\"enc\":") +  String((WiFi.encryptionType(indices[i]) != ENC_TYPE_NONE)? "1":"0")
+			+ String("}");
+			if(comma){
+				rst += ",";	
+			}else{
+				comma=true;
+			}
+			rst += item;
+      	}
+    }
+	rst += "]}";
+	DBG_PRINTF("scan result:%s\n",rst.c_str());
+	return rst;
 }

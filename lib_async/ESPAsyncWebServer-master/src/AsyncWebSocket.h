@@ -24,8 +24,10 @@
 #include <Arduino.h>
 #ifdef ESP32
 #include <AsyncTCP.h>
+#define WS_MAX_QUEUED_MESSAGES 32
 #else
 #include <ESPAsyncTCP.h>
+#define WS_MAX_QUEUED_MESSAGES 8
 #endif
 #include <ESPAsyncWebServer.h>
 
@@ -214,7 +216,7 @@ class AsyncWebSocketClient {
     void _onPoll();
     void _onTimeout(uint32_t time);
     void _onDisconnect();
-    void _onData(void *buf, size_t plen);
+    void _onData(void *pbuf, size_t plen);
 };
 
 typedef std::function<void(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)> AwsEventHandler;

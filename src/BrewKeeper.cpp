@@ -174,7 +174,7 @@ bool BrewProfile::checkCondition(unsigned long time,Gravity gravity){
 	return false;
 }
 
-float BrewProfile::tempByTimeGravity(unsigned long time,Gravity gravity)
+float BrewProfile::tempByTimeGravity(time_t time,Gravity gravity)
 {
 	if(time < _schedule->startDay) return INVALID_CONTROL_TEMP;
 

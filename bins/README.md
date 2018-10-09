@@ -4,11 +4,28 @@
 
 NOTE: If you are upgrading from version prior to v2.3 without glycol option, you will need to run "Device Setup" again. Erase the EEPROM, setup the sensors, and the PINs.
 
+
+NOTE: The images with **newui** use different flash layout(4m2m) which has 2m file space. They are not "compatible" with those(4m) have 3m file space.  
+ * Online update might not work on changing between those two layout. Flashing by USB is recommended.
+ * File system will be reformted after changing. All settings will be gone
+
 Those images are prebuilt:
 ## Simple Configuration
  * The Pins are defined as the main page.
  * Two buttons as input
  * 20x4 LCD at any address
+
+## spainish
+ * Default configuration in Spanish
+
+## newui
+ * Default configuration
+ * Tom's frontend instead of classic one
+ * framework 1.8.0
+ * flash layout 4m2m(2M program/2M file space)
+
+## newui.spanish
+ * same as newui, in Spanish
 
 ## ioexpander 
  * Default configuration as BrewShield

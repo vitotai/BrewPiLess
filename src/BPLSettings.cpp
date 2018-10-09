@@ -81,7 +81,7 @@ SystemConfiguration* BPLSettings::systemConfiguration(){
     return &_data.syscfg;
 }
     // decode json
-static void stringNcopy(char *dst,const char *src,int n){
+static void stringNcopy(char *dst,const char *src,size_t n){
 	if(strlen(src) < n){
 		strcpy(dst,src);
 	}else{
@@ -133,6 +133,7 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
         syscfg->netmask = (uint32_t) scanIP(root[KeyNetmask]);
     }
     free(buffer);
+	return true;
 }
     // encod json
 String BPLSettings::jsonSystemConfiguration(void){
@@ -413,7 +414,6 @@ bool BPLSettings::dejsonBeerProfile(String json)
 	tempSchedule->numberOfSteps=schedule.size();
 	if(tempSchedule->numberOfSteps > MaximumSteps) tempSchedule->numberOfSteps=MaximumSteps;
 
-	int i=0;
 	for(int i=0;i< tempSchedule->numberOfSteps ;i++){
 		ScheduleStep *step = &tempSchedule->steps[i];
 		JsonObject&	 entry= schedule[i];

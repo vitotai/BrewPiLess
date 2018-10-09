@@ -93,8 +93,9 @@ void IIClcd::init(){
 
 void IIClcd::init_priv()
 {
-#ifdef ESP8266
-	Wire.begin();
+	#ifdef ESP8266
+
+	Wire.begin(PIN_SDA,PIN_SCL);
 	#if LCD_AUTO_ADDRESSING == true
 	scanForAddress();
 	#endif
@@ -294,7 +295,7 @@ inline size_t IIClcd::write(uint8_t value) {
     if (!_bufferOnly) {
         send(value, Rs);
     }
-    return 0;
+    return 1;
 }
 
 /************ low level data pushing commands **********/
@@ -331,10 +332,10 @@ void IIClcd::expanderWrite(uint8_t _data) {
 
 void IIClcd::pulseEnable(uint8_t _data){
 	expanderWrite(_data | En);	// En high
-	delayMicroseconds(1);		// enable pulse must be >450ns
+	delayMicroseconds(1); //delayMicroseconds(1);		// enable pulse must be >450ns
 
 	expanderWrite(_data & ~En);	// En low
-	delayMicroseconds(50);		// commands need > 37us to settle
+	delayMicroseconds(50); //delayMicroseconds(50);		// commands need > 37us to settle
 }
 
 // This resets the backlight timer and updates the SPI output

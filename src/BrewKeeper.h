@@ -32,7 +32,7 @@ public:
 	}
 	void setUnit(char unit);
 	void setOriginalGravityPoint(uint16_t gravity);
-	float tempByTimeGravity(unsigned long time,Gravity gravity);
+	float tempByTimeGravity(time_t time,Gravity gravity);
 	void setStableThreshold(uint8_t threshold){ _stableThreshold=threshold; }
 	void profileUpdated();
 };
@@ -50,7 +50,7 @@ protected:
 	void _loadProfile(void);
 public:
 
-	BrewKeeper(void(*puts)(const char*)):_write(puts),_lastGravity(INVALID_GRAVITY){}
+	BrewKeeper(void(*puts)(const char*)):_lastGravity(INVALID_GRAVITY),_write(puts){}
 	void updateGravity(float sg);
 	void updateOriginalGravity(float sg);
 

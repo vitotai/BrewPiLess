@@ -46,7 +46,15 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
- * v3.0 (working)
+ * v3.1
+    * Fix beer profile which uses gravity as conditions
+    * Ditch WiFiManager.
+    * AP mode is always avaible.
+    * Plato supported
+    * Spanish supported
+    * Tom's frontend embedded.
+
+ * v3.0
     * Avoid frequent access access of file system
     * Revise settings. Merge all settings into one file.
     * Applying temperature corection of iSpindel calibration informatoin.
