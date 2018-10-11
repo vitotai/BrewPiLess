@@ -702,6 +702,7 @@
                 //              setTimeout(function() {
                 //                   if (!BWF.gotMsg) BWF.reconnect();
                 //              }, 12000);
+                closeDlgLoading();
             },
             handlers: {
                 L: function(lines) {

@@ -872,6 +872,7 @@ function initctrl() {
         error: function(e) {
             //console.log("error");
             communicationError();
+            closeDlgLoading();
         },
         handlers: {
             A: function(c) {
