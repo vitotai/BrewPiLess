@@ -40,61 +40,274 @@
 
                 <div layout horizontal cross-center>
                     <h6 class="inline-header">
-                        <%= log_method %>
-                    </h6>
-                    <div class="md-radio md-radio-inline">
-                        <input id="m_get" type="radio" name="method" checked onchange="cmethod(this);">
-                        <label for="m_get">GET</label>
-                    </div>
-                    <div class="md-radio md-radio-inline">
-                        <input id="m_post" type="radio" name="method" onchange="cmethod(this);">
-                        <label for="m_post">POST</label>
-                    </div>
-                    <div class="md-radio md-radio-inline">
-                        <input id="m_put" type="radio" name="method" onchange="cmethod(this);">
-                        <label for="m_put">PUT</label>
-                    </div>
-                </div>
-
-                <div layout horizontal cross-center>
-                    <h6 class="inline-header">
-                        <%= log_url %>
-                    </h6>
-                    <input type="text" id="url" size="128" placeholder="input link" onchange="checkurl(this);">
-                </div>
-
-                <div layout horizontal cross-center>
-                    <h6 class="inline-header">Data Type:</h6>
-                    <input type="text" id="data-type" size="42" placeholder="Content-Type">
-                </div>
-                <p class="hint">JSON:"application/json", Form Type:"application/x-www-form-urlencoded"</p>
-
-                <div layout horizontal cross-center>
-                    <h6 class="inline-header">
-                        <%= log_format %>
-                    </h6>
-                    <div layout vertical style="width: 100%;">
-                        <textarea id="format" rows="4" cols="64" oninput="checkformat(this)"></textarea>
-                        <div layout horizontal main-justified cross-center>
-                            <span onmouseover="showformat(this)" onmouseout="hideformat()">
-                                <u><%= log_notation %></u>
-                            </span>
-                            <span>
-                                <%= log_characters %>
-                                <span id="fmthint">0/256</span>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div layout horizontal cross-center>
-                    <h6 class="inline-header">
                         <%= log_time_period %>
                     </h6>
                     <input type="text" id="period" size="4">
                     <%= log_seconds %>
                 </div>
 
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= log_service_type %>
+                    </h6>
+                    <div>
+                        <select id=service-type name=service onchange="serviceChange()">
+                            <option value="generichttp"> <%= log_generic_http %> </option>
+                            <option value="thingspeak"> thingspeak.com </option>
+                            <option value="ubidots"> ubidots.com </option>
+                            <option value="brewfather"> Brewfather </option>
+                            </select>
+                    </div>
+
+                </div>
+
+
+                <div id=service-opt>
+                    <div id=thingspeak class=service-options>
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_thingspeak_api_key %>
+                            </h6>
+                            <input type="text" id="thingspeak-apikey" size="42">
+
+                        </div>
+                        <div id=thingspeak>
+                            <h6 class="inline-header">
+                                <%= log_thingspeak_fields %>
+                            </h6>
+                            <div>
+
+                                <span class=listgrid>
+                                            <label for="thingspeak-f1">Field 1:</label>
+                                            <select  name=thingspeak-f1>
+                                            <option value="unused"> Unused </option>
+                                            <option value="b"> <%= log_beertemp %> </option>
+                                            <option value="B"> <%= log_beerset %> </option>
+                                            <option value="f"> <%= log_fridgetemp %> </option>
+                                            <option value="F"> <%= log_fridgeset %> </option>
+                                            <option value="r"> <%= log_roomtemp %> </option>
+                                            <option value="g"> <%= log_gravity %> </option>
+                                            <option value="p"> <%= log_plato %> </option>
+                                            <option value="a"> <%= log_auxtemp %> </option>
+                                            <option value="v"> <%= log_voltage %> </option>
+                                            <option value="t"> <%= log_tilt_value %> </option>
+                                            </select>
+                                            </span>
+                                <span class=listgrid>
+                                                    <label for="thingspeak-f2">Field 2:</label>
+                                                    <select  name=thingspeak-f2>
+                                                    <option value="unused"> Unused </option>
+                                                    <option value="b"> <%= log_beertemp %> </option>
+                                                    <option value="B"> <%= log_beerset %> </option>
+                                                    <option value="f"> <%= log_fridgetemp %> </option>
+                                                    <option value="F"> <%= log_fridgeset %> </option>
+                                                    <option value="r"> <%= log_roomtemp %> </option>
+                                                    <option value="g"> <%= log_gravity %> </option>
+                                                    <option value="p"> <%= log_plato %> </option>
+                                                    <option value="a"> <%= log_auxtemp %> </option>
+                                                    <option value="v"> <%= log_voltage %> </option>
+                                                    <option value="t"> <%= log_tilt_value %> </option>
+                                                    </select>
+                                            </span>
+
+                                <span class=listgrid>
+                                                    <label for="thingspeak-f3">Field 3:</label>
+                                                    <select  name=thingspeak-f3>
+                                                    <option value="unused"> Unused </option>
+                                                    <option value="b"> <%= log_beertemp %> </option>
+                                                    <option value="B"> <%= log_beerset %> </option>
+                                                    <option value="f"> <%= log_fridgetemp %> </option>
+                                                    <option value="F"> <%= log_fridgeset %> </option>
+                                                    <option value="r"> <%= log_roomtemp %> </option>
+                                                    <option value="g"> <%= log_gravity %> </option>
+                                                    <option value="p"> <%= log_plato %> </option>
+                                                    <option value="a"> <%= log_auxtemp %> </option>
+                                                    <option value="v"> <%= log_voltage %> </option>
+                                                    <option value="t"> <%= log_tilt_value %> </option>
+                                                    </select>
+                                            </span>
+                                <br>
+                                <span class=listgrid>
+                                                    <label for="thingspeak-f4">Field 4:</label>
+                                                    <select  name=thingspeak-f4>
+                                                    <option value="unused"> Unused </option>
+                                                    <option value="b"> <%= log_beertemp %> </option>
+                                                    <option value="B"> <%= log_beerset %> </option>
+                                                    <option value="f"> <%= log_fridgetemp %> </option>
+                                                    <option value="F"> <%= log_fridgeset %> </option>
+                                                    <option value="r"> <%= log_roomtemp %> </option>
+                                                    <option value="g"> <%= log_gravity %> </option>
+                                                    <option value="p"> <%= log_plato %> </option>
+                                                    <option value="a"> <%= log_auxtemp %> </option>
+                                                    <option value="v"> <%= log_voltage %> </option>
+                                                    <option value="t"> <%= log_tilt_value %> </option>
+                                                    </select>
+                                            </span>
+
+                                <span class=listgrid>
+                                                    <label for="thingspeak-f5">Field 5:</label>
+                                                    <select  name=thingspeak-f5>
+                                                    <option value="unused"> Unused </option>
+                                                    <option value="b"> <%= log_beertemp %> </option>
+                                                    <option value="B"> <%= log_beerset %> </option>
+                                                    <option value="f"> <%= log_fridgetemp %> </option>
+                                                    <option value="F"> <%= log_fridgeset %> </option>
+                                                    <option value="r"> <%= log_roomtemp %> </option>
+                                                    <option value="g"> <%= log_gravity %> </option>
+                                                    <option value="p"> <%= log_plato %> </option>
+                                                    <option value="a"> <%= log_auxtemp %> </option>
+                                                    <option value="v"> <%= log_voltage %> </option>
+                                                    <option value="t"> <%= log_tilt_value %> </option>
+                                                    </select>
+                                            </span>
+
+                                <span class=listgrid>
+                                                    <label for="thingspeak-f6">Field 6:</label>
+                                                    <select  name=thingspeak-f6>
+                                                    <option value="unused"> Unused </option>
+                                                    <option value="b"> <%= log_beertemp %> </option>
+                                                    <option value="B"> <%= log_beerset %> </option>
+                                                    <option value="f"> <%= log_fridgetemp %> </option>
+                                                    <option value="F"> <%= log_fridgeset %> </option>
+                                                    <option value="r"> <%= log_roomtemp %> </option>
+                                                    <option value="g"> <%= log_gravity %> </option>
+                                                    <option value="p"> <%= log_plato %> </option>
+                                                    <option value="a"> <%= log_auxtemp %> </option>
+                                                    <option value="v"> <%= log_voltage %> </option>
+                                                    <option value="t"> <%= log_tilt_value %> </option>
+                                                    </select>
+                                            </span>
+                                <br>
+                                <span class=listgrid>
+                                                    <label for="thingspeak-f7">Field 7:</label>
+                                                    <select  name=thingspeak-f7>
+                                                    <option value="unused"> Unused </option>
+                                                    <option value="b"> <%= log_beertemp %> </option>
+                                                    <option value="B"> <%= log_beerset %> </option>
+                                                    <option value="f"> <%= log_fridgetemp %> </option>
+                                                    <option value="F"> <%= log_fridgeset %> </option>
+                                                    <option value="r"> <%= log_roomtemp %> </option>
+                                                    <option value="g"> <%= log_gravity %> </option>
+                                                    <option value="p"> <%= log_plato %> </option>
+                                                    <option value="a"> <%= log_auxtemp %> </option>
+                                                    <option value="v"> <%= log_voltage %> </option>
+                                                    <option value="t"> <%= log_tilt_value %> </option>
+                                                    </select>
+                                            </span>
+                                <span class=listgrid>
+                                                    <label for="thingspeak-f8">Field 8:</label>
+                                                    <select  name=thingspeak-f8>
+                                                    <option value="unused"> Unused </option>
+                                                    <option value="b"> <%= log_beertemp %> </option>
+                                                    <option value="B"> <%= log_beerset %> </option>
+                                                    <option value="f"> <%= log_fridgetemp %> </option>
+                                                    <option value="F"> <%= log_fridgeset %> </option>
+                                                    <option value="r"> <%= log_roomtemp %> </option>
+                                                    <option value="g"> <%= log_gravity %> </option>
+                                                    <option value="p"> <%= log_plato %> </option>
+                                                    <option value="a"> <%= log_auxtemp %> </option>
+                                                    <option value="v"> <%= log_voltage %> </option>
+                                                    <option value="t"> <%= log_tilt_value %> </option>
+                                                    </select>
+                                                    </span>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div id=brewfather class=service-options>
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_brewfather_id %>
+                            </h6>
+                            <input type="text" id="brewfather-id" size="42">
+                        </div>
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_brewfather_device_label %>
+                            </h6>
+                            <input type="text" id="brewfather-device" size="42">
+                        </div>
+                    </div>
+
+                    <div id=ubidots class=service-options>
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_ubidots_account %>
+                            </h6>
+                            <select name="ubidots-account" class="nb">
+                                                        <option value="1"><%= log_ubidots_educational %></option>
+                                                        <option value="2"><%= log_ubidots_industrial %>></option>
+                                                    </select>
+
+                        </div>
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_ubidots_token %>
+                            </h6>
+                            <input type="text" id="ubidots-token" size="42">
+                        </div>
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_ubidots_device %>
+                            </h6>
+                            <input type="text" id="ubidots-device" size="42">
+                        </div>
+                    </div>
+
+                    <div id=generichttp class=service-options>
+
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_method %>
+                            </h6>
+                            <div class="md-radio md-radio-inline">
+                                <input id="m_get" type="radio" name="method" checked onchange="cmethod(this);">
+                                <label for="m_get">GET</label>
+                            </div>
+                            <div class="md-radio md-radio-inline">
+                                <input id="m_post" type="radio" name="method" onchange="cmethod(this);">
+                                <label for="m_post">POST</label>
+                            </div>
+                            <div class="md-radio md-radio-inline">
+                                <input id="m_put" type="radio" name="method" onchange="cmethod(this);">
+                                <label for="m_put">PUT</label>
+                            </div>
+                        </div>
+
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_url %>
+                            </h6>
+                            <input type="text" id="url" size="128" placeholder="input link" onchange="checkurl(this);">
+                        </div>
+
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">Data Type:</h6>
+                            <input type="text" id="data-type" size="42" placeholder="Content-Type">
+                        </div>
+                        <p class="hint">JSON:"application/json", Form Type:"application/x-www-form-urlencoded"</p>
+
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_format %>
+                            </h6>
+                            <div layout vertical style="width: 100%;">
+                                <textarea id="format" rows="4" cols="64" oninput="checkformat(this)"></textarea>
+                                <div layout horizontal main-justified cross-center>
+                                    <span onmouseover="showformat(this)" onmouseout="hideformat()">
+                                <u><%= log_notation %></u>
+                            </span>
+                                    <span>
+                                <%= log_characters %>
+                                <span id="fmthint">0/256</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="card-footer">
                     <button type="button" onclick="update();" class="btn"><%= log_update %></button>
                 </div>
@@ -232,6 +445,12 @@
                 <th>%g</th>
                 <td>
                     <%= log_gravity %>
+                </td>
+            </tr>
+            <tr>
+                <th>%p</th>
+                <td>
+                    <%= log_plato %>
                 </td>
             </tr>
             <tr>

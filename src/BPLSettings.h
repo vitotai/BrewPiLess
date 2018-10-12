@@ -141,7 +141,8 @@ typedef struct _RemoteLoggingInformation{
 	time_t period;
 	uint8_t method;
 	uint8_t enabled;
-    uint8_t _padding[3];
+	uint8_t service;
+    uint8_t _padding[2];
 } RemoteLoggingInformation;
 
 

@@ -224,6 +224,21 @@
     "log_tilt_value": "Tilt value",
     "log_timestamp": "Unix timestamp of last gravity update",
 
+    "log_plato": "Plato",
+    "log_service_type": "Service Type:",
+    "log_generic_http": "Generic HTTP",
+
+    "__NOTE_service_terms": "translation might be unnecessary.",
+    "log_thingspeak_api_key": "Write API Key:",
+    "log_thingspeak_fields": "Fields:",
+    "log_brewfather_id": "ID:",
+    "log_brewfather_device_label": "Device Label:",
+    "log_ubidots_account": "Account:",
+    "log_ubidots_token": "Token:",
+    "log_ubidots_device": "Device:",
+    "log_ubidots_educational": "Educational",
+    "log_ubidots_industrial": "Industrial",
+
     "__setup_html": "setup.html",
     "setup_page_title": "BrewPiLess setup!",
     "setup_device_list": "Device List",

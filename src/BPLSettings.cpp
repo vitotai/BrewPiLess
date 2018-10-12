@@ -612,6 +612,8 @@ bool BPLSettings::dejsonRemoteLogging(String json)
 	strcpy(logInfo->contentType,contentType);
 	logInfo->period = period;
 	logInfo->enabled = enabled;
+	logInfo->service = root.containsKey("service")? root["service"]:0;
+
   	return true;
 }
 
@@ -624,6 +626,7 @@ String BPLSettings::jsonRemoteLogging(void)
 	RemoteLoggingInformation *logInfo = remoteLogInfo();
 	root["enabled"] = logInfo->enabled;
 	root["period"] = logInfo->period;
+	root["service"] = logInfo->service;
 
 	if(logInfo->method ==mHTTP_GET) root["method"]="GET";
 	else if(logInfo->method ==mHTTP_PUT) root["method"]="PUT";

@@ -49,7 +49,7 @@ typedef int8_t fixed4_4; // fixed4_4 uses 1-sign bit, 3 int bits and 4 fraction 
 #define MAX_TEMP 32767
 #define MIN_TEMP INVALID_TEMP+1
 
-#define INVALID_TEMP_FLOAT -1000.0
+#define INVALID_TEMP_FLOAT -200.0
 #define IS_FLOAT_TEMP_VALID(a) ((a) > INVALID_TEMP_FLOAT)
 
 

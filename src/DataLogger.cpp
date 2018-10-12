@@ -14,20 +14,29 @@ extern BrewPiProxy brewPi;
 
 #define GSLOG_JSON_BUFFER_SIZE 256
 #define MAX_GSLOG_CONFIG_LEN 1024
-#define GSLogConfigFile "/gslog.cfg"
 
+#define KeyBeerTemp "beerTemp"
+#define KeyBeerSet "beerSet"
+#define KeyFridgeTemp "fridgeTemp"
+#define KeyFridgeSet "fridgeSet"
+#define KeyRoomTemp "roomTemp"
+#define KeyGravity "gravity"
+#define KeyPlato "plato"
+#define KeyAuxTemp "auxTemp"
+#define KeyVoltage "voltage"
+#define KeyTilt  "tilt"
 
-int DataLogger::printFloat(char* buffer,float value,int precision,bool valid)
+size_t DataLogger::printFloat(char* buffer,float value,int precision,bool valid)
 {
 	if(valid){
 		return sprintFloat(buffer,value,precision);
 	}else{
-		strcpy(buffer,"255"); // ubidots.com doesn't accept "null" as values.
-		return 3;
+		strcpy(buffer,"null"); // ubidots.com doesn't accept "null" as values.
+		return 4;
 	}
 }
 
-int DataLogger::dataSprintf(char *buffer,const char *format)
+size_t DataLogger::dataSprintf(char *buffer,const char *format)
 {
 	uint8_t state, mode;
 	float beerSet,fridgeSet;
@@ -36,7 +45,7 @@ int DataLogger::dataSprintf(char *buffer,const char *format)
 	brewPi.getAllStatus(&state,&mode,& beerTemp,& beerSet,& fridgeTemp,& fridgeSet,& roomTemp);
 
 	int i=0;
-	int d=0;
+	size_t d=0;
 	for(i=0;i< (int) strlen(format);i++){
 		char ch=format[i];
 		if( ch == '%'){
@@ -125,19 +134,63 @@ int copyTemp(char* buf,char* name,float value, bool concate)
 	return n;
 }
 
+
+size_t DataLogger::nonNullJson(char* buffer,size_t size)
+{
+	const int JSON_BUFFER_SIZE = JSON_OBJECT_SIZE(15);
+	DynamicJsonBuffer jsonBuffer(JSON_BUFFER_SIZE);
+	JsonObject& root = jsonBuffer.createObject();
+
+	uint8_t state, mode;
+	float beerSet,fridgeSet;
+	float beerTemp,fridgeTemp,roomTemp;
+
+	brewPi.getAllStatus(&state,&mode,& beerTemp,& beerSet,& fridgeTemp,& fridgeSet,& roomTemp);
+
+	if(IS_FLOAT_TEMP_VALID(beerTemp)) root[KeyBeerTemp] = beerTemp;
+	if(IS_FLOAT_TEMP_VALID(beerSet)) root[KeyBeerSet] = beerSet;
+	if(IS_FLOAT_TEMP_VALID(fridgeTemp)) root[KeyFridgeTemp] = fridgeTemp;
+	if(IS_FLOAT_TEMP_VALID(fridgeSet)) root[KeyFridgeSet] = fridgeSet;
+	if(IS_FLOAT_TEMP_VALID(roomTemp)) root[KeyRoomTemp] = roomTemp;
+
+	float sg=externalData.gravity();
+	if(IsGravityValid(sg)){
+		root[KeyGravity] = sg;
+		root[KeyPlato] = externalData.plato();
+	}
+
+	// iSpindel data
+	float vol=externalData.deviceVoltage();
+	if(IsVoltageValid(vol)){
+		 root[KeyVoltage] = vol;
+		float at=externalData.auxTemp();
+		if(IS_FLOAT_TEMP_VALID(at)) root[KeyAuxTemp] = at;
+		float tilt=externalData.tiltValue();
+		root[KeyTilt]=tilt;
+	}
+
+	return root.printTo(buffer,size);
+}
+
+#define BUFFERSIZE 512
+
 void DataLogger::sendData(void)
 {
-	char data[512];
+	char data[BUFFERSIZE];
 	int len=0;
 
-	len =dataSprintf(data,_loggingInfo->format);
+	if(_loggingInfo->service == ServiceNonNullJson){
+		len = nonNullJson(data,BUFFERSIZE);
+	}else{
+		len =dataSprintf(data,_loggingInfo->format);
+	}
 
 	if(len==0){
 		DBG_PRINTF("Invalid format\n");
 		return;
 	}
 
-	DBG_PRINTF("url=%s\n",_loggingInfo->url);
+	DBG_PRINTF("url=\"%s\"\n",_loggingInfo->url);
 	DBG_PRINTF("data= %d, \"%s\"\n",len,data);
 
 	int code;
@@ -145,6 +198,7 @@ void DataLogger::sendData(void)
   	_http.setUserAgent(F("ESP8266"));
 
 	DBG_PRINTF("[HTTP] %d...\n",_loggingInfo->method);
+	DBG_PRINTF("Content-Type:\"%s\"\n", _loggingInfo->contentType);
 	if(_loggingInfo->method == mHTTP_POST
 		|| _loggingInfo->method== mHTTP_PUT ){
 		// post

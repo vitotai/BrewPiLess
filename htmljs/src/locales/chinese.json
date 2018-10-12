@@ -1,5 +1,5 @@
 {
-    "page_lang": "zh",
+    "page_lang": "zh-tw",
     "page_title": "BrewPiLess執行中!",
     "lcdline1": "Live LCD waiting",
     "lcdline2": "for update from",
@@ -224,6 +224,21 @@
     "log_voltage": "iSpindel電壓",
     "log_tilt_value": "Tilt值",
     "log_timestamp": "最後一次回報比重的時間",
+
+    "log_plato": "Plato",
+    "log_service_type": "Service Type:",
+    "log_generic_http": "Generic HTTP",
+
+    "__NOTE_service_terms": "translation might be unnecessary.",
+    "log_thingspeak_api_key": "Write API Key:",
+    "log_thingspeak_fields": "Fields:",
+    "log_brewfather_id": "ID:",
+    "log_brewfather_device_label": "Device Label:",
+    "log_ubidots_account": "Account:",
+    "log_ubidots_token": "Token:",
+    "log_ubidots_device": "Device:",
+    "log_ubidots_educational": "Educational",
+    "log_ubidots_industrial": "Industrial",
 
     "__setup_html": "setup.html",
     "setup_page_title": "BrewPiLess 設定!",
