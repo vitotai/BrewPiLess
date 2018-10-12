@@ -46,6 +46,9 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * v3.2
+    * Revise remote logging settings. Simpler interface and special process for ubidots.com.
+
  * v3.1
     * Fix beer profile which uses gravity as conditions
     * Ditch WiFiManager.
