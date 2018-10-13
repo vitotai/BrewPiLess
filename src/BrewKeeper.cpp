@@ -66,11 +66,34 @@ void BrewKeeper::keep(time_t now)
 
 	}
 }
+void BrewKeeper::setMode(char mode){
+	char buff[36];
+	sprintf(buff,"j{mode:%c}",mode);
+	DBG_PRINTF("write:%s\n",buff);
+	_write(buff);
+}
+
+void BrewKeeper::setBeerSet(char* tempStr){
+	char buff[36];
+	sprintf(buff,"j{beerSet:%s}",tempStr);
+	DBG_PRINTF("write:%s\n",buff);
+	_write(buff);
+}
+
+void BrewKeeper::setFridgeSet(char* tempStr){
+	char buff[36];
+	sprintf(buff,"j{fridgeSet:%s}",tempStr);
+	DBG_PRINTF("write:%s\n",buff);
+	_write(buff);
+}
 
 //**********************************************************************************
 //class BrewProfile
 //**********************************************************************************
 
+void BrewProfile::setScheduleStartDate(time_t time){
+	_schedule->startDay=time;
+}
 
 void BrewProfile::setUnit(char unit)
 {

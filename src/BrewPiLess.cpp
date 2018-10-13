@@ -66,6 +66,8 @@ extern "C" {
 
 #include "ExternalData.h"
 
+#include "MqttClient.h"
+
 #if EanbleParasiteTempControl
 #include "ParasiteTempController.h"
 #endif
@@ -1597,6 +1599,9 @@ void setup(void){
 #ifdef EMIWorkaround
 	_lcdReinitTime = millis();
 #endif
+
+	//mqtt
+	mqttClient.connect();
 }
 
 uint32_t _rssiReportTime;
