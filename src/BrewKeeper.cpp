@@ -141,7 +141,7 @@ void BrewProfile::_toNextStep(unsigned long time)
 	_status->timeEnterCurrentStep=time;	
 	_status->startingDate= _schedule->startDay;
 	_saveBrewingStatus();
-	DBG_PRINTF("_toNextStep:%d current:%ld, duration:%ld\n",_status->currentStep,time, csd );
+	DBG_PRINTF("_toNextStep:%d current:%lu, duration:%u\n",_status->currentStep,time, csd );
 }
 
 bool BrewProfile::checkCondition(unsigned long time,Gravity gravity){
