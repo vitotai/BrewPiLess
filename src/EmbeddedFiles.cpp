@@ -22,33 +22,38 @@ typedef struct _EmbeddedFileMapEntry{
 	bool  gzipped;
 } EmbeddedFileMapEntry;
 
-#include "data_bwf_js.h"
+#include "data/bwf_js.h"
 const char file_bwf_js [] PROGMEM="/bwf.js";
 
-#include "data_testcmd_htm.h"
+#include "data/testcmd_htm.h"
 const char file_testcmd_htm [] PROGMEM="/testcmd.htm";
+
+#include "data/dygraph_js.h"
 
 #if FrontEnd == TomsFrontEnd
 
-#include "data_index_htm.h"
+#if WebPageLanguage == spanish
+#include "data/spanish_index_htm.h"
+#include "data/spanish_control_htm.h"
+#include "data/spanish_setup_htm.h"
+#include "data/spanish_log_htm.h"
+#include "data/spanish_gdc_htm.h"
+#include "data/spanish_config_htm.h"
+#else
+#include "data/english_index_htm.h"
+#include "data/english_control_htm.h"
+#include "data/english_setup_htm.h"
+#include "data/english_log_htm.h"
+#include "data/english_gdc_htm.h"
+#include "data/english_config_htm.h"
+#endif
+
 const char file_index_htm [] PROGMEM="/index.htm";
-
-#include "data_dygraph_js.h"
 const char file_dygraph_js [] PROGMEM="/dygraph-combined.js";
-
-#include "data_control_htm.h"
 const char file_control_htm [] PROGMEM="/control.htm";
-
-#include "data_setup_htm.h"
 const char file_setup_htm [] PROGMEM="/setup.htm";
-
-#include "data_log_htm.h"
 const char file_logconfig [] PROGMEM="/logging.htm";
-
-#include "data_gdc_htm.h"
 const char file_gravitydevice [] PROGMEM="/gravity.htm";
-
-#include "data_config_htm.h"
 const char file_config [] PROGMEM="/config.htm";
 
 EmbeddedFileMapEntry fileMaps[]={
@@ -64,22 +69,27 @@ EmbeddedFileMapEntry fileMaps[]={
 };
 
 #else
-// classic front end
 
-#include "data_c_index_htm.h"
+#if WebPageLanguage == spanish
+#include "data/spanish_c_index_htm.h"
+#include "data/spanish_c_setup_htm.h"
+#include "data/spanish_c_log_htm.h"
+#include "data/spanish_c_gdc_htm.h"
+#include "data/spanish_c_config_htm.h"
+#else
+#include "data/english_c_index_htm.h"
+#include "data/english_c_setup_htm.h"
+#include "data/english_c_log_htm.h"
+#include "data/english_c_gdc_htm.h"
+#include "data/english_c_config_htm.h"
+#endif
+
 const char file_index_htm [] PROGMEM="/index.htm";
-
-#include "data_c_setup_htm.h"
 const char file_setup_htm [] PROGMEM="/setup.htm";
-
-#include "data_c_log_htm.h"
 const char file_logconfig [] PROGMEM="/log.htm";
-
-#include "data_c_gdc_htm.h"
 const char file_gravitydevice [] PROGMEM="/gdc.htm";
-
-#include "data_c_config_htm.h"
 const char file_config [] PROGMEM="/config.htm";
+
 
 EmbeddedFileMapEntry fileMaps[]={
 {file_bwf_js,data_bwf_min_js_gz,sizeof(data_bwf_min_js_gz),true},
