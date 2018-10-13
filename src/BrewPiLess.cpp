@@ -834,9 +834,9 @@ void reportRssi(void)
 	char mode=parasiteTempController.getMode();
 	
 	if(mode == 'o')
-		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%ld}",WiFi.RSSI(),mode,parasiteTempController.getTimeElapsed());
+		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u}",WiFi.RSSI(),mode,parasiteTempController.getTimeElapsed());
 	else{
-		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%ld,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d}",
+		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d}",
 			WiFi.RSSI(),mode,parasiteTempController.getTimeElapsed(),
 			parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound());
 	}
