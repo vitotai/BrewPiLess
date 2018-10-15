@@ -5,6 +5,10 @@
 #ifndef NULL
 #define NULL 0
 #endif
+#define Language english
+#define STRINGIFY(str)  #str
+#define PASTER(lo,file)   STRINGIFY(data/lo ## file )
+#define EVALUATOR(l,x)  PASTER(l,x)
 
 #define STRINGIFY(str)  #str
 #define PASTER(lo,file)   STRINGIFY(data/lo ## file )

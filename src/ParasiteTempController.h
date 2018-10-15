@@ -14,6 +14,8 @@ public:
     String getSettings(void);
     bool updateSettings(String json);
     
+    void setTemperatureRange(float lower,float upper);
+
     char getMode();
     uint32_t getTimeElapsed();
 

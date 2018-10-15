@@ -66,7 +66,7 @@ extern "C" {
 
 #include "ExternalData.h"
 
-#include "MqttClient.h"
+#include "MqttRemoteControl.h"
 
 #if EanbleParasiteTempControl
 #include "ParasiteTempController.h"
@@ -1601,7 +1601,7 @@ void setup(void){
 #endif
 
 	//mqtt
-	mqttClient.connect();
+	mqttRemoteControl.begin();
 }
 
 uint32_t _rssiReportTime;
@@ -1652,6 +1652,7 @@ void loop(void){
   	brewPi.loop();
 
  	brewLogger.loop();
+	mqttRemoteControl.loop();
 
  	#ifdef ENABLE_LOGGING
 
