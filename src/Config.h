@@ -455,6 +455,8 @@
 #define DEFAULT_USERNAME "brewpiless"
 #define DEFAULT_PASSWORD "brewpiless"
 
+//#define english 0
+//#define spanish 1
 
 #ifndef WebPageLanguage
 #define WebPageLanguage english

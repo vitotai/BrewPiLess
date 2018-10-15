@@ -94,3 +94,9 @@ bool ParasiteTempController::checkSettings(void)
     if(_settings->minIdleTime < MIN_IDLE_TIME ) return false;
     return true;
 }
+
+void ParasiteTempController::setTemperatureRange(float lower,float upper)
+{
+    _settings->setTemp = lower;
+    _settings->maxIdleTemp = upper;
+}
