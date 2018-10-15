@@ -426,7 +426,7 @@
         Q("#gravity-sg").innerHTML = window.plato ? sg.toFixed(1) : sg.toFixed(3);
         if (typeof window.og != "undefined") {
             Q("#gravity-att").innerHTML = window.plato ? BrewMath.attP(window.og, sg) : BrewMath.att(window.og, sg);
-            Q("#gravity-abv").innerHTML = BrewMath.abvP(window.og, sg);
+            Q("#gravity-abv").innerHTML = window.plato ? BrewMath.abvP(window.og, sg) : BrewMath.abv(window.og, sg);
         }
     }
 

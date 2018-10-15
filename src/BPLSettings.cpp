@@ -192,10 +192,10 @@ String BPLSettings::jsonSystemConfiguration(void){
 		gdc->ispindelEnable=root[KeyEnableiSpindel];
 		gdc->ispindelTempCal = root[KeyTempCorrection];
 
-		if(gdc->ispindelTempCal){
+//		if(gdc->ispindelTempCal){
 		    gdc->ispindelCalibrationBaseTemp =
                 (root.containsKey(KeyCorrectionTemp))? root[KeyCorrectionTemp]:20;
-		}
+//		}
 		gdc->calculateGravity=root[KeyCalculateGravity];
 		gdc->ispindelCoefficients[0]=root[KeyCoefficientA0];
 		gdc->ispindelCoefficients[1]=root[KeyCoefficientA1];

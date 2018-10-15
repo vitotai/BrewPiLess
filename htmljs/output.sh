@@ -15,27 +15,30 @@ classic-index.htm.gz classic-config.htm.gz classic-setup.htm.gz classic-gdc.htm.
 variables=(data_index_htm_gz control_htm_gz config_htm_gz setup_htm_gz logging_htm_gz gravity_htm_gz \
  data_c_index_htm_gz data_c_config_htm_gz data_c_setup_htm_gz data_c_gdc_htm_gz data_c_log_htm_gz)
 
-outfiles=(data_index_htm.h data_control_htm.h data_config_htm.h data_setup_htm.h data_log_htm.h data_gdc_htm.h \
- data_c_index_htm.h data_c_config_htm.h data_c_setup_htm.h data_c_gdc_htm.h data_c_log_htm.h)
+outfiles=(index_htm control_htm config_htm setup_htm log_htm gdc_htm \
+ c_index_htm c_config_htm c_setup_htm c_gdc_htm c_log_htm)
 
 languages=(english spanish)
 
 
+gen_C_file()
+{
+lang=$1
 for ((index=0; index<${#htmlfiles[@]}; index++)); do
-
-for lang in "${languages[@]}"
-do
-srcdir="dist/$lang"
+    srcdir="dist/$lang"
 
 #   echo "[$index]: ${htmlfiles[$index]}"
    input="$srcdir/${htmlfiles[$index]}"
-   output="$OUTDIR/${outfiles[$index]}"
+   output="$OUTDIR/${lang}_${outfiles[$index]}.h"
    variable=${variables[$index]}
    #echo "input: $input output file: $output with variables $variable "
-   echo "#if WebPageLanguage == $lang" >> $output
-   xxd -i  "$input" >> $output 
-   echo "#endif" >> $output
+   xxd -i  "$input" > $output 
+   echo "processing $output"
+   sed -i "s/unsigned char .\+\[\]/const unsigned char $variable\[\] PROGMEM/" $output
 done
-    echo "processing $variable"
-    sed -i "s/unsigned char .\+\[\]/const unsigned char $variable\[\] PROGMEM/" $output
+}
+
+for lang in "${languages[@]}"
+do
+gen_C_file $lang
 done

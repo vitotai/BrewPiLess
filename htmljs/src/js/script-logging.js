@@ -265,8 +265,8 @@ function generichttp_get() {
 }
 
 function generichttp_set(r) {
-    serviceOption("generichttp");
     Q("#service-type").value = "generichttp";
+    serviceOption("generichttp");
     window.selectedMethod = r.method;
     Q("#m_" + r.method.toLowerCase()).checked = true;
     Q("#url").value = (r.url === undefined) ? "" : r.url;
@@ -276,8 +276,8 @@ function generichttp_set(r) {
 }
 // ubidots.com
 function ubidots_set(r) {
-    serviceOption("ubidots");
     Q("#service-type").value = "ubidots";
+    serviceOption("ubidots");
 
     // different api    
     var match = /http:\/\/([\w\.]+)\.ubidots\.com\/api\/v1\.6\/devices\/(\w+)\/\?token=(\w+)$/.exec(r.url);
@@ -306,8 +306,8 @@ function ubidots_get() {
 }
 // thingspeak.com
 function thingspeak_set(r) {
-    serviceOption("thingspeak");
     Q("#service-type").value = "thingspeak";
+    serviceOption("thingspeak");
 
     var values = {};
     var fields = r.format.split('&');
@@ -344,8 +344,8 @@ function thingspeak_get() {
 }
 //brewfahter
 function brewfather_set(r) {
-    serviceOption("brewfather");
     Q("#service-type").value = "brewfather";
+    serviceOption("brewfather");
 
     var match = /http:\/\/log\.brewfather\.net\/brewpiless\?id=(\w+)$/.exec(r.url);
     Q("#brewfather-id").value = match[1];
@@ -419,7 +419,14 @@ function update() {
 }
 
 function remote_init(classic) {
+    var MinPeriod = { generichttp: 1, thingspeak: 15, brewfather: 900, ubidots: 1 };
+    Q("#period").onchange = function() {
+        var min = MinPeriod[Q("#service-type").value];
+        if (Q("#period").value < min) Q("#period").value = min;
+    };
+
     serviceOption("generichttp");
+
     s_ajax({
         url: logurl + "?data=1",
         m: "GET",
@@ -456,6 +463,7 @@ function serviceOption(opt) {
         if (div.id == opt) div.style.display = "block";
         else div.style.display = "none";
     }
+    Q("#period").onchange();
 }
 
 function serviceChange() {
