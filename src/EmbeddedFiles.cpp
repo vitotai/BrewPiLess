@@ -6,6 +6,25 @@
 #define NULL 0
 #endif
 
+#define STRINGIFY(str)  #str
+#define PASTER(lo,file)   STRINGIFY(data/lo ## file )
+#define EVALUATOR(l,x)  PASTER(l,x)
+
+#define ClassicIndexHtmFile EVALUATOR(WebPageLanguage,_c_index_htm.h)
+#define ClassicSetupHtmFile EVALUATOR(WebPageLanguage,_c_setup_htm.h)
+#define ClassicLogHtmFile EVALUATOR(WebPageLanguage,_c_log_htm.h)
+#define ClassicGravityHtmFile EVALUATOR(WebPageLanguage,_c_gdc_htm.h)
+#define ClassicConfigHtmFile EVALUATOR(WebPageLanguage,_c_config_htm.h)
+
+
+#define IndexHtmFile EVALUATOR(WebPageLanguage,_index_htm.h)
+#define ControlHtmFile EVALUATOR(WebPageLanguage,_control_htm.h)
+#define SetupHtmFile EVALUATOR(WebPageLanguage,_setup_htm.h)
+#define LogHtmFile EVALUATOR(WebPageLanguage,_log_htm.h)
+#define GravityHtmFile EVALUATOR(WebPageLanguage,_gdc_htm.h)
+#define ConfigHtmFile EVALUATOR(WebPageLanguage,_config_htm.h)
+
+
 
 #if NoEmbeddedFile == true
 
@@ -32,21 +51,12 @@ const char file_testcmd_htm [] PROGMEM="/testcmd.htm";
 
 #if FrontEnd == TomsFrontEnd
 
-#if WebPageLanguage == spanish
-#include "data/spanish_index_htm.h"
-#include "data/spanish_control_htm.h"
-#include "data/spanish_setup_htm.h"
-#include "data/spanish_log_htm.h"
-#include "data/spanish_gdc_htm.h"
-#include "data/spanish_config_htm.h"
-#else
-#include "data/english_index_htm.h"
-#include "data/english_control_htm.h"
-#include "data/english_setup_htm.h"
-#include "data/english_log_htm.h"
-#include "data/english_gdc_htm.h"
-#include "data/english_config_htm.h"
-#endif
+#include IndexHtmFile
+#include ControlHtmFile
+#include SetupHtmFile
+#include LogHtmFile
+#include GravityHtmFile
+#include ConfigHtmFile
 
 const char file_index_htm [] PROGMEM="/index.htm";
 const char file_dygraph_js [] PROGMEM="/dygraph-combined.js";
@@ -70,19 +80,12 @@ EmbeddedFileMapEntry fileMaps[]={
 
 #else
 
-#if WebPageLanguage == spanish
-#include "data/spanish_c_index_htm.h"
-#include "data/spanish_c_setup_htm.h"
-#include "data/spanish_c_log_htm.h"
-#include "data/spanish_c_gdc_htm.h"
-#include "data/spanish_c_config_htm.h"
-#else
-#include "data/english_c_index_htm.h"
-#include "data/english_c_setup_htm.h"
-#include "data/english_c_log_htm.h"
-#include "data/english_c_gdc_htm.h"
-#include "data/english_c_config_htm.h"
-#endif
+
+#include ClassicIndexHtmFile
+#include ClassicSetupHtmFile
+#include ClassicLogHtmFile
+#include ClassicGravityHtmFile
+#include ClassicConfigHtmFile
 
 const char file_index_htm [] PROGMEM="/index.htm";
 const char file_setup_htm [] PROGMEM="/setup.htm";
