@@ -168,6 +168,32 @@ typedef struct _ParasiteTempControlSettings{
     uint8_t _padding[4];
 }ParasiteTempControlSettings;
 
+//*****************************************************
+// MQtt remote control
+// too many strings. fixed allocation wastes too much.
+// server, user, pass, 4x path = 128 * 7 
+// Furthermore, ArduinoJson will modify the "source" buffer.
+// so additional buffer is neede to decode.
+// So let's store the strings in  a compact way 
+#define MqttSettingStringSpace 320
+typedef struct _MqttRemoteControlSettings{
+    uint16_t port;
+    uint8_t  enabled;
+    uint8_t  _padding1;
+
+    uint16_t  serverOffset;
+    uint16_t  usernameOffset;
+    uint16_t  passwordOffset;
+    uint16_t  modePathOffset;
+    uint16_t  settingTempPathOffset;
+    uint16_t  capControlPathOffset;
+    uint16_t  ptcPathOffset;
+    uint8_t   _padding2[8];
+
+    uint8_t   _strings[MqttSettingStringSpace];
+}MqttRemoteControlSettings;
+
+
 //####################################################
 // whole structure
 struct Settings{
@@ -180,6 +206,8 @@ struct Settings{
     RemoteLoggingInformation remoteLogginInfo; // 636: 444
     AutoCapSettings autoCapSettings; // 1080: 12
     ParasiteTempControlSettings parasiteTempControlSettings; //1092: 20
+
+    MqttRemoteControlSettings mqttRemoteControlSettings;
 };
 
 class BPLSettings
@@ -219,6 +247,12 @@ public:
     ParasiteTempControlSettings *parasiteTempControlSettings(void){ return &_data.parasiteTempControlSettings;}
     bool dejsonParasiteTempControlSettings(String json);
     String jsonParasiteTempControlSettings(bool enabled);
+
+
+    MqttRemoteControlSettings *mqttRemoteControlSettings(void){ return & _data.mqttRemoteControlSettings;}
+    bool dejsonMqttRemoteControlSettings(String json);
+    String jsonMqttRemoteControlSettings(void);
+
 protected:
     Settings _data;
 

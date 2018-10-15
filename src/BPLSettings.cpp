@@ -703,3 +703,114 @@ String BPLSettings::jsonParasiteTempControlSettings(bool enabled){
     return output;
 }
 
+
+//***************************************************************
+// MQTT control
+
+#define EnableMqttKey "enabled"
+#define ServerAddressKey "server"
+#define ServerPort "port"
+#define MqttUsernameKey "user"
+#define MqttPasswordKey "pass"
+
+#define ModePathKey "mode"
+#define SettingTempPathkey "set"
+#define PtcPathKey "ptc"
+#define CapPathKey "cap"
+
+String BPLSettings::jsonMqttRemoteControlSettings(void){
+    const int BUFFER_SIZE = JSON_OBJECT_SIZE(10);
+    StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+    JsonObject& root = jsonBuffer.createObject();
+
+	MqttRemoteControlSettings *settings=mqttRemoteControlSettings();
+
+	root[EnableMqttKey] = settings->enabled;
+	root[ServerPort] =  settings->port;
+
+	if(settings->serverOffset){
+		root[ServerAddressKey] = settings->_strings + settings->serverOffset;
+	}
+
+	if(settings->usernameOffset){
+		root[MqttUsernameKey] = settings->_strings + settings->usernameOffset;
+	}
+
+	if(settings->passwordOffset){
+		root[MqttPasswordKey] = settings->_strings + settings->passwordOffset;
+	}
+
+	if(settings->modePathOffset){
+		root[ModePathKey] = settings->_strings + settings->modePathOffset;
+	}
+
+	if(settings->settingTempPathOffset){
+		root[SettingTempPathkey] = settings->_strings + settings->settingTempPathOffset;
+	}
+
+#if	EanbleParasiteTempControl
+	if(settings->ptcPathOffset){
+		root[PtcPathKey] = settings->_strings + settings->ptcPathOffset;
+	}
+#endif
+
+#if Auto_CAP
+	if(settings->capControlPathOffset){
+		root[CapPathKey] = settings->_strings + settings->capControlPathOffset;
+	}
+#endif
+    String output;
+    root.printTo(output);
+    return output;
+
+}
+
+static char *copyIfExist(JsonObject& root,const char* key,uint16_t &offset,char* ptr,char* base){
+	if(root.containsKey(key)){
+		const char* str=root[key];
+		size_t length = strlen(str) +1;
+		if(ptr - base  +length > MqttSettingStringSpace ) return NULL;
+
+		strcpy(ptr,str);
+		offset = (uint16_t)(ptr - base);
+		ptr += length;
+	}
+
+	return ptr;
+}
+
+bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
+    DynamicJsonBuffer jsonBuffer(JSON_OBJECT_SIZE(10));
+
+	JsonObject& root = jsonBuffer.parseObject(json.c_str());
+	if(!root.success()
+		|| !root.containsKey(EnableMqttKey)
+		|| !root.containsKey(ServerPort)){
+        return false;
+    }
+	MqttRemoteControlSettings *settings=mqttRemoteControlSettings();
+
+	memset((char*)settings,'\0',sizeof(MqttRemoteControlSettings));
+
+	settings->enabled=root[EnableMqttKey];
+	settings->port=root[ServerPort];
+
+	char *base=(char*) settings->_strings;
+	char *ptr=base +1;
+
+	if(!(ptr=copyIfExist(root,ServerAddressKey,settings->serverOffset,ptr,base))) return false;
+	if(!(ptr=copyIfExist(root,MqttUsernameKey,settings->usernameOffset,ptr,base))) return false;
+	if(!(ptr=copyIfExist(root,MqttPasswordKey,settings->passwordOffset,ptr,base))) return false;
+	if(!(ptr=copyIfExist(root,ModePathKey,settings->modePathOffset,ptr,base))) return false;
+	if(!(ptr=copyIfExist(root,SettingTempPathkey,settings->settingTempPathOffset,ptr,base))) return false;
+	
+	#if	EanbleParasiteTempControl
+	if(!(ptr=copyIfExist(root,PtcPathKey,settings->ptcPathOffset,ptr,base))) return false;
+	#endif
+
+	#if Auto_CAP
+	if(!(ptr=copyIfExist(root,CapPathKey,settings->capControlPathOffset,ptr,base))) return false;
+	#endif
+
+	return true;
+}

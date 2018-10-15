@@ -29,14 +29,6 @@ MqttRemoteControl::MqttRemoteControl(){
 
     _client.setClient(_espClient);
 
-
-    #if EanbleParasiteTempControl
-    _ptcValue[0]='\0';
-    #endif
-
-    #if Auto_CAP
-    _capState=CapStateUnknown;
-    #endif
 }
 
 bool MqttRemoteControl::loop(){
@@ -148,18 +140,19 @@ void MqttRemoteControl::_onDisconnect(void){
 
 void MqttRemoteControl::_onMessage(char* topic, uint8_t* payload, size_t len) {
     DBG_PRINTF("MQTT:rcv %s\n",topic);
+
     if(strcmp(topic, _modePath) ==0){
         this->_onModeChange((char*)payload,len);
     }else if(strcmp(topic, _setTempPath) ==0){
         this->_onSettingChange((char*)payload,len);
     }
 #if EanbleParasiteTempControl
-    }else if(strcmp(topic, _ptcPath) ==0){
+    else if(strcmp(topic, _ptcPath) ==0){
         this->_onPtcChange((char*)payload,len);
     }
 #endif 
 #if Auto_CAP
-    }else if(strcmp(topic, _capPath) ==0){
+    else if(strcmp(topic, _capPath) ==0){
         this->_onCapChange((char*)payload,len);
     }
 #endif
@@ -213,7 +206,7 @@ void MqttRemoteControl::_onSettingChange(char* payload, size_t len){
 
 #if EanbleParasiteTempControl
 void MqttRemoteControl::_onPtcChange(char* payload, size_t len){
-    buffer[32];
+    char buffer[32];
     size_t toCopy=len;
     if(toCopy > 31) toCopy=31;
     memcpy(buffer,payload,toCopy);
