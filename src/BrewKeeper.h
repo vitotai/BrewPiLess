@@ -62,8 +62,7 @@ public:
 	void profileUpdated(){ _profile.profileUpdated();}
 	void begin(void){ _profile.profileUpdated();}
 
-	void setScheduleStartDate(time_t time){  _profile.setScheduleStartDate(time);   }
-	void setMode(char mode);
+	void setModeFromRemote(char mode);
 	void setBeerSet(char *tempStr);
 	void setFridgeSet(char *tempStr);
 };
