@@ -1,6 +1,6 @@
 #include "MqttRemoteControl.h"
 #include "BrewKeeper.h"
-#include "TimeKeeper.h"
+#include "BPLSettings.h"
 
 #if EanbleParasiteTempControl
 #include "ParasiteTempController.h"
@@ -9,14 +9,6 @@
 #if Auto_CAP
 #include "AutoCapContro.h"
 #endif
-
-#define _serverAddress "things.ubidots.com"
-#define _serverPort 1883
-#define _username "uR1H1tTRu17w3F2SllTtYqrRQKbiae"
-#define _password "uR1H1tTRu17w3F2SllTtYqrRQKbiae"
-
-#define _modePath "/v1.6/devices/bplcommander/mode/lv"
-#define _setTempPath "/v1.6/devices/bplcommander/settemp/lv"
 
 
 MqttRemoteControl mqttRemoteControl;
@@ -55,10 +47,7 @@ void MqttRemoteControl::_runModeCommand(void){
     if(_lvMode == InvalidMode){
         DBG_PRINTF("MQTT:mode not set\n");
     }
-    if(_lvMode == ModeBeerProfile){
-      brewKeeper.setScheduleStartDate(TimeKeeper.getTimeSeconds());
-    }
-    brewKeeper.setMode(_lvMode);
+    brewKeeper.setModeFromRemote(_lvMode);
 }
 
 void MqttRemoteControl::_runSettingCommand(void){
@@ -77,12 +66,31 @@ void MqttRemoteControl::_runSettingCommand(void){
 
 bool MqttRemoteControl::begin()
 {
-    _client.setServer(_serverAddress, _serverPort);
-    _client.setCallback([this](char* topic, uint8_t* payload, unsigned int len){
-        this->_onMessage(topic,payload,len);
-    });
+    MqttRemoteControlSettings *settings=theSettings.mqttRemoteControlSettings();
 
-    _enabled = true;
+    _enabled = settings->enabled;
+    if(_enabled){
+        _serverAddress=settings->serverOffset? (char*)settings->_strings + settings->serverOffset:NULL;
+        _serverPort = settings->port;
+
+        _username = settings->usernameOffset? (char*)settings->_strings + settings->usernameOffset:NULL;
+        _password = settings->passwordOffset? (char*)settings->_strings + settings->passwordOffset:NULL;
+
+        _modePath = settings->modePathOffset? (char*)settings->_strings + settings->modePathOffset:NULL;
+        _setTempPath = settings->settingTempPathOffset? (char*)settings->_strings + settings->settingTempPathOffset:NULL;
+#if EanbleParasiteTempControl
+        _ptcPath = settings->ptcPathOffset? (char*)settings->_strings + settings->ptcPathOffset:NULL;
+#endif
+
+#if Auto_CAP
+        _capPath = settings->capControlPathOffset? (char*)settings->_strings + settings->capControlPathOffset:NULL;
+#endif
+
+        _client.setServer(_serverAddress, _serverPort);
+        _client.setCallback([this](char* topic, uint8_t* payload, unsigned int len){
+            this->_onMessage(topic,payload,len);
+        });
+    }
 
     return false;
 

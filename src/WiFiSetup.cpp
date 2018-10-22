@@ -78,6 +78,7 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 		if(_ip !=INADDR_NONE){
 			WiFi.config(_ip,_gw,_nm);
 		}
+		WiFi.setAutoReconnect(true);
 		WiFi.begin();
 		_time=millis();
 	}
