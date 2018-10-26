@@ -50,7 +50,7 @@ void WiFiSetupClass::begin(char const *ssid,const char *passwd)
 
 	_apName=ssid;
 	_apPassword=passwd;
-
+	WiFi.setAutoConnect(_autoReconnect);
 	if( _settingApMode){
 		DBG_PRINTF("\nAP mode\n");
 		WiFi.mode(WIFI_AP);
@@ -125,8 +125,9 @@ String WiFiSetupClass::status(void){
 
 bool WiFiSetupClass::stayConnected(void)
 {
-	dnsServer->processNextRequest();
-	if(! _apMode){
+	if(_apMode){
+		dnsServer->processNextRequest();
+	}else{
 		if(_wifiState==WiFiStateChangeConnectPending){
 			DBG_PRINTF("Change Connect\n");
 			if(WiFi.getMode() == WIFI_AP){
@@ -162,39 +163,8 @@ bool WiFiSetupClass::stayConnected(void)
 
 				_time=millis();
 				DBG_PRINTF("Lost Network. auto reconnect %d\n",_autoReconnect);
-				if(_autoReconnect){
-					_wifiState = WiFiStateWaitToConnect;
-				}else{
-					_wifiState = WiFiStateDisconnected;
-				}
+				_wifiState = WiFiStateDisconnected;
 				return true;
-			}
-			else if(_wifiState==WiFiStateWaitToConnect)
-			{
-				if((millis() - _time) > TIME_WAIT_TO_CONNECT)
-				{
-					WiFi.begin();
-					_time=millis();
-					_wifiState = WiFiStateConnecting;
-					DBG_PRINTF("Reconnect...\n");
-				}
-			}
-			else if(_wifiState==WiFiStateConnecting)
-			{
-				if((millis() - _time) > TIME_RECONNECT_TIMEOUT){
-					_time=millis();
-					_wifiState = WiFiStateWaitToConnect;
-					_reconnect++;
-					DBG_PRINTF("Reconnect fail\n");
-
-					if(_switchToAp){
-						if(_maxReconnect !=0 && _reconnect>=_maxReconnect){
-							DBG_PRINTF("Fail to reconnect. Setup AP mode.\n");
- 							enterApMode();
- 							return true;
-						}
-					}
-				}
 			}
 			// WiFiStateDisconnected else do nothing.
  		}
