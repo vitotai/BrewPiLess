@@ -37,7 +37,9 @@ module.exports = (grunt) ->
           minifyCSS: true
         files: [{
           'dist/index.tmpl.htm': 'dist/index.tmpl.htm',
+          'dist/index_s.tmpl.htm': 'dist/index_s.tmpl.htm',
           'dist/control.tmpl.htm': 'dist/control.tmpl.htm',
+          'dist/control_s.tmpl.htm': 'dist/control_s.tmpl.htm',
           'dist/setup.tmpl.htm': 'dist/setup.tmpl.htm',
           'dist/gravity.tmpl.htm': 'dist/gravity.tmpl.htm',
           'dist/logging.tmpl.htm': 'dist/logging.tmpl.htm',
@@ -62,7 +64,9 @@ module.exports = (grunt) ->
           minifyCSS: false
         files: [{
           'build/index.tmpl.html': 'build/index.tmpl.html',
+          'build/index_s.tmpl.html': 'build/index_s.tmpl.html',
           'build/control.tmpl.html': 'build/control.tmpl.html',
+          'build/control_s.tmpl.html': 'build/control_s.tmpl.html',
           'build/setup.tmpl.html': 'build/setup.tmpl.html',
           'build/gravity.tmpl.html': 'build/gravity.tmpl.html',
           'build/logging.tmpl.html': 'build/logging.tmpl.html',
@@ -80,7 +84,9 @@ module.exports = (grunt) ->
       main:
         files: [
             { 'dist/index.tmpl.htm': ['build/index.tmpl.html'] },
+            { 'dist/index_s.tmpl.htm': ['build/index_s.tmpl.html'] },
             { 'dist/control.tmpl.htm': ['build/control.tmpl.html'] },
+            { 'dist/control_s.tmpl.htm': ['build/control_s.tmpl.html'] },
             { 'dist/setup.tmpl.htm': ['build/setup.tmpl.html'] },
             { 'dist/gravity.tmpl.htm': ['build/gravity.tmpl.html'] },
             { 'dist/logging.tmpl.htm': ['build/logging.tmpl.html'] },
@@ -141,7 +147,7 @@ module.exports = (grunt) ->
         expand: true
         files: [{
           expand: true
-          src: ['dist/english/*.htm','dist/chinese/*.htm','dist/spanish/*.htm']
+          src: ['dist/english/*.htm','dist/chinese/*.htm','dist/spanish/*.htm','dist/portuguesbr/*.htm']
           dest: '.'
           ext: '.htm.gz'
         }]
@@ -150,7 +156,9 @@ module.exports = (grunt) ->
       dist:
         files: [
           'build/index.tmpl.html': ['src/index.tmpl.html']
+          'build/index_s.tmpl.html': ['src/index_s.tmpl.html']
           'build/control.tmpl.html': ['src/control.tmpl.html']
+          'build/control_s.tmpl.html': ['src/control_s.tmpl.html']
           'build/setup.tmpl.html': ['src/setup.tmpl.html']
           'build/gravity.tmpl.html': ['src/gravity.tmpl.html']
           'build/logging.tmpl.html': ['src/logging.tmpl.html']
@@ -167,13 +175,15 @@ module.exports = (grunt) ->
     multi_lang_site_generator:
       default:
           options:
-            vocabs:           ['english','chinese','spanish']
+            vocabs:           ['english','chinese','spanish','portuguesbr']
             vocab_directory:  'src/locales'
             output_directory: 'dist'
             template_directory: 'dist'
           files: [
             'index.htm': ['index.tmpl.htm']
+            'index_s.htm': ['index_s.tmpl.htm']
             'control.htm': ['control.tmpl.htm']
+            'control_s.htm': ['control_s.tmpl.htm']
             'setup.htm': ['setup.tmpl.htm']
             'gravity.htm': ['gravity.tmpl.htm']
             'logging.htm': ['logging.tmpl.htm']
