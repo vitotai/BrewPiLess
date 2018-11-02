@@ -829,22 +829,50 @@ void notifyLogStatus(void)
 
 void reportRssi(void)
 {
+	char buf[256];
+
+	uint8_t mode, state;
+	char unit;
+	float beerSet, beerTemp, fridgeTemp, fridgeSet, roomTemp;
+	float min,max;
+	char statusLine[21];
+	brewPi.getTemperatureSetting(&unit,&min,&max);
+	brewPi.getAllStatus(&state, &mode, &beerTemp, &beerSet, &fridgeTemp, &fridgeSet, &roomTemp);
+	display.getLine(3,statusLine);
+
 #if EanbleParasiteTempControl
-	char buf[128];
 	char mode=parasiteTempController.getMode();
 	
-	if(mode == 'o')
-		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u}",WiFi.RSSI(),mode,parasiteTempController.getTimeElapsed());
-	else{
-		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d}",
+	sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d,\
+		\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\"}",
 			WiFi.RSSI(),mode,parasiteTempController.getTimeElapsed(),
-			parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound());
-	}
+			parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound()
+		state,
+		mode,
+		(int)(beerTemp*100),
+		(int)(beerSet*100),
+		(int)(fridgeTemp*100),
+		(int)(fridgeSet*100),
+		(int)(roomTemp*100),
+		statusLine,
+		unit
+
+			);
 
 	stringAvailable(buf);
 #else
-	char buf[32];
-	sprintf(buf,"A:{\"rssi\":%d}",WiFi.RSSI());
+	sprintf(buf,"A:{\"rssi\":%d,\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\"}",
+		WiFi.RSSI(),
+		state,
+		mode,
+		(int)(beerTemp*100),
+		(int)(beerSet*100),
+		(int)(fridgeTemp*100),
+		(int)(fridgeSet*100),
+		(int)(roomTemp*100),
+		statusLine,
+		unit
+		);
 	stringAvailable(buf);
 #endif
 }
@@ -1575,7 +1603,7 @@ void setup(void){
 }
 
 uint32_t _rssiReportTime;
-#define RssiReportPeriod 10
+#define RssiReportPeriod 5
 
 void loop(void){
 //{brewpi
