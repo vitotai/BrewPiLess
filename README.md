@@ -49,6 +49,7 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  * v3.3
     * LCD information push from server instead of request/response.
     * Replace ServerSideEvent by WebSocket. 
+    * add Brazil Portugues support.
 
  * v3.2
     * Revise remote logging settings. Simpler interface and special process for ubidots.com.
