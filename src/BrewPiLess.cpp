@@ -71,8 +71,8 @@ extern "C" {
 #endif
 //WebSocket seems to be unstable, at least on iPhone.
 //Go back to ServerSide Event.
-#define UseWebSocket false
-#define UseServerSideEvent true
+#define UseWebSocket true
+#define UseServerSideEvent false
 #define ResponseAppleCNA true
 #define CaptivePortalTimeout 180
 
@@ -841,12 +841,12 @@ void reportRssi(void)
 	display.getLine(3,statusLine);
 
 #if EanbleParasiteTempControl
-	char mode=parasiteTempController.getMode();
+	char ptcmode=parasiteTempController.getMode();
 	
 	sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d,\
 		\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\"}",
-			WiFi.RSSI(),mode,parasiteTempController.getTimeElapsed(),
-			parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound()
+			WiFi.RSSI(),ptcmode,parasiteTempController.getTimeElapsed(),
+			parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound(),
 		state,
 		mode,
 		(int)(beerTemp*100),

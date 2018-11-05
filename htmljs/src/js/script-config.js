@@ -58,7 +58,7 @@ function waitrestart() {
 }
 
 function save() {
-    var ins = document.querySelectorAll("input");
+    var ins = document.querySelectorAll("#sysconfig input");
     var data = "";
     //(new Uint32Array([-1]))[0]
     var json = {};

@@ -5,7 +5,7 @@
     var T_CHART_RETRY = 10000;
     var T_LOAD_CHART = 150;
     var T_BWF_RECONNECT = 10000;
-    var T_BWF_LCD = 4800;
+    var T_BWF_LCD = 10000;
     var BChart = {
         offset: 0,
         url: 'chart.php',
@@ -204,30 +204,9 @@
             }*/
     };
     /* LCD information */
-    function parseLcdText(lines) {
+
+    function parseStatusLine(line) {
         var status = {};
-        var modePatterns = {
-            b: /Mode\s+Beer\s+Const/i,
-            f: /Mode\s+Fridge\s+Const/i,
-            p: /Mode\s+Beer\s+Profile/i,
-            o: /Mode\s+Off/i
-        };
-        var modes = Object.keys(modePatterns);
-        status.ControlMode = "i";
-        for (var m = 0; m < modes.length; m++) {
-            if (modePatterns[modes[m]].test(lines[0])) {
-                status.ControlMode = modes[m];
-                break;
-            }
-        }
-        //status.ControlState = i;
-        var tempRE = /\s*([a-zA-Z]+)\s*([-\d\.]+)\s+([-\d\.]+)\s+(\S+[CF])\s*$/i;
-        for (var i = 1; i < 3; i++) {
-            var temps = tempRE.exec(lines[i]);
-            status.unit = temps[4];
-            status[temps[1] + "Temp"] = isNaN(Number(temps[2])) ? temps[2] : temps[2] + temps[4];
-            status[temps[1] + "Set"] = isNaN(Number(temps[3])) ? temps[3] : temps[3] + temps[4];
-        }
         var i = 0;
         var statePatterns = [
             /Idling\s+for\s+(\S+)\s*$/i,
@@ -243,22 +222,35 @@
         ];
         status.ControlStateSince = "";
         for (i = 0; i < statePatterns.length; i++) {
-            var match = statePatterns[i].exec(lines[3]);
+            var match = statePatterns[i].exec(line);
             if (match) {
                 if (typeof match[1] !== "undefined") status.ControlStateSince = match[1];
                 break;
             }
         }
         status.ControlState = i;
-        status.StatusLine = lines[3];
+        status.StatusLine = line;
         return status;
     }
 
-    function processLcdText(lines) {
+
+    function renderLcdText(info) {
         var div = Q(".error");
         if (div) div.style.display = "none";
 
-        var status = parseLcdText(lines);
+        function T(temp) {
+            if (temp < -10000) return "--.-";
+            return (temp / 100).toFixed(1) + "&deg;" + info.tu;
+        }
+        var status = parseStatusLine(info.sl);
+        status.ControlMode = info.md;
+        status.unit = info.tu;
+        status.BeerTemp = T(info.bt);
+        status.BeerSet = T(info.bs);
+        status.FridgeTemp = T(info.ft);
+        status.FridgeSet = T(info.fs);
+        status.RoomTemp = T(info.rt);
+
         var ModeString = {
             o: "<%= mode_off %>",
             b: "<%= mode_beer_const %>",
@@ -309,9 +301,40 @@
             var temp = tempRE.exec(status.BeerTemp);
             if (temp.length > 0) window.beerTemp = temp[0];
         }
+    }
 
-        // display classic LCD
-        displayLcdText(lines);
+    var roomOfridge = false;
+
+    function simLcd(info) {
+
+        var ModeString = {
+            o: "Off",
+            b: "Beer Const.",
+            f: "Fridge Const.",
+            p: "Beer Profile",
+            i: "Invalid"
+        };
+
+        function showTemp(tp) {
+            // always takes 5 chars
+            if (tp < -10000) return " --.-";
+            var text = (tp / 100.0).toFixed(1);
+            var spaces = "";
+            var i = text.length;
+            for (; i < 5; i++) spaces += " ";
+            return spaces + text;
+        }
+
+        var lines = [];
+        lines[0] = "Mode   " + ModeString[info.md];
+        lines[1] = "Beer  " + showTemp(info.bt) + " " + showTemp(info.bs) + " &deg;" + info.tu;
+        if (info.rt > -10000 && roomOfridge)
+            lines[2] = "Room  " + showTemp(info.rt) + " " + showTemp(-20000) + " &deg;" + info.tu;
+        else
+            lines[2] = "Fridge" + showTemp(info.ft) + " " + showTemp(info.fs) + " &deg;" + info.tu;
+        roomOfridge = !roomOfridge;
+        lines[3] = info.sl;
+        return lines;
     }
 
     function displayLcdText(lines) {
@@ -319,6 +342,14 @@
             var d = document.getElementById("lcd-line-" + i);
             if (d) d.innerHTML = lines[i];
         }
+    }
+
+    function displayLcd(info) {
+        // classic interface
+        window.tempUnit = info.tu;
+        displayLcdText(simLcd(info));
+        // new interface
+        renderLcdText(info);
     }
 
     function hideErrorMsgs() {
@@ -624,8 +655,13 @@
     }
 
     function BPLMsg(c) {
+        BWF.gotMsg = true;
+
         if (typeof c["rssi"] != "undefined") {
             displayrssi(c["rssi"]);
+        }
+        if (typeof c["sl"] != "undefined") {
+            displayLcd(c);
         }
         if (typeof c["reload"] != "undefined") {
             console.log("Forced reload chart");
@@ -690,7 +726,7 @@
                     }
                     //gotMsg==true, set flag and send
                     BWF.gotMsg = false;
-                    BWF.send("l");
+                    //BWF.send("l");
                 }, T_BWF_LCD);
             },
             error: function(e) {
@@ -705,10 +741,10 @@
                 closeDlgLoading();
             },
             handlers: {
-                L: function(lines) {
-                    BWF.gotMsg = true;
-                    processLcdText(lines);
-                },
+                /*                L: function(lines) {
+                                    BWF.gotMsg = true;
+                                    processLcdText(lines);
+                            },*/
                 A: BPLMsg,
                 G: function(c) {
                     gravityDevice(c);

@@ -396,7 +396,7 @@
 //#endif
 
 #define EMIWorkaround 1
-#define BPL_VERSION "3.2"
+#define BPL_VERSION "3.3"
 
 #ifndef EanbleParasiteTempControl
 #define EanbleParasiteTempControl 0

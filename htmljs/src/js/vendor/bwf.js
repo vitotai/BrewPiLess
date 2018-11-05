@@ -9,7 +9,6 @@ function invoke(arg) {
             }
         }
     };
-
     xhttp.ontimeout = function() {
             if (typeof arg["timeout"] != "undefined")
                 arg.timeout();
@@ -30,6 +29,7 @@ function invoke(arg) {
 }
 
 var BWF = {
+    BrewProfile: "/brewing.json",
     process: function(msg) {
         if (this.raw != null) {
             this.raw(msg);
@@ -47,59 +47,50 @@ var BWF = {
     on: function(lb, handler) {
         this.handlers[lb] = handler;
     },
-    send: function(data, opt) {
-        opt = (typeof opt == "undefined") ? {} : opt;
-        //console.log("snd:" + data);
-        var b = this;
-        if (b.state != 2) {
-            console.log("SSE not conneced.");
-            b.error(-2);
-            return;
-        }
-        invoke({
-            m: "POST",
-            url: "/putline",
-            mime: "application/x-www-form-urlencoded",
-            data: "data=" + encodeURI(data),
-            success: function() { if (typeof opt.success !== "undefined") opt.success(); },
-            fail: function(a) {
-                if (typeof opt.fail !== "undefined") opt.fail(a);
-                else b.error(a);
-            }
-        });
+    send: function(data) {
+        if (this.ws.readyState == 1) this.ws.send(data);
     },
     reconnecting: false,
-    state: 0, //0: disconnected, 1: connecting, 2. connected. 3:wait-reconnect
     connect: function() {
-        var b = this;
-        var es = new EventSource("/getline");
-        b.state = 1;
-        es.onmessage = function(e) {
-            b.process(e.data);
-        };
-        es.onerror = function() {
-            b.state = 0;
-            b.error(-2);
-            if (b.auto) {
-                b.state = 3;
-                setTimeout(function() { b.reconnect(); }, 5000);
-            }
-        };
-        es.onopen = function() {
-            b.state = 2;
-            b.onconnect();
-        };
-        b.es = es;
+        var me = this;
+        if (typeof WebSocket !== "undefined") {
+            var ws = new WebSocket('ws://' + document.location.host + '/ws');
+            me.ws = ws;
+            ws.onopen = function() {
+                console.log("Connected");
+                me.onconnect();
+            };
+
+            ws.onclose = function() {
+                if (me.reconnecting) return;
+                console.log("WS close");
+                me.error(-2);
+                if (me.auto) setTimeout(function() { me.reconnect(); }, 5000);
+            };
+
+            /*ws.onerror = function() {
+                console.log("ws error");
+            };*/
+
+            ws.onmessage = function(e) {
+                me.process(e.data);
+            };
+        } else {
+            //console.log("not support WebSocket");
+            alert("Error! WebSocket Not Supported!");
+        }
     },
     reconnect: function(forced) {
-        forced = (typeof forced == "undefined") ? false : forced;
-        var t = this;
-        if (!forced && t.es.readyState == 1) return;
-        // to ignore "onerror()"
-        t.es.onerror = function() {};
-        t.es.close();
+        forced = (typeof forced == "undefined") ? false : true;
+        var me = this;
+        if (me.reconnecting) return;
+        if (!forced && me.ws.readyState == 1) return;
+        console.log("reconnect forced:" + forced + " state:" + me.ws.readyState);
+        me.reconnecting = true;
+        me.ws.close();
         // this might triger onerror, and result in "reconnect" call again.
-        t.connect();
+        me.connect();
+        me.reconnecting = false;
     },
     init: function(arg) {
         var b = this;
