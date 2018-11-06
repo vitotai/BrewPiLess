@@ -95,7 +95,6 @@ extern "C" {
 
 #define POLLING_PATH 	"/getline_p"
 #define PUTLINE_PATH	"/putline"
-//#define CONTROL_CC_PATH	"/tcc"
 
 #ifdef ENABLE_LOGGING
 #define LOGGING_PATH	"/log"
@@ -125,7 +124,6 @@ extern "C" {
 #define ParasiteTempControlPath "/ptc"
 #endif
 
-#define IGNORE_MASK_PATH  "/icalm"
 
 #define GravityDeviceConfigPath "/gdc"
 #define GravityFormulaPath "/coeff"
@@ -138,6 +136,7 @@ extern "C" {
 #define WIFI_CONNECT_PATH "/wificon"
 #define WIFI_DISC_PATH "/wifidisc"
 
+#define MQTT_PATH "/mqtt"
 
 const char *public_list[]={
 "/bwf.js",
@@ -362,12 +361,12 @@ public:
 	void handleRequest(AsyncWebServerRequest *request){
 		SystemConfiguration *syscfg=theSettings.systemConfiguration();
 
+		#if UseServerSideEvent == true
 	 	if(request->method() == HTTP_GET && request->url() == POLLING_PATH) {
 	 		char *line=brewPi.getLastLine();
 	 		if(line[0]!=0) request->send(200, "text/plain", line);
 	 		else request->send(200, "text/plain;", "");
 	 	}
-		#if UseServerSideEvent == true
 		 else if(request->method() == HTTP_POST && request->url() == PUTLINE_PATH){
 	 		String data=request->getParam("data", true, false)->value();
 	 		//DBG_PRINTF("putline:%s\n",data.c_str());
@@ -378,8 +377,30 @@ public:
 	 		brewPi.putLine(data.c_str());
 	 		request->send(200,"application/json","{}");
 	 	}
+		else
 		#endif
-		else if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
+		if(request->method() == HTTP_GET && request->url() == MQTT_PATH){
+			request->send(200,"application/json",theSettings.jsonMqttRemoteControlSettings());
+	 	}else if(request->method() == HTTP_POST && request->url() == MQTT_PATH){
+	 	    if(!request->authenticate(syscfg->username, syscfg->password))
+	        return request->requestAuthentication();
+
+			if(request->hasParam("data", true)){
+				if(theSettings.dejsonMqttRemoteControlSettings(request->getParam("data", true)->value())){
+					theSettings.save();
+					request->send(200,"application/json","{}");
+					mqttRemoteControl.reset();
+				}else{
+  					request->send(500);
+					DBG_PRINTF("json format error\n");
+  					return;
+				}
+			}else{
+	  			request->send(400);
+				DBG_PRINTF("no data in post\n");
+  			}
+
+		}else if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
 			if(request->hasParam("cfg"))
 				request->send(200,"application/json",theSettings.jsonSystemConfiguration());
 			else 
@@ -577,10 +598,14 @@ public:
 
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET){
-	 		if(request->url() == POLLING_PATH || request->url() == CONFIG_PATH || request->url() == TIME_PATH
-			 || request->url() == RESETWIFI_PATH  /*|| request->url() == CONTROL_CC_PATH*/
+	 		if( request->url() == CONFIG_PATH || request->url() == TIME_PATH
+			#if UseServerSideEvent == true
+			|| request->url() == POLLING_PATH 
+			#endif
+			 || request->url() == RESETWIFI_PATH  
 			 || request->url() == GETSTATUS_PATH
 			 || request->url() == BEER_PROFILE_PATH
+			 || request->url() == MQTT_PATH
 	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
 	 		#endif
@@ -611,6 +636,7 @@ public:
 	 			|| request->url() ==  FPUTS_PATH || request->url() == FLIST_PATH
 	 			|| request->url() == TIME_PATH
 				|| request->url() == BEER_PROFILE_PATH
+				|| request->url() == MQTT_PATH
 	 			#ifdef ENABLE_LOGGING
 	 			|| request->url() == LOGGING_PATH
 	 			#endif

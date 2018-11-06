@@ -719,8 +719,8 @@ String BPLSettings::jsonParasiteTempControlSettings(bool enabled){
 #define CapPathKey "cap"
 
 String BPLSettings::jsonMqttRemoteControlSettings(void){
-    const int BUFFER_SIZE = JSON_OBJECT_SIZE(10);
-    StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+    const int BUFFER_SIZE = JSON_OBJECT_SIZE(12);
+    DynamicJsonBuffer jsonBuffer(BUFFER_SIZE);
     JsonObject& root = jsonBuffer.createObject();
 
 	MqttRemoteControlSettings *settings=mqttRemoteControlSettings();
@@ -728,25 +728,19 @@ String BPLSettings::jsonMqttRemoteControlSettings(void){
 	root[EnableMqttKey] = settings->enabled;
 	root[ServerPort] =  settings->port;
 
-	if(settings->serverOffset){
-		root[ServerAddressKey] = settings->_strings + settings->serverOffset;
-	}
-
-	if(settings->usernameOffset){
-		root[MqttUsernameKey] = settings->_strings + settings->usernameOffset;
-	}
-
-	if(settings->passwordOffset){
-		root[MqttPasswordKey] = settings->_strings + settings->passwordOffset;
-	}
 
 	if(settings->modePathOffset){
-		root[ModePathKey] = settings->_strings + settings->modePathOffset;
+		char* modepath=(char*) (settings->_strings + settings->modePathOffset);
+		DBG_PRINTF("mode path:%s offset:%d\n",modepath, settings->modePathOffset);
+		root[ModePathKey] =modepath;
 	}
 
 	if(settings->settingTempPathOffset){
-		root[SettingTempPathkey] = settings->_strings + settings->settingTempPathOffset;
+		char* setpath=(char*) (settings->_strings + settings->settingTempPathOffset);
+		DBG_PRINTF("set path:%s offset:%d\n",setpath, settings->settingTempPathOffset);
+		root[SettingTempPathkey] = setpath;
 	}
+
 
 #if	EanbleParasiteTempControl
 	if(settings->ptcPathOffset){
@@ -759,8 +753,22 @@ String BPLSettings::jsonMqttRemoteControlSettings(void){
 		root[CapPathKey] = settings->_strings + settings->capControlPathOffset;
 	}
 #endif
+
+	if(settings->serverOffset){
+		root[ServerAddressKey] =(char*) (settings->_strings + settings->serverOffset);
+	}
+
+	if(settings->usernameOffset){
+		root[MqttUsernameKey] =(char*)(settings->_strings + settings->usernameOffset);
+	}
+
+	if(settings->passwordOffset){
+		root[MqttPasswordKey] =(char*) (settings->_strings + settings->passwordOffset);
+	}
+
     String output;
     root.printTo(output);
+	DBG_PRINTF("json:--\n%s\n--\n",output.c_str());
     return output;
 
 }
@@ -769,11 +777,20 @@ static char *copyIfExist(JsonObject& root,const char* key,uint16_t &offset,char*
 	if(root.containsKey(key)){
 		const char* str=root[key];
 		size_t length = strlen(str) +1;
-		if(ptr - base  +length > MqttSettingStringSpace ) return NULL;
+		if(length==1){
+			offset =0;
+			return ptr;
+		} 
 
+
+		if(ptr - base  +length > MqttSettingStringSpace ) return NULL;
 		strcpy(ptr,str);
 		offset = (uint16_t)(ptr - base);
-		ptr += length;
+
+		size_t rto4= (length & 0x3)? ((length & ~0x3) + 4):length;
+		ptr += rto4;
+
+		DBG_PRINTF("mqtt set:%s offset:%d, length:%d, ptr inc:%d\n",key,offset,length,rto4);
 	}
 
 	return ptr;
@@ -796,7 +813,7 @@ bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 	settings->port=root[ServerPort];
 
 	char *base=(char*) settings->_strings;
-	char *ptr=base +1;
+	char *ptr=base +4;
 
 	if(!(ptr=copyIfExist(root,ServerAddressKey,settings->serverOffset,ptr,base))) return false;
 	if(!(ptr=copyIfExist(root,MqttUsernameKey,settings->usernameOffset,ptr,base))) return false;
