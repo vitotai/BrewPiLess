@@ -387,7 +387,6 @@ public:
 	        return request->requestAuthentication();
 
 			if(request->hasParam("data", true)){
-
 				if(theSettings.dejsonSystemConfiguration(request->getParam("data", true)->value())){
 					theSettings.save();
 					request->send(200,"application/json","{}");
@@ -1259,6 +1258,7 @@ public:
 				syscfg->ip = ip;
 				syscfg->gw = gw;
 				syscfg->netmask = nm;
+				theSettings.save();
 			}else{
 				WiFiSetup.connect(ssid.c_str(),pass);
 				DBG_PRINTF("dynamic IP\n");

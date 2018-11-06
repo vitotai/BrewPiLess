@@ -112,85 +112,87 @@
         <%= config_wait_restart %>
     </div>
     <div id="inputform">
-        <form action="#" action="post">
-            <table>
-                <tr>
-                    <td>
-                        <%= config_lcd_auto_off %>
-                    </td>
-                    <td><input name="aoff" type="text" size="5" maxlength="5" class="nb">
-                        <%= config_seconds %>
-                    </td>
-                </tr>
+        <div id="sysconfig">
+            <form action="#" action="post">
+                <table>
+                    <tr>
+                        <td>
+                            <%= config_lcd_auto_off %>
+                        </td>
+                        <td><input name="aoff" type="text" size="5" maxlength="5" class="nb">
+                            <%= config_seconds %>
+                        </td>
+                    </tr>
 
-                <tr>
-                    <td>
-                        <%= config_title %>
-                    </td>
-                    <td><input name="title" type="text" size="12" maxlength="24"></td>
-                </tr>
-                <tr>
-                    <td>
-                        <%= config_host_network_name %>
-                    </td>
-                    <td><input name="name" type="text" size="12" maxlength="16"></td>
-                </tr>
-                <tr>
-                    <td>
-                        <%= config_http_port %>
-                    </td>
-                    <td><input name="port" type="text" size="5" maxlength="5"></td>
-                </tr>
-                <tr>
-                    <td>
-                        <%= config_username %>
-                    </td>
-                    <td><input name="user" type="text" size="12" maxlength="16" class="nb"></td>
-                </tr>
-                <tr>
-                    <td>
-                        <%= config_password %>
-                    </td>
-                    <td><input name="pass" type="password" size="12" maxlength="16" class="nb"></td>
-                </tr>
-                <tr>
-                    <td>
-                        <%= config_always_password %>
-                    </td>
-                    <td><input type="checkbox" name="protect"></td>
-                </tr>
-                <tr>
-                    <td>
-                        <%= config_network_mode %>
-                    </td>
-                    <td><select name="wifi" class="nb" onchange="modechange(this);">
+                    <tr>
+                        <td>
+                            <%= config_title %>
+                        </td>
+                        <td><input name="title" type="text" size="12" maxlength="24"></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <%= config_host_network_name %>
+                        </td>
+                        <td><input name="name" type="text" size="12" maxlength="16"></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <%= config_http_port %>
+                        </td>
+                        <td><input name="port" type="text" size="5" maxlength="5"></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <%= config_username %>
+                        </td>
+                        <td><input name="user" type="text" size="12" maxlength="16" class="nb"></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <%= config_password %>
+                        </td>
+                        <td><input name="pass" type="password" size="12" maxlength="16" class="nb"></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <%= config_always_password %>
+                        </td>
+                        <td><input type="checkbox" name="protect"></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <%= config_network_mode %>
+                        </td>
+                        <td><select name="wifi" class="nb" onchange="modechange(this);">
     <!--                        <option value="1"><%= config_station %></option> -->
                         <option value="2"><%= config_ap %></option>
                         <option value="3"><%= config_stationap %></option>
                     </select></td>
-                </tr>
-                <tr class="staconfig">
-                    <td class>
-                        <%= config_network %>
-                    </td>
-                    <td><button id="connnected-ssid" onclick="Net.show();return false;">...</button> </td>
-                </tr>
-                <tr class="staconfig">
-                    <td>
-                        <%= config_ip %>
-                    </td>
-                    <td><span id="sta-ip"></span> </td>
-                </tr>
+                    </tr>
+                    <tr class="staconfig">
+                        <td class>
+                            <%= config_network %>
+                        </td>
+                        <td><button id="connnected-ssid" onclick="Net.show();return false;">...</button> </td>
+                    </tr>
+                    <tr class="staconfig">
+                        <td>
+                            <%= config_ip %>
+                        </td>
+                        <td><span id="sta-ip"></span> </td>
+                    </tr>
 
-                <tr>
-                    <td>
-                        <%= config_save_change %>
-                    </td>
-                    <td><input type="submit" id="submitsave" name="submit"></input>
-                    </td>
-                </tr>
-            </table>
-        </form>
+                    <tr>
+                        <td>
+                            <%= config_save_change %>
+                        </td>
+                        <td><input type="submit" id="submitsave" name="submit"></input>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
     </div>
 
     <div id="networkselection" class="modal">

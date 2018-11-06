@@ -109,11 +109,11 @@ void BPLSettings::defaultSystemConfiguration(void){
 }
 
 bool BPLSettings::dejsonSystemConfiguration(String json){
-    char *buffer=strdup(json.c_str());
+//    char *buffer=strdup(json.c_str());
 
     const int BUFFER_SIZE = JSON_OBJECT_SIZE(15);
     StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
-	JsonObject& root = jsonBuffer.parseObject(buffer);
+	JsonObject& root = jsonBuffer.parseObject(json.c_str());
     
     SystemConfiguration *syscfg=&_data.syscfg;
 
@@ -128,11 +128,11 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
         syscfg->wifiMode = root[KeyWifi];
         syscfg->backlite = root[KeyLcdBackLight];
 
-        syscfg->ip = (uint32_t) scanIP(root[KeyIpAddress]);
-        syscfg->gw = (uint32_t) scanIP(root[KeyGateway]);
-        syscfg->netmask = (uint32_t) scanIP(root[KeyNetmask]);
+//        syscfg->ip = (uint32_t) scanIP(root[KeyIpAddress]);
+//        syscfg->gw = (uint32_t) scanIP(root[KeyGateway]);
+//        syscfg->netmask = (uint32_t) scanIP(root[KeyNetmask]);
     }
-    free(buffer);
+//    free(buffer);
 	return true;
 }
     // encod json
