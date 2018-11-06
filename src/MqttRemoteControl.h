@@ -14,7 +14,9 @@
 
 #define MaxSettingLength 31
 
+#define MaximumMqttConnectNumber 5
 #define ReconnectTimer 5000
+#define ReconnectTimerLong 600000
 
 #define CapStateOn 1
 #define CapStateOff 0
@@ -22,14 +24,16 @@
 
 #define PtcRemoteControlRange 3
 
+
 class MqttRemoteControl{
 protected:
     WiFiClient _espClient;
     PubSubClient _client;
-
     uint32_t _connectTime;
+    uint16_t _connectAttempt;
 
     bool _enabled;
+    bool _reconnecting;
     char _lvMode;
     char _lvSetting[MaxSettingLength+1];
 
@@ -66,10 +70,12 @@ protected:
 #if Auto_CAP
     void _onCapChange(char* payload,size_t len);
 #endif
-
+    void _loadConfig();
 public:
     MqttRemoteControl();
     bool begin();
+    void reset();
+
     bool disconnect();
 
     bool loop();

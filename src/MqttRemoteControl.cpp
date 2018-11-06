@@ -24,6 +24,17 @@ MqttRemoteControl::MqttRemoteControl(){
 }
 
 bool MqttRemoteControl::loop(){
+    if(_reconnecting){
+        DBG_PRINTF("MQTT:reconnecting..\n");
+        if(_client.connected()){
+            _client.disconnect();
+        }
+        // load
+        _loadConfig();
+        // reconnect aagin in next loop, if necessary
+        _reconnecting =false;
+    }
+
     if(! _enabled) return false;
 
     if(_client.connected()){
@@ -31,12 +42,20 @@ bool MqttRemoteControl::loop(){
     }else{
         // reconnect
         uint32_t now=millis();
-        if(now - _connectTime > ReconnectTimer){
+
+        if(( (_connectAttempt < MaximumMqttConnectNumber) && (now - _connectTime > ReconnectTimer))
+            || (now - _connectTime > ReconnectTimerLong)
+            ){
+                DBG_PRINTF("MQTT:reconnect..\n");
+
             _connectTime = now;
             if(_client.connect("BrewPiLess-12",_username,_password)){
+                _connectAttempt =0;
                 this->_onConnect();
+                 DBG_PRINTF("MQTT:connected..\n");
             }else{
                 DBG_PRINTF("MQTT:connect failed\n");
+                _connectAttempt ++;
             }
         }
     }
@@ -64,20 +83,22 @@ void MqttRemoteControl::_runSettingCommand(void){
     }
 }
 
-bool MqttRemoteControl::begin()
+void MqttRemoteControl::_loadConfig()
 {
     MqttRemoteControlSettings *settings=theSettings.mqttRemoteControlSettings();
 
     _enabled = settings->enabled;
     if(_enabled){
-        _serverAddress=settings->serverOffset? (char*)settings->_strings + settings->serverOffset:NULL;
         _serverPort = settings->port;
+
+        _serverAddress=settings->serverOffset? (char*)settings->_strings + settings->serverOffset:NULL;
 
         _username = settings->usernameOffset? (char*)settings->_strings + settings->usernameOffset:NULL;
         _password = settings->passwordOffset? (char*)settings->_strings + settings->passwordOffset:NULL;
 
         _modePath = settings->modePathOffset? (char*)settings->_strings + settings->modePathOffset:NULL;
         _setTempPath = settings->settingTempPathOffset? (char*)settings->_strings + settings->settingTempPathOffset:NULL;
+        
 #if EanbleParasiteTempControl
         _ptcPath = settings->ptcPathOffset? (char*)settings->_strings + settings->ptcPathOffset:NULL;
 #endif
@@ -86,15 +107,49 @@ bool MqttRemoteControl::begin()
         _capPath = settings->capControlPathOffset? (char*)settings->_strings + settings->capControlPathOffset:NULL;
 #endif
 
+
+        #if SerialDebug
+        DBG_PRINTF("MQTT load config:\n");
+        if(_serverAddress) DBG_PRINTF("server:%s\n",_serverAddress);
+        if(_username) DBG_PRINTF("username:%s\n",_username);
+        if(_password) DBG_PRINTF("_password:%s\n",_password);
+        if(_modePath) DBG_PRINTF("_modePath:%s\n",_modePath);
+        if(_setTempPath) DBG_PRINTF("_setTempPath:%s\n",_setTempPath);
+
+        #if EanbleParasiteTempControl
+
+        if(_ptcPath) DBG_PRINTF("_ptcPath:%s\n",_ptcPath);
+        #endif
+
+        #if Auto_CAP
+        if(_capPath) DBG_PRINTF("_capPath:%s\n",_capPath);
+        #endif
+        
+        #endif
+
+
+
         _client.setServer(_serverAddress, _serverPort);
         _client.setCallback([this](char* topic, uint8_t* payload, unsigned int len){
             this->_onMessage(topic,payload,len);
         });
     }
-
-    return false;
-
 }
+
+bool MqttRemoteControl::begin()
+{
+    _loadConfig();
+    _connectAttempt=0;
+    _reconnecting= false;
+    return false;
+}
+
+void MqttRemoteControl::reset()
+{
+    _connectAttempt=0;
+    _reconnecting = true;
+}
+
 
 void MqttRemoteControl::_onConnect(void){
     // subscribe
