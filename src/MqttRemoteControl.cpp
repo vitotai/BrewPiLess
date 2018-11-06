@@ -19,8 +19,16 @@ MqttRemoteControl::MqttRemoteControl(){
     _enabled =false;
     _connectTime =0;
 
-    _client.setClient(_espClient);
-
+    _client.onConnect([this](bool){
+        this->_onConnect();
+    });
+    _client.onDisconnect([this](AsyncMqttClientDisconnectReason reason){
+        DBG_PRINTF("\n***MQTT:disc:%d\n",reason);
+        this->_onDisconnect();
+    });
+    _client.onMessage([this](char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total){
+        this->_onMessage(topic,(uint8_t*)payload,len);
+    });
 }
 
 bool MqttRemoteControl::loop(){
@@ -37,26 +45,17 @@ bool MqttRemoteControl::loop(){
 
     if(! _enabled) return false;
 
-    if(_client.connected()){
-        _client.loop();
-    }else{
+    if(! _client.connected()){
         // reconnect
         uint32_t now=millis();
 
         if(( (_connectAttempt < MaximumMqttConnectNumber) && (now - _connectTime > ReconnectTimer))
             || (now - _connectTime > ReconnectTimerLong)
             ){
-                DBG_PRINTF("MQTT:reconnect..\n");
+            DBG_PRINTF("MQTT:reconnect..\n");
 
             _connectTime = now;
-            if(_client.connect("BrewPiLess-12",_username,_password)){
-                _connectAttempt =0;
-                this->_onConnect();
-                 DBG_PRINTF("MQTT:connected..\n");
-            }else{
-                DBG_PRINTF("MQTT:connect failed\n");
-                _connectAttempt ++;
-            }
+            _client.connect();
         }
     }
     return true;
@@ -88,6 +87,7 @@ void MqttRemoteControl::_loadConfig()
     MqttRemoteControlSettings *settings=theSettings.mqttRemoteControlSettings();
 
     _enabled = settings->enabled;
+
     if(_enabled){
         _serverPort = settings->port;
 
@@ -123,16 +123,11 @@ void MqttRemoteControl::_loadConfig()
 
         #if Auto_CAP
         if(_capPath) DBG_PRINTF("_capPath:%s\n",_capPath);
+        #endif        
         #endif
-        
-        #endif
-
-
 
         _client.setServer(_serverAddress, _serverPort);
-        _client.setCallback([this](char* topic, uint8_t* payload, unsigned int len){
-            this->_onMessage(topic,payload,len);
-        });
+        _client.setCredentials(_username,_password);
     }
 }
 
@@ -152,6 +147,9 @@ void MqttRemoteControl::reset()
 
 
 void MqttRemoteControl::_onConnect(void){
+    _connectAttempt =0;
+    DBG_PRINTF("MQTT:connected..\n");
+
     // subscribe
     if(_modePath){
         if(_client.subscribe(_modePath, 1)){
@@ -194,10 +192,7 @@ void MqttRemoteControl::_onConnect(void){
 
 void MqttRemoteControl::_onDisconnect(void){
      DBG_PRINTF("\nMQTT:Disconnected.\n");
-
-    if (WiFi.isConnected()) {
-     //   mqttReconnectTimer.once(2, connectToMqtt);
-    }
+    _connectAttempt ++;
 }
 
 

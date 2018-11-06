@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 
-#include <PubSubClient.h>
+#include <AsyncMqttClient.h>
 
 #include "Config.h"
 
@@ -27,8 +27,7 @@
 
 class MqttRemoteControl{
 protected:
-    WiFiClient _espClient;
-    PubSubClient _client;
+    AsyncMqttClient _client;
     uint32_t _connectTime;
     uint16_t _connectAttempt;
 
