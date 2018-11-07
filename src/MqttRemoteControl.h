@@ -15,7 +15,7 @@
 #define MaxSettingLength 31
 
 #define MaximumMqttConnectNumber 5
-#define ReconnectTimer 5000
+#define ReconnectTimer 10000
 #define ReconnectTimerLong 600000
 
 #define CapStateOn 1
