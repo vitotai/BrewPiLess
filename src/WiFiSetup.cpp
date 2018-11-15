@@ -6,6 +6,8 @@
 
 WiFiSetupClass WiFiSetup;
 
+#define TimeForRescueAPMode 60000
+
 #if SerialDebug == true
 #define DebugOut(a) DebugPort.print(a)
 #define DBG_PRINTF(...) DebugPort.printf(__VA_ARGS__)
@@ -22,11 +24,14 @@ WiFiSetupClass WiFiSetup;
 #define wifi_info(a)
 #endif
 
-void WiFiSetupClass::staConfig(bool apMode,IPAddress ip,IPAddress gw, IPAddress nm){
-	_settingApMode = apMode;
+void WiFiSetupClass::staConfig(IPAddress ip,IPAddress gw, IPAddress nm){
 	_ip=ip;
 	_gw=gw;
 	_nm=nm;
+}
+
+void WiFiSetupClass::setMode(WiFiMode mode){
+	_mode = mode;
 }
 
 void WiFiSetupClass::enterApMode(void)
@@ -44,30 +49,36 @@ void WiFiSetupClass::setupApService(void)
 }
 
 
-void WiFiSetupClass::begin(char const *ssid,const char *passwd)
+void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 {
 	wifi_info("begin:");
-
+	_mode=mode;
 	_apName=ssid;
 	_apPassword=passwd;
 	WiFi.setAutoConnect(_autoReconnect);
-	if( _settingApMode){
+	WiFi.mode(_mode);
+
+	if( _mode == WIFI_AP){
 		DBG_PRINTF("\nAP mode\n");
-		WiFi.mode(WIFI_AP);
 		_apMode=true;
+		WiFi.softAP(_apName, _apPassword);
+
 	}else{
-		DBG_PRINTF("\nAP_STA mode\n");
-		WiFi.mode(WIFI_AP_STA);
+		if(_mode == WIFI_AP_STA){
+			DBG_PRINTF("\nAP_STA mode\n");
+			WiFi.softAP(_apName, _apPassword);
+		}else{
+			DBG_PRINTF("\nSTA mode\n");
+		}
 		_apMode=false;
 		if(_ip !=INADDR_NONE){
 			WiFi.config(_ip,_gw,_nm);
 		}
 		WiFi.begin();
+		_time=millis();
 	}
-	WiFi.softAP(_apName, _apPassword);
 	setupApService();
 	DBG_PRINTF("\ncreate network:%s pass:%s\n",ssid, passwd);
-	
 }
 
 bool WiFiSetupClass::connect(char const *ssid,const char *passwd,IPAddress ip,IPAddress gw, IPAddress nm){
@@ -78,22 +89,17 @@ bool WiFiSetupClass::connect(char const *ssid,const char *passwd,IPAddress ip,IP
 	if(_targetPass) free((void*)_targetPass);
 	_targetPass=(passwd)? strdup(passwd):NULL;
 
-	//if((ip !=INADDR_NONE) && (gw!=INADDR_NONE) & (nm!=INADDR_NONE)){
-		_ip=ip;
-		_gw=gw;
-		_nm=nm;
-	//}
+	_ip=ip;
+	_gw=gw;
+	_nm=nm;
 
 	_wifiState = WiFiStateChangeConnectPending;
-	if(_apMode){
-		_apMode =false;
-	}
+	_apMode =false;
 	return true;
 }
 
 bool WiFiSetupClass::disconnect(void){
 	DBG_PRINTF("Disconnect Request\n");
-	_settingApMode =true;
 	_wifiState = WiFiStateDisconnectPending;
 	return true;
 }
@@ -110,9 +116,9 @@ void WiFiSetupClass::onConnected(){
 
 String WiFiSetupClass::status(void){
 	String ret;
-	ret  = String("{\"ap\":") + String(_settingApMode? 1:0) + String(",\"con\":") + String((WiFi.status() == WL_CONNECTED)? 1:0);
+	ret  = String("{\"md\":") + String(_mode) + String(",\"con\":") + String((WiFi.status() == WL_CONNECTED)? 1:0);
 
-	if(!_settingApMode){
+	if(_mode != WIFI_AP){
 		ret += String(",\"ssid\":\"") + WiFi.SSID() 
 			 + String("\",\"ip\":\"") + WiFi.localIP().toString()
 			 + String("\",\"gw\":\"") + WiFi.gatewayIP().toString()
@@ -130,22 +136,20 @@ bool WiFiSetupClass::stayConnected(void)
 	}else{
 		if(_wifiState==WiFiStateChangeConnectPending){
 			DBG_PRINTF("Change Connect\n");
-			if(WiFi.getMode() == WIFI_AP){
-				WiFi.mode(WIFI_AP_STA);
-			}
 			//if(WiFi.status() == WL_CONNECTED){
 			WiFi.disconnect();
+			WiFi.mode(_mode);
 			//DBG_PRINTF("Disconnect\n");
 			//}
 			if(_ip != INADDR_NONE){
 				WiFi.config(_ip,_gw,_nm);
 			}
 			WiFi.begin(_targetSSID,_targetPass);
-			_time=millis();
 			_reconnect =0;
 			_wifiState = WiFiStateConnecting;
 
 			wifi_info("**try:");
+			_time=millis();
 
 		}else if(_wifiState==WiFiStateDisconnectPending){
 			WiFi.disconnect();
@@ -163,12 +167,21 @@ bool WiFiSetupClass::stayConnected(void)
 
 				_time=millis();
 				DBG_PRINTF("Lost Network. auto reconnect %d\n",_autoReconnect);
-				_wifiState = WiFiStateDisconnected;
+				_wifiState = WiFiStateConnectionRecovering;
 				return true;
+			}else if (_wifiState==WiFiStateConnectionRecovering){
+				// if sta mode, turn on softAP
+				if(_time > TimeForRescueAPMode){
+					_wifiState =WiFiStateDisconnected;
+					if(_mode == WIFI_STA){
+						// create a wifi
+						WiFi.mode(WIFI_AP_STA);
+						WiFi.softAP(_apName, _apPassword);						
+					}
+				}
 			}
-			// WiFiStateDisconnected else do nothing.
  		}
- 		else
+ 		else // connected
  		{
  			byte oldState=_wifiState;
  			_wifiState=WiFiStateConnected;

@@ -393,6 +393,7 @@ public:
 					display.setAutoOffPeriod(theSettings.systemConfiguration()->backlite);
 					if(theSettings.systemConfiguration()->wifiMode == WIFI_AP
 						&& WiFiSetup.isConnected()){
+							WiFiSetup.setMode(theSettings.systemConfiguration()->wifiMode);
 							WiFiSetup.disconnect();
 						}
 					if(!request->hasParam("nb")){
@@ -1218,8 +1219,10 @@ public:
 	}
 
 	void handleNetworkDisconnect(AsyncWebServerRequest *request){
-		WiFiSetup.disconnect();
 		theSettings.systemConfiguration()->wifiMode=WIFI_AP;
+		WiFiSetup.setMode(WIFI_AP);
+		WiFiSetup.disconnect();
+
 		request->send(200,"application/json","{}");
 	}
 
@@ -1491,9 +1494,9 @@ void setup(void){
 	//1. Start WiFi
 	DBG_PRINTF("Starting WiFi...\n");
 	WiFiMode wifiMode= (WiFiMode) syscfg->wifiMode;
-	WiFiSetup.staConfig(wifiMode == WIFI_AP,IPAddress(syscfg->ip),IPAddress(syscfg->gw),IPAddress(syscfg->netmask));
+	WiFiSetup.staConfig(IPAddress(syscfg->ip),IPAddress(syscfg->gw),IPAddress(syscfg->netmask));
 	WiFiSetup.onEvent(wiFiEvent);
-	WiFiSetup.begin(syscfg->hostnetworkname,syscfg->password);
+	WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password);
 
   	DBG_PRINTF("WiFi Done!\n");
 
