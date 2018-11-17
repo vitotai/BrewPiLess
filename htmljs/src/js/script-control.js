@@ -837,11 +837,11 @@ function ccparameter(s) {
 }
 
 function rcvBeerProfile(p) {
+    closeDlgLoading();
     updateTempUnit(p.u); // using profile temp before we get from controller
     BrewPiSetting.tempUnit = p.u;
     profileEditor.initProfile(p);
     ControlChart.init("tc_chart", profileEditor.chartdata(), p.u);
-    closeDlgLoading();
 }
 
 function initctrl_C(next) {
@@ -871,8 +871,8 @@ function initctrl() {
         },
         error: function(e) {
             //console.log("error");
-            communicationError();
             closeDlgLoading();
+            communicationError();
         },
         handlers: {
             A: function(c) {

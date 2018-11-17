@@ -697,7 +697,7 @@
         BWF.init({
             //            reconnect: false,
             onconnect: function() {
-                BWF.send("cl");
+                BWF.send("c");
                 if (window.lcdTimer) clearInterval(window.lcdTimer);
                 window.lcdTimer = setInterval(function() {
                     if (!BWF.gotMsg) {

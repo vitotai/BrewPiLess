@@ -387,15 +387,17 @@ public:
 	        return request->requestAuthentication();
 
 			if(request->hasParam("data", true)){
+				uint8_t oldMode = theSettings.systemConfiguration()->wifiMode;
+
 				if(theSettings.dejsonSystemConfiguration(request->getParam("data", true)->value())){
 					theSettings.save();
 					request->send(200,"application/json","{}");
 					display.setAutoOffPeriod(theSettings.systemConfiguration()->backlite);
-					if(theSettings.systemConfiguration()->wifiMode == WIFI_AP
-						&& WiFiSetup.isConnected()){
-							WiFiSetup.setMode(theSettings.systemConfiguration()->wifiMode);
-							WiFiSetup.disconnect();
-						}
+
+					if(oldMode !=  theSettings.systemConfiguration()->wifiMode){
+						WiFiSetup.setMode((WiFiMode)theSettings.systemConfiguration()->wifiMode);
+					}
+
 					if(!request->hasParam("nb")){
 						requestRestart(false);
 					}
@@ -1221,7 +1223,6 @@ public:
 	void handleNetworkDisconnect(AsyncWebServerRequest *request){
 		theSettings.systemConfiguration()->wifiMode=WIFI_AP;
 		WiFiSetup.setMode(WIFI_AP);
-		WiFiSetup.disconnect();
 
 		request->send(200,"application/json","{}");
 	}
@@ -1229,19 +1230,14 @@ public:
 	
 	void handleNetworkConnect(AsyncWebServerRequest *request){
 
-		if(!request->hasParam("nw",true) && !request->hasParam("ap",true)){
+		if(!request->hasParam("nw",true)){
 			request->send(400);
 			return;
 		}
 		
 		SystemConfiguration *syscfg=theSettings.systemConfiguration();
 		
-		if(request->hasParam("ap",true)){
-			// AP only mode
-			WiFiSetup.disconnect();
-			// save to config
-			syscfg->wifiMode  = WIFI_AP;
-		}else{
+
 			String ssid=request->getParam("nw",true)->value();
 			const char *pass=NULL;
 			if(request->hasParam("pass",true)){
@@ -1266,9 +1262,7 @@ public:
 				WiFiSetup.connect(ssid.c_str(),pass);
 				DBG_PRINTF("dynamic IP\n");
 			}
-			//MDNS.notifyAPChange();
-			syscfg->wifiMode  = WIFI_AP_STA;
-		}
+			//MDNS.notifyAPChange();		
 		theSettings.save();
 
 		request->send(200,"application/json","{}");

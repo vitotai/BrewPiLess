@@ -3,19 +3,6 @@ function formatIP(ip) {
     return ip;
 }
 
-function showStaConfig() {
-    var units = document.querySelectorAll(".staconfig");
-    for (var i = 0; i < units.length; i++) {
-        units[i].style.display = "";
-    }
-}
-
-function hideStaConfig() {
-    var units = document.querySelectorAll(".staconfig");
-    for (var i = 0; i < units.length; i++) {
-        units[i].style.display = "none";
-    }
-}
 
 function loadSetting() {
     s_ajax({
@@ -35,10 +22,7 @@ function loadSetting() {
                     // wifi mode
                     div = Q("select[name=" + key + "]");
                     if (div) {
-                        var v = (j[key] == 1) ? 3 : j[key];
-                        div.value = v;
-                        if (v == 3) showStaConfig();
-                        else hideStaConfig();
+                        div.value = j[key];
                     }
                 }
             });
@@ -119,10 +103,7 @@ function validIP(t) {
     return value;
 }
 
-function modechange(sel) {
-    if (sel.value == 2) hideStaConfig();
-    else showStaConfig();
-}
+function modechange(sel) {}
 
 var Net = {
     select: function(l) {

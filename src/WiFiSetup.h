@@ -4,7 +4,7 @@
 #include <DNSServer.h>
 
 #define WiFiStateConnected 0
-#define WiFiStateWaitToConnect 1
+#define WiFiStateModeChangePending 1
 #define WiFiStateConnecting 2
 #define WiFiStateDisconnected 3
 #define WiFiStateDisconnectPending 4
@@ -73,7 +73,7 @@ private:
 	IPAddress _nm;
 
 	void setupApService(void);
-	void enterApMode();
+	void enterBackupApMode();
 	void onConnected();
 };
 

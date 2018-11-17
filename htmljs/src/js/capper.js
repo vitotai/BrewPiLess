@@ -4,14 +4,18 @@ function TabPane(modes) {
 
     function dselect(m) {
         var d = document.getElementById(m + "-m");
-        var nc = document.getElementById(m + "-m").className.replace(/\snav-selected/, '');
+        //        var nc = document.getElementById(m + "-m").className.replace(/\snav-selected/, '');
+        var nc = d.className.replace(/\snav-selected/, '');
         d.className = nc;
 
         document.getElementById(m + "-s").style.display = "none";
     }
 
     function select(m) {
-        document.getElementById(m + "-m").className += ' nav-selected';
+        var d = document.getElementById(m + "-m");
+        if (d.className.indexOf("nav-selected") < 0)
+            d.className += ' nav-selected';
+
         document.getElementById(m + "-s").style.display = "block";
         t.cmode = m;
     }

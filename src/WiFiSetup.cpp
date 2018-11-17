@@ -31,13 +31,17 @@ void WiFiSetupClass::staConfig(IPAddress ip,IPAddress gw, IPAddress nm){
 }
 
 void WiFiSetupClass::setMode(WiFiMode mode){
+	DBG_PRINTF("WiFi mode from:%d to %d\n",_mode,_mode);	
+
+	if(mode == _mode) return;
 	_mode = mode;
+	_wifiState = WiFiStateModeChangePending;
 }
 
-void WiFiSetupClass::enterApMode(void)
+void WiFiSetupClass::enterBackupApMode(void)
 {
-	WiFi.mode(WIFI_AP);
-	_apMode=true;
+	WiFi.mode(WIFI_AP_STA);
+	WiFi.softAP(_apName, _apPassword);						
 }
 
 void WiFiSetupClass::setupApService(void)
@@ -52,24 +56,24 @@ void WiFiSetupClass::setupApService(void)
 void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 {
 	wifi_info("begin:");
+	DBG_PRINTF("\nAP mode:%d\n",mode);
+
 	_mode=mode;
 	_apName=ssid;
 	_apPassword=passwd;
+	
+	// let the underlined library do the reconnection jobs.
 	WiFi.setAutoConnect(_autoReconnect);
-	WiFi.mode(_mode);
 
-	if( _mode == WIFI_AP){
-		DBG_PRINTF("\nAP mode\n");
+	WiFi.mode(_mode);
+	// start AP
+	if( _mode == WIFI_AP || _mode == WIFI_AP_STA){
 		_apMode=true;
 		WiFi.softAP(_apName, _apPassword);
+		setupApService();
+	}
 
-	}else{
-		if(_mode == WIFI_AP_STA){
-			DBG_PRINTF("\nAP_STA mode\n");
-			WiFi.softAP(_apName, _apPassword);
-		}else{
-			DBG_PRINTF("\nSTA mode\n");
-		}
+	if( _mode == WIFI_STA || _mode == WIFI_AP_STA){
 		_apMode=false;
 		if(_ip !=INADDR_NONE){
 			WiFi.config(_ip,_gw,_nm);
@@ -77,7 +81,6 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 		WiFi.begin();
 		_time=millis();
 	}
-	setupApService();
 	DBG_PRINTF("\ncreate network:%s pass:%s\n",ssid, passwd);
 }
 
@@ -138,7 +141,6 @@ bool WiFiSetupClass::stayConnected(void)
 			DBG_PRINTF("Change Connect\n");
 			//if(WiFi.status() == WL_CONNECTED){
 			WiFi.disconnect();
-			WiFi.mode(_mode);
 			//DBG_PRINTF("Disconnect\n");
 			//}
 			if(_ip != INADDR_NONE){
@@ -153,13 +155,44 @@ bool WiFiSetupClass::stayConnected(void)
 
 		}else if(_wifiState==WiFiStateDisconnectPending){
 			WiFi.disconnect();
-			WiFi.mode(WIFI_OFF);
 			DBG_PRINTF("Enter AP Mode\n");
     		_apMode=true;
-			WiFi.mode(WIFI_AP);	
 			_wifiState =WiFiStateDisconnected;
 			return true;
-			
+		}else if(_wifiState==WiFiStateModeChangePending){
+			WiFiMode mode= WiFi.getMode();
+
+			if(mode == WIFI_AP_STA){
+				if( _mode == WIFI_AP){
+					//WiFi.disconnect();
+					_wifiState =WiFiStateDisconnected;
+				}else if (_mode == WIFI_STA){
+				}
+				WiFi.mode(_mode);
+
+			}else if(mode == WIFI_STA){
+				if( _mode == WIFI_AP_STA){
+					WiFi.mode(_mode);
+					WiFi.softAP(_apName, _apPassword);
+				}else if (_mode == WIFI_AP){
+					//WiFi.disconnect();
+					_wifiState =WiFiStateDisconnected;
+					WiFi.mode(_mode);
+				}
+
+			}else if(mode == WIFI_AP){
+				if(_mode == WIFI_AP_STA) WiFi.mode(_mode);
+				WiFi.begin();
+				_wifiState =WiFiStateConnectionRecovering;
+				_time=millis();
+
+				if(_mode == WIFI_STA){
+					if(WiFi.SSID() == NULL || WiFi.SSID() == "")
+						WiFi.mode(WIFI_AP_STA);
+					// just keep WIFI_AP_Mode in case Network isn't specified
+				}
+			}
+
 		}else if(WiFi.status() != WL_CONNECTED){
  			if(_wifiState==WiFiStateConnected)
  			{
@@ -175,8 +208,7 @@ bool WiFiSetupClass::stayConnected(void)
 					_wifiState =WiFiStateDisconnected;
 					if(_mode == WIFI_STA){
 						// create a wifi
-						WiFi.mode(WIFI_AP_STA);
-						WiFi.softAP(_apName, _apPassword);						
+						enterBackupApMode();
 					}
 				}
 			}
@@ -187,6 +219,9 @@ bool WiFiSetupClass::stayConnected(void)
  			_wifiState=WiFiStateConnected;
  			_reconnect=0;
  			if(oldState != _wifiState){
+				if(WiFi.getMode() != _mode){
+					WiFi.mode(_mode);
+				}
 				onConnected();
 				return true;
 			}
