@@ -46,6 +46,11 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * v3.4
+    * Add back STATAION mode only.
+    * fixing Cap control tab display bug.
+    * fixing blocking "Communication to BPL" dialog under AP mode
+
  * v3.3
     * LCD information push from server instead of request/response.
     * Replace ServerSideEvent by WebSocket. 
@@ -53,6 +58,7 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
 
  * v3.2
     * Revise remote logging settings. Simpler interface and special process for ubidots.com.
+    * Update to Arduino/ESP8266 framework 1.8.0
 
  * v3.1
     * Fix beer profile which uses gravity as conditions
