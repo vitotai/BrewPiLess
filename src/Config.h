@@ -402,6 +402,9 @@
 #define EanbleParasiteTempControl 0
 #endif
 
+#ifndef SupportPressureTransducer
+#define SupportPressureTransducer true
+#endif
 /**************************************************************************************/
 /*  Configuration: 																	  */
 /*  Only one setting: the serial used to connect to.                                  */

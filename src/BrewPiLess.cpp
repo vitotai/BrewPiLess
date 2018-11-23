@@ -71,6 +71,11 @@ extern "C" {
 #if EanbleParasiteTempControl
 #include "ParasiteTempController.h"
 #endif
+
+#if SupportPressureTransducer
+#include "PressureMonitor.h"
+#endif
+
 //WebSocket seems to be unstable, at least on iPhone.
 //Go back to ServerSide Event.
 #define UseWebSocket true
@@ -137,6 +142,9 @@ extern "C" {
 #define WIFI_DISC_PATH "/wifidisc"
 
 #define MQTT_PATH "/mqtt"
+#if SupportPressureTransducer
+#define PRESSURE_PATH "/psi"
+#endif
 
 const char *public_list[]={
 "/bwf.js",
@@ -530,6 +538,10 @@ public:
 	 	    if(!request->authenticate(syscfg->username, syscfg->password))
 	        return request->requestAuthentication();
 			// auto cap.
+			if(request->hasParam("psi")){
+				theSettings.pressureMonitorSettings()->psi=request->getParam("psi")->value().toInt();
+				DBG_PRINTF("set pressure:%d",theSettings.pressureMonitorSettings()->psi);
+			}
 			bool response=true;
 			if(request->hasParam("cap")){
 				AsyncWebParameter* value = request->getParam("cap");
@@ -550,6 +562,34 @@ public:
 			}
 			if(response) request->send(200,"application/json","{}");
 			capStatusReport();
+		}
+		#endif
+		#if SupportPressureTransducer
+		else if(request->url() == PRESSURE_PATH){
+	 	    if(!request->authenticate(syscfg->username, syscfg->password))
+	        return request->requestAuthentication();
+
+			if(request->method() == HTTP_GET){
+				if(request->hasParam("r")){
+					int reading=PressureMonitor.currentAdcReading();
+					request->send(200,"application/json",String("{\"a0\":")+String(reading)+String("}"));
+				}else{
+					request->send(200,"application/json",theSettings.jsonPressureMonitorSettings());
+				}
+			}else{
+				// post
+				if(request->hasParam("data",true)){
+					if(theSettings.dejsonPressureMonitorSettings(request->getParam("data",true)->value())){
+						theSettings.save();
+						request->send(200,"application/json","{}");
+					}else
+						DBG_PRINTF("invalid Json\n");
+						request->send(402);
+				}else{
+					DBG_PRINTF("no data\n");
+					request->send(401);
+				}
+			}
 		}
 		#endif
 		else if(request->url() == BEER_PROFILE_PATH){
@@ -615,6 +655,9 @@ public:
 			#if AUTO_CAP
 			 || request->url() == CAPPER_PATH
 			#endif
+			#if SupportPressureTransducer
+			|| request->url() == PRESSURE_PATH
+			#endif
 	 		){
 	 			return true;
 			}else{
@@ -640,10 +683,12 @@ public:
 	 			#ifdef ENABLE_LOGGING
 	 			|| request->url() == LOGGING_PATH
 	 			#endif
-			 #if EanbleParasiteTempControl
-			 || request->url() == ParasiteTempControlPath
-			 #endif
-
+				#if EanbleParasiteTempControl
+			 	|| request->url() == ParasiteTempControlPath
+			 	#endif
+				#if SupportPressureTransducer
+				|| request->url() == PRESSURE_PATH
+				#endif
 	 			)
 	 			return true;
 		}
@@ -696,7 +741,15 @@ String capControlStatus(void)
 		capstate += String(",\"g\":") + String(autoCapControl.targetGravity(),3);
 	}else if (mode ==AutoCapModeTime){
 		capstate += String(",\"t\":") + String(autoCapControl.targetTime());
-	}	
+	}
+
+#if SupportPressureTransducer
+	PressureMonitorSettings* ps=theSettings.pressureMonitorSettings();
+	if(ps->mode == PMModeControl){
+		capstate += String(",\"pm\":2,\"psi\":") + String(ps->psi);
+	}
+#endif
+
 	return capstate;
 } 
 void stringAvailable(const char*);
@@ -727,11 +780,25 @@ void greeting(std::function<void(const char*)> sendFunc)
 	SystemConfiguration *syscfg= theSettings.systemConfiguration();
 #if AUTO_CAP
 	String capstate= capControlStatus();
+
+#if EanbleParasiteTempControl
+	
+	String ptcstate= parasiteTempController.getSettings();
+
+	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
+				\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s},\"ptcs\":%s}"
+		,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
+		TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
+		logname, capstate.c_str(),ptcstate.c_str());
+
+
+#else
 	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
 				\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s}}"
 		,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
 		TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
 		logname, capstate.c_str());
+#endif
 	
 #else
 	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld, \"log\":\"%s\"}"
@@ -873,6 +940,28 @@ void reportRssi(void)
 #if EanbleParasiteTempControl
 	char ptcmode=parasiteTempController.getMode();
 	
+	#if SupportPressureTransducer
+		int pmmode=PressureMonitor.mode();
+		int psi = (int) PressureMonitor.currentPsi();
+		
+		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d,\
+			\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\",\"pm\":%d,\"psi\":%d}",
+				WiFi.RSSI(),ptcmode,parasiteTempController.getTimeElapsed(),
+				parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound(),
+			state,
+			mode,
+			(int)(beerTemp*100),
+			(int)(beerSet*100),
+			(int)(fridgeTemp*100),
+			(int)(fridgeSet*100),
+			(int)(roomTemp*100),
+			statusLine,
+			unit,
+			pmmode,
+			psi
+			);
+
+	#else
 	sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d,\
 		\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\"}",
 			WiFi.RSSI(),ptcmode,parasiteTempController.getTimeElapsed(),
@@ -888,7 +977,7 @@ void reportRssi(void)
 		unit
 
 			);
-
+	#endif
 	stringAvailable(buf);
 #else
 	sprintf(buf,"A:{\"rssi\":%d,\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\"}",
@@ -1689,6 +1778,10 @@ void loop(void){
 	if(autoCapControl.autoCapOn(now,externalData.gravity(true))){
 		capStatusReport();
 	}
+	#endif
+	
+	#if SupportPressureTransducer
+	PressureMonitor.loop();
 	#endif
 
 	#if GreetingInMainLoop

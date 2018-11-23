@@ -11,16 +11,25 @@
 #define AutoCapModeTime 3
 #define AutoCapModeGravity 4
 
+
+#define CapStatusInactive 0
+#define CapStatusActive  1
+#define CapStatusUnknown 2
+typedef uint8_t CapStatus;
+
 class AutoCapControl
 {
 public:
 
-    AutoCapControl(void){}
-
-    bool isCapOn(void){ return AutoCapControl::capper->isActive();}
-    bool autoCapOn(uint32_t current, float gravity);
+    AutoCapControl(void):_capStatus(CapStatusUnknown){}
 
     void begin(void);
+
+    bool isCapOn(void);
+    bool isPhysicalCapOn(void);
+    void setPhysicalCapOn(bool on);
+
+    bool autoCapOn(uint32_t current, float gravity);
     void capManualSet(bool capped);
     void capAtTime(uint32_t now);
     void catOnGravity(float sg);
@@ -30,8 +39,12 @@ public:
     uint8_t mode(void){return _settings->autoCapMode;}
 
     static Actuator* capper;
+
 private:
     AutoCapSettings *_settings;
+    CapStatus _capStatus;
+
+    void setCapOn(bool on);
 
     void saveConfig(void);
 };
