@@ -28,6 +28,14 @@ void BPLSettings::load()
 	}
 	f.read((uint8_t*)&_data,sizeof(_data));
 	f.close();
+	// check invalid value, and correct
+	SystemConfiguration *cfg=  systemConfiguration();
+	if( *( cfg->hostnetworkname) == '\0'
+		|| cfg->wifiMode ==0){
+			setDefault();
+			DBG_PRINTF("invalid system configuration!\n");
+	}
+		
 }
 
 void BPLSettings::save()
@@ -54,7 +62,10 @@ void BPLSettings::setDefault(void)
     defaultLogFileIndexes();
     defaultRemoteLogging();
     defaultAutoCapSettings();
+
+#if EanbleParasiteTempControl
     defaultParasiteTempControlSettings();
+#endif
 }
 
 void BPLSettings::defaultTimeInformation(void){}
@@ -101,7 +112,7 @@ void BPLSettings::defaultSystemConfiguration(void){
 
     syscfg->port = 80;
     syscfg->passwordLcd = false;
-    syscfg->wifiMode = WIFI_STA;
+    syscfg->wifiMode = WIFI_AP_STA;
     syscfg->backlite = 0;
     syscfg->ip = (uint32_t) IPAddress(0,0,0,0);
     syscfg->gw = (uint32_t) IPAddress(0,0,0,0);
@@ -643,6 +654,7 @@ String BPLSettings::jsonRemoteLogging(void)
 
 //***************************************************************
 // parasite control
+#if EanbleParasiteTempControl
 #define EnableKey "enabled"
 #define SetTempKey "temp"
 #define TrigerTempKey "stemp"
@@ -703,3 +715,174 @@ String BPLSettings::jsonParasiteTempControlSettings(bool enabled){
     return output;
 }
 
+
+#endif
+//***************************************************************
+// pressure control
+#if SupportPressureTransducer
+#define PressureMonitorModeKey "mode"
+#define ConversionAKey "a"
+#define ConversionBKey "b"
+
+bool BPLSettings::dejsonPressureMonitorSettings(String json){
+    DynamicJsonBuffer jsonBuffer(JSON_OBJECT_SIZE(10));
+	JsonObject& root = jsonBuffer.parseObject(json.c_str());
+	DBG_PRINTF("PM json:\"%s\"\n",json.c_str());
+	DBG_PRINTF("success:%d\n",root.success());
+	if(!root.success()
+		|| !root.containsKey(PressureMonitorModeKey)
+		|| !root.containsKey(ConversionAKey)
+		|| !root.containsKey(ConversionBKey)){
+            return false;
+        }
+	PressureMonitorSettings *settings=pressureMonitorSettings();
+	settings->mode = root[PressureMonitorModeKey];
+	settings->fa = root[ConversionAKey];
+	settings->fb = root[ConversionBKey];
+	return true;
+}
+
+String BPLSettings::jsonPressureMonitorSettings(void){
+    const int BUFFER_SIZE = JSON_OBJECT_SIZE(9);
+    StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+    JsonObject& root = jsonBuffer.createObject();
+    
+	PressureMonitorSettings *settings=pressureMonitorSettings();
+	root[PressureMonitorModeKey]=settings->mode;
+	root[ConversionAKey]=settings->fa;
+	root[ConversionBKey]=settings->fb;
+    String output;
+    root.printTo(output);
+    return output;
+
+}
+#endif
+//***************************************************************
+// MQTT control
+#if SupportMqttRemoteControl
+#define EnableMqttKey "enabled"
+#define ServerAddressKey "server"
+#define ServerPort "port"
+#define MqttUsernameKey "user"
+#define MqttPasswordKey "pass"
+
+#define ModePathKey "mode"
+#define SettingTempPathkey "set"
+#define PtcPathKey "ptc"
+#define CapPathKey "cap"
+
+String BPLSettings::jsonMqttRemoteControlSettings(void){
+    const int BUFFER_SIZE = JSON_OBJECT_SIZE(12);
+    DynamicJsonBuffer jsonBuffer(BUFFER_SIZE);
+    JsonObject& root = jsonBuffer.createObject();
+
+	MqttRemoteControlSettings *settings=mqttRemoteControlSettings();
+
+	root[EnableMqttKey] = settings->enabled;
+	root[ServerPort] =  settings->port;
+
+
+	if(settings->modePathOffset){
+		char* modepath=(char*) (settings->_strings + settings->modePathOffset);
+		DBG_PRINTF("mode path:%s offset:%d\n",modepath, settings->modePathOffset);
+		root[ModePathKey] =modepath;
+	}
+
+	if(settings->settingTempPathOffset){
+		char* setpath=(char*) (settings->_strings + settings->settingTempPathOffset);
+		DBG_PRINTF("set path:%s offset:%d\n",setpath, settings->settingTempPathOffset);
+		root[SettingTempPathkey] = setpath;
+	}
+
+
+#if	EanbleParasiteTempControl
+	if(settings->ptcPathOffset){
+		root[PtcPathKey] = settings->_strings + settings->ptcPathOffset;
+	}
+#endif
+
+#if Auto_CAP
+	if(settings->capControlPathOffset){
+		root[CapPathKey] = settings->_strings + settings->capControlPathOffset;
+	}
+#endif
+
+	if(settings->serverOffset){
+		root[ServerAddressKey] =(char*) (settings->_strings + settings->serverOffset);
+	}
+
+	if(settings->usernameOffset){
+		root[MqttUsernameKey] =(char*)(settings->_strings + settings->usernameOffset);
+	}
+
+	if(settings->passwordOffset){
+		root[MqttPasswordKey] =(char*) (settings->_strings + settings->passwordOffset);
+	}
+
+    String output;
+    root.printTo(output);
+	DBG_PRINTF("json:--\n%s\n--\n",output.c_str());
+    return output;
+
+}
+
+static char *copyIfExist(JsonObject& root,const char* key,uint16_t &offset,char* ptr,char* base){
+	if(root.containsKey(key)){
+		const char* str=root[key];
+		size_t length = strlen(str) +1;
+		if(length==1){
+			offset =0;
+			return ptr;
+		} 
+
+
+		if(ptr - base  +length > MqttSettingStringSpace ) return NULL;
+		strcpy(ptr,str);
+		offset = (uint16_t)(ptr - base);
+
+		size_t rto4= (length & 0x3)? ((length & ~0x3) + 4):length;
+		ptr += rto4;
+
+		DBG_PRINTF("mqtt set:%s offset:%d, length:%d, ptr inc:%d\n",key,offset,length,rto4);
+	}
+
+	return ptr;
+}
+
+bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
+    DynamicJsonBuffer jsonBuffer(JSON_OBJECT_SIZE(10));
+
+	JsonObject& root = jsonBuffer.parseObject(json.c_str());
+	if(!root.success()
+		|| !root.containsKey(EnableMqttKey)
+		|| !root.containsKey(ServerPort)){
+        return false;
+    }
+	MqttRemoteControlSettings *settings=mqttRemoteControlSettings();
+
+	memset((char*)settings,'\0',sizeof(MqttRemoteControlSettings));
+
+	settings->enabled=root[EnableMqttKey];
+	settings->port=root[ServerPort];
+
+	char *base=(char*) settings->_strings;
+	char *ptr=base +4;
+
+	if(!(ptr=copyIfExist(root,ServerAddressKey,settings->serverOffset,ptr,base))) return false;
+	if(!(ptr=copyIfExist(root,MqttUsernameKey,settings->usernameOffset,ptr,base))) return false;
+	if(!(ptr=copyIfExist(root,MqttPasswordKey,settings->passwordOffset,ptr,base))) return false;
+	if(!(ptr=copyIfExist(root,ModePathKey,settings->modePathOffset,ptr,base))) return false;
+	if(!(ptr=copyIfExist(root,SettingTempPathkey,settings->settingTempPathOffset,ptr,base))) return false;
+	
+	#if	EanbleParasiteTempControl
+	if(!(ptr=copyIfExist(root,PtcPathKey,settings->ptcPathOffset,ptr,base))) return false;
+	#endif
+
+	#if Auto_CAP
+	if(!(ptr=copyIfExist(root,CapPathKey,settings->capControlPathOffset,ptr,base))) return false;
+	#endif
+
+	return true;
+}
+
+#endif

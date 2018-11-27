@@ -41,7 +41,14 @@ void WiFiSetupClass::setMode(WiFiMode mode){
 void WiFiSetupClass::enterBackupApMode(void)
 {
 	WiFi.mode(WIFI_AP_STA);
-	WiFi.softAP(_apName, _apPassword);						
+	createNetwork();
+}
+
+void WiFiSetupClass::createNetwork(){
+	if(strlen(_apPassword)>=8)
+		WiFi.softAP(_apName, _apPassword);
+	else
+		WiFi.softAP(_apName);
 }
 
 void WiFiSetupClass::setupApService(void)
@@ -56,12 +63,16 @@ void WiFiSetupClass::setupApService(void)
 void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 {
 	wifi_info("begin:");
-	DBG_PRINTF("\nAP mode:%d\n",mode);
-
-	_mode=mode;
-	_apName=ssid;
-	_apPassword=passwd;
 	
+	_mode= (mode==WIFI_OFF)? WIFI_AP_STA:mode;
+	
+	DBG_PRINTF("\nAP mode:%d, used;%d\n",mode,_mode);
+
+
+	_apName=(ssid == NULL || *ssid=='\0')? DEFAULT_HOSTNAME:ssid;
+	
+	_apPassword=(passwd !=NULL && *passwd=='\0')? NULL:passwd;
+
 	// let the underlined library do the reconnection jobs.
 	WiFi.setAutoConnect(_autoReconnect);
 
@@ -69,7 +80,7 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 	// start AP
 	if( _mode == WIFI_AP || _mode == WIFI_AP_STA){
 		_apMode=true;
-		WiFi.softAP(_apName, _apPassword);
+		createNetwork();
 		setupApService();
 	}
 
@@ -78,10 +89,11 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 		if(_ip !=INADDR_NONE){
 			WiFi.config(_ip,_gw,_nm);
 		}
+		WiFi.setAutoReconnect(true);
 		WiFi.begin();
 		_time=millis();
 	}
-	DBG_PRINTF("\ncreate network:%s pass:%s\n",ssid, passwd);
+	DBG_PRINTF("\ncreate network:%s pass:%s\n",_apName, passwd);
 }
 
 bool WiFiSetupClass::connect(char const *ssid,const char *passwd,IPAddress ip,IPAddress gw, IPAddress nm){
@@ -173,7 +185,7 @@ bool WiFiSetupClass::stayConnected(void)
 			}else if(mode == WIFI_STA){
 				if( _mode == WIFI_AP_STA){
 					WiFi.mode(_mode);
-					WiFi.softAP(_apName, _apPassword);
+					createNetwork();
 				}else if (_mode == WIFI_AP){
 					//WiFi.disconnect();
 					_wifiState =WiFiStateDisconnected;
@@ -203,7 +215,7 @@ bool WiFiSetupClass::stayConnected(void)
 				_wifiState = WiFiStateConnectionRecovering;
 				return true;
 			}else if (_wifiState==WiFiStateConnectionRecovering){
-				// if sta mode, turn on softAP
+				// if sta mode, turn on AP mode
 				if(_time > TimeForRescueAPMode){
 					_wifiState =WiFiStateDisconnected;
 					if(_mode == WIFI_STA){

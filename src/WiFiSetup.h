@@ -75,6 +75,7 @@ private:
 	void setupApService(void);
 	void enterBackupApMode();
 	void onConnected();
+	void createNetwork();
 };
 
 extern WiFiSetupClass WiFiSetup;
