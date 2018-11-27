@@ -175,7 +175,7 @@ module.exports = (grunt) ->
     multi_lang_site_generator:
       default:
           options:
-            vocabs:           ['english','chinese','spanish','portuguese-br']
+            vocabs:           ['english','chinese','spanish','portuguese-br','slovak']
             vocab_directory:  'src/locales'
             output_directory: 'dist'
             template_directory: 'dist'
