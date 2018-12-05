@@ -295,7 +295,7 @@
     "script_control_invalid_value_check_again": "Neplatná hodnota. Skontroluj znova",
     "script_control_not_conected_to_controller": "Nepripojené k riadiacej jednotke.",
     "script_control_invalid_temperature": "Neplatná teplota:",
-    "script_control_save_profile_before_applay": "najprv uložte profil pred použitím",
+    "script_control_save_profile_before_applay": "pred použitím najprv uložte profil",
     "script_control_failed_to_save": "neúspešné uloženie.",
     "script_control_version_mismatched": "Nesprávna verzia!. Znova načítajte stránku.",
     "script_control_too_many_steps": " Príliš veľa krokov!",
