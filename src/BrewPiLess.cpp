@@ -142,9 +142,12 @@ extern "C" {
 #define WIFI_DISC_PATH "/wifidisc"
 
 #define MQTT_PATH "/mqtt"
+<<<<<<< HEAD
 #if SupportPressureTransducer
 #define PRESSURE_PATH "/psi"
 #endif
+=======
+>>>>>>> AsyncMQTT
 
 const char *public_list[]={
 "/bwf.js",
