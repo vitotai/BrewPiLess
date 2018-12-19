@@ -863,6 +863,7 @@ function initctrl() {
     getActiveNavItem();
     Capper.init();
     modekeeper.init();
+    PTC.init(Q("#ptc-control"));
     openDlgLoading();
 
     BWF.init({
@@ -885,6 +886,8 @@ function initctrl() {
                 }
                 if (typeof c["cap"] != "undefined")
                     Capper.status(c["cap"]);
+                if (typeof c["ptcs"] != "undefined")
+                    PTC.config(c.ptcs);
             },
             C: function(c) { ccparameter(c); },
             B: rcvBeerProfile

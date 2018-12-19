@@ -66,7 +66,9 @@ extern "C" {
 
 #include "ExternalData.h"
 
+#if SupportMqttRemoteControl
 #include "MqttRemoteControl.h"
+#endif
 
 #if EanbleParasiteTempControl
 #include "ParasiteTempController.h"
@@ -142,12 +144,9 @@ extern "C" {
 #define WIFI_DISC_PATH "/wifidisc"
 
 #define MQTT_PATH "/mqtt"
-<<<<<<< HEAD
 #if SupportPressureTransducer
 #define PRESSURE_PATH "/psi"
 #endif
-=======
->>>>>>> AsyncMQTT
 
 const char *public_list[]={
 "/bwf.js",
@@ -390,6 +389,8 @@ public:
 	 	}
 		else
 		#endif
+
+		#if SupportMqttRemoteControl
 		if(request->method() == HTTP_GET && request->url() == MQTT_PATH){
 			request->send(200,"application/json",theSettings.jsonMqttRemoteControlSettings());
 	 	}else if(request->method() == HTTP_POST && request->url() == MQTT_PATH){
@@ -411,7 +412,9 @@ public:
 				DBG_PRINTF("no data in post\n");
   			}
 
-		}else if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
+		}else 
+		#endif
+		if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
 			if(request->hasParam("cfg"))
 				request->send(200,"application/json",theSettings.jsonSystemConfiguration());
 			else 
@@ -1718,8 +1721,10 @@ void setup(void){
 	_lcdReinitTime = millis();
 #endif
 
+#if SupportMqttRemoteControl
 	//mqtt
 	mqttRemoteControl.begin();
+#endif
 }
 
 uint32_t _rssiReportTime;
@@ -1770,7 +1775,10 @@ void loop(void){
   	brewPi.loop();
 
  	brewLogger.loop();
+
+#if SupportMqttRemoteControl
 	mqttRemoteControl.loop();
+#endif
 
  	#ifdef ENABLE_LOGGING
 

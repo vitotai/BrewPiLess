@@ -10,10 +10,11 @@
     </title>
     <meta name="apple-mobile-web-app-title" content="BrewPiLess">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <script src="/dygraph-combined.js" ignore></script>
+    <script type="text/javascript" src="dygraph-combined.js" ignore></script>
     <script type="text/javascript" src="js/vendor/bwf.js"></script>
     <script type="text/javascript" src="js/shared.js"></script>
     <script type="text/javascript" src="js/capper.js"></script>
+    <script type="text/javascript" src="js/ptc.js"></script>
     <script type="text/javascript" src="js/script-control.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="style-control.css">
@@ -25,7 +26,7 @@
     <!-- /build -->
 
     <div viewport layout vertical>
-        <div main>
+        <div main class="card">
 
             <div class="navbar" horizontal layout main-justified cross-center>
                 <div class="navitems">
@@ -52,6 +53,7 @@
                             <div layout horizontal cross-center>
                                 <span class="start-date"><%= control_startdate %></span>
                                 <input type="datetime-local" style="max-width: 200px;margin: 8px 0 16px;" id="startdate" onchange="profileEditor.startDayChange();">
+                                <button id="setnow" class="btn" onclick="profileEditor.startnow();"><%= control_now %></button>
                             </div>
                         </div>
                         <div layout horizontal main-justified cross-center class="spacing">
@@ -139,50 +141,86 @@
             </div>
 
         </div>
-    </div>
 
-    <!-- capper -->
+        <!-- capper -->
 
-    <div class="frame" id="capper-frame">
-        <hr>
+        <div class="card" id="capper-frame">
 
-        <div layout horizontal main-justified cross-center>
-            <div layout horizontal cross-center>
-                <%= control_cap_control %>
+            <div layout horizontal main-justified cross-center>
+                <div layout horizontal cross-center>
+                    <%= control_cap_control %>
+                </div>
             </div>
-        </div>
 
-        <div class=navbar horizontal layout main-justified cross-center id="cap-header">
-            <div class=navitems>
-                <a href=#tab-gravity-m class="navitem" id="tab-gravity-m">
-                    <%= control_gravity %>
-                </a>
-                <a href=#tab-time-m class="navitem" id="tab-time-m">
-                    <%= control_time %>
-                </a>
-                <a href=#tab-manual-m class="navitem" id="tab-manual-m">
-                    <%= control_manual %>
-                </a>
-                <button id="cap-apply" class="btn btn--raised" style=max-width:200px><%= control_apply %></button>
+            <div class=navbar horizontal layout main-justified cross-center id="cap-header">
+                <div class=navitems>
+                    <a href=#tab-gravity-m class="navitem" id="tab-gravity-m">
+                        <%= control_gravity %>
+                    </a>
+                    <a href=#tab-time-m class="navitem" id="tab-time-m">
+                        <%= control_time %>
+                    </a>
+                    <a href=#tab-manual-m class="navitem" id="tab-manual-m">
+                        <%= control_manual %>
+                    </a>
+                    <button id="cap-apply" class="btn btn--raised" style=max-width:200px><%= control_apply %></button>
+                </div>
             </div>
-        </div>
 
-        <div class="tab-containter" layout horizontal>
-            <div id="tab-gravity-s" class="detail spacing" main-justified cross-center>
-                <span style="margin:16px" class=detail> <%= control_capgravity %> 
+            <div class="tab-containter" layout horizontal>
+                <div id="tab-gravity-s" class="detail spacing" main-justified cross-center>
+                    <span style="margin:16px" class=detail> <%= control_capgravity %> 
                             <input type=number step="0.001" size=6  id="capgravityinput" style="max-width:100px;margin:16px"> </span>
-            </div>
-            <div id="tab-time-s" class="detail">
-                <span style="margin:16px" class=detail>   <%= control_capafter %>
-                                <input type=datetime-local style="max-width:200px;margin:16px" id=captimeinput>
-                             </span>
-            </div>
-            <div id="tab-manual-s" class="detail">
-                <span style="margin:16px" class=detail>  <%= control_capped %>
-                                <input type=checkbox  checked id="capswitch">
-                                                  </span>
+                    <span class="psi-set-group">@ <input type=number step="1" size=6  class="cappressure" style="max-width:60px;margin:16px">psi</span>
+                </div>
+                <div id="tab-time-s" class="detail">
+                    <span style="margin:16px" class=detail>   <%= control_capafter %>
+                        <input type=datetime-local style="max-width:200px;margin:16px" id=captimeinput>
+                    </span>
+                    <span class="psi-set-group">@ <input type=number step="1" size=6  class="cappressure" style="max-width:60px;margin:16px">psi</span>
+                </div>
+                <div id="tab-manual-s" class="detail">
+                    <span style="margin:16px" class=detail>
+                        <input type="checkbox" id="capswitch" name="capswitch" class="switch-input" checked>
+                        <label for="capswitch" class="switch-label" style="min-width: 0;"><%= control_capped %></label>
+                    </span>
+                    <span class="psi-set-group">@ <input type=number step="1" size=6  class="cappressure" style="max-width:60px;margin:16px">psi</span>
+                </div>
             </div>
         </div>
+        <!-- ptc -->
+        <div id="ptc-control" class="card" horizontal layout main-justified cross-center>
+            Glycol Temperature Control
+            <div layout horizontal cross-center>
+                <h6 class="inline-header">
+                    Target Temperature
+                </h6>
+                <input type="text" name="temp" size=4> &deg;C
+            </div>
+
+            <div layout horizontal cross-center>
+                <h6 class="inline-header">
+                    Triggering Temperauture
+                </h6>
+                <input type="text" name="stemp" size=4> &deg;C
+            </div>
+            <div layout horizontal cross-center>
+                <h6 class="inline-header">
+                    Minimum Cooling Time
+                </h6>
+                <input type="text" name="mincool" size=4>Seconds
+            </div>
+            <div layout horizontal cross-center>
+                <h6 class="inline-header">
+                    Miminum Idle Time
+                </h6>
+                <input type="text" name="minidle" size=4>Seconds
+            </div>
+            <div class="card-footer">
+                <button class="btn btn--raised" style="max-width: 200px;" onclick="PTC.apply()"><%= control_apply %></button>
+            </div>
+        </div>
+
     </div>
 
     <!-- build:include partials/footer.html -->

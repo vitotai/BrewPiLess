@@ -238,7 +238,7 @@
                             </h6>
                             <select name="ubidots-account" class="nb">
                                                         <option value="1"><%= log_ubidots_educational %></option>
-                                                        <option value="2"><%= log_ubidots_industrial %>></option>
+                                                        <option value="2"><%= log_ubidots_industrial %></option>
                                                     </select>
 
                         </div>
@@ -325,7 +325,7 @@
                             <%= log_new_log_name %>
                         </h6>
                         <input type="text" id="logname" size="24" maxlength="24"></input>
-                        <button id="startlogbutton"><%= log_start_logging %></button>
+                        <button id="startlogbutton" class="btn"><%= log_start_logging %></button>
                     </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
@@ -355,7 +355,7 @@
                             <%= log_or_water_at %>
                         </h6><input type=text id=watertemp size=4>&deg;
                         <%= log_calibrated %> <input type=text id=caltemp size=4>&deg;
-                            <select id=tempunit><option vlue=C>C</option><option value=F>F</option></select>
+                            <select id=tempunit><option value=C>C</option><option value=F>F</option></select>
 
                     </div>
                 </div>
@@ -363,7 +363,7 @@
                 <div id=logstopinput style="display:none">
                     <%= log_recording %> <strong id="loggingtitle"></strong>
                         <%= log_since %> <strong id=start-log-date></strong>
-                            <button id="stoplogbutton"><%= log_stop_logging %></button>
+                            <button id="stoplogbutton" class="btn"><%= log_stop_logging %></button>
                 </div>
 
 

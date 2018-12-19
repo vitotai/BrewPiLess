@@ -56,13 +56,21 @@ void ExternalData::sseNotify(char *buf){
 			len=sprintFloat(coeff[i],_cfg->ispindelCoefficients[i],9);
 			coeff[i][len]='\0';	
 		}
-
+		char strRssi[32];
+		if(_rssiValid){
+			len=sprintf(strRssi,",\"rssi\":%d",_rssi);
+			strRssi[len]='\0';
+		}else{
+			strRssi[1]=' ';
+			strRssi[0]='\0';
+		} 
 		const char *spname=(_ispindelName)? _ispindelName:"Unknown";
-		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d,\"ctemp\":%d,\"plato\":%d}",
+		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s %s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d,\"ctemp\":%d,\"plato\":%d}",
 					spname, 
 					strbattery,
 					strgravity,
 					strtilt,
+					strRssi,
 					_lastUpdate,slowpassfilter,_cfg->stableThreshold,
 					_cfg->numberCalPoints,
                     _cfg->ispindelCalibrationBaseTemp,
@@ -260,6 +268,9 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 
         if(root.containsKey("battery"))
     	    setDeviceVoltage(root["battery"]);
+
+        if(root.containsKey("RSSI"))
+    	    setDeviceRssi(root["RSSI"]);
 
 		//setPlato(root["gravityP"],TimeKeeper.getTimeSeconds());
 		if(root.containsKey("gravity") &&

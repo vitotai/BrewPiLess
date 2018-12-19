@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+
+<html lang="<%= page_lang %>">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= pressure_setting_title %>
+    </title>
+    <meta name="apple-mobile-web-app-title" content="BrewPiLess">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/script-pressure.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="style-pressure.css">
+</head>
+
+<body onload=loaded()>
+
+    <!-- build:include partials/header.html -->
+    <!-- /build -->
+
+    <div viewport layout vertical>
+        <div main>
+            <!-- Pressure Transducer -->
+            <div id="transducer-control" class="card">
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= enabled_pressure_transducer %>
+                    </h6>
+                    <input type="checkbox" id="pt-enabled" name="pt-enabled" class="switch-input" checked>
+                    <label for="pt-enabled" class="switch-label" style="min-width: 0;"></label>
+
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= control_pressure %>
+                    </h6>
+                    <input type="checkbox" id="pt-control" name="p-control" class="switch-input" checked>
+                    <label for="pt-control" class="switch-label" style="min-width: 0;"></label>
+
+                </div>
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= pressure_conversion_parameters %>
+                    </h6>
+                    <%= pressure_conversion_parameters_desp %>
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                    </h6>
+                    b:<input type="text" id=fpb name="fpb" size=4> a:
+                    <input type="text" id=fpa name="fpa" size=4> <button class="btn" onclick="PCTRL.cal()">Calibrate</button>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn--raised" style="max-width: 200px;" onclick="PCTRL.apply()"><%= control_apply %></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="dlg_calibrate" class="modal">
+        <div class="modal-content card">
+            <p><%= pressure_calibrate_step1 %> <button class="btn btn--raised" onclick="PCTRL.cal0()"><%= pressure_calibrate_step1_button %></button> </p>
+            <p><%= pressure_calibrate_step2_1 %> <input type="text" id=calpsi name="calpsi" size=4 style="display:inline;max-width:100px;margin:16px"> <%= pressure_calibrate_step2_2 %> <button id="cal1" class="btn btn--raised" onclick="PCTRL.cal1()"><%= pressure_calibrate_step2_button %></button> </p>
+            <div class="card-footer">
+                <button class="btn btn--raised" onclick="PCTRL.xcal()"><%= dismiss %></button>
+            </div>
+        </div>
+
+    </div>
+    <!-- build:include partials/footer.html -->
+    <!-- /build -->
+</body>
+
+</html>

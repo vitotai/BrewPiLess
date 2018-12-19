@@ -167,10 +167,6 @@
 #define ButtonViaPCF8574 0
 #endif
 
-#ifndef AUTO_CAP
-#define  AUTO_CAP 1
-#endif
-
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -255,6 +251,12 @@
 #define BREWPI_MENU 0
 #undef  BREWPI_BUTTONS 
 #define  BREWPI_BUTTONS 0
+
+#define EanbleParasiteTempControl flase
+#define SupportPressureTransducer false
+#define SupportMqttRemoteControl false
+#define  AUTO_CAP false
+
 
 #elif BOARD == Thorrak_PCB
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
@@ -396,15 +398,8 @@
 //#endif
 
 #define EMIWorkaround 1
-#define BPL_VERSION "3.4"
+#define BPL_VERSION "3.5"
 
-#ifndef EanbleParasiteTempControl
-#define EanbleParasiteTempControl 0
-#endif
-
-#ifndef SupportPressureTransducer
-#define SupportPressureTransducer true
-#endif
 /**************************************************************************************/
 /*  Configuration: 																	  */
 /*  Only one setting: the serial used to connect to.                                  */
@@ -468,8 +463,24 @@
 #define ClassicFrontEnd 0
 #define TomsFrontEnd 1
 
-#ifndef UseNewFrontEnd
-#define FrontEnd ClassicFrontEnd
-#else
+#ifndef UseClassicFrontEnd
 #define FrontEnd TomsFrontEnd
+#else
+#define FrontEnd ClassicFrontEnd
+#endif
+
+#ifndef EanbleParasiteTempControl
+#define EanbleParasiteTempControl true
+#endif
+
+#ifndef SupportPressureTransducer
+#define SupportPressureTransducer true
+#endif
+
+#ifndef SupportMqttRemoteControl
+#define SupportMqttRemoteControl true
+#endif
+
+#ifndef AUTO_CAP
+#define  AUTO_CAP true
 #endif

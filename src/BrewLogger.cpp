@@ -922,6 +922,10 @@ BrewLogger::BrewLogger(void){
 		writeBuffer(idx,ResumeBrewTag); //*ptr = ResumeBrewTag;
 		size_t rtime= TimeKeeper.getTimeSeconds();
 		size_t gap=rtime - _pFileInfo->starttime;
+		if(rtime < 1545211593L || gap > 60*60*24*30){
+			// something wrong. just give it an hour
+			gap =60*10;
+		}
 		DBG_PRINTF("resume, start:%lu, current:%u gap:%u\n",_pFileInfo->starttime,rtime,gap);
 		//if (gap > 255) gap = 255;
 		writeBuffer(idx+1,(uint8_t) (gap>>16)&0xFF );

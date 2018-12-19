@@ -2,6 +2,8 @@
 #include "BrewKeeper.h"
 #include "BPLSettings.h"
 
+#if SupportMqttRemoteControl
+
 #if EanbleParasiteTempControl
 #include "ParasiteTempController.h"
 #endif
@@ -294,4 +296,6 @@ void MqttRemoteControl::_onCapChange(char* payload,size_t len){
 
     autoCapControl.capManualSet(mode);
 }
+#endif
+
 #endif
