@@ -1,7 +1,7 @@
 #include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
 //needed for library
 #include <DNSServer.h>
-#include "config.h"
+#include "Config.h"
 #include "WiFiSetup.h"
 
 WiFiSetupClass WiFiSetup;
@@ -15,7 +15,7 @@ WiFiSetupClass WiFiSetup;
 #else
 #define DebugOut(a)
 #define DBG_PRINTF(...)
-#define DBG_PRINTLN(a) 
+#define DBG_PRINTLN(a)
 #endif
 
 #if SerialDebug
@@ -31,7 +31,7 @@ void WiFiSetupClass::staConfig(IPAddress ip,IPAddress gw, IPAddress nm){
 }
 
 void WiFiSetupClass::setMode(WiFiMode mode){
-	DBG_PRINTF("WiFi mode from:%d to %d\n",_mode,_mode);	
+	DBG_PRINTF("WiFi mode from:%d to %d\n",_mode,_mode);
 
 	if(mode == _mode) return;
 	_mode = mode;
@@ -63,14 +63,14 @@ void WiFiSetupClass::setupApService(void)
 void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 {
 	wifi_info("begin:");
-	
+
 	_mode= (mode==WIFI_OFF)? WIFI_AP_STA:mode;
-	
+
 	DBG_PRINTF("\nAP mode:%d, used;%d\n",mode,_mode);
 
 
 	_apName=(ssid == NULL || *ssid=='\0')? DEFAULT_HOSTNAME:ssid;
-	
+
 	_apPassword=(passwd !=NULL && *passwd=='\0')? NULL:passwd;
 
 	// let the underlined library do the reconnection jobs.
@@ -134,7 +134,7 @@ String WiFiSetupClass::status(void){
 	ret  = String("{\"md\":") + String(_mode) + String(",\"con\":") + String((WiFi.status() == WL_CONNECTED)? 1:0);
 
 	if(_mode != WIFI_AP){
-		ret += String(",\"ssid\":\"") + WiFi.SSID() 
+		ret += String(",\"ssid\":\"") + WiFi.SSID()
 			 + String("\",\"ip\":\"") + WiFi.localIP().toString()
 			 + String("\",\"gw\":\"") + WiFi.gatewayIP().toString()
 			 + String("\",\"nm\":\"") + WiFi.subnetMask().toString() + String("\"");
@@ -239,7 +239,7 @@ bool WiFiSetupClass::stayConnected(void)
 			}
   		}
 	}
-	
+
 	if(_wifiScanState == WiFiScanStatePending){
 		String nets=scanWifi();
 		_wifiScanState = WiFiScanStateNone;
@@ -258,9 +258,9 @@ bool WiFiSetupClass::requestScanWifi(void) {
 }
 
 String WiFiSetupClass::scanWifi(void) {
-	
+
 	String rst="{\"list\":[";
-	
+
 	DBG_PRINTF("Scan Networks...\n");
 	int n = WiFi.scanNetworks();
     DBG_PRINTF("Scan done");
@@ -277,7 +277,7 @@ String WiFiSetupClass::scanWifi(void) {
         	for (int j = i + 1; j < n; j++) {
           		if (WiFi.RSSI(indices[j]) > WiFi.RSSI(indices[i])) {
             		std::swap(indices[i], indices[j]);
-          		}	
+          		}
         	}
       	}
 
@@ -294,7 +294,7 @@ String WiFiSetupClass::scanWifi(void) {
             	}
           	}
         }
-		
+
       	//display networks in page
 		bool comma=false; // i==0 might not the "first", might be duplicated.
       	for (int i = 0; i < n; i++) {
@@ -302,12 +302,12 @@ String WiFiSetupClass::scanWifi(void) {
         	DBG_PRINTLN(WiFi.SSID(indices[i]));
 	        DBG_PRINTLN(WiFi.RSSI(indices[i]));
         	//int quality = getRSSIasQuality(WiFi.RSSI(indices[i]));
-			String item=String("{\"ssid\":\"") + WiFi.SSID(indices[i]) + 
+			String item=String("{\"ssid\":\"") + WiFi.SSID(indices[i]) +
 			String("\",\"rssi\":") + WiFi.RSSI(indices[i]) +
 			String(",\"enc\":") +  String((WiFi.encryptionType(indices[i]) != ENC_TYPE_NONE)? "1":"0")
 			+ String("}");
 			if(comma){
-				rst += ",";	
+				rst += ",";
 			}else{
 				comma=true;
 			}
