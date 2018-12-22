@@ -14,6 +14,7 @@ public:
 
     // web interface
 	void loop(time_t now);
+	void reportNow(void);
 
 protected:
 	void sendData(void);
@@ -27,5 +28,6 @@ protected:
 	
 	time_t _lastUpdate;
 };
+extern DataLogger dataLogger;
 
 #endif

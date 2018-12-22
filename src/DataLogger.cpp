@@ -93,6 +93,12 @@ size_t DataLogger::dataSprintf(char *buffer,const char *format)
 	return d;
 }
 
+void DataLogger::reportNow(void)
+{
+	_lastUpdate=0;
+}
+
+
 void DataLogger::loop(time_t now)
 {
 	if(!_loggingInfo->enabled) return;

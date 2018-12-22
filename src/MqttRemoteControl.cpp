@@ -1,6 +1,7 @@
 #include "MqttRemoteControl.h"
 #include "BrewKeeper.h"
 #include "BPLSettings.h"
+#include "DataLogger.h"
 
 #if SupportMqttRemoteControl
 
@@ -75,9 +76,12 @@ void MqttRemoteControl::_runSettingCommand(void){
         if(_lvMode == ModeBeerConst){
             DBG_PRINTF("MQTT:set beerSet:%s\n",_lvSetting);
             brewKeeper.setBeerSet(_lvSetting);
+            dataLogger.reportNow();
         }else if(_lvMode == ModeFridgeConst){
              DBG_PRINTF("MQTT:set fridgeSet:%s\n",_lvSetting);
             brewKeeper.setFridgeSet(_lvSetting);
+            dataLogger.reportNow();
+
         }else{
             DBG_PRINTF("MQTT: invalid mode to set:%c\n",_lvMode);
         }
