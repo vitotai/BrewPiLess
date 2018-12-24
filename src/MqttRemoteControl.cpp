@@ -226,6 +226,8 @@ void MqttRemoteControl::_onModeChange(char* payload,size_t len){
     char mode; // o:off, f: fridgeConst, b: beerConst, p: beerProfile
     
     const char modeChars[]={ModeOff,ModeFridgeConst,ModeBeerConst,ModeBeerProfile};
+ 
+    DBG_PRINTF("MQTT:mode path value:%c\n",*payload);
 
     if(*payload >='0' && *payload <= '3'){
         mode = modeChars[*payload - '0'];

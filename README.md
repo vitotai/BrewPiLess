@@ -47,6 +47,11 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
 
 ## Version History
  * v3.4
+    * MQTT Remote Control
+    * Pressure transducer support
+    * Add iSpindel WiFi signal, "Now" button in profile editing
+
+ * v3.4
     * Add back STATAION mode only.
     * fixing Cap control tab display bug.
     * fixing blocking "Communication to BPL" dialog under AP mode
