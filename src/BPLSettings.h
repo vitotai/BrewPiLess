@@ -2,6 +2,7 @@
 #define BPLSettings_H
 #include <FS.h>
 #include <time.h>
+#include "Config.h"
 //*****************************************************
 // 156 bytes
 typedef struct _SystemConfiguration{

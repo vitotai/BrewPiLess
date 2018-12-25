@@ -14,7 +14,7 @@ class PressureMonitorClass{
 public:
     PressureMonitorClass();
     float currentPsi(){return _currentPsi;}
-
+    bool isCurrentPsiValid(){return _currentPsi > -1; }
     int currentAdcReading();
     PMMode mode(){return _settings->mode; };    
     void loop();

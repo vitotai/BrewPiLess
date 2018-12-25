@@ -409,6 +409,12 @@
     "pressure_calibrate_step2_button":"步驟二",
     "dismiss":"離開",
 
+    "__new_for_logging":"New logging items",
+
+    "log_temperature_unit":"Temperature in C or F",
+    "log_mode_in_integer":"mode in integer",
+    "log_mode_in_character":"mode in character",
+    "log_pressure_reading":"Pressure in PSI",
 
     "end": "***END***"
 }
