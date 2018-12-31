@@ -197,9 +197,11 @@ void requestRestart(bool disc);
 void initTime(bool apmode)
 {
 	if(apmode){
+		DBG_PRINTF("initTime in ap mode\n");
 		TimeKeeper.begin();
 	}else{
-		TimeKeeper.begin((char*)"time.nist.gov",(char*)"time.windows.com",(char*)"de.pool.ntp.org");
+		DBG_PRINTF("connect to Time server\n");
+		TimeKeeper.begin((char*)"time.google.com",(char*)"pool.ntp.org",(char*)"time.windows.com");
 	}
 }
 #if AUTO_CAP

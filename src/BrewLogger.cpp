@@ -924,6 +924,7 @@ BrewLogger::BrewLogger(void){
 		size_t gap=rtime - _pFileInfo->starttime;
 		if(rtime < 1545211593L || gap > 60*60*24*30){
 			// something wrong. just give it an hour
+			DBG_PRINTF("abnormal resume, start:%lu, current:%u gap:%u\n",_pFileInfo->starttime,rtime,gap);
 			gap =60*10;
 		}
 		DBG_PRINTF("resume, start:%lu, current:%u gap:%u\n",_pFileInfo->starttime,rtime,gap);
