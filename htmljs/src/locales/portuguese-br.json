@@ -26,9 +26,9 @@
     
     "legend_date": "Data/Hora",
     "legend_beertemp": "Temp. Cerveja",
-    "legend_beerset": "Setpoint Cerveja",
+    "legend_beerset": "SP Cerveja",
     "legend_fridgetemp": "Temp. Refrig.",
-    "legend_fridgeset": "Setpoint Refrig.",
+    "legend_fridgeset": "SP Refrig.",
     "legend_roomtemp": "Temp. Amb.",
     "legend_auxtemp": "Temp. Aux.",
     "legend_gravity": "Densidade",
