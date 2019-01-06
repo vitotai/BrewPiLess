@@ -440,8 +440,8 @@
                 Q("#iSpindel-tilt").innerHTML = "" + msg["angle"];
         }
         if (typeof msg["rssi"] != "undefined"){
-            if(Q("#ispindel-rssi-line")){
-                Q("#ispindel-rssi-line").classList.remove("no-display");
+            if(Q("#ispindel-rssi")){
+                Q("#ispindel-rssi").classList.remove("no-display");
                 wifibar("#ispindel-rssi",msg.rssi);
             }
         }

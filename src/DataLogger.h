@@ -6,6 +6,7 @@
 
 #define ServiceGenericHttp 0
 #define ServiceNonNullJson 1
+#define ServiceHTTPNullString 2
 
 class DataLogger
 {

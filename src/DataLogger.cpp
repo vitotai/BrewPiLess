@@ -45,8 +45,13 @@ size_t DataLogger::printFloat(char* buffer,float value,int precision,bool valid)
 	if(valid){
 		return sprintFloat(buffer,value,precision);
 	}else{
-		strcpy(buffer,"null"); // ubidots.com doesn't accept "null" as values.
-		return 4;
+		if(_loggingInfo->service == ServiceHTTPNullString){
+			strcpy(buffer,"\"\""); // for brewer's friend
+			return 2;
+		}else{
+			strcpy(buffer,"null"); // ubidots.com doesn't accept "null" as values.
+			return 4;
+		}
 	}
 }
 

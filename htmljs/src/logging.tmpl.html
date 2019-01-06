@@ -56,13 +56,44 @@
                             <option value="thingspeak"> thingspeak.com </option>
                             <option value="ubidots"> ubidots.com </option>
                             <option value="brewfather"> Brewfather </option>
-                            </select>
+                            <option value="brewersfriend"> Brewer'sFriend </option>
+                        </select>
                     </div>
 
                 </div>
 
 
                 <div id=service-opt>
+                    <div id=brewersfriend class=service-options>
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_brewersfriend_stream_url %>
+                            </h6>
+                            <input type="text" id="brewersfriend-url" size="42">
+                        </div>
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_brewersfriend_beer %>
+                            </h6>
+                            <input type="text" id="brewersfriend-beer" size="42">
+                        </div>
+
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_brewersfriend_gravity_unit %>
+                            </h6>
+
+                            <div class="md-radio md-radio-inline">
+                                <input id="gu-sg" type="radio" name="BF-gu" value="gu-sg" checked >
+                                <label for="gu-sg">SG(1.x)</label>
+                            </div>
+                            <div class="md-radio md-radio-inline">
+                                <input id="gu-plato" type="radio" name="BF-gu" value="gu-plato">
+                                <label for="gu-plato">Plato(&deg;P)</label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id=thingspeak class=service-options>
                         <div layout horizontal cross-center>
                             <h6 class="inline-header">
@@ -71,7 +102,7 @@
                             <input type="text" id="thingspeak-apikey" size="42">
 
                         </div>
-                        <div id=thingspeak>
+                        <div>
                             <h6 class="inline-header">
                                 <%= log_thingspeak_fields %>
                             </h6>

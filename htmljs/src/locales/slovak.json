@@ -239,6 +239,10 @@
     "log_ubidots_device": "Zariadenie:",
     "log_ubidots_educational": "Vzdelávacie",
     "log_ubidots_industrial": "Priemyselné",
+    "log_brewersfriend_stream_url":"Stream URL:",
+    "log_brewersfriend_beer":"Beer:",
+    "log_brewersfriend_gravity_unit":"Gravity Unit",
+
 
     "__setup_html": "setup.html",
     "setup_page_title": "Nastavenie BrewPiLess!",

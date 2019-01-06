@@ -88,12 +88,45 @@
                         <option value="thingspeak"> thingspeak.com </option>
                         <option value="ubidots"> ubidots.com </option>
                         <option value="brewfather"> Brewfather </option>
+                        <option value="brewersfriend"> Brewer'sFriend </option>
                         </select>
                     </span>
                 </li>
 
             </ul>
             <div id=service-opt>
+
+                <div id=brewersfriend class=service-options>
+                    <ul class=inputlist>
+                        <li>
+                            <span class=itemtitle><%= log_brewersfriend_stream_url %></span>
+                            <span class=itemvalue><input type="text" id="brewersfriend-url" size="42"></span>
+                        </li>
+                        <li>
+                                <span class=itemtitle>
+                                <%= log_brewersfriend_beer %>
+                                </span>
+                                <span class=itemvalue><input type="text" id="brewersfriend-beer" size="42"></span>
+                        </li>
+
+                        <li>
+                            <span class=itemtitle>
+                                <%= log_brewersfriend_gravity_unit %>
+                            </span>
+                            <span class=itemvalue>
+                            <span class="md-radio md-radio-inline">
+                                <input id="gu-sg" type="radio" name="BF-gu" value="gu-sg" checked >
+                                <label for="gu-sg">SG(1.x)</label>
+                            </span>
+                            <span class="md-radio md-radio-inline">
+                                <input id="gu-plato" type="radio" name="BF-gu" value="gu-plato">
+                                <label for="gu-plato">Plato(&deg;P)</label>
+                            </span>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+
 
                 <div id=thingspeak>
                     <ul class=inputlist>
