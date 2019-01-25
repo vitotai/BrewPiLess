@@ -12,6 +12,12 @@ Actuator* AutoCapControl::capper = &defaultActuator;
 
 AutoCapControl autoCapControl;
 
+uint8_t AutoCapControl::mode(void)
+{
+    if(AutoCapControl::capper != &defaultActuator)
+        return _settings->autoCapMode;
+    return AutoCapModeNone;
+}
 
 void AutoCapControl::begin(void)
 {

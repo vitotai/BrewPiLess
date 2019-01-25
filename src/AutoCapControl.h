@@ -36,7 +36,7 @@ public:
     
     uint32_t targetTime(void){return _settings->condition.targetTime;}
     float    targetGravity(void){return _settings->condition.targetGravity;}
-    uint8_t mode(void){return _settings->autoCapMode;}
+    uint8_t mode(void);
 
     static Actuator* capper;
 
