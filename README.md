@@ -51,6 +51,7 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
     * Pressure transducer support
     * Add iSpindel WiFi signal if available, "Now" button in profile editing
     * "Fixed" incorrect time issue after restart.
+    * Add DNS setting for static IP
 
  * v3.4
     * Add back STATAION mode only.
