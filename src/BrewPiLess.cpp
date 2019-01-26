@@ -1373,10 +1373,14 @@ public:
 				IPAddress ip=scanIP(request->getParam("ip",true)->value().c_str());
 				IPAddress gw=scanIP(request->getParam("gw",true)->value().c_str());
 				IPAddress nm=scanIP(request->getParam("nm",true)->value().c_str());
+				
+				IPAddress dns=request->hasParam("dns",true)? scanIP(request->getParam("dns",true)->value().c_str()):IPAddress(0,0,0,0);
+
 				WiFiSetup.connect(ssid.c_str(),pass, 
 							ip,
 							gw,
-							nm
+							nm,
+							dns
 				);
 				// save to config
 				syscfg->ip = ip;
@@ -1613,7 +1617,7 @@ void setup(void){
 	//1. Start WiFi
 	DBG_PRINTF("Starting WiFi...\n");
 	WiFiMode wifiMode= (WiFiMode) syscfg->wifiMode;
-	WiFiSetup.staConfig(IPAddress(syscfg->ip),IPAddress(syscfg->gw),IPAddress(syscfg->netmask));
+	WiFiSetup.staConfig(IPAddress(syscfg->ip),IPAddress(syscfg->gw),IPAddress(syscfg->netmask),IPAddress(syscfg->dns));
 	WiFiSetup.onEvent(wiFiEvent);
 	WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password);
 

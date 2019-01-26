@@ -163,6 +163,7 @@
     "config_fixedip": "固定IP",
     "config_gateway": "Gateway",
     "config_netmask": "Netmask",
+    "config_dns": "DNS",
     "config_save_change": "儲存變更",
     "config_network_mode": "網路模式",
     "config_ip": "IP",

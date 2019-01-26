@@ -162,6 +162,7 @@
     "config_fixedip": "Fixná IP",
     "config_gateway": "Brána",
     "config_netmask": "Maska siete",
+    "config_dns": "DNS",
     "config_save_change": "Uložiť zmeny",
     "config_network_mode": "Sieťový mód",
     "config_ip": "IP",

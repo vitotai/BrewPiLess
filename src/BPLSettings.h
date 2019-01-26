@@ -17,7 +17,8 @@ typedef struct _SystemConfiguration{
     uint16_t  port;
     uint8_t passwordLcd;
     uint8_t wifiMode;
-    uint8_t _padding[8];
+    uint32_t dns;
+    uint8_t _padding[4];
 }SystemConfiguration;
 
 //*****************************************************

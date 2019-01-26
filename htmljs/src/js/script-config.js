@@ -235,9 +235,12 @@ var Net = {
         var ip = validIP(Q("#staticip").value);
         var gw = validIP(Q("#gateway").value);
         var nm = validIP(Q("#netmask").value);
+        var dns= validIP(Q("#dns").value);
         if (ip && gw && nm) {
             data = data + "&ip=" + Q("#staticip").value.trim() +
-                "&gw=" + Q("#gateway").value.trim() + "&nm=" + Q("#netmask").value.trim();
+                "&gw=" + Q("#gateway").value.trim() 
+                + "&nm=" + Q("#netmask").value.trim()
+                + "&dns=" + Q("#dns").value.trim();
         }
         s_ajax({
             m: "POST",

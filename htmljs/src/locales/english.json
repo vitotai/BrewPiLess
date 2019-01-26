@@ -162,6 +162,7 @@
     "config_fixedip": "Fixed IP",
     "config_gateway": "Gateway",
     "config_netmask": "Netmask",
+    "config_dns": "DNS",
     "config_save_change": "Save Change",
     "config_network_mode": "Network Mode",
     "config_ip": "IP",

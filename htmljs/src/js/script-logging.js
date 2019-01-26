@@ -336,7 +336,7 @@ function thingspeak_get() {
 
     var info = {};
     info.url = "http://api.thingspeak.com/update";
-    info.format = encodeURIComponent(format.escapeJSON());;
+    info.format = encodeURIComponent(format.escapeJSON());
     info.method = "POST";
     info.type = "application/x-www-form-urlencoded";
     info.service = 0;

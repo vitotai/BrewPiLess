@@ -161,6 +161,7 @@
     "config_fixedip": "IP Fixo",
     "config_gateway": "Gateway",
     "config_netmask": "Netmask",
+    "config_dns": "DNS",
     "config_save_change": "Salvar alterações",
     "config_network_mode": "Modo de rede",
     "config_ip": "IP",

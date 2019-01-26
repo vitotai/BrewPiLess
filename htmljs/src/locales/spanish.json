@@ -162,6 +162,7 @@
     "config_fixedip": "IP Fija",
     "config_gateway": "Puerta de enlace",
     "config_netmask": "m&aacute;scara de red",
+    "config_dns": "DNS",
     "config_save_change": "Guardar",
     "config_network_mode": "Modo de red",
     "config_ip": "IP",
