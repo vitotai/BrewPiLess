@@ -10,6 +10,9 @@
 #include "TemperatureFormats.h"
 #include "BrewPiProxy.h"
 #include "ExternalData.h"
+#if SupportPressureTransducer
+#include "PressureMonitor.h"
+#endif
 extern BrewPiProxy brewPi;
 
 #define GSLOG_JSON_BUFFER_SIZE 256
@@ -25,14 +28,30 @@ extern BrewPiProxy brewPi;
 #define KeyAuxTemp "auxTemp"
 #define KeyVoltage "voltage"
 #define KeyTilt  "tilt"
+#define KeyPressure "pressure"
+#define KeyMode "mode"
+
+static char modeInInteger(char mode){
+	char modevalue;
+	if(mode == 'p') modevalue = '3';
+	else if(mode == 'b') modevalue = '2';
+	else if(mode == 'f') modevalue = '1';
+	else modevalue = '0';
+	return modevalue;
+}
 
 size_t DataLogger::printFloat(char* buffer,float value,int precision,bool valid)
 {
 	if(valid){
 		return sprintFloat(buffer,value,precision);
 	}else{
-		strcpy(buffer,"null"); // ubidots.com doesn't accept "null" as values.
-		return 4;
+		if(_loggingInfo->service == ServiceHTTPNullString){
+			strcpy(buffer,"\"\""); // for brewer's friend
+			return 2;
+		}else{
+			strcpy(buffer,"null"); // ubidots.com doesn't accept "null" as values.
+			return 4;
+		}
 	}
 }
 
@@ -69,7 +88,14 @@ size_t DataLogger::dataSprintf(char *buffer,const char *format)
 			}else if(ch == 'p'){
 				float sg=externalData.plato();
 				d += printFloat(buffer+d,sg,2,IsGravityValid(sg));
-			}else if(ch == 'v'){
+			}
+			#if SupportPressureTransducer
+			else if(ch == 'P'){
+				float sg=externalData.plato();
+				d += printFloat(buffer+d,PressureMonitor.currentPsi(),1,PressureMonitor.isCurrentPsiValid());
+			}
+			#endif
+			else if(ch == 'v'){
 				float vol=externalData.deviceVoltage();
 				d += printFloat(buffer+d,vol,1,IsVoltageValid(vol));
 			}else if(ch == 'a'){
@@ -80,6 +106,18 @@ size_t DataLogger::dataSprintf(char *buffer,const char *format)
 				d += printFloat(buffer+d,tilt,2,true);
 			}else if(ch == 'u'){
 				d += sprintInt(buffer+d, externalData.lastUpdate());
+			}else if(ch == 'U'){
+				char unit;
+				uint8 unused1,unused2;
+				brewPi.getLogInfo(&unit,&unused1,&unused2);
+				*(buffer+d)= unit;
+				d++;
+			}else if(ch == 'm'){
+				*(buffer+d)= modeInInteger(mode);
+				d++;
+			}else if(ch == 'M'){
+				*(buffer+d)= mode;
+				d++;
 			}else{
 				// wrong format
 				return 0;
@@ -92,6 +130,12 @@ size_t DataLogger::dataSprintf(char *buffer,const char *format)
 	buffer[d]='\0';
 	return d;
 }
+
+void DataLogger::reportNow(void)
+{
+	_lastUpdate=0;
+}
+
 
 void DataLogger::loop(time_t now)
 {
@@ -153,6 +197,10 @@ size_t DataLogger::nonNullJson(char* buffer,size_t size)
 	if(IS_FLOAT_TEMP_VALID(fridgeSet)) root[KeyFridgeSet] = fridgeSet;
 	if(IS_FLOAT_TEMP_VALID(roomTemp)) root[KeyRoomTemp] = roomTemp;
 
+	root[KeyMode] =(int)( modeInInteger(mode) - '0');
+	#if SupportPressureTransducer
+	if(PressureMonitor.isCurrentPsiValid()) root[KeyPressure]= PressureMonitor.currentPsi();
+	#endif
 	float sg=externalData.gravity();
 	if(IsGravityValid(sg)){
 		root[KeyGravity] = sg;

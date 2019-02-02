@@ -35,6 +35,7 @@ public:
 	float tempByTimeGravity(time_t time,Gravity gravity);
 	void setStableThreshold(uint8_t threshold){ _stableThreshold=threshold; }
 	void profileUpdated();
+	void setScheduleStartDate(time_t time);
 };
 
 
@@ -61,6 +62,10 @@ public:
 	void profileUpdated(){ _profile.profileUpdated();}
 	void begin(void){ _profile.profileUpdated();}
 
+	void setModeFromRemote(char mode);
+	void setBeerSet(char *tempStr);
+	void setFridgeSet(char *tempStr);
 };
 
+extern BrewKeeper brewKeeper;
 #endif

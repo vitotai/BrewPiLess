@@ -85,6 +85,7 @@ void BPLSettings::defaultAutoCapSettings(void){}
 #define  KeyIpAddress "ip"
 #define  KeyGateway   "gw"
 #define  KeyNetmask    "mask"
+#define  KeyDNS "dns"
 
 extern IPAddress scanIP(const char *str);
 
@@ -117,6 +118,7 @@ void BPLSettings::defaultSystemConfiguration(void){
     syscfg->ip = (uint32_t) IPAddress(0,0,0,0);
     syscfg->gw = (uint32_t) IPAddress(0,0,0,0);
     syscfg->netmask = (uint32_t) IPAddress(0,0,0,0);
+    syscfg->dns = (uint32_t) IPAddress(0,0,0,0);
 }
 
 bool BPLSettings::dejsonSystemConfiguration(String json){
@@ -139,6 +141,9 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
         syscfg->wifiMode = root[KeyWifi];
         syscfg->backlite = root[KeyLcdBackLight];
 
+//		if(root.containsKey(KeyDNS)){
+//			syscfg->dns = (uint32_t) scanIP(root[KeyDNS]);	
+//		}
 //        syscfg->ip = (uint32_t) scanIP(root[KeyIpAddress]);
 //        syscfg->gw = (uint32_t) scanIP(root[KeyGateway]);
 //        syscfg->netmask = (uint32_t) scanIP(root[KeyNetmask]);
@@ -166,6 +171,7 @@ String BPLSettings::jsonSystemConfiguration(void){
     root[KeyIpAddress]= IPAddress(syscfg->ip).toString();
     root[KeyGateway]= IPAddress(syscfg->gw).toString();
     root[KeyNetmask]= IPAddress(syscfg->netmask).toString();
+	root[KeyDNS] = IPAddress(syscfg->dns).toString();
 
     String ret;
     root.printTo(ret);

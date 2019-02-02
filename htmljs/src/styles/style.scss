@@ -136,11 +136,14 @@
 
 /** WIFI **/
 
-#rssi {
+.wifi-bars {
     position: relative;
     height: 16px;
     width: 24px;
     display: inline-block;
+}
+.no-display {
+    display:none;
 }
 
 #wifisignal {

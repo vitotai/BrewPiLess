@@ -11,7 +11,6 @@
 @import 'ui-elements/switch';
 @import 'ui-elements/table';
 @import 'ui-elements/textarea';
-
 .hint {
     padding-left: 140px;
     margin-top: 0;
@@ -26,4 +25,8 @@
     position: absolute;
     border: 1px solid white;
     background: lightgray;
+}
+
+.listgrid {
+    margin: 4px;
 }

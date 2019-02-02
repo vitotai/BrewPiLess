@@ -24,10 +24,11 @@ WiFiSetupClass WiFiSetup;
 #define wifi_info(a)
 #endif
 
-void WiFiSetupClass::staConfig(IPAddress ip,IPAddress gw, IPAddress nm){
+void WiFiSetupClass::staConfig(IPAddress ip,IPAddress gw, IPAddress nm,IPAddress dns){
 	_ip=ip;
 	_gw=gw;
 	_nm=nm;
+	_dns=dns;
 }
 
 void WiFiSetupClass::setMode(WiFiMode mode){
@@ -96,7 +97,7 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 	DBG_PRINTF("\ncreate network:%s pass:%s\n",_apName, passwd);
 }
 
-bool WiFiSetupClass::connect(char const *ssid,const char *passwd,IPAddress ip,IPAddress gw, IPAddress nm){
+bool WiFiSetupClass::connect(char const *ssid,const char *passwd,IPAddress ip,IPAddress gw, IPAddress nm, IPAddress dns){
 	DBG_PRINTF("Connect to %s pass:%s, ip=%s\n",ssid, passwd,ip.toString().c_str());
 
 	if(_targetSSID) free((void*)_targetSSID);
@@ -107,6 +108,7 @@ bool WiFiSetupClass::connect(char const *ssid,const char *passwd,IPAddress ip,IP
 	_ip=ip;
 	_gw=gw;
 	_nm=nm;
+	_dns=dns;
 
 	_wifiState = WiFiStateChangeConnectPending;
 	_apMode =false;
@@ -156,7 +158,7 @@ bool WiFiSetupClass::stayConnected(void)
 			//DBG_PRINTF("Disconnect\n");
 			//}
 			if(_ip != INADDR_NONE){
-				WiFi.config(_ip,_gw,_nm);
+				WiFi.config(_ip,_gw,_nm,_dns);
 			}
 			WiFi.begin(_targetSSID,_targetPass);
 			_reconnect =0;

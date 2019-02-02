@@ -56,13 +56,44 @@
                             <option value="thingspeak"> thingspeak.com </option>
                             <option value="ubidots"> ubidots.com </option>
                             <option value="brewfather"> Brewfather </option>
-                            </select>
+                            <option value="brewersfriend"> Brewer'sFriend </option>
+                        </select>
                     </div>
 
                 </div>
 
 
                 <div id=service-opt>
+                    <div id=brewersfriend class=service-options>
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_brewersfriend_stream_url %>
+                            </h6>
+                            <input type="text" id="brewersfriend-url" size="42">
+                        </div>
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_brewersfriend_beer %>
+                            </h6>
+                            <input type="text" id="brewersfriend-beer" size="42">
+                        </div>
+
+                        <div layout horizontal cross-center>
+                            <h6 class="inline-header">
+                                <%= log_brewersfriend_gravity_unit %>
+                            </h6>
+
+                            <div class="md-radio md-radio-inline">
+                                <input id="gu-sg" type="radio" name="BF-gu" value="gu-sg" checked >
+                                <label for="gu-sg">SG(1.x)</label>
+                            </div>
+                            <div class="md-radio md-radio-inline">
+                                <input id="gu-plato" type="radio" name="BF-gu" value="gu-plato">
+                                <label for="gu-plato">Plato(&deg;P)</label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id=thingspeak class=service-options>
                         <div layout horizontal cross-center>
                             <h6 class="inline-header">
@@ -71,7 +102,7 @@
                             <input type="text" id="thingspeak-apikey" size="42">
 
                         </div>
-                        <div id=thingspeak>
+                        <div>
                             <h6 class="inline-header">
                                 <%= log_thingspeak_fields %>
                             </h6>
@@ -91,7 +122,10 @@
                                             <option value="a"> <%= log_auxtemp %> </option>
                                             <option value="v"> <%= log_voltage %> </option>
                                             <option value="t"> <%= log_tilt_value %> </option>
-                                            </select>
+                                            <option value="P"> <%= log_pressure_reading %></option>
+                                            <option value="m"> <%= log_mode_in_integer %></option>
+
+                                        </select>
                                             </span>
                                 <span class=listgrid>
                                                     <label for="thingspeak-f2">Field 2:</label>
@@ -107,7 +141,10 @@
                                                     <option value="a"> <%= log_auxtemp %> </option>
                                                     <option value="v"> <%= log_voltage %> </option>
                                                     <option value="t"> <%= log_tilt_value %> </option>
-                                                    </select>
+                                                    <option value="P"> <%= log_pressure_reading %></option>
+                                                    <option value="m"> <%= log_mode_in_integer %></option>
+        
+                                                </select>
                                             </span>
 
                                 <span class=listgrid>
@@ -124,7 +161,10 @@
                                                     <option value="a"> <%= log_auxtemp %> </option>
                                                     <option value="v"> <%= log_voltage %> </option>
                                                     <option value="t"> <%= log_tilt_value %> </option>
-                                                    </select>
+                                                    <option value="P"> <%= log_pressure_reading %></option>
+                                                    <option value="m"> <%= log_mode_in_integer %></option>
+        
+                                                </select>
                                             </span>
                                 <br>
                                 <span class=listgrid>
@@ -141,7 +181,10 @@
                                                     <option value="a"> <%= log_auxtemp %> </option>
                                                     <option value="v"> <%= log_voltage %> </option>
                                                     <option value="t"> <%= log_tilt_value %> </option>
-                                                    </select>
+                                                    <option value="P"> <%= log_pressure_reading %></option>
+                                                    <option value="m"> <%= log_mode_in_integer %></option>
+        
+                                                </select>
                                             </span>
 
                                 <span class=listgrid>
@@ -158,6 +201,9 @@
                                                     <option value="a"> <%= log_auxtemp %> </option>
                                                     <option value="v"> <%= log_voltage %> </option>
                                                     <option value="t"> <%= log_tilt_value %> </option>
+                                                    <option value="P"> <%= log_pressure_reading %></option>
+                                                    <option value="m"> <%= log_mode_in_integer %></option>
+        
                                                     </select>
                                             </span>
 
@@ -175,7 +221,10 @@
                                                     <option value="a"> <%= log_auxtemp %> </option>
                                                     <option value="v"> <%= log_voltage %> </option>
                                                     <option value="t"> <%= log_tilt_value %> </option>
-                                                    </select>
+                                                    <option value="P"> <%= log_pressure_reading %></option>
+                                                    <option value="m"> <%= log_mode_in_integer %></option>
+        
+                                                </select>
                                             </span>
                                 <br>
                                 <span class=listgrid>
@@ -192,7 +241,11 @@
                                                     <option value="a"> <%= log_auxtemp %> </option>
                                                     <option value="v"> <%= log_voltage %> </option>
                                                     <option value="t"> <%= log_tilt_value %> </option>
-                                                    </select>
+                                                    <option value="P"> <%= log_pressure_reading %></option>
+                                                    <option value="m"> <%= log_mode_in_integer %></option>
+
+
+                                                </select>
                                             </span>
                                 <span class=listgrid>
                                                     <label for="thingspeak-f8">Field 8:</label>
@@ -208,7 +261,10 @@
                                                     <option value="a"> <%= log_auxtemp %> </option>
                                                     <option value="v"> <%= log_voltage %> </option>
                                                     <option value="t"> <%= log_tilt_value %> </option>
-                                                    </select>
+                                                    <option value="P"> <%= log_pressure_reading %></option>
+                                                    <option value="m"> <%= log_mode_in_integer %></option>
+
+                                                </select>
                                                     </span>
 
                             </div>
@@ -238,7 +294,7 @@
                             </h6>
                             <select name="ubidots-account" class="nb">
                                                         <option value="1"><%= log_ubidots_educational %></option>
-                                                        <option value="2"><%= log_ubidots_industrial %>></option>
+                                                        <option value="2"><%= log_ubidots_industrial %></option>
                                                     </select>
 
                         </div>
@@ -325,7 +381,7 @@
                             <%= log_new_log_name %>
                         </h6>
                         <input type="text" id="logname" size="24" maxlength="24"></input>
-                        <button id="startlogbutton"><%= log_start_logging %></button>
+                        <button id="startlogbutton" class="btn"><%= log_start_logging %></button>
                     </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
@@ -355,7 +411,7 @@
                             <%= log_or_water_at %>
                         </h6><input type=text id=watertemp size=4>&deg;
                         <%= log_calibrated %> <input type=text id=caltemp size=4>&deg;
-                            <select id=tempunit><option vlue=C>C</option><option value=F>F</option></select>
+                            <select id=tempunit><option value=C>C</option><option value=F>F</option></select>
 
                     </div>
                 </div>
@@ -363,7 +419,7 @@
                 <div id=logstopinput style="display:none">
                     <%= log_recording %> <strong id="loggingtitle"></strong>
                         <%= log_since %> <strong id=start-log-date></strong>
-                            <button id="stoplogbutton"><%= log_stop_logging %></button>
+                            <button id="stoplogbutton" class="btn"><%= log_stop_logging %></button>
                 </div>
 
 
@@ -477,6 +533,35 @@
                     <%= log_timestamp %>
                 </td>
             </tr>
+
+            <tr>
+                <th>%U</th>
+                <td>
+                    <%= log_temperature_unit %>
+                </td>
+            </tr>
+
+            <tr>
+                <th>%m</th>
+                <td>
+                    <%= log_mode_in_integer %>
+                </td>
+            </tr>
+
+            <tr>
+                <th>%M</th>
+                <td>
+                    <%= log_mode_in_character %>
+                </td>
+            </tr>
+
+            <tr>
+                <th>%P</th>
+                <td>
+                    <%= log_pressure_reading %>
+                </td>
+            </tr>
+
         </table>
     </div>
 

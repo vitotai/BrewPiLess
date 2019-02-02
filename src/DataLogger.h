@@ -6,6 +6,7 @@
 
 #define ServiceGenericHttp 0
 #define ServiceNonNullJson 1
+#define ServiceHTTPNullString 2
 
 class DataLogger
 {
@@ -14,6 +15,7 @@ public:
 
     // web interface
 	void loop(time_t now);
+	void reportNow(void);
 
 protected:
 	void sendData(void);
@@ -27,5 +29,6 @@ protected:
 	
 	time_t _lastUpdate;
 };
+extern DataLogger dataLogger;
 
 #endif

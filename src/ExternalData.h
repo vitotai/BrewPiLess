@@ -67,6 +67,8 @@ protected:
 	float _ispindelTilt;
 	bool  _calibrating;
 	float _filteredGravity;
+	int16_t _rssi;
+	bool _rssiValid;
 
 
 	GravityDeviceConfiguration *_cfg;
@@ -80,7 +82,7 @@ protected:
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),
 	_lastUpdate(0),_deviceVoltage(INVALID_VOLTAGE)
-	,_ispindelName(NULL),_calibrating(false)
+	,_ispindelName(NULL),_calibrating(false),_rssiValid(false)
 	{ _filteredGravity = INVALID_GRAVITY;}
 
 	float gravity(bool filtered=false);
@@ -106,6 +108,7 @@ public:
 //	void setUpdateTime(time_t update){ _lastUpdate=update;}
 	time_t lastUpdate(void){return _lastUpdate;}
 	void setDeviceVoltage(float vol){ _deviceVoltage = vol; }
+	void setDeviceRssi(int16_t rssi){_rssi = rssi;  _rssiValid=true;}
 	float deviceVoltage(void){return _deviceVoltage;}
 	float tiltValue(void){return _ispindelTilt;}
 	void invalidateDeviceVoltage(void) { _deviceVoltage= INVALID_VOLTAGE; }

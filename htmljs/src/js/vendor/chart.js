@@ -632,6 +632,7 @@
                     var d2 = data[i++];
                     var d3 = data[i++];
                     var tdiff = d3 + (d2 << 8) + (d1 << 16);
+                    if(tdiff > 30*24*60*60) tdiff= 30*60; // it's wrong if it's too long.
                     var ntime = t.starttime + tdiff;
                     if (ntime > t.ctime) {
                         // add a gap to it                   

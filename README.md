@@ -46,6 +46,13 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * v3.5
+    * MQTT Remote Control
+    * Pressure transducer support
+    * Add iSpindel WiFi signal if available, "Now" button in profile editing
+    * "Fixed" incorrect time issue after restart.
+    * Add DNS setting for static IP
+
  * v3.4
     * Add back STATAION mode only.
     * fixing Cap control tab display bug.

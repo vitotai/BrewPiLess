@@ -126,7 +126,7 @@ BrewLogger::BrewLogger(void){
 
 
 		dataRead=_logFile.read((uint8_t*)_logBuffer,LogBufferSize);
-		DBG_PRINTF("read:%ld\n",dataRead);
+		DBG_PRINTF("read:%d\n",dataRead);
 		if(dataRead < 8){
             DBG_PRINTF("resume failed\n");
 			_logFile.close();
@@ -181,7 +181,7 @@ BrewLogger::BrewLogger(void){
 		        			if( i == OrderGravity){        
 								#if SerialDebug
 								int gravityInt = (d0 << 8) | d1;
-                            	DBG_PRINTF("resume@%ld, SG:%d\n",_resumeLastLogTime,gravityInt);
+                            	DBG_PRINTF("resume@%u, SG:%d\n",_resumeLastLogTime,gravityInt);
 								#endif
                                     // dont trust the data
 //                            	if(gravityInt > 8000 && gravityInt < 12500)
@@ -207,7 +207,7 @@ BrewLogger::BrewLogger(void){
 				}else if(tag == StateTag  || tag == ModeTag  || tag ==CorrectionTempTag ){
 					// DO nothing.
 				}else{
-					DBG_PRINTF("Unknown tag %d,%d @%ld\n",tag,mask,offset+processIndex);
+					DBG_PRINTF("Unknown tag %d,%d @%u\n",tag,mask,offset+processIndex);
 				}
 			}//while() processing data in buffer
 			int dataLeft=0;
@@ -219,7 +219,7 @@ BrewLogger::BrewLogger(void){
 			size_t len=_logFile.read((uint8_t*)_logBuffer+dataLeft,LogBufferSize - dataLeft);
 			if(len==0) break; // nothing to do
 			dataRead = len +  dataLeft;
-			DBG_PRINTF("read:%ld, all:%ld\n",len,dataRead);
+			DBG_PRINTF("read:%u, all:%u\n",len,dataRead);
 			processIndex=0;
 
 		}while(true);
@@ -424,12 +424,12 @@ BrewLogger::BrewLogger(void){
 		//                        that is,  total size = _savedLength + _logIndex
 		// in abnormal cases, the file size is total size since all data are "written".
 
-		DBG_PRINTF("beginCopyAfter:%d, _logIndex=%ld, saved=%ld, return:%ld, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
+		DBG_PRINTF("beginCopyAfter:%d, _logIndex=%u, saved=%u, return:%u, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
 		if(last >= (_logIndex +_savedLength)){
             DBG_PRINTF(" return:0\n");
             return 0;
         }
-        DBG_PRINTF(" return:%ld\n",_logIndex+_savedLength - last);
+        DBG_PRINTF(" return:%u\n",_logIndex+_savedLength - last);
 		return ( _logIndex+_savedLength - last);
 	}
 
@@ -441,7 +441,7 @@ BrewLogger::BrewLogger(void){
 		// rindex is the real index of the whole log
 		size_t rindex= index + _lastRead;
 
-		DBG_PRINTF("read index:%ld, max:%ld, _lastRead =%ld, rindex=%ld\n",index,maxLen,_lastRead,rindex);
+		DBG_PRINTF("read index:%u, max:%u, _lastRead =%u, rindex=%u\n",index,maxLen,_lastRead,rindex);
 
 		// the reqeust data index is more than what we have.
 		if(rindex > (_savedLength +_logIndex)) return maxLen; // return whatever it wants.
@@ -457,19 +457,19 @@ BrewLogger::BrewLogger(void){
 			sizeRead=_logFile.read(buffer,sizeRead);
 
 			if(sizeRead < maxLen){
-				DBG_PRINTF("!Error: file read:%ld of %ld, file size:%ld\n",sizeRead,maxLen,_logFile.size());
+				DBG_PRINTF("!Error: file read:%u of %u, file size:%u\n",sizeRead,maxLen,_logFile.size());
 				size_t insufficient = maxLen - sizeRead;
                 if(insufficient > _logIndex){
                     size_t fillsize=insufficient - _logIndex;
                     memset(buffer + sizeRead,FillTag,fillsize);
                     sizeRead += fillsize;
                     insufficient = _logIndex;
-    				DBG_PRINTF("!Error: fill blank:%ld\n",fillsize);
+    				DBG_PRINTF("!Error: fill blank:%u\n",fillsize);
                 }
                 memcpy(buffer+ sizeRead,_logBuffer,insufficient);
 				sizeRead += insufficient;
 			}
-			DBG_PRINTF("read file:%ld\n",sizeRead);
+			DBG_PRINTF("read file:%u\n",sizeRead);
 		}else{
 			//DBG_PRINTF("read from buffer\n");
 			// read from buffer
@@ -478,7 +478,7 @@ BrewLogger::BrewLogger(void){
 			sizeRead = _logIndex - rindex;
 			if(sizeRead > maxLen) sizeRead=maxLen;
 			memcpy(buffer,_logBuffer+rindex,sizeRead);
-			DBG_PRINTF("read buffer:%ld\n",sizeRead);
+			DBG_PRINTF("read buffer:%u\n",sizeRead);
 		}
 		
 		return sizeRead;
@@ -922,7 +922,12 @@ BrewLogger::BrewLogger(void){
 		writeBuffer(idx,ResumeBrewTag); //*ptr = ResumeBrewTag;
 		size_t rtime= TimeKeeper.getTimeSeconds();
 		size_t gap=rtime - _pFileInfo->starttime;
-		DBG_PRINTF("resume, start:%d, current:%d gap:%d\n",_pFileInfo->starttime,rtime,gap);
+		if(rtime < 1545211593L || gap > 60*60*24*30){
+			// something wrong. just give it an hour
+			DBG_PRINTF("abnormal resume, start:%lu, current:%u gap:%u\n",_pFileInfo->starttime,rtime,gap);
+			gap =60*10;
+		}
+		DBG_PRINTF("resume, start:%lu, current:%u gap:%u\n",_pFileInfo->starttime,rtime,gap);
 		//if (gap > 255) gap = 255;
 		writeBuffer(idx+1,(uint8_t) (gap>>16)&0xFF );
 		writeBuffer(idx+2,(uint8_t) (gap>>8)&0xFF );

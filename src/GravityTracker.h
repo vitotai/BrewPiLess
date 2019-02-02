@@ -45,7 +45,7 @@ public:
 
         if(timediff > AveragePeriod){
            addRecord(gravity);
-           DBG_PRINTF("add %d @%ld\n",gravity,time);
+           DBG_PRINTF("add %d @%u\n",gravity,time);
            if(_lastValue >0){
                timediff -= AveragePeriod;
                while(timediff > AveragePeriod){

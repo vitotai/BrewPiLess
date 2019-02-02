@@ -439,6 +439,12 @@
             if (Q("#iSpindel-tilt"))
                 Q("#iSpindel-tilt").innerHTML = "" + msg["angle"];
         }
+        if (typeof msg["rssi"] != "undefined"){
+            if(Q("#ispindel-rssi")){
+                Q("#ispindel-rssi").classList.remove("no-display");
+                wifibar("#ispindel-rssi",msg.rssi);
+            }
+        }
         //}
         if (typeof msg["lpf"] != "undefined")
             GravityFilter.setBeta(msg["lpf"]);
@@ -572,18 +578,23 @@
         showgravitydlg("og");
     }
 
-
-    function displayrssi(x) {
+    function wifibar(did,x){
         var strength = [-1000, -90, -80, -70, -67];
         var bar = 4;
         for (; bar >= 0; bar--) {
             if (strength[bar] < x) break;
         }
-        var bars = document.getElementsByClassName("rssi-bar");
+        var bars = Q(did).getElementsByClassName("rssi-bar");
         for (var i = 0; i < bars.length; i++) {
             bars[i].style.backgroundColor = (i < bar) ? window.rssiBarColor : "rgba(255,255,255,0.05)";
         }
+        Q(did).title = (x > 0) ? "?" : Math.min(Math.max(2 * (x + 100), 0), 100);
+
+    }
+
+    function displayrssi(x) {
         Q("#rssi").title = (x > 0) ? "?" : Math.min(Math.max(2 * (x + 100), 0), 100);
+        wifibar("#rssi",x);
         if (Q("#wifisignal"))
             Q("#wifisignal").innerHTML = (x > 0) ? "?" : Math.min(Math.max(2 * (x + 100), 0), 100);
     }
@@ -690,6 +701,13 @@
             if (window.plato) showPlatoUnit();
         }
 
+        if (typeof c["pm"] != "undefined" && typeof c["psi"] != "undefined") {
+            if (c.pm != 0) {
+                Q("#pressure-info-pane").style.display = "block";
+                Q("#pressure-psi").innerHTML = c.psi;
+            }
+        }
+
         ptcshow(c);
     }
 
@@ -768,6 +786,7 @@
     }
 
     function init() {
+        Q("#pressure-info-pane").style.display = "none";
         window.plato = false;
         BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
         initRssi();

@@ -214,7 +214,8 @@
                 <input id="nwpass" name="nwpass" length="64" type="password" placeholder="password"><br><br>
                 <input id="staticip" name="ip" length="1" placeholder="<%= config_fixedip %>" class="nb iptype"><br>
                 <input id="gateway" name="gw" length="1" placeholder="<%= config_gateway %>" class="nb iptype"><br>
-                <input id="netmask" name="mask" length="1" placeholder="<%= config_netmask %>" class="nb iptype"><br><br>
+                <input id="netmask" name="mask" length="1" placeholder="<%= config_netmask %>" class="nb iptype"><br>
+                <input id="dns" name="dns" length="1" placeholder="<%= config_dns %>" class="nb iptype"><br><br>
                 <button type="button" onclick="return Net.save()"><%= config_save_change %></button>
                 <button onclick="Net.hide();return false;"><%= dlg_cancel %></button>
             </form>

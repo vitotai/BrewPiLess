@@ -10,7 +10,7 @@
     </title>
     <meta name="apple-mobile-web-app-title" content="BrewPiLess">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <script src="/dygraph-combined.js" ignore></script>
+    <script type="text/javascript" src="dygraph-combined.js" ignore></script>
     <script type="text/javascript" src="js/vendor/bwf.js"></script>
     <script type="text/javascript" src="js/vendor/chart.js"></script>
     <script type="text/javascript" src="js/vendor/regression.js"></script>
@@ -66,6 +66,15 @@
                 <li class="heading"><strong><%= ispindel_data %></strong></li>
                 <li layout horizontal main-justified><span class="descriptor"><%= ispindel_tilt %></span> <span id="iSpindel-tilt">--</span></li>
                 <li layout horizontal main-justified><span class="descriptor"><%= ispindel_battery %></span> <span id="iSpindel-battery">--</span></li>
+                <li layout horizontal main-justified id=ispindel-rssi-line>
+                    <span class="descriptor"><%= wifi %></span> <div id="ispindel-rssi" class="wifi-bars no-display">
+                        <div class="rssi-bar rssi-bar1"></div>
+                        <div class="rssi-bar rssi-bar2"></div>
+                        <div class="rssi-bar rssi-bar3"></div>
+                        <div class="rssi-bar rssi-bar4"></div>
+                    </div>
+                </li>
+
                 <li layout horizontal main-justified><span class="descriptor"><%= ispindel_lastupdate %></span> <span id="iSpindel-last">--</span></li>
             </ul>
 
@@ -94,13 +103,18 @@
                     </div>
                 </li>
             </ul>
+            <ul class="data-pane" id="pressure-info-pane">
+                <li layout horizontal main-justified><span class="descriptor">Pressure</span><span><span id="pressure-psi"></span> psi</span>
+                </li>
+            </ul>
+
 
             <ul class="data-pane">
                 <li class="heading"><strong><%= system %></strong></li>
                 <li layout horizontal main-justified><span class="descriptor"><%= writing_log %></span><span id="recording"></span></li>
                 <li layout horizontal main-justified>
                     <span class="descriptor"><%= wifi %></span>
-                    <div id="rssi">
+                    <div id="rssi" class="wifi-bars">
                         <div class="rssi-bar rssi-bar1"></div>
                         <div class="rssi-bar rssi-bar2"></div>
                         <div class="rssi-bar rssi-bar3"></div>
@@ -219,8 +233,8 @@
             </ul>
 
             <div class="dialog-buttons">
-                <button onclick="dismissgravity()"><%= dlg_cancel %></button>
-                <button onclick="inputgravity()"><%= dlg_ok %></button>
+                <button class="btn btn--rise" onclick="dismissgravity()"><%= dlg_cancel %></button>
+                <button class="btn btn--rise" onclick="inputgravity()"><%= dlg_ok %></button>
             </div>
         </div>
     </div>
@@ -261,7 +275,7 @@
                                 </tr>
                             </tobdy>
                         </table>
-                        <div style="float:right;"><button onclick="applyIgnoreMask()"><%= control_apply %></button></div>
+                        <div style="float:right;"><button class="btn btn--rise" onclick="applyIgnoreMask()"><%= control_apply %></button></div>
                     </td>
                     <td>
                         <div id="graph"></div>

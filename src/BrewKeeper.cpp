@@ -1,5 +1,6 @@
 #include <FS.h>
 #include <ArduinoJson.h>
+#include "TimeKeeper.h"
 
 #include "BrewPiProxy.h"
 #include "BrewKeeper.h"
@@ -66,11 +67,38 @@ void BrewKeeper::keep(time_t now)
 
 	}
 }
+void BrewKeeper::setModeFromRemote(char mode){
+	char unit, ori_mode;
+	float beerSet,fridgeSet;
+	brewPi.getControlParameter(&unit,&ori_mode,&beerSet,&fridgeSet);
+	if(mode == 'p' && ori_mode != 'p') _profile.setScheduleStartDate(TimeKeeper.getTimeSeconds());
+	char buff[36];
+	sprintf(buff,"j{mode:%c}",mode);
+	DBG_PRINTF("write:%s\n",buff);
+	_write(buff);
+}
+
+void BrewKeeper::setBeerSet(char* tempStr){
+	char buff[36];
+	sprintf(buff,"j{beerSet:%s}",tempStr);
+	DBG_PRINTF("write:%s\n",buff);
+	_write(buff);
+}
+
+void BrewKeeper::setFridgeSet(char* tempStr){
+	char buff[36];
+	sprintf(buff,"j{fridgeSet:%s}",tempStr);
+	DBG_PRINTF("write:%s\n",buff);
+	_write(buff);
+}
 
 //**********************************************************************************
 //class BrewProfile
 //**********************************************************************************
 
+void BrewProfile::setScheduleStartDate(time_t time){
+	_schedule->startDay=time;
+}
 
 void BrewProfile::setUnit(char unit)
 {
@@ -118,7 +146,7 @@ void BrewProfile::_toNextStep(unsigned long time)
 	_status->timeEnterCurrentStep=time;	
 	_status->startingDate= _schedule->startDay;
 	_saveBrewingStatus();
-	DBG_PRINTF("_toNextStep:%d current:%ld, duration:%ld\n",_status->currentStep,time, csd );
+	DBG_PRINTF("_toNextStep:%d current:%lu, duration:%u\n",_status->currentStep,time, csd );
 }
 
 bool BrewProfile::checkCondition(unsigned long time,Gravity gravity){

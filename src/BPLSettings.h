@@ -2,6 +2,7 @@
 #define BPLSettings_H
 #include <FS.h>
 #include <time.h>
+#include "Config.h"
 //*****************************************************
 // 156 bytes
 typedef struct _SystemConfiguration{
@@ -16,7 +17,8 @@ typedef struct _SystemConfiguration{
     uint16_t  port;
     uint8_t passwordLcd;
     uint8_t wifiMode;
-    uint8_t _padding[8];
+    uint32_t dns;
+    uint8_t _padding[4];
 }SystemConfiguration;
 
 //*****************************************************

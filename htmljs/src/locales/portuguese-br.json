@@ -133,7 +133,8 @@
     "menu2_setup": "dispositivos",
     "menu2_config": "rede",
     "menu2_gravity": "densidade",
-    
+    "menu2_pressure": "Pressão",
+
     "__control_html__": "control.html",
     
     "control_page_title": "BrewPiLess | Modos de Fermentação",
@@ -160,6 +161,7 @@
     "config_fixedip": "IP Fixo",
     "config_gateway": "Gateway",
     "config_netmask": "Netmask",
+    "config_dns": "DNS",
     "config_save_change": "Salvar alterações",
     "config_network_mode": "Modo de rede",
     "config_ip": "IP",
@@ -237,6 +239,10 @@
     "log_ubidots_device": "Device:",
     "log_ubidots_educational": "Educational",
     "log_ubidots_industrial": "Industrial",
+    "log_brewersfriend_stream_url":"Stream URL:",
+    "log_brewersfriend_beer":"Beer:",
+    "log_brewersfriend_gravity_unit":"Gravity Unit",
+
     
     "__setup_html": "setup.html",
     "setup_page_title": "BrewPiLess | Ajustes",
@@ -381,6 +387,38 @@
     
     "time_format_short": "{MM}m{SS}",
     "time_format_long": "{HH}h{MM}m{SS}",
-    
+
+    "__mqtt_in_config__":"MQTT section in config.htm",
+    "mqtt_remote_control":" MQTT Remote Control",
+    "mqtt_enabled":"Enabled:",
+    "mqtt_server":"MQTT Server:",
+    "mqtt_port":"MQTT Port:",
+    "mqtt_username":"Username:",
+    "mqtt_password":"Password:",
+    "mqtt_mode_path":"Path for mode:",
+    "mqtt_settemp_path":"Path for setting temperature:",
+    "mqtt_cap_control_path":"Path for capping control:",
+    "mqtt_ptc_path":"Path for PTC temperature:",
+
+    "__pressure_htm__":"Pressure control",
+    "pressure_setting_title":"Pressure Transducer Settings",
+    "enabled_pressure_transducer":"Enable Pressure Transducer:",
+    "control_pressure":"Control Pressure:",
+    "pressure_conversion_parameters":"Pressure Conversion parameters:",
+    "pressure_conversion_parameters_desp":"Pressure in PSI= (A0_reading - b) * a",
+    "pressure_calibrate_step1":"Step1: under no pressure, 0 psi, press",
+    "pressure_calibrate_step1_button":"Calibrate step 1",
+    "pressure_calibrate_step2_1":"Step2: under pressure",
+    "pressure_calibrate_step2_2":"psi, press",
+    "pressure_calibrate_step2_button":"Calibrate step 2",
+    "dismiss":"Dismiss",
+
+    "__new_for_logging":"New logging items",
+
+    "log_temperature_unit":"Temperature in C or F",
+    "log_mode_in_integer":"mode in integer",
+    "log_mode_in_character":"mode in character",
+    "log_pressure_reading":"Pressure in PSI",
+
     "__end__": "END"
     }    

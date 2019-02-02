@@ -66,9 +66,18 @@ extern "C" {
 
 #include "ExternalData.h"
 
+#if SupportMqttRemoteControl
+#include "MqttRemoteControl.h"
+#endif
+
 #if EanbleParasiteTempControl
 #include "ParasiteTempController.h"
 #endif
+
+#if SupportPressureTransducer
+#include "PressureMonitor.h"
+#endif
+
 //WebSocket seems to be unstable, at least on iPhone.
 //Go back to ServerSide Event.
 #define UseWebSocket true
@@ -93,7 +102,6 @@ extern "C" {
 
 #define POLLING_PATH 	"/getline_p"
 #define PUTLINE_PATH	"/putline"
-//#define CONTROL_CC_PATH	"/tcc"
 
 #ifdef ENABLE_LOGGING
 #define LOGGING_PATH	"/log"
@@ -123,7 +131,6 @@ extern "C" {
 #define ParasiteTempControlPath "/ptc"
 #endif
 
-#define IGNORE_MASK_PATH  "/icalm"
 
 #define GravityDeviceConfigPath "/gdc"
 #define GravityFormulaPath "/coeff"
@@ -136,6 +143,10 @@ extern "C" {
 #define WIFI_CONNECT_PATH "/wificon"
 #define WIFI_DISC_PATH "/wifidisc"
 
+#define MQTT_PATH "/mqtt"
+#if SupportPressureTransducer
+#define PRESSURE_PATH "/psi"
+#endif
 
 const char *public_list[]={
 "/bwf.js",
@@ -186,9 +197,11 @@ void requestRestart(bool disc);
 void initTime(bool apmode)
 {
 	if(apmode){
+		DBG_PRINTF("initTime in ap mode\n");
 		TimeKeeper.begin();
 	}else{
-		TimeKeeper.begin((char*)"time.nist.gov",(char*)"time.windows.com",(char*)"de.pool.ntp.org");
+		DBG_PRINTF("connect to Time server\n");
+		TimeKeeper.begin((char*)"time.google.com",(char*)"pool.ntp.org",(char*)"time.windows.com");
 	}
 }
 #if AUTO_CAP
@@ -360,12 +373,12 @@ public:
 	void handleRequest(AsyncWebServerRequest *request){
 		SystemConfiguration *syscfg=theSettings.systemConfiguration();
 
+		#if UseServerSideEvent == true
 	 	if(request->method() == HTTP_GET && request->url() == POLLING_PATH) {
 	 		char *line=brewPi.getLastLine();
 	 		if(line[0]!=0) request->send(200, "text/plain", line);
 	 		else request->send(200, "text/plain;", "");
 	 	}
-		#if UseServerSideEvent == true
 		 else if(request->method() == HTTP_POST && request->url() == PUTLINE_PATH){
 	 		String data=request->getParam("data", true, false)->value();
 	 		//DBG_PRINTF("putline:%s\n",data.c_str());
@@ -376,8 +389,34 @@ public:
 	 		brewPi.putLine(data.c_str());
 	 		request->send(200,"application/json","{}");
 	 	}
+		else
 		#endif
-		else if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
+
+		#if SupportMqttRemoteControl
+		if(request->method() == HTTP_GET && request->url() == MQTT_PATH){
+			request->send(200,"application/json",theSettings.jsonMqttRemoteControlSettings());
+	 	}else if(request->method() == HTTP_POST && request->url() == MQTT_PATH){
+	 	    if(!request->authenticate(syscfg->username, syscfg->password))
+	        return request->requestAuthentication();
+
+			if(request->hasParam("data", true)){
+				if(theSettings.dejsonMqttRemoteControlSettings(request->getParam("data", true)->value())){
+					theSettings.save();
+					request->send(200,"application/json","{}");
+					mqttRemoteControl.reset();
+				}else{
+  					request->send(500);
+					DBG_PRINTF("json format error\n");
+  					return;
+				}
+			}else{
+	  			request->send(400);
+				DBG_PRINTF("no data in post\n");
+  			}
+
+		}else 
+		#endif
+		if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
 			if(request->hasParam("cfg"))
 				request->send(200,"application/json",theSettings.jsonSystemConfiguration());
 			else 
@@ -507,6 +546,10 @@ public:
 	 	    if(!request->authenticate(syscfg->username, syscfg->password))
 	        return request->requestAuthentication();
 			// auto cap.
+			if(request->hasParam("psi")){
+				theSettings.pressureMonitorSettings()->psi=request->getParam("psi")->value().toInt();
+				DBG_PRINTF("set pressure:%d",theSettings.pressureMonitorSettings()->psi);
+			}
 			bool response=true;
 			if(request->hasParam("cap")){
 				AsyncWebParameter* value = request->getParam("cap");
@@ -527,6 +570,34 @@ public:
 			}
 			if(response) request->send(200,"application/json","{}");
 			capStatusReport();
+		}
+		#endif
+		#if SupportPressureTransducer
+		else if(request->url() == PRESSURE_PATH){
+	 	    if(!request->authenticate(syscfg->username, syscfg->password))
+	        return request->requestAuthentication();
+
+			if(request->method() == HTTP_GET){
+				if(request->hasParam("r")){
+					int reading=PressureMonitor.currentAdcReading();
+					request->send(200,"application/json",String("{\"a0\":")+String(reading)+String("}"));
+				}else{
+					request->send(200,"application/json",theSettings.jsonPressureMonitorSettings());
+				}
+			}else{
+				// post
+				if(request->hasParam("data",true)){
+					if(theSettings.dejsonPressureMonitorSettings(request->getParam("data",true)->value())){
+						theSettings.save();
+						request->send(200,"application/json","{}");
+					}else
+						DBG_PRINTF("invalid Json\n");
+						request->send(402);
+				}else{
+					DBG_PRINTF("no data\n");
+					request->send(401);
+				}
+			}
 		}
 		#endif
 		else if(request->url() == BEER_PROFILE_PATH){
@@ -575,10 +646,14 @@ public:
 
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET){
-	 		if(request->url() == POLLING_PATH || request->url() == CONFIG_PATH || request->url() == TIME_PATH
-			 || request->url() == RESETWIFI_PATH  /*|| request->url() == CONTROL_CC_PATH*/
+	 		if( request->url() == CONFIG_PATH || request->url() == TIME_PATH
+			#if UseServerSideEvent == true
+			|| request->url() == POLLING_PATH 
+			#endif
+			 || request->url() == RESETWIFI_PATH  
 			 || request->url() == GETSTATUS_PATH
 			 || request->url() == BEER_PROFILE_PATH
+			 || request->url() == MQTT_PATH
 	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
 	 		#endif
@@ -587,6 +662,9 @@ public:
 			 #endif
 			#if AUTO_CAP
 			 || request->url() == CAPPER_PATH
+			#endif
+			#if SupportPressureTransducer
+			|| request->url() == PRESSURE_PATH
 			#endif
 	 		){
 	 			return true;
@@ -609,13 +687,16 @@ public:
 	 			|| request->url() ==  FPUTS_PATH || request->url() == FLIST_PATH
 	 			|| request->url() == TIME_PATH
 				|| request->url() == BEER_PROFILE_PATH
+				|| request->url() == MQTT_PATH
 	 			#ifdef ENABLE_LOGGING
 	 			|| request->url() == LOGGING_PATH
 	 			#endif
-			 #if EanbleParasiteTempControl
-			 || request->url() == ParasiteTempControlPath
-			 #endif
-
+				#if EanbleParasiteTempControl
+			 	|| request->url() == ParasiteTempControlPath
+			 	#endif
+				#if SupportPressureTransducer
+				|| request->url() == PRESSURE_PATH
+				#endif
 	 			)
 	 			return true;
 		}
@@ -668,7 +749,15 @@ String capControlStatus(void)
 		capstate += String(",\"g\":") + String(autoCapControl.targetGravity(),3);
 	}else if (mode ==AutoCapModeTime){
 		capstate += String(",\"t\":") + String(autoCapControl.targetTime());
-	}	
+	}
+
+#if SupportPressureTransducer
+	PressureMonitorSettings* ps=theSettings.pressureMonitorSettings();
+	if(ps->mode == PMModeControl){
+		capstate += String(",\"pm\":2,\"psi\":") + String(ps->psi);
+	}
+#endif
+
 	return capstate;
 } 
 void stringAvailable(const char*);
@@ -699,11 +788,25 @@ void greeting(std::function<void(const char*)> sendFunc)
 	SystemConfiguration *syscfg= theSettings.systemConfiguration();
 #if AUTO_CAP
 	String capstate= capControlStatus();
+
+#if EanbleParasiteTempControl
+	
+	String ptcstate= parasiteTempController.getSettings();
+
+	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
+				\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s},\"ptcs\":%s}"
+		,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
+		TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
+		logname, capstate.c_str(),ptcstate.c_str());
+
+
+#else
 	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
 				\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s}}"
 		,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
 		TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
 		logname, capstate.c_str());
+#endif
 	
 #else
 	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld, \"log\":\"%s\"}"
@@ -845,6 +948,28 @@ void reportRssi(void)
 #if EanbleParasiteTempControl
 	char ptcmode=parasiteTempController.getMode();
 	
+	#if SupportPressureTransducer
+		int pmmode=PressureMonitor.mode();
+		int psi = (int) PressureMonitor.currentPsi();
+		
+		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d,\
+			\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\",\"pm\":%d,\"psi\":%d}",
+				WiFi.RSSI(),ptcmode,parasiteTempController.getTimeElapsed(),
+				parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound(),
+			state,
+			mode,
+			(int)(beerTemp*100),
+			(int)(beerSet*100),
+			(int)(fridgeTemp*100),
+			(int)(fridgeSet*100),
+			(int)(roomTemp*100),
+			statusLine,
+			unit,
+			pmmode,
+			psi
+			);
+
+	#else
 	sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d,\
 		\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\"}",
 			WiFi.RSSI(),ptcmode,parasiteTempController.getTimeElapsed(),
@@ -860,7 +985,7 @@ void reportRssi(void)
 		unit
 
 			);
-
+	#endif
 	stringAvailable(buf);
 #else
 	sprintf(buf,"A:{\"rssi\":%d,\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\"}",
@@ -1248,10 +1373,14 @@ public:
 				IPAddress ip=scanIP(request->getParam("ip",true)->value().c_str());
 				IPAddress gw=scanIP(request->getParam("gw",true)->value().c_str());
 				IPAddress nm=scanIP(request->getParam("nm",true)->value().c_str());
+				
+				IPAddress dns=request->hasParam("dns",true)? scanIP(request->getParam("dns",true)->value().c_str()):IPAddress(0,0,0,0);
+
 				WiFiSetup.connect(ssid.c_str(),pass, 
 							ip,
 							gw,
-							nm
+							nm,
+							dns
 				);
 				// save to config
 				syscfg->ip = ip;
@@ -1488,7 +1617,7 @@ void setup(void){
 	//1. Start WiFi
 	DBG_PRINTF("Starting WiFi...\n");
 	WiFiMode wifiMode= (WiFiMode) syscfg->wifiMode;
-	WiFiSetup.staConfig(IPAddress(syscfg->ip),IPAddress(syscfg->gw),IPAddress(syscfg->netmask));
+	WiFiSetup.staConfig(IPAddress(syscfg->ip),IPAddress(syscfg->gw),IPAddress(syscfg->netmask),IPAddress(syscfg->dns));
 	WiFiSetup.onEvent(wiFiEvent);
 	WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password);
 
@@ -1597,6 +1726,11 @@ void setup(void){
 #ifdef EMIWorkaround
 	_lcdReinitTime = millis();
 #endif
+
+#if SupportMqttRemoteControl
+	//mqtt
+	mqttRemoteControl.begin();
+#endif
 }
 
 uint32_t _rssiReportTime;
@@ -1648,6 +1782,10 @@ void loop(void){
 
  	brewLogger.loop();
 
+#if SupportMqttRemoteControl
+	mqttRemoteControl.loop();
+#endif
+
  	#ifdef ENABLE_LOGGING
 
  	dataLogger.loop(now);
@@ -1657,6 +1795,10 @@ void loop(void){
 	if(autoCapControl.autoCapOn(now,externalData.gravity(true))){
 		capStatusReport();
 	}
+	#endif
+	
+	#if SupportPressureTransducer
+	PressureMonitor.loop();
 	#endif
 
 	#if GreetingInMainLoop

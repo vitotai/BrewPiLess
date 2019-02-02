@@ -12,6 +12,12 @@ Actuator* AutoCapControl::capper = &defaultActuator;
 
 AutoCapControl autoCapControl;
 
+uint8_t AutoCapControl::mode(void)
+{
+    if(AutoCapControl::capper != &defaultActuator)
+        return _settings->autoCapMode;
+    return AutoCapModeNone;
+}
 
 void AutoCapControl::begin(void)
 {
@@ -55,6 +61,38 @@ void AutoCapControl::capManualSet(bool capped)
     saveConfig();
 }
 
+bool isPhysicalCapOn(void){ 
+    if( AutoCapControl::capper == &defaultActuator ) return false;
+    return AutoCapControl::capper->isActive(); 
+}
+
+void AutoCapControl::setPhysicalCapOn(bool on){
+    if( AutoCapControl::capper != &defaultActuator ){
+        if(AutoCapControl::capper->isActive() != on){
+            DBG_PRINTF("capper CAP:%d\n",on);
+            AutoCapControl::capper->setActive(on);
+        }
+    }
+}
+
+bool AutoCapControl::isCapOn(void){ 
+    return _capStatus == CapStatusActive;
+}
+
+void AutoCapControl::setCapOn(bool on){
+    if( AutoCapControl::capper != &defaultActuator ){
+            CapStatus status = on? CapStatusActive:CapStatusInactive;
+            if(status != _capStatus){
+                _capStatus =status;
+                setPhysicalCapOn(on);
+            }
+    }
+}
+
+// one thing to keep in mind: the actuactor might be assigned after power on
+// before the actuactor is assigned, the status is "unknown", and
+// the action to check and set capping status should be done.
+
 bool AutoCapControl::autoCapOn(uint32_t current, float gravity)
 {
     if( AutoCapControl::capper == &defaultActuator ) return false;
@@ -65,31 +103,36 @@ bool AutoCapControl::autoCapOn(uint32_t current, float gravity)
         //    if( AutoCapControl::capper != &defaultActuator ) 
         _settings->autoCapMode = AutoCapModeManualOpen;
         return true;
+
     }else if(_settings->autoCapMode == AutoCapModeManualClose ){
-        if(!AutoCapControl::capper->isActive())
-            AutoCapControl::capper->setActive(true);
+
+        if( _capStatus != CapStatusActive) setCapOn(true);
+
     }else if (_settings->autoCapMode == AutoCapModeManualOpen){
-        if(AutoCapControl::capper->isActive())
-            AutoCapControl::capper->setActive(false);
+
+        if(_capStatus != CapStatusInactive) setCapOn(false);
+
     }else if(_settings->autoCapMode == AutoCapModeTime){
+        
         if(current > _settings->condition.targetTime){
-            if(!AutoCapControl::capper->isActive()){
-                DBG_PRINTF("times up, capped. act:%d\n",AutoCapControl::capper->isActive());
-                AutoCapControl::capper->setActive(true);
+            if(_capStatus != CapStatusActive){
+                DBG_PRINTF("times up, capped. act:%d\n",_capStatus);
+                setCapOn(true);
                 return true;
             }
-        }else if(AutoCapControl::capper->isActive())
-            AutoCapControl::capper->setActive(false);
+        }else if(_capStatus != CapStatusInactive)
+            setCapOn(false);
+
     }else if(_settings->autoCapMode == AutoCapModeGravity){
-        if((gravity > 0.8 && gravity < 1.25)
-            && (gravity <= _settings->condition.targetGravity)){
-            if(!AutoCapControl::capper->isActive()){
+
+        if((gravity <= _settings->condition.targetGravity)){
+            if(_capStatus != CapStatusActive){
                 DBG_PRINTF("gravity meet, capped.\n");
-                AutoCapControl::capper->setActive(true);
+                setCapOn(true);
                 return true;
             }
-        }if(AutoCapControl::capper->isActive())
-            AutoCapControl::capper->setActive(false);
+        }else if(_capStatus != CapStatusInactive)
+            setCapOn(false);
     }
 
     return false;

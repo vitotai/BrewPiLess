@@ -103,6 +103,77 @@
                     </div>
                 </form>
             </div>
+            <div id="mqtt" class="card">
+                <h5>
+                    <%= mqtt_remote_control %>
+                </h5>
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_enabled %>
+                    </h6>
+                    <input type="checkbox" id="mqtt_enabled" name="mqtt_enabled" class="switch-input" checked>
+                    <label for="mqtt_enabled" class="switch-label" style="min-width: 0;"></label>
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_server %>
+                    </h6>
+                    <input name="mqtt_server" type="text" size="32" maxlength="64" class="nb">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_port %>
+                    </h6>
+                    <input name="mqtt_port" type="text" size="5" maxlength="5" class="nb">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_username %>
+                    </h6>
+                    <input name="mqtt_user" type="text" size="32" maxlength="64" class="nb">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_password %>
+                    </h6>
+                    <input name="mqtt_pass" type="text" size="32" maxlength="64" class="nb">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_mode_path %>
+                    </h6>
+                    <input name="mqtt_mode" type="text" size="32" maxlength="64" class="nb">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_settemp_path %>
+                    </h6>
+                    <input name="mqtt_set" type="text" size="32" maxlength="64" class="nb">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_cap_control_path %>
+                    </h6>
+                    <input name="mqtt_cap" type="text" size="32" maxlength="64" class="nb">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_ptc_path %>
+                    </h6>
+                    <input name="mqtt_ptc" type="text" size="32" maxlength="64" class="nb">
+                </div>
+                <div class="card-footer">
+                    <input type="submit" id="submitsavemqtt" name="submit" class="btn"></input>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -127,7 +198,8 @@
                 <input id="nwpass" name="nwpass" length="64" type="password" placeholder="password"><br><br>
                 <input id="staticip" name="ip" length="1" placeholder="<%= config_fixedip %>" class="nb iptype"><br>
                 <input id="gateway" name="gw" length="1" placeholder="<%= config_gateway %>" class="nb iptype"><br>
-                <input id="netmask" name="mask" length="1" placeholder="<%= config_netmask %>" class="nb iptype"><br><br>
+                <input id="netmask" name="mask" length="1" placeholder="<%= config_netmask %>" class="nb iptype"><br>
+                <input id="dns" name="dns" length="1" placeholder="<%= config_dns %>" class="nb iptype"><br><br>
                 <button type="button" onclick="return Net.save()"><%= config_save_change %></button>
                 <button onclick="Net.hide();return false;"><%= dlg_cancel %></button>
             </form>

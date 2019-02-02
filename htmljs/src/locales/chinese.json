@@ -135,6 +135,7 @@
     "menu2_setup": "設定",
     "menu2_config": "系統",
     "menu2_gravity": "比重",
+    "menu2_pressure": "壓力",
 
     "__control_html__": "control.html",
 
@@ -162,6 +163,7 @@
     "config_fixedip": "固定IP",
     "config_gateway": "Gateway",
     "config_netmask": "Netmask",
+    "config_dns": "DNS",
     "config_save_change": "儲存變更",
     "config_network_mode": "網路模式",
     "config_ip": "IP",
@@ -239,6 +241,10 @@
     "log_ubidots_device": "Device:",
     "log_ubidots_educational": "Educational",
     "log_ubidots_industrial": "Industrial",
+
+    "log_brewersfriend_stream_url":"Stream URL:",
+    "log_brewersfriend_beer":"Beer:",
+    "log_brewersfriend_gravity_unit":"Gravity Unit",
 
     "__setup_html": "setup.html",
     "setup_page_title": "BrewPiLess 設定!",
@@ -382,6 +388,38 @@
 
     "time_format_short": "{MM}分{SS}",
     "time_format_long": "{HH}時{MM}分{SS}",
+
+    "__mqtt_in_config__":"MQTT section in config.htm",
+    "mqtt_remote_control":" MQTT遠端控制",
+    "mqtt_enabled":"啓用:",
+    "mqtt_server":"MQTT Server:",
+    "mqtt_port":"MQTT Port:",
+    "mqtt_username":"Username:",
+    "mqtt_password":"Password:",
+    "mqtt_mode_path":"模式 Path:",
+    "mqtt_settemp_path":"設定溫度Path:",
+    "mqtt_cap_control_path":"加蓋Path:",
+    "mqtt_ptc_path":"冷水溫度Path:",
+
+    "__pressure_htm__":"Pressure control",
+    "pressure_setting_title":"壓力感測器設定",
+    "enabled_pressure_transducer":"啓用:",
+    "control_pressure":"控製壓力:",
+    "pressure_conversion_parameters":"壓力換算參數:",
+    "pressure_conversion_parameters_desp":"PSI= (A0_reading - b) * a",
+    "pressure_calibrate_step1":"步驟一:沒有壓力(0 psi), 按下",
+    "pressure_calibrate_step1_button":"校正步驟一",
+    "pressure_calibrate_step2_1":"步驟二: 在這個",
+    "pressure_calibrate_step2_2":"psi壓力下, 按下",
+    "pressure_calibrate_step2_button":"步驟二",
+    "dismiss":"離開",
+
+    "__new_for_logging":"New logging items",
+
+    "log_temperature_unit":"Temperature in C or F",
+    "log_mode_in_integer":"mode in integer",
+    "log_mode_in_character":"mode in character",
+    "log_pressure_reading":"Pressure in PSI",
 
     "end": "***END***"
 }
