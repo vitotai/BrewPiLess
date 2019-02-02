@@ -197,7 +197,7 @@ size_t DataLogger::nonNullJson(char* buffer,size_t size)
 	if(IS_FLOAT_TEMP_VALID(fridgeSet)) root[KeyFridgeSet] = fridgeSet;
 	if(IS_FLOAT_TEMP_VALID(roomTemp)) root[KeyRoomTemp] = roomTemp;
 
-	root[KeyMode] = modeInInteger(mode);
+	root[KeyMode] =(int)( modeInInteger(mode) - '0');
 	#if SupportPressureTransducer
 	if(PressureMonitor.isCurrentPsiValid()) root[KeyPressure]= PressureMonitor.currentPsi();
 	#endif
