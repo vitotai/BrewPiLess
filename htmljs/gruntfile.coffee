@@ -165,8 +165,8 @@ module.exports = (grunt) ->
           'build/setup.tmpl.html': ['src/setup.tmpl.html']
           'build/gravity.tmpl.html': ['src/gravity.tmpl.html']
           'build/logging.tmpl.html': ['src/logging.tmpl.html']
-          'build/config.tmpl.html': ['src/config.tmpl.html'],          
-          'build/pressure.tmpl.html': ['src/pressure.tmpl.html'],          
+          'build/config.tmpl.html': ['src/config.tmpl.html'],
+          'build/pressure.tmpl.html': ['src/pressure.tmpl.html'],
           'build/classic-index.tmpl.html': ['src/classic-index.tmpl.html']
           'build/classic-setup.tmpl.html': ['src/classic-setup.tmpl.html']
           'build/classic-gdc.tmpl.html': ['src/classic-gdc.tmpl.html']
@@ -175,15 +175,11 @@ module.exports = (grunt) ->
           'build/BPLLogViewer.tmpl.html': ['src/BPLLogViewer.tmpl.html']
           'build/BPLog.tmpl.html': ['src/BPLog.tmpl.html']
         ]
-  
+
     multi_lang_site_generator:
       default:
           options:
-<<<<<<< HEAD
             vocabs:           ['english','chinese','spanish','portuguese-br','slovak']
-=======
-            vocabs:           ['english','chinese','spanish','portuguese-br', 'slovak']
->>>>>>> vitotai/master
             vocab_directory:  'src/locales'
             output_directory: 'dist'
             template_directory: 'dist'
