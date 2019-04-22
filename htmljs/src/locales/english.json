@@ -78,7 +78,7 @@
 
     "dlg_connecting": "Communicating with BrewPiLess controller...",
 
-    "dlg_startprofile": "{P}Note:{/P} {P}For Beer Profoile to work properly,{/P} {P} {B} Original Gravity Must be specified {/B} if SG is specified as percentage(%), and {B} Local logging must be activated {/B} if stability of gravity reading is used. {/P} Original Gravity:",
+    "dlg_startprofile": "{P}Note:{/P} {P}For Beer Profile to work properly,{/P} {P} {B} Original Gravity Must be specified {/B} if SG is specified as percentage(%), and {B} Local logging must be activated {/B} if stability of gravity reading is used. {/P} Original Gravity:",
 
     "dlg_startprofile_oknog": "OK, just Go",
     "dlg_startprofile_ok": "Set OG, and Go",
@@ -146,7 +146,7 @@
 
     "__config_html__": "config.html",
     "config_page_title": "BrewPiLess Configuration",
-    "config_wait_restart": "Congfiuration saved. Wait for restart... (note: if the hostname is changed, the page won't be reloaded.)",
+    "config_wait_restart": "Configuration saved. Wait for restart... (note: if the hostname is changed, the page won't be reloaded.)",
     "config_lcd_auto_off": "LCD auto off",
     "config_seconds": "seconds",
     "config_title": "Title",
