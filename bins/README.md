@@ -9,6 +9,8 @@ NOTE: The images with **newui** use different flash layout(4m2m) which has 2m fi
  * Online update might not work on changing between those two layout. Flashing by USB is recommended.
  * File system will be reformted after changing. All settings will be gone
 
+NOTE: Due to the size increase of latest framework, all images will use 2m file space after version 3.6. The last version for 4m1m and SONOFF is v3.5.1. 
+
 Those images are prebuilt:
 ## Default Configuration
  * The Pins are defined as the main page.
