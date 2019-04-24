@@ -254,7 +254,14 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 		}
 		
         float itemp=root["temperature"];
-		setAuxTemperatureCelsius(itemp);
+		float tempC=itemp;
+		if(root.containsKey("temp_units")){
+			const char *TU=root["temp_units"];
+			if(*TU == 'F') tempC = (itemp-32)/1.8;
+			else if(*TU == 'K') tempC = itemp- 273.15;
+		}
+
+		setAuxTemperatureCelsius(tempC);
 
 		//Serial.print("temperature:");
 		//Serial.println(itemp);

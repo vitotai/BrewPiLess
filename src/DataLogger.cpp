@@ -91,7 +91,6 @@ size_t DataLogger::dataSprintf(char *buffer,const char *format)
 			}
 			#if SupportPressureTransducer
 			else if(ch == 'P'){
-				float sg=externalData.plato();
 				d += printFloat(buffer+d,PressureMonitor.currentPsi(),1,PressureMonitor.isCurrentPsiValid());
 			}
 			#endif
