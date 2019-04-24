@@ -46,6 +46,12 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * v3.6
+    * update framework to 2.0.4
+    * iSpindel temperature format; assumed to be Celsius
+    * update OLED library to 4.0 (Not verified)
+    * update to ArduinoJson V6
+
  * v3.5.1 
     * fixed iSpindel temperature unit issue
     * update new OLED library(not verified)

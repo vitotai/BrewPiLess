@@ -181,8 +181,14 @@ int copyTemp(char* buf,char* name,float value, bool concate)
 size_t DataLogger::nonNullJson(char* buffer,size_t size)
 {
 	const int JSON_BUFFER_SIZE = JSON_OBJECT_SIZE(15);
+	
+	#if ARDUINOJSON_VERSION_MAJOR == 6
+	DynamicJsonDocument root(JSON_BUFFER_SIZE);
+	#else
+
 	DynamicJsonBuffer jsonBuffer(JSON_BUFFER_SIZE);
 	JsonObject& root = jsonBuffer.createObject();
+	#endif
 
 	uint8_t state, mode;
 	float beerSet,fridgeSet;
@@ -215,8 +221,11 @@ size_t DataLogger::nonNullJson(char* buffer,size_t size)
 		float tilt=externalData.tiltValue();
 		root[KeyTilt]=tilt;
 	}
-
+	#if ARDUINOJSON_VERSION_MAJOR == 6
+	return	serializeJson(root,buffer,size);
+	#else
 	return root.printTo(buffer,size);
+	#endif
 }
 
 #define BUFFERSIZE 512
@@ -241,6 +250,7 @@ void DataLogger::sendData(void)
 	DBG_PRINTF("data= %d, \"%s\"\n",len,data);
 
 	int code;
+	WiFiClient wifiClient;
 	HTTPClient _http;
   	_http.setUserAgent(F("ESP8266"));
 
@@ -250,7 +260,8 @@ void DataLogger::sendData(void)
 		|| _loggingInfo->method== mHTTP_PUT ){
 		// post
 
- 		_http.begin(_loggingInfo->url);
+		_http.begin(wifiClient,_loggingInfo->url);
+
  		if(_loggingInfo->contentType){
   			_http.addHeader("Content-Type", _loggingInfo->contentType);
  		}else{
@@ -259,8 +270,7 @@ void DataLogger::sendData(void)
     // start connection and send HTTP header
     	code = _http.sendRequest((_loggingInfo->method == mHTTP_POST)? "POST":"PUT",(uint8_t*)data,len);
     }else{
- 		_http.begin(String(_loggingInfo->url) + String("?") + String(data));
-
+ 			_http.begin(wifiClient,String(_loggingInfo->url) + String("?") + String(data));
     	code = _http.GET();
     }
 

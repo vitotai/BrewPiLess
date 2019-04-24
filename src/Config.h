@@ -398,7 +398,7 @@
 //#endif
 
 #define EMIWorkaround 1
-#define BPL_VERSION "3.5"
+#define BPL_VERSION "3.6"
 
 /**************************************************************************************/
 /*  Configuration: 																	  */

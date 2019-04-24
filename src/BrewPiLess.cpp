@@ -865,7 +865,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 		});
 		#endif
   	} else if(type == WS_EVT_DISCONNECT){
-    	DBG_PRINTF("ws[%s][%u] disconnect: %u\n", server->url(), client->id());
+    	DBG_PRINTF("ws[%s] disconnect: %u\n", server->url(), client->id());
   	} else if(type == WS_EVT_ERROR){
     	DBG_PRINTF("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
   	} else if(type == WS_EVT_PONG){
@@ -885,12 +885,12 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 
 		} else {
       		//message is comprised of multiple frames or the frame is split into multiple packets
-      		if(info->index == 0){
+/*      		if(info->index == 0){
         		if(info->num == 0)
-        		DBG_PRINTF("ws[%u] frame[%u] start[%lu]\n", client->id(), info->num, info->len);
-      		}
+        		DBG_PRINTF("ws[%u] frame[%u] start[%u]\n", client->id(), info->num, info->len);
+      		}*/
 
-      		DBG_PRINTF("ws[%u] frame [%lu - %lu]: ", client->id(), info->num, info->index, info->index + len);
+//      		DBG_PRINTF("ws[%u] frame [%lu - %lu]: ", client->id(), info->num, info->index, info->index + len);
 
 	        for(size_t i=0; i < info->len; i++) {
     	    	//msg += (char) data[i];
@@ -900,7 +900,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
       		//DBG_PRINTF("%s\n",msg.c_str());
 
 			if((info->index + len) == info->len){
-				DBG_PRINTF("ws[%u] frame[%u] end[%lu]\n", client->id(), info->num, info->len);
+//				DBG_PRINTF("ws[%u] frame[%u] end[%lu]\n", client->id(), info->num, info->len);
 //        		if(info->final){
 //        			DBG_PRINTF("ws[%s][%u] %s-message end\n",  client->id());
 //        		}
