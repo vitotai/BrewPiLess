@@ -1744,6 +1744,7 @@ void loop(void){
 	brewpiLoop();
 #endif
 //}brewpi
+	MDNS.update();
 #if EanbleParasiteTempControl
 	parasiteTempController.run();
 #endif

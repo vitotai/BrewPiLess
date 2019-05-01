@@ -183,7 +183,7 @@ size_t DataLogger::nonNullJson(char* buffer,size_t size)
 	const int JSON_BUFFER_SIZE = JSON_OBJECT_SIZE(15);
 	
 	#if ARDUINOJSON_VERSION_MAJOR == 6
-	DynamicJsonDocument root(JSON_BUFFER_SIZE);
+	DynamicJsonDocument root(JSON_BUFFER_SIZE +size);
 	#else
 
 	DynamicJsonBuffer jsonBuffer(JSON_BUFFER_SIZE);

@@ -272,6 +272,9 @@ public:
     bool dejsonParasiteTempControlSettings(String json);
     String jsonParasiteTempControlSettings(bool enabled);
 
+    void preFormat(void);
+    void postFormat(void);
+    
 #if SupportPressureTransducer
     //pressure monitor
     PressureMonitorSettings *pressureMonitorSettings(){return &_data.pressureMonitorSettings;}
