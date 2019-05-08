@@ -1020,6 +1020,11 @@ bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 #endif
 		|| !root.containsKey(EnableMqttKey)
 		|| !root.containsKey(ServerPort)){
+
+#if ARDUINOJSON_VERSION_MAJOR == 6	
+		DBG_PRINTF("dejsonMqttRemoteControlSettings error:%s",error.c_str());
+#endif
+
         return false;
     }
 	MqttRemoteControlSettings *settings=mqttRemoteControlSettings();
