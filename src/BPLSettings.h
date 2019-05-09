@@ -188,10 +188,11 @@ typedef struct _MqttRemoteControlSettings{
     uint16_t  usernameOffset;
     uint16_t  passwordOffset;
     uint16_t  modePathOffset;
-    uint16_t  settingTempPathOffset;
+    uint16_t  beerSetPathOffset;
     uint16_t  capControlPathOffset;
     uint16_t  ptcPathOffset;
-    uint8_t   _padding2[8];
+    uint16_t  fridgeSetPathOffset;
+    uint8_t   _padding2[6];
 
     uint8_t   _strings[MqttSettingStringSpace];
 }MqttRemoteControlSettings;

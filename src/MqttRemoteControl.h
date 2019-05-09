@@ -34,7 +34,8 @@ protected:
     bool _enabled;
     bool _reconnecting;
     char _lvMode;
-    char _lvSetting[MaxSettingLength+1];
+    char _lvBeerSet[MaxSettingLength+1];
+    char _lvFridgeSet[MaxSettingLength+1];
 
     char* _serverAddress;
     uint16_t _serverPort;
@@ -42,7 +43,8 @@ protected:
     char* _password;
 
     char* _modePath;
-    char* _setTempPath;
+    char* _beerSetPath;
+    char* _fridgeSetPath;
     
     #if EanbleParasiteTempControl
     char* _ptcPath;
@@ -57,10 +59,10 @@ protected:
     void _onMessage(char* topic, uint8_t* payload, size_t len);
 
     void _onModeChange(char* payload,size_t len);
-    void _onSettingChange(char* payload, size_t len);
+
+    void _onSettingTempChange(bool isBeerSet,char* payload, size_t len);
 
     void _runModeCommand(void);
-    void _runSettingCommand(void);
 
 #if EanbleParasiteTempControl
     void _onPtcChange(char* payload,size_t len);

@@ -18,7 +18,8 @@ MqttRemoteControl mqttRemoteControl;
 
 MqttRemoteControl::MqttRemoteControl(){
     _lvMode = InvalidMode;
-    _lvSetting[0] = '\0';
+    _lvBeerSet[0] = '\0';
+    _lvFridgeSet[0] = '\0';
     _enabled =false;
     _connectTime =0;
 
@@ -71,23 +72,6 @@ void MqttRemoteControl::_runModeCommand(void){
     brewKeeper.setModeFromRemote(_lvMode);
 }
 
-void MqttRemoteControl::_runSettingCommand(void){
-    if(_lvSetting[0] !='\0'){
-        if(_lvMode == ModeBeerConst){
-            DBG_PRINTF("MQTT:set beerSet:%s\n",_lvSetting);
-            brewKeeper.setBeerSet(_lvSetting);
-            dataLogger.reportNow();
-        }else if(_lvMode == ModeFridgeConst){
-             DBG_PRINTF("MQTT:set fridgeSet:%s\n",_lvSetting);
-            brewKeeper.setFridgeSet(_lvSetting);
-            dataLogger.reportNow();
-
-        }else{
-            DBG_PRINTF("MQTT: invalid mode to set:%c\n",_lvMode);
-        }
-    }
-}
-
 void MqttRemoteControl::_loadConfig()
 {
     MqttRemoteControlSettings *settings=theSettings.mqttRemoteControlSettings();
@@ -102,7 +86,8 @@ void MqttRemoteControl::_loadConfig()
         _password = settings->passwordOffset? (char*)settings->_strings + settings->passwordOffset:NULL;
 
         _modePath = settings->modePathOffset? (char*)settings->_strings + settings->modePathOffset:NULL;
-        _setTempPath = settings->settingTempPathOffset? (char*)settings->_strings + settings->settingTempPathOffset:NULL;
+        _beerSetPath = settings->beerSetPathOffset? (char*)settings->_strings + settings->beerSetPathOffset:NULL;
+        _fridgeSetPath = settings->fridgeSetPathOffset? (char*)settings->_strings + settings->fridgeSetPathOffset:NULL;
         
 #if EanbleParasiteTempControl
         _ptcPath = settings->ptcPathOffset? (char*)settings->_strings + settings->ptcPathOffset:NULL;
@@ -119,7 +104,8 @@ void MqttRemoteControl::_loadConfig()
         if(_username) DBG_PRINTF("username:%s\n",_username);
         if(_password) DBG_PRINTF("_password:%s\n",_password);
         if(_modePath) DBG_PRINTF("_modePath:%s\n",_modePath);
-        if(_setTempPath) DBG_PRINTF("_setTempPath:%s\n",_setTempPath);
+        if(_beerSetPath) DBG_PRINTF("_setTempPath:%s\n",_beerSetPath);
+        if(_fridgeSetPath) DBG_PRINTF("_setTempPath:%s\n",_fridgeSetPath);
 
         #if EanbleParasiteTempControl
 
@@ -164,11 +150,19 @@ void MqttRemoteControl::_onConnect(void){
         }
     }
 
-    if(_setTempPath){
-        if(_client.subscribe(_setTempPath, 1)){
-            DBG_PRINTF("MQTT:Subscribing %s\n",_setTempPath);
+    if(_beerSetPath){
+        if(_client.subscribe(_beerSetPath, 1)){
+            DBG_PRINTF("MQTT:Subscribing %s\n",_beerSetPath);
         }else{
-            DBG_PRINTF("MQTT:Subscribing %s FAILED\n",_setTempPath);
+            DBG_PRINTF("MQTT:Subscribing %s FAILED\n",_beerSetPath);
+        }
+    }
+
+    if(_fridgeSetPath){
+        if(_client.subscribe(_fridgeSetPath, 1)){
+            DBG_PRINTF("MQTT:Subscribing %s\n",_fridgeSetPath);
+        }else{
+            DBG_PRINTF("MQTT:Subscribing %s FAILED\n",_fridgeSetPath);
         }
     }
 
@@ -206,8 +200,10 @@ void MqttRemoteControl::_onMessage(char* topic, uint8_t* payload, size_t len) {
 
     if(strcmp(topic, _modePath) ==0){
         this->_onModeChange((char*)payload,len);
-    }else if(strcmp(topic, _setTempPath) ==0){
-        this->_onSettingChange((char*)payload,len);
+    }else if(strcmp(topic, _beerSetPath) ==0){
+        this->_onSettingTempChange(true,(char*)payload,len);
+    }else if(strcmp(topic, _fridgeSetPath) ==0){
+        this->_onSettingTempChange(false,(char*)payload,len);
     }
 #if EanbleParasiteTempControl
     else if(strcmp(topic, _ptcPath) ==0){
@@ -251,19 +247,25 @@ void MqttRemoteControl::_onModeChange(char* payload,size_t len){
     }
 }
 
-void MqttRemoteControl::_onSettingChange(char* payload, size_t len){
+void MqttRemoteControl::_onSettingTempChange(bool isBeerSet,char* payload, size_t len){
     // assume it's just a simple float string.
     size_t toCopy=len;
+    char *settingPtr=isBeerSet? _lvBeerSet:_lvFridgeSet;
 
     if(toCopy > MaxSettingLength) toCopy=MaxSettingLength;
 
-    if(strncmp(_lvSetting,payload,toCopy) !=0){
+    if(strncmp(settingPtr,payload,toCopy) !=0){
     
-        memcpy(_lvSetting,payload,toCopy);
-        _lvSetting[toCopy]='\0';
+        memcpy(settingPtr,payload,toCopy);
+        settingPtr[toCopy]='\0';
 
-        DBG_PRINTF("MQTT: setting:%s\n",_lvSetting);    
-        _runSettingCommand();
+        DBG_PRINTF("MQTT:tempset :%s\n",settingPtr);
+        if(isBeerSet)
+            brewKeeper.setBeerSet(settingPtr);
+        else
+            brewKeeper.setFridgeSet(settingPtr);
+        
+        dataLogger.reportNow();
     }else{
         DBG_PRINTF("MQTT:Setting not changed\n");
     }
