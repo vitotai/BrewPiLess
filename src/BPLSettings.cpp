@@ -911,8 +911,8 @@ String BPLSettings::jsonPressureMonitorSettings(void){
 #define MqttPasswordKey "pass"
 
 #define ModePathKey "mode"
-#define BeerSetPathKey "bset"
-#define FridgeSetPathKey "fset"
+#define BeerSetPathKey "beerset"
+#define FridgeSetPathKey "fridgeset"
 #define PtcPathKey "ptc"
 #define CapPathKey "cap"
 
