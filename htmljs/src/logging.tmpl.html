@@ -13,6 +13,7 @@
     <script type="text/javascript" src="js/vendor/bwf.js"></script>
     <script type="text/javascript" src="js/shared.js"></script>
     <script type="text/javascript" src="js/script-logging.js"></script>
+    <script type="text/javascript" src="js/mqtt.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="style-logging.css">
 </head>
@@ -27,6 +28,95 @@
             <h4>
                 <%= log_page_title %>
             </h4>
+            <div class="card">
+                <h5>
+                    <%= log_local_log %>
+                </h5>
+
+                <div id=logstartinput>
+                    <div id=logctrl layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= log_new_log_name %>
+                        </h6>
+                        <input type="text" id="logname" size="24" maxlength="24"></input>
+                        <button id="startlogbutton" class="btn btn--raised"><%= log_start_logging %></button>
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= log_options %>
+                        </h6>
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= log_calibrate_ispindel %>
+                        </h6>
+                        <input type=checkbox id=calispindel>
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= log_tilt_in_water %>
+                        </h6>
+                        <input type=text id=tiltinw size=6>
+                    </div>
+                    <div layout horizontal cross-center class=tiltwatercorrect>
+                        <h6 class="inline-header">
+                            <%= log_hydrometer_reading %>
+                        </h6>
+                        <input type=text id=hydrometer size=6>
+                    </div>
+                    <div layout horizontal cross-center class=tiltwatercorrect>
+                        <h6 class="inline-header">
+                            <%= log_or_water_at %>
+                        </h6><input type=text id=watertemp size=4>&deg;
+                        <%= log_calibrated %> <input type=text id=caltemp size=4>&deg;
+                            <select id=tempunit><option value=C>C</option><option value=F>F</option></select>
+
+                    </div>
+                </div>
+
+                <div id=logstopinput style="display:none">
+                    <%= log_recording %> <strong id="loggingtitle"></strong>
+                        <%= log_since %> <strong id=start-log-date></strong>
+                            <button id="stoplogbutton" class="btn btn--raised"><%= log_stop_logging %></button>
+                </div>
+
+
+                <div id="fsinfo">
+                    <%= log_free_space %>
+                        <span id="fsfree">0</span> Bytes,
+                        <%= log_used_space %>
+                            <span id="fsused">0</span> Bytes,
+                            <%= log_total_space %>
+                                <span id="fssize">0</span> Bytes
+                </div>
+
+                <h5 class="small-heading">
+                    <%= log_recorded_log %>
+                </h5>
+
+                <table id="loglist" class="mdl-data-table">
+                    <tr>
+                        <th>
+                            <%= log_log %>
+                        </th>
+                        <th>
+                            <%= log_date %>
+                        </th>
+                        <th>
+                            <%= log_action %>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td class="logid"></td>
+                        <td class="logdate"></td>
+                        <td>
+                            <button class="dlbutton btn btn--raised"><%= log_download %></button>
+                            <button class="rmbutton btn btn--raised"><%= log_delete %></button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
             <div class="card">
                 <div layout horizontal main-justified cross-center>
                     <h5>
@@ -84,7 +174,7 @@
                             </h6>
 
                             <div class="md-radio md-radio-inline">
-                                <input id="gu-sg" type="radio" name="BF-gu" value="gu-sg" checked >
+                                <input id="gu-sg" type="radio" name="BF-gu" value="gu-sg" checked>
                                 <label for="gu-sg">SG(1.x)</label>
                             </div>
                             <div class="md-radio md-radio-inline">
@@ -365,99 +455,140 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <button type="button" onclick="update();" class="btn"><%= log_update %></button>
+                    <button type="button" onclick="update();" class="btn btn--raised"><%= log_update %></button>
                 </div>
 
             </div>
+            <div id="mqtt" class="card">
+                <div layout horizontal main-justified cross-center>
+                    <h4>
+                        <%= mqtt_settings %>
+                    </h4>
+                </div>
 
-            <div class="card">
-                <h5>
-                    <%= log_local_log %>
-                </h5>
+                <div layout horizontal cross-center>
+                    <h5>
+                        <%= mqtt_broker_settings %>
+                    </h5>
+                </div>
 
-                <div id=logstartinput>
-                    <div id=logctrl layout horizontal cross-center>
-                        <h6 class="inline-header">
-                            <%= log_new_log_name %>
-                        </h6>
-                        <input type="text" id="logname" size="24" maxlength="24"></input>
-                        <button id="startlogbutton" class="btn"><%= log_start_logging %></button>
-                    </div>
-                    <div layout horizontal cross-center>
-                        <h6 class="inline-header">
-                            <%= log_options %>
-                        </h6>
-                    </div>
-                    <div layout horizontal cross-center>
-                        <h6 class="inline-header">
-                            <%= log_calibrate_ispindel %>
-                        </h6>
-                        <input type=checkbox id=calispindel>
-                    </div>
-                    <div layout horizontal cross-center>
-                        <h6 class="inline-header">
-                            <%= log_tilt_in_water %>
-                        </h6>
-                        <input type=text id=tiltinw size=6>
-                    </div>
-                    <div layout horizontal cross-center class=tiltwatercorrect>
-                        <h6 class="inline-header">
-                            <%= log_hydrometer_reading %>
-                        </h6>
-                        <input type=text id=hydrometer size=6>
-                    </div>
-                    <div layout horizontal cross-center class=tiltwatercorrect>
-                        <h6 class="inline-header">
-                            <%= log_or_water_at %>
-                        </h6><input type=text id=watertemp size=4>&deg;
-                        <%= log_calibrated %> <input type=text id=caltemp size=4>&deg;
-                            <select id=tempunit><option value=C>C</option><option value=F>F</option></select>
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_server %>
+                    </h6>
+                    <input name="mqtt_server" type="text" size="32" maxlength="64" class="nb mqtt-input">
+                </div>
 
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_port %>
+                    </h6>
+                    <input name="mqtt_port" type="text" size="5" maxlength="5" class="nb mqtt-input">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_username %>
+                    </h6>
+                    <input name="mqtt_user" type="text" size="32" maxlength="64" class="nb mqtt-input">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_password %>
+                    </h6>
+                    <input name="mqtt_pass" type="text" size="32" maxlength="64" class="nb mqtt-input">
+                </div>
+
+                <div layout horizontal main-justified cross-center>
+                    <h5>
+                        <%= mqtt_reporting %>
+                    </h5>
+                    <div>
+                        <input type="checkbox" id="mqtt_log" name="mqtt_log" class="switch-input mqtt-input" checked>
+                        <label for="mqtt_log" class="switch-label" style="min-width: 0;"></label>
                     </div>
                 </div>
 
-                <div id=logstopinput style="display:none">
-                    <%= log_recording %> <strong id="loggingtitle"></strong>
-                        <%= log_since %> <strong id=start-log-date></strong>
-                            <button id="stoplogbutton" class="btn"><%= log_stop_logging %></button>
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_time_period %>
+                    </h6>
+                    <input type="text" id="mqtt_period" name="mqtt_period" size="4" class="mqtt-input">
+                    <%= log_seconds %>
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_base_path %>
+                    </h6>
+                    <input name="mqtt_base" type="text" size="32" maxlength="64" class="nb mqtt-input">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_report_format %>
+                    </h6>
+                    <div>
+                        <select name="mqtt_format" class="mqtt-input">
+                            <option value=0><%= mqtt_individual_topic %></option>
+                            <option value=1><%= mqtt_whole_as_json %></option>
+                        </select>
+                    </div>
                 </div>
 
 
-                <div id="fsinfo">
-                    <%= log_free_space %>
-                        <span id="fsfree">0</span> Bytes,
-                        <%= log_used_space %>
-                            <span id="fsused">0</span> Bytes,
-                            <%= log_total_space %>
-                                <span id="fssize">0</span> Bytes
+                <div layout horizontal main-justified cross-center>
+                    <h5>
+                        <%= mqtt_remote_control %>
+                    </h5>
+                    <div>
+                        <input type="checkbox" id="mqtt_enabled" name="mqtt_enabled" class="switch-input mqtt-input" checked>
+                        <label for="mqtt_enabled" class="switch-label" style="min-width: 0;"></label>
+                    </div>
                 </div>
 
-                <h5 class="small-heading">
-                    <%= log_recorded_log %>
-                </h5>
 
-                <table id="loglist" class="mdl-data-table">
-                    <tr>
-                        <th>
-                            <%= log_log %>
-                        </th>
-                        <th>
-                            <%= log_date %>
-                        </th>
-                        <th>
-                            <%= log_action %>
-                        </th>
-                    </tr>
-                    <tr>
-                        <td class="logid"></td>
-                        <td class="logdate"></td>
-                        <td>
-                            <button class="dlbutton btn"><%= log_download %></button>
-                            <button class="rmbutton btn"><%= log_delete %></button>
-                        </td>
-                    </tr>
-                </table>
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_mode_path %>
+                    </h6>
+                    <input name="mqtt_mode" type="text" size="32" maxlength="64" class="nb mqtt-input">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_beerset_path %>
+                    </h6>
+                    <input name="mqtt_beerset" type="text" size="32" maxlength="64" class="nb mqtt-input">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_fridgeset_path %>
+                    </h6>
+                    <input name="mqtt_fridgeset" type="text" size="32" maxlength="64" class="nb mqtt-input">
+                </div>
+
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_cap_control_path %>
+                    </h6>
+                    <input name="mqtt_cap" type="text" size="32" maxlength="64" class="nb mqtt-input">
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= mqtt_ptc_path %>
+                    </h6>
+                    <input name="mqtt_ptc" type="text" size="32" maxlength="64" class="nb mqtt-input">
+                </div>
+                <div class="card-footer">
+                    <input type="submit" id="submitsavemqtt" name="submit" class="btn btn--raised"></input>
+                </div>
             </div>
+
         </div>
     </div>
 

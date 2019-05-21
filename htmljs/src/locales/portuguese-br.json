@@ -7,23 +7,23 @@
     "lcdline4": "",
     "chart_temperature": "Temperatura",
     "chart_gravity": "Densidade",
-    
+
     "menu_logging": "Registros",
     "menu_setup": "Dispositivos",
     "menu_config": "Rede",
     "menu_gravity": "Densidade",
-    
+
     "gravity_og": "OG:",
     "gravity_sg": "SG:",
     "gravity_att": "Aten.:",
     "gravity_abv": "ABV:",
-    
+
     "ispindel_battery": "Bateria:",
     "ispindel_tilt": "Inclinação:",
-    
+
     "ptc_title": "PTC",
     "ptc_temp": "TEMP",
-    
+
     "legend_date": "Data/Hora",
     "legend_beertemp": "Temp. Cerveja",
     "legend_beerset": "SP Cerveja",
@@ -34,7 +34,7 @@
     "legend_gravity": "Densidade",
     "legend_filteredsg": "SG Ajustada",
     "legend_state": "status",
-    
+
     "control_title": "",
     "control_beerprofile": "Perfil de Fermentação",
     "control_beerconst": "Sensor da Cerveja",
@@ -75,21 +75,21 @@
     "control_gravity": "Densidade",
     "control_capgravity": "Fechar quando a densidade for menor que:",
     "control_capafter": "Fechar depois de:",
-    
+
     "dlg_connecting": "Comunicando-se com o Brewpiless",
-    
-    "dlg_startprofile": "{P}{B}ATENÇÃO: {/B}Melhore o Perfil de Fermentação.{/P} {P} {B} 1.{/B} Informando corretamente a OG <BR \/>{B} 2.{/B} Ativando o registro de dados local <BR \/>{B} 3.{/B} Informando a SG em percentual (%)<BR \/><BR \/>{B}Isso ajudará na estabilidade das leituras.{/B} {/P} <BR \/>Informe a Densidade Original (OG):",    
+
+    "dlg_startprofile": "{P}{B}ATENÇÃO: {/B}Melhore o Perfil de Fermentação.{/P} {P} {B} 1.{/B} Informando corretamente a OG <BR \/>{B} 2.{/B} Ativando o registro de dados local <BR \/>{B} 3.{/B} Informando a SG em percentual (%)<BR \/><BR \/>{B}Isso ajudará na estabilidade das leituras.{/B} {/P} <BR \/>Informe a Densidade Original (OG):",
     "dlg_startprofile_oknog": "Ignorar",
     "dlg_startprofile_ok": "Definir OG e Continuar",
     "dlg_cancel": "Cancelar",
     "dlg_ok": "Confirmar",
-    
+
     "dlg_addgravity_sg": "Adicionar dados da densidade:",
     "dlg_addgravity_og": "Defina Densidade Original (OG):",
     "dlg_addgravity_1": "Entre com o valor da densidade.",
     "dlg_saveas_1": "Salval Perfil como",
     "dlg_saveas_2": "Não é permitido caracteres especiais e espaços.",
-    
+
     "dlg_profilelist_load": "Carregar Perfil",
     "dlg_profilelist_del": "Apagar",
     "dlg_poly_tilt": "Inclinação",
@@ -97,9 +97,9 @@
     "dlg_poly_cal": "Calculado",
     "dlg_poly_error": "Erro",
     "dlg_poly_ignored": "Ignorado",
-    
+
     "__delimiter__": "A seguir, interface do Tom.",
-    
+
     "status": "Estado:",
     "status_mode": "Modo:",
     "status_beertemp": "Temp. Cerveja:",
@@ -118,7 +118,7 @@
     "ptc_running": "ATIVO",
     "ptc_for": "por",
     "ptc_range": "Variação:",
-    
+
     "cap_condition": "Condição:",
     "system": "Geral:",
     "writing_log": "Registro:",
@@ -126,7 +126,7 @@
     "error_waitscript": "Aguardando atualização do script...",
     "error_connect": "Falha de conexão com o servidor.",
     "error_conrtollerupdate": "Controlador não atualiza dados.",
-    
+
     "menu2_graph": "gráfico",
     "menu2_control": "modos de fermentação",
     "menu2_logs": "registros",
@@ -136,13 +136,13 @@
     "menu2_pressure": "Pressão",
 
     "__control_html__": "control.html",
-    
+
     "control_page_title": "BrewPiLess | Modos de Fermentação",
     "control_del_last_item": "Apagar último item",
     "control_clear_all": "Apagar tudo",
     "control_load": "Carregar",
     "control_cap_control": "CONTROLE SPUNDING",
-    
+
     "__config_html__": "config.html",
     "config_page_title": "BrewPiLess | Configuração de rede",
     "config_wait_restart": "Configuração salva. Aguarde a reinicialização... (Observação: se o nome do host for alterado, a página não será recarregada).",
@@ -167,7 +167,7 @@
     "config_ip": "IP",
     "config_network_selection": "Selecionar rede",
     "config_scan": "Pesquisar redes",
-    
+
     "__gdc_html": "gdc.html",
     "gravity_title": "BrewPiLess | Densidade",
     "gravity_calculated_bpl": "Calculado pelo BrewPiLess",
@@ -178,9 +178,9 @@
     "gravity_point": "ponto, 1= 0.001 para SG, ou 0.1&deg;P para Plato",
     "gravity_save_change": "Salvar alterações",
     "gravity_useplato": "Usar Plato",
-    
+
     "__log_html": "log.html",
-    
+
     "log_page_title": "BrewPiLess | Registros",
     "log_remote_log": "Registro Remoto",
     "log_enabled": "Habilitar",
@@ -192,7 +192,7 @@
     "log_time_period": "Intervalo de registro:",
     "log_seconds": "segundos",
     "log_update": "Atualizar",
-    
+
     "log_local_log": "Registro Local",
     "log_new_log_name": "Nome do novo registro:",
     "log_start_logging": "Iniciar registro",
@@ -224,11 +224,11 @@
     "log_voltage": "Voltagem iSpindel",
     "log_tilt_value": "Inclinação",
     "log_timestamp": "Registro de data/hora da última atualização de densidade",
-    
+
     "log_plato": "Plato",
     "log_service_type": "Tipo de Serviço:",
     "log_generic_http": "Generic HTTP",
-    
+
     "__NOTE_service_terms": "translation might be unnecessary.",
     "log_thingspeak_api_key": "Write API Key:",
     "log_thingspeak_fields": "Fields:",
@@ -239,11 +239,11 @@
     "log_ubidots_device": "Device:",
     "log_ubidots_educational": "Educational",
     "log_ubidots_industrial": "Industrial",
-    "log_brewersfriend_stream_url":"Stream URL:",
-    "log_brewersfriend_beer":"Beer:",
-    "log_brewersfriend_gravity_unit":"Gravity Unit",
+    "log_brewersfriend_stream_url": "Stream URL:",
+    "log_brewersfriend_beer": "Beer:",
+    "log_brewersfriend_gravity_unit": "Gravity Unit",
 
-    
+
     "__setup_html": "setup.html",
     "setup_page_title": "BrewPiLess | Ajustes",
     "setup_device_list": "Lista de Dispositivos",
@@ -280,23 +280,23 @@
     "setup_ptc_cooler": "Resfriador PTC",
     "setup_1wire_actuator": "Atuador 1-wire",
     "setup_channel": "Canal",
-    
+
     "__capper_js": "capper.js",
     "capper_invalid_gravity": "Densidade Inválida",
     "capper_failed_set_capper": "falha ao configurar Spunding",
     "capper_invalid_time": "Hora Inválida",
     "done": "Concluído!",
-    
+
     "__script_config_js": "script-config.js",
     "script_config_error_getting_data": "erro ao receber dados",
     "script_config_error_saving_data": "erro salvando dados",
-    
+
     "__script_control_js": "script-control.js",
     "failed": "falha",
     "error": "erro!",
     "script_control_temperature": "Temperatura",
     "script_control_time": "Hora",
-    
+
     "script_control_invalid_value_check_again": "Valor inválido. Verifique novamente.",
     "script_control_not_conected_to_controller": "Não conectado ao controlador.",
     "script_control_invalid_temperature": "Temperatura inválida.",
@@ -304,10 +304,10 @@
     "script_control_failed_to_save": "falha ao salvar.",
     "script_control_version_mismatched": "Versão incompatível! Recarregue a página.",
     "script_control_too_many_steps": "Passos demais!",
-    
+
     "__script_gravity_js": "script-gravity.js",
     "script_control_failed_updating_data": "falha ao atualizar dados:",
-    
+
     "__script_logging_js": "script-logging.js",
     "script_logging_failed_stop_for": "Falha ao parar por:",
     "script_logging_too_many_logs": "Registros demais. Apague algum antes de criar um novo.",
@@ -324,7 +324,7 @@
     "script_logging_delete_the_log": "Apagar o registro",
     "script_logging_stop_current_logging": "Parar o registro atual?",
     "script_logging_start_new_log": "Iniciar novo registro?",
-    
+
     "__script_setup_js": "script-setup.js",
     "script_setup_no_installed_devices": "Sem dispositivos instalados!",
     "script_setup_error_saving": "erro ao salvar:",
@@ -334,21 +334,21 @@
     "script_setup_retrieving": "Recuperando...",
     "script_setup_erase_all_setting": "Apagar todos os ajustes?",
     "setup_update_timeout": "Tempo esgotado!",
-    
+
     "__script_viewer_js": "script-viewer.js",
     "script_viewer_invalid_log": "Registro inválido!",
     "script_viewer_failed_load_file": "Falha ao carregar arquivo",
     "script_viewer_not_downloading_file": "O navegador não suporta o download de arquivos.",
-    
+
     "script_log_version_mismatched": "Versão de registro incompatível!",
     "script_fail_update_formula": "Falha ao atualizar fórmula.",
-    
+
     "_BPLLogViewer_htm": "BPLLogViewer.htm",
     "log_start_since": "Desde",
     "log_elapsed": "Decorrido",
     "log_crop_to": "Cortar para",
     "log_export": "Exportar",
-    
+
     "__chart_js": "chart.js",
     "chart_state_label": "Estado",
     "chart_state_idle": "Inativo",
@@ -362,17 +362,17 @@
     "chart_state_cooling_min_time": "Tempo Min. Esfriando",
     "chart_state_heating_min_time": "Tempo Min. Aquecendo",
     "chart_state_invalid": "Status Inválido",
-    
+
     "__mode_string": "Mode Strings, in script.js",
-    
+
     "mode_off": "Desligado",
     "mode_beer_const": "Sensor Cerveja",
     "mode_fridge_const": "Sensor Refrig.",
     "mode_beer_profile": "Perfil de Fermentação",
     "mode_invalide": "Inválido",
-    
+
     "__state_text": "in script.js, do not translate {time} {HH}, {MM},{SS}",
-    
+
     "state_text_idle": "Inativo por {time}",
     "state_text_off": "Controle de Temp. Desligado",
     "state_text_door_Open": "Porta Aberta",
@@ -384,41 +384,53 @@
     "state_text_cooling_min_time": "Tempo Restante Esfriando {time}",
     "state_text_heating_min_time": "Tempo Restante Aquecendo {time}",
     "state_text_invalid": "Status Inválido",
-    
+
     "time_format_short": "{MM}m{SS}",
     "time_format_long": "{HH}h{MM}m{SS}",
 
-    "__mqtt_in_config__":"MQTT section in config.htm",
-    "mqtt_remote_control":" MQTT Controle Remoto",
-    "mqtt_enabled":"Ativado:",
-    "mqtt_server":"MQTT Servidor:",
-    "mqtt_port":"MQTT Porta:",
-    "mqtt_username":"Nome de usuário:",
-    "mqtt_password":"Senha:",
-    "mqtt_mode_path":"Caminho para o modo:",
-    "mqtt_settemp_path":"Caminho para configuração de temperatura:",
-    "mqtt_cap_control_path":"Caminho para controle Válv. CO2:",
-    "mqtt_ptc_path":"Caminho para temperatura PTC:",
+    "__mqtt_in_config__": "MQTT section in logging.htm",
+    "mqtt_remote_control": " MQTT Controle Remoto",
+    "mqtt_enabled": "Ativado:",
+    "mqtt_server": "MQTT Corretor:",
+    "mqtt_port": "MQTT Porta:",
+    "mqtt_username": "Nome de usuário:",
+    "mqtt_password": "Senha:",
+    "mqtt_mode_path": "Caminho para o modo:",
+    "mqtt_beerset_path": "Caminho para configuração de beerSet:",
+    "mqtt_fridgeset_path": "Caminho para configuração de fridgeSet:",
 
-    "__pressure_htm__":"Controle de Pressão",
-    "pressure_setting_title":"Configuração Transdutor de Pressão",
-    "enabled_pressure_transducer":"Ativar Transdutor de Pressão:",
-    "control_pressure":"Controle de Pressão:",
-    "pressure_conversion_parameters":"Parâmetros de conversão de pressão:",
-    "pressure_conversion_parameters_desp":"Pressão em PSI= (A0_reading - b) * a",
-    "pressure_calibrate_step1":"Passo 1: sob nenhuma pressão, 0 psi, pressione",
-    "pressure_calibrate_step1_button":"Calibrando passo 1",
-    "pressure_calibrate_step2_1":"Passo 2: sob pressão",
-    "pressure_calibrate_step2_2":"psi, pressione",
-    "pressure_calibrate_step2_button":"Calibrando passo 2",
-    "dismiss":"Ignorar",
+    "mqtt_cap_control_path": "Caminho para controle Válv. CO2:",
+    "mqtt_ptc_path": "Caminho para temperatura PTC:",
 
-    "__new_for_logging":"Novos itens de registro",
-  
-    "log_temperature_unit":"Temperatura em C or F",
-    "log_mode_in_integer":"modo em números inteiros",
-    "log_mode_in_character":"modo em caracteres especiais",
-    "log_pressure_reading":"Pressão em PSI",
+    "mqtt_settings": "MQTT Settings",
+    "mqtt_broker_settings": "Broker Settings",
+    "mqtt_reporting": "Reporting",
+    "mqtt_time_period": "Publish Period",
+    "mqtt_base_path": "Base Path",
+    "mqtt_report_format": "Report data as",
+    "mqtt_individual_topic": "Individual Topic",
+    "mqtt_whole_as_json": "Whole as JSON",
+
+
+    "__pressure_htm__": "Controle de Pressão",
+    "pressure_setting_title": "Configuração Transdutor de Pressão",
+    "enabled_pressure_transducer": "Ativar Transdutor de Pressão:",
+    "control_pressure": "Controle de Pressão:",
+    "pressure_conversion_parameters": "Parâmetros de conversão de pressão:",
+    "pressure_conversion_parameters_desp": "Pressão em PSI= (A0_reading - b) * a",
+    "pressure_calibrate_step1": "Passo 1: sob nenhuma pressão, 0 psi, pressione",
+    "pressure_calibrate_step1_button": "Calibrando passo 1",
+    "pressure_calibrate_step2_1": "Passo 2: sob pressão",
+    "pressure_calibrate_step2_2": "psi, pressione",
+    "pressure_calibrate_step2_button": "Calibrando passo 2",
+    "dismiss": "Ignorar",
+
+    "__new_for_logging": "Novos itens de registro",
+
+    "log_temperature_unit": "Temperatura em C or F",
+    "log_mode_in_integer": "modo em números inteiros",
+    "log_mode_in_character": "modo em caracteres especiais",
+    "log_pressure_reading": "Pressão em PSI",
 
     "__end__": "END"
-    }    
+}
