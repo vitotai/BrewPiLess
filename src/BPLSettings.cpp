@@ -904,7 +904,7 @@ String BPLSettings::jsonPressureMonitorSettings(void){
 //***************************************************************
 // MQTT control
 #if SupportMqttRemoteControl
-#define EnableMqttKey "enabled"
+#define EnableRemoteControlKey "enabled"
 #define ServerAddressKey "server"
 #define ServerPort "port"
 #define MqttUsernameKey "user"
@@ -915,6 +915,11 @@ String BPLSettings::jsonPressureMonitorSettings(void){
 #define FridgeSetPathKey "fridgeset"
 #define PtcPathKey "ptc"
 #define CapPathKey "cap"
+
+#define MqttLoggingKey "log"
+#define MqttLogPeriodKey "period"
+#define ReportBasePathKey "base"
+#define MqttReportFormatKey "format"
 
 String BPLSettings::jsonMqttRemoteControlSettings(void){
 
@@ -927,10 +932,19 @@ String BPLSettings::jsonMqttRemoteControlSettings(void){
     JsonObject& root = jsonBuffer.createObject();
 	#endif
 	MqttRemoteControlSettings *settings=mqttRemoteControlSettings();
-
-	root[EnableMqttKey] = settings->enabled;
+	
+	root[EnableRemoteControlKey] = (settings->mode == MqttModeControl || settings->mode == MqttModeBothControlLoggging)? 1:0;
 	root[ServerPort] =  settings->port;
 
+	root[MqttLoggingKey] =  (settings->mode == MqttModeLogging || settings->mode == MqttModeBothControlLoggging)? 1:0;
+	root[MqttLogPeriodKey] = settings->reportPeriod;
+	root[MqttReportFormatKey] = settings->reportFormat;
+
+	if(settings->reportBasePathOffset){
+		char* base=(char*) (settings->_strings + settings->reportBasePathOffset);
+		DBG_PRINTF("base path:%s offset:%d\n",base, settings->reportBasePathOffset);
+		root[ReportBasePathKey] =base;
+	}
 
 	if(settings->modePathOffset){
 		char* modepath=(char*) (settings->_strings + settings->modePathOffset);
@@ -1016,7 +1030,7 @@ static char *copyIfExist(JsonObject& root,const char* key,uint16_t &offset,char*
 bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 
 #if ARDUINOJSON_VERSION_MAJOR == 6
-	DynamicJsonDocument root(JSON_OBJECT_SIZE(10) +json.length());
+	DynamicJsonDocument root(JSON_OBJECT_SIZE(15) +json.length());
 	auto error = deserializeJson(root,json);
 	if(error
 #else
@@ -1025,7 +1039,7 @@ bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 	JsonObject& root = jsonBuffer.parseObject(json.c_str());
 	if(!root.success()
 #endif
-		|| !root.containsKey(EnableMqttKey)
+		|| !root.containsKey(EnableRemoteControlKey)
 		|| !root.containsKey(ServerPort)){
 
 #if ARDUINOJSON_VERSION_MAJOR == 6	
@@ -1038,7 +1052,21 @@ bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 
 	memset((char*)settings,'\0',sizeof(MqttRemoteControlSettings));
 
-	settings->enabled=root[EnableMqttKey];
+	bool rc=root[EnableRemoteControlKey];
+	if(!root.containsKey(MqttLoggingKey)){
+		settings->mode= rc? MqttModeControl:MqttModeOff;
+		// everything else is "cleared" by memset to zero
+	}else{
+		bool log=root[MqttLoggingKey];
+		settings->mode= (rc && log)? MqttModeBothControlLoggging:
+						( rc? MqttModeControl:
+							( log? MqttModeLogging:MqttModeOff));		
+		settings->reportPeriod=root[MqttLogPeriodKey];
+		settings->reportFormat=root[MqttReportFormatKey];
+	}
+
+
+
 	settings->port=root[ServerPort];
 
 	char *base=(char*) settings->_strings;
@@ -1050,7 +1078,9 @@ bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 	if(!(ptr=copyIfExist(root,ModePathKey,settings->modePathOffset,ptr,base))) return false;
 	if(!(ptr=copyIfExist(root,BeerSetPathKey,settings->beerSetPathOffset,ptr,base))) return false;
 	if(!(ptr=copyIfExist(root,FridgeSetPathKey,settings->fridgeSetPathOffset,ptr,base))) return false;
-	
+
+	if(!(ptr=copyIfExist(root,ReportBasePathKey,settings->reportBasePathOffset,ptr,base))) return false;
+
 	#if	EanbleParasiteTempControl
 	if(!(ptr=copyIfExist(root,PtcPathKey,settings->ptcPathOffset,ptr,base))) return false;
 	#endif

@@ -178,11 +178,20 @@ typedef struct _ParasiteTempControlSettings{
 // so additional buffer is neede to decode.
 // So let's store the strings in  a compact way 
 #if SupportMqttRemoteControl
+
+#define MqttModeOff 0
+#define MqttModeControl 1
+#define MqttModeLogging 2
+#define MqttModeBothControlLoggging 3
+
+#define MqttReportIndividual 0
+#define MqttReportJson 1
+
 #define MqttSettingStringSpace 320
 typedef struct _MqttRemoteControlSettings{
     uint16_t port;
-    uint8_t  enabled;
-    uint8_t  _padding1;
+    uint8_t  mode;
+    uint8_t  reportFormat;
 
     uint16_t  serverOffset;
     uint16_t  usernameOffset;
@@ -192,7 +201,10 @@ typedef struct _MqttRemoteControlSettings{
     uint16_t  capControlPathOffset;
     uint16_t  ptcPathOffset;
     uint16_t  fridgeSetPathOffset;
-    uint8_t   _padding2[6];
+
+    uint16_t  reportBasePathOffset;
+    uint16_t  reportPeriod;
+    uint8_t   _padding2[2];
 
     uint8_t   _strings[MqttSettingStringSpace];
 }MqttRemoteControlSettings;

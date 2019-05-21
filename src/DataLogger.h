@@ -20,11 +20,6 @@ public:
 protected:
 	void sendData(void);
 
-	size_t nonNullJson(char *buffer,size_t size);
-
- 	size_t dataSprintf(char *buffer,const char *format);
- 	size_t printFloat(char* buffer,float value,int precision,bool valid);
-
 	RemoteLoggingInformation *_loggingInfo;
 	
 	time_t _lastUpdate;
