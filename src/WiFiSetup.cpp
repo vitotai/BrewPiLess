@@ -65,11 +65,16 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 {
 	wifi_info("begin:");
 	
+
 	_mode= (mode==WIFI_OFF)? WIFI_AP_STA:mode;
-	
+
+
+	DBG_PRINTF("\nSaved SSID:\"%s\"\n",WiFi.SSID().c_str());
 	DBG_PRINTF("\nAP mode:%d, used;%d\n",mode,_mode);
-
-
+	if(WiFi.SSID() == "[Your SSID]"){
+			DBG_PRINTF("Invalid SSID!");
+			_mode = WIFI_AP;
+	}
 	_apName=(ssid == NULL || *ssid=='\0')? DEFAULT_HOSTNAME:ssid;
 	
 	_apPassword=(passwd !=NULL && *passwd=='\0')? NULL:passwd;
@@ -88,10 +93,16 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 	if( _mode == WIFI_STA || _mode == WIFI_AP_STA){
 		_apMode=false;
 		if(_ip !=INADDR_NONE){
-			WiFi.config(_ip,_gw,_nm);
+				WiFi.config(_ip,_gw,_nm);
+		}else{
+			// the weird printout of "[NO IP]" implies that explicitly specification of DHCP 
+			// might be necessary.
+			WiFi.config(INADDR_NONE,INADDR_NONE,INADDR_NONE);
 		}
+		
 		WiFi.setAutoReconnect(true);
 		WiFi.begin();
+		
 		_time=millis();
 	}
 	DBG_PRINTF("\ncreate network:%s pass:%s\n",_apName, passwd);

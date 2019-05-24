@@ -1,4 +1,5 @@
 #include <ArduinoJson.h>
+#include <time.h>
 #include <string.h>
 #include <IPAddress.h>
 #include <FS.h>
