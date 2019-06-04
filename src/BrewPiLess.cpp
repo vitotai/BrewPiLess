@@ -417,6 +417,7 @@ public:
 		}else 
 		#endif
 		if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
+			if(!request->authenticate(syscfg->username, syscfg->password)) return request->requestAuthentication();
 			if(request->hasParam("cfg"))
 				request->send(200,"application/json",theSettings.jsonSystemConfiguration());
 			else 
@@ -505,6 +506,7 @@ public:
 	 	#ifdef ENABLE_LOGGING
 	 	else if (request->url() == LOGGING_PATH){
 	 		if(request->method() == HTTP_POST){
+				if(!request->authenticate(syscfg->username, syscfg->password)) return request->requestAuthentication();
 				if(request->hasParam("data", true)){
 		    		if(theSettings.dejsonRemoteLogging(request->getParam("data", true)->value())){
 		    			request->send(200,"application/json","{}");
@@ -586,7 +588,9 @@ public:
 				}
 			}else{
 				// post
-				if(request->hasParam("data",true)){
+				if(!request->authenticate(syscfg->username, syscfg->password)) return request->requestAuthentication();
+
+				if(request->hasParam("data",true)){					
 					if(theSettings.dejsonPressureMonitorSettings(request->getParam("data",true)->value())){
 						theSettings.save();
 						request->send(200,"application/json","{}");
@@ -604,6 +608,9 @@ public:
 			if(request->method() == HTTP_GET){
 				request->send(200,"application/json",theSettings.jsonBeerProfile());
 			}else{ //if(request->method() == HTTP_POST){
+
+				if(!request->authenticate(syscfg->username, syscfg->password)) return request->requestAuthentication();
+
 				if(request->hasParam("data",true)){
 					if(theSettings.dejsonBeerProfile(request->getParam("data",true)->value())){
 						theSettings.save();
@@ -628,6 +635,7 @@ public:
 		 			return;
 		 		}
 		 	}
+			/*
 			bool auth=true;
 
 			for(byte i=0;i< sizeof(public_list)/sizeof(const char*);i++){
@@ -636,8 +644,8 @@ public:
 						break;
 					}
 			}
-
-	 	    if(auth && !request->authenticate(syscfg->username, syscfg->password))
+			*/
+	 	    if(syscfg->passwordLcd && !request->authenticate(syscfg->username, syscfg->password))
 	        return request->requestAuthentication();
 
 	 		sendFile(request,path); //request->send(SPIFFS, path);
