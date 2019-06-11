@@ -1,7 +1,7 @@
 MQTT Remote Control enables controlling BPL by a MQTT server. When enabled, BPL subscribes the specified path and changes the setting accordingly.
 Currently, four item can be controlled in this way:
 
-![MQTT Remote Control Settings](https://github.com/vitotai/BrewPiLess/blob/v35pre/img/mqtt.remote.jpg?raw=true)
+![MQTT Remote Control Settings](image/mqtt.remote.jpg?raw=true)
 
 ### Mode
 The values can be 0,1,2,3 or o,f,b,p for 'Off', 'Fridge Constant', 'Beer Constant', and 'Beer Profile'.

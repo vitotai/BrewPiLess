@@ -2,7 +2,7 @@
 
 
 By using a pressure transducer, BPL can read pressure and control the pressure if capping is supported.
-![Pressure Settings](https://github.com/vitotai/BrewPiLess/blob/v35pre/img/pressure-setting.jpg?raw=true)
+![Pressure Settings](image/pressure-setting.jpg?raw=true)
 
 ## Pressure Reading
 The pressure transducers supported is something like this: [Pressure Transducer](http://www.auberins.com/index.php?main_page=product_info&cPath=38&products_id=311). Using other types might be possible, but the output should be linear voltage.
@@ -32,7 +32,7 @@ In practice, there are errors and the readings sometimes are not exact the same 
 1. Step 1: make sure there is "NO pressure". And click the button to get "b".
 2. Step 2: put the transducer under a pressure closer maximum the better. Input the pressure and click "Step 2" button.
 
-![Pressure Calibration](https://github.com/vitotai/BrewPiLess/blob/v35pre/img/pressure-cal.jpg?raw=true)
+![Pressure Calibration](image/pressure-cal.jpg?raw=true)
 
 BPL will then derive the parameters automatically.
 

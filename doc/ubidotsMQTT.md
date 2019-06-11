@@ -2,24 +2,24 @@
 ### Step 1. create variables
 Go to the device page, and add two variables, "mode" and "setTemp".
 
-![](https://github.com/vitotai/BrewPiLess/blob/v35pre/img/ubidots.variable.jpg?raw=true)
+![](image/ubidots.variable.jpg?raw=true)
 
 Make sure the "api label" is correctly set.
 
 ### Step 2. create controls
 Go to dashboard. Click "+"(Add widget) to add a **slider** control:
-![New Control](https://github.com/vitotai/BrewPiLess/blob/v35pre/img/ubidots.add.control.jpg?raw=true)
+![New Control](image/ubidots.add.control.jpg?raw=true)
 
 Choose the just added variable, mode:
 Set the range 0-3, while 0 is off, 1 is "Fridge Constant", 2 is "Beer Constant", and 3 is "Beer Profile".
 
-![New Widget](https://github.com/vitotai/BrewPiLess/blob/v35pre/img/ubidots.widget.creation.jpg?raw=true)
+![New Widget](image/ubidots.widget.creation.jpg?raw=true)
 
 Do the same to the "settemp" variable with correct ranges.
 
 Now you will have it.
 
-![](https://github.com/vitotai/BrewPiLess/blob/v35pre/img/ubidots.control.widget.jpg?raw=true)
+![](image/ubidots.control.widget.jpg?raw=true)
 
 
 ## Settings for ubidots.com
@@ -38,7 +38,7 @@ Let the device label be 'fermenter2' and mode and setting temperature variables 
 * Setting Temperature path: /v1.6/devices/fermenter2/settemp/lv
 
 You will have to create two variables named 'mode' and 'settemp' in device 'fermenter2'. 
-![MQTT Remote Settings for ubidots.com](https://github.com/vitotai/BrewPiLess/blob/v35pre/img/ubidots.mqtt.settings.jpg?raw=true)
+![MQTT Remote Settings for ubidots.com](image/ubidots.mqtt.settings.jpg?raw=true)
 
 ## Usage
 
