@@ -21,3 +21,6 @@ Tom has created a set of elegant frontend of BPL:
 https://github.com/tommueller/BrewPiLess/tree/master/htmljs/dist
 Tom's work has been merged into this project:
 https://github.com/vitotai/BrewPiLess/tree/master/htmljs
+
+***
+[Index](index.md)

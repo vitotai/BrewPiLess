@@ -43,3 +43,6 @@ You will have to create two variables named 'mode' and 'settemp' in device 'ferm
 ## Usage
 
 Slide the **mode slider** to change mode and **settemp slider** to change temperature. The "settemp" should be set __**after**__ mode is changed so that it's not ambiguous.
+
+***
+[Index](index.md)

@@ -5,7 +5,7 @@ If this feature is enabled, BPL will record the TILT angles from iSpindel, expec
 3. Drop iSpindel into the fermenter after carefully sanitizing it.
 4. Start local logging with **"Calibrate iSpindel"** enabled. Enter the _reading of the hydrometer_ in the hydrometer, **or** enter the _temperature_ of the water and the _calibration temperature_ of the hydrometer to let BPL derive the reading.
 ![Start Logging](image/log_general.jpg?raw=true)
-5. [Input SG](https://github.com/vitotai/BrewPiLess/wiki/Manual-Gravity-Logging), which is the value of Original Gravity. Note: You should usually input the same value as OG. That is, you have to input the same data for OG and SG.( OG is not necessarily the starting SG of current log, so BPL won't automatically add a gravity data for you.)
+5. [Input SG](ManualGravityInput.md), which is the value of Original Gravity. Note: You should usually input the same value as OG. That is, you have to input the same data for OG and SG.( OG is not necessarily the starting SG of current log, so BPL won't automatically add a gravity data for you.)
 ![Input SG](image/gravity_input.jpg?raw=true)
 7. Measure SG as usual or more frequently. Input the measured SG.
 
@@ -16,8 +16,11 @@ BPL will derive the formula by the Tilt values and gravity data input. If the nu
 ![](image/ispindel_calibrating.jpg)
 
 If BPL is in calibrating mode, there will be a lower case "f" at the bottom of the legend block. Click the "f" will bring out the calibration points and formula used.
-![](https://github.com/vitotai/BrewPiLess/raw/master/img/ispindel_formula.jpg)
+![](image/ispindel_formula.jpg)
 
 Check the checkbox of "ignore" if that set of data is erroneous. BPL will derive a new formula based on updated data. Press "Apply" to re calculate all gravity based on new formula. Note that at least two set of data should be left "un"-ignored. At least two set of data is necessary to derive a valid formula.
 
 Please note that the maximum number of data set is **21**. Tilt and gravity data set beyond 21 can't be ignored.
+
+***
+[Index](index.md)

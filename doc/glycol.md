@@ -19,4 +19,8 @@ The version of BrewPi ported to BrewPiLess is designed to control fermenting tem
 You might notice that temperatures of beer and fridge from the same sensor are different. The reason is the values are filtered and and they have different filtering parameters. Those parameters also can be changed by the JSON commands. `fridgeFastFilt`, `fridgeSlowFilt`, `firdgeSlopeFilt`, `beerFastFilt`, `beerSlowFilt`, and `beerSlopeFilt`.
 
 Ref:
-[JSON commands](https://github.com/vitotai/BrewPiLess/wiki/JSON-command)
+[JSON commands](JsonCommand.md)
+
+
+***
+[Index](index.md)

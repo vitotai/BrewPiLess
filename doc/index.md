@@ -8,7 +8,7 @@
   * [Software Configuration](SoftwareConfiguration.md)
 * [WiFi Setup](WiFiSetupV32.md)
 * [System Setup](SystemSetup.md)
-  * [SoftAP mode](https://github.com/vitotai/BrewPiLess/wiki/SoftAP-mode)
+  * [SoftAP mode](SoftAPMode.md)
 * [Device Setup](DeviceSetup.md)
 * [Using Buttons & Menu](UsingButtonsAndUI.md)
 * [Temperature Logging](TemperatureLogging.md)

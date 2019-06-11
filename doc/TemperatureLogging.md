@@ -9,3 +9,6 @@
 * The loggging format changed after v1.2.7/v2.0/v2.4. Use BPLLogViewerV2.htm to view the new logs and BPLLogViewer.htm for old logs.
 
 You can view, share, and crop the logs. Check http://vito.tw/?p=821
+
+***
+[Index](index.md)

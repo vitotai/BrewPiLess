@@ -18,3 +18,6 @@ To set PTC target temperature, the 'triggering temperature' will set to 3 degree
 Connecting to MQTT server takes up a TCP connection and some resource. The program might stick to the setting on MQTT server. Therefore, enable it only when you need it.
 
 There is latency of network and update of data. Therefore, expect some delay after changing the setting.
+
+***
+[Index](index.md)

@@ -36,7 +36,6 @@
  [REF#1](https://community.brewpi.com/t/ds18b20-oddities-clones/1656)
 [REF#2](https://www.homebrewtalk.com/forum/threads/howto-make-a-brewpi-fermentation-controller-for-cheap.466106/page-136#post-7556259)
 
-* Q: How to set 2M sketch size.
 
-   Check https://github.com/vitotai/BrewPiLess/wiki/2M-sketch-Space
- 
+ ***
+[Index](index.md)

@@ -40,3 +40,6 @@ BPL will then derive the parameters automatically.
 "Capping control" is necessary to support pressure control. A solenoid is needed to vent the gas/co2 when necessary. The most tricky part is the venting. A small pin hole or gap should work. **Venting flow should be just a little greater than the speed of CO2 generation.
 
 ** BPL checks the pressure **every second**, if the pressure is greater than specified value, the solenoid will be open. The less the gas/pressure is released in 1 second, the more precise the pressure control is. It might sound like difficult. The fact is that it is more difficult to make something air tight. A threaded pipe and cap without seal might do the job.
+
+***
+[Index](index.md)

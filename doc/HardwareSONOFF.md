@@ -6,3 +6,5 @@ BrewPiLess can run on [SONOFF Basic](https://www.itead.cc/wiki/Sonoff) and [SONO
 SONOFF dual is not supported, because the Relays are controlled by Serial instead of GPIO.
 
 
+***
+[Index](index.md)

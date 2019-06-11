@@ -22,3 +22,6 @@ http://platformio.org/get-started/ide?install=vscode
 4. Launch VSCode, open the path of BrewPiLess that contains `platformio.ini`
 
 5. If everything goes well, you can build and upload. Check PlatformIO manual for more detail.
+
+***
+[Index](index.md)

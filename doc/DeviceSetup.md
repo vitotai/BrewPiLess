@@ -10,3 +10,5 @@ After editing and applying all devices, click `Refresh Device List` to review th
 
 To uninstall a device, set the `Function` to `None`.
 
+***
+[Index](index.md)

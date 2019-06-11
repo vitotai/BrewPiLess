@@ -18,3 +18,6 @@ Default username and password are both **brewpiless**.
 Note: Change of all settings except `LCD auto off` will result in re-boot of BPL. The setting of LCD auto off is supposed to be effective right away after submit.
 
 If Network is set Station+AP mode, BPL will create a WiFi network even when it is connecting to a AP. It is useful and good to set Station+AP mode when working with iSpindel. In most case, BPL is placed near the fermenter, so it is near iSpindel, which should solve connection issue of iSpindel, if any, and save the power of iSpindel.
+
+***
+[Index](index.md)

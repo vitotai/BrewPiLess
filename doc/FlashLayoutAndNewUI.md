@@ -6,3 +6,6 @@ To support OTA update, the total program space should be at least twice of the p
 Fortunately, framework 1.8.0 sports 4m2m(2m program space) by default. Therefore, we don't need to [manually create](https://github.com/vitotai/BrewPiLess/wiki/2M-sketch-Space) the linkage description file.
 
 Because of the different flash layout, change one layout to another should be done over USB instead of OTA. Morover, the file system will be corrupted and all data will be gone.
+
+***
+[Index](index.md)

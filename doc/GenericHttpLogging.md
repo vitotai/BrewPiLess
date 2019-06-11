@@ -26,4 +26,8 @@ The `Data Type` field is used as "Content-Type" in HTTP protocol. When it is lef
 
 Due to the memory limitation, HTTPS is not supported. Therefore, if you want to send data to a service that supports only HTTPS, an additional proxy is needed.
 
-You can use Generic HTTP format for thingspeak.com and Brewfather to get exact the same result, but you should use ubidots.com specific settings to setup ubidots.com. It is because that ubidots.com will reject all values if one of them are "null".
+You can use Generic HTTP format for thingspeak.com and Brewfather to get exact the same result, but you should use ubidots.com specific settings to setup ubidots.com. It is because that ubidots.com will reject all values if one of them are "null"
+
+
+***
+[Index](index.md).
