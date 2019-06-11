@@ -24,4 +24,5 @@ Note: to cap, BPL will set the PIN to "active". Most of the solenoids are normal
 
 Active="capped".
 
+***
 [Index](index.md)

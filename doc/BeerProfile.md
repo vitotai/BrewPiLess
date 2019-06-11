@@ -35,3 +35,6 @@ The computation is done when the profile is "loaded". Changing the OG after "app
 Use `Save As` button to save the edited profile. The saved name should not contain special characters.
 
 Use `...` button next to `Save As` button to open and close the profile list. After loading the profile by clicking it on the list, you have to **Save** it before **Apply**ing it.
+
+***
+[Index](index.md)
