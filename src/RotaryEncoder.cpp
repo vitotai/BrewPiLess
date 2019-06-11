@@ -234,11 +234,11 @@ ICACHE_RAM_ATTR static boolean btnDetect(void)
 
 	return false;
 }
-static bool _buttonStatusChange;
+static bool _buttonStatusChanged=false;
 
 ICACHE_RAM_ATTR static void processbuttons(){
 	if(btnDetect()){
-		_buttonStatusChange = true;
+		_buttonStatusChanged = true;
 	}
 }
 ICACHE_RAM_ATTR static void isr_upChanged(void) {
@@ -260,15 +260,19 @@ ICACHE_RAM_ATTR static void isr_downChanged(void) {
 }
 
 static boolean btnReadButtons(void){
-	noInterrupts();
 	processbuttons(); // to process continuous pressing
 
-	if(_buttonStatusChange){
-		_buttonStatusChange = false;
-		interrupts();
+	//noInterrupts();
+	if(_buttonStatusChanged){
+		//  Interrupt happens just before read and write.
+		//  that would result in loss of button pressed event.
+		//  however, disable/enable interrupt seems to make the system unstable.
+		// it's better to lose information instead of instaibliity.
+		_buttonStatusChanged = false;
+		//interrupts();
 		return true;
 	}
-	interrupts();
+	//interrupts();
 	return false;
 }
 
