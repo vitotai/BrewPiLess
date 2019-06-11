@@ -23,3 +23,5 @@ Note: to cap, BPL will set the PIN to "active". Most of the solenoids are normal
 | Not Inverted/SSR  |   Normal open |	Not-Inverted |  Active: close, inactive: open |
 
 Active="capped".
+
+[Index](index.md)
