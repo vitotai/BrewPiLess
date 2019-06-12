@@ -48,10 +48,11 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
 ## Version History
  * v3.6
     * update framework to 2.2.0
-    * update OLED library to 4.0 (Not verified)
+    * update OLED library to 4.0 (Not verified by me, but SOMEONE@HBT did report working)
     * update to ArduinoJson V6
     * add revised LCD page. at /lcd
     * SOFF OTA configuraton not longer available for space limit
+    * Using interrupt for more responsive button operation.
 
  * v3.5.1 
     * fixed iSpindel temperature unit issue

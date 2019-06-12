@@ -8,7 +8,7 @@ You can set multiple parameters in one command. The command after `j` is in form
 
 | Key            | Meaning       | Note       |
 | -------------- |:-------------:| :--------------------|
-| tempFormat         | Temperature format          | F for Fahrenheit, C for Celius. The algorithm always uses fixed point Celcius format internally, but it converts all settings that go in or out to the right format.	|
+| tempFormat         | Temperature format          | F for Fahrenheit, C for Celsius. The algorithm always uses fixed point Celcius format internally, but it converts all settings that go in or out to the right format.	|
 | tempSetMin        | Minimum temperature setting     | The fridge and beer temperatures cannot go below this value. |
 | tempSetMax        | Maximum temperature setting    | The fridge and beer temperatures cannot go above this value.  |
 | Kp                | Kp parameters of PID           | The beer temperature error is multiplied by Kp to give the proportional part of the PID value.  | 

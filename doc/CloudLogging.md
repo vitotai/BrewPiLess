@@ -2,6 +2,7 @@ Remote logging, or cloud logging, is used to push data to a remote server. Most 
 * [ubidots.com](ubidots.md)
 * [thingspeak.com](thingspeak.md)
 * [Brewfahter](brewfather.md)
+* [Brewer's Friend](brewersfriend.md)
 
 ***
 [Index](index.md)

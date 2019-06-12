@@ -43,18 +43,18 @@ The pin allocation is defined in `Config.h`:
 
 `#define DownButtonPin NODEMCU_PIN_D4`
 
-You can change the pin allocation to your configuration. Just don't use D8, which is pulled low to enable normal booting. You might need to use pull-up register if you choose D0, which doesn't support internal pull-up.
+You can change the pin allocation to your configuration. **Just don't use D8**, which is pulled low to enable normal booting. You might need to use pull-up register if you choose D0, which doesn't support internal pull-up.
 
-### Rotary Encoder
+### Rotary Encoder _Not Recommended_
 Due to the special usage at bootup of GPIO0,2,15(D3,D4,D8), they can't be used as inputs for rotary encoder. One of the solution is buy an IO Expander. 
 Currently, PCF8574 is supported if you really need the rotary encoder. You will have to change the compile options in Config.h to enable this feature.
 The Rotary Encoder doesn't work with OLED LCD.
 
-### Wake-up button
+### Wake-up button _deprecated_
 No longer available after v2.7. Two-button configuration will work on the hardware setup for Wake-up button and pressing the button will "wake up" BPL also.
 
 
-### 2 Buttons via PCF8574
+### 2 Buttons via PCF8574 _Not Recommended_
 Use this option to share the same hardware with BrewManiacEx. UP is connect to P1 while DOWN is connect to P0. (Enter is at P2, and Start is at P3. BrewPiLess uses only two buttons.)
 
 ***

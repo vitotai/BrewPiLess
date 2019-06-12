@@ -25,7 +25,7 @@
 * [Use with Glycol](glycol.md)
 * [Auto Capping(Spunding)](AutoSpunding.md)
 * [MQTT Remote Control](MQTT.md)
-  * [ubidots.com](ubidots.md)
+  * [ubidots.com](MQTT.ubidots.md)
 * [Pressure Monitor and Control](PressureMonitor.md)
 * [Other URLs](OtherUrl.md)
   * Clear WiFi setting
