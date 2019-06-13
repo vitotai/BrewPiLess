@@ -63,4 +63,8 @@
 
 #include "Actuator.h"
 
-extern ValueActuator alarm;
+extern ValueActuator alarmActuator;
+
+#ifndef uint32
+typedef uint32_t uint32;
+#endif
