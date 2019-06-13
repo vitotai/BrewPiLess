@@ -1,9 +1,22 @@
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPUpdateServer.h>
 #include <ESP8266mDNS.h>
 #include <FS.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <WebServer.h>
+
+#include <FS.h>
+#include <SPIFFS.h>
+#endif
+
+
+#include <WiFiClient.h>
+
 #include <ArduinoJson.h>
 #include "Config.h"
 #include "ExternalData.h"
@@ -20,7 +33,11 @@
 #endif
 
 #if (DEVELOPMENT_OTA == true) || (DEVELOPMENT_FILEMANAGER == true)
+#if defined(ESP32)
+static WebServer server(UPDATE_SERVER_PORT);
+#else
 static ESP8266WebServer server(UPDATE_SERVER_PORT);
+#endif
 #endif
 
 #if DEVELOPMENT_OTA == true
@@ -217,12 +234,22 @@ static void handleFileList(void) {
 
   String path = server.arg("dir");
   DBG_PRINTLN("handleFileList: " + path);
+  #if defined(ESP32)
+  File dir = SPIFFS.open(path);
+  #else
   Dir dir = SPIFFS.openDir(path);
+  #endif
   path = String();
 
   String output = "[";
+#if defined(ESP32)
+  File entry = dir.openNextFile();
+
+  while(entry){
+#else
   while(dir.next()){
     File entry = dir.openFile("r");
+#endif
     if (output != "[") output += ',';
     bool isDir = false;
     output += "{\"type\":\"";
@@ -231,6 +258,10 @@ static void handleFileList(void) {
     output += String(entry.name()).substring(1);
     output += "\"}";
     entry.close();
+#if defined(ESP32)
+    entry = dir.openNextFile();
+#endif
+
   }
 
   output += "]";
@@ -268,6 +299,7 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
   });
 
   //get heap status, analog input value and all GPIO statuses in one json call
+  #if 0
   server.on("/all", HTTP_GET, [](){
     String json = "{";
     json += "\"heap\":"+String(ESP.getFreeHeap());
@@ -277,6 +309,7 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
     server.send(200, "text/json", json);
     json = String();
   });
+  #endif
 
   server.on(SPIFFS_FORMAT_PATH,HTTP_GET, [](){
      server.sendHeader("Content-Encoding", "gzip");

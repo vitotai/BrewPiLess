@@ -1,6 +1,14 @@
-#include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#include <WebServer.h>
+#endif
+
 //needed for library
 #include <DNSServer.h>
+#include <FS.h>
 #include "Config.h"
 #include "WiFiSetup.h"
 
@@ -333,7 +341,12 @@ String WiFiSetupClass::scanWifi(void) {
         	//int quality = getRSSIasQuality(WiFi.RSSI(indices[i]));
 			String item=String("{\"ssid\":\"") + WiFi.SSID(indices[i]) + 
 			String("\",\"rssi\":") + WiFi.RSSI(indices[i]) +
-			String(",\"enc\":") +  String((WiFi.encryptionType(indices[i]) != ENC_TYPE_NONE)? "1":"0")
+			String(",\"enc\":") + 
+			#if defined(ESP32)
+			 String((WiFi.encryptionType(indices[i]) != WIFI_AUTH_OPEN)? "1":"0")
+			#else
+			 String((WiFi.encryptionType(indices[i]) != ENC_TYPE_NONE)? "1":"0")
+			#endif
 			+ String("}");
 			if(comma){
 				rst += ",";	

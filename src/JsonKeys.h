@@ -22,7 +22,7 @@
 #include "Brewpi.h"
 
 #ifdef ARDUINO
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
 // There is no concept of PROGMEM with the ESP8266
 #include <pgmspace.h>
 #else

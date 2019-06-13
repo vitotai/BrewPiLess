@@ -23,7 +23,7 @@
 #include <limits.h>
 #include "TempControl.h"
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 // Appears this isn't defined in the ESP8266 implementation
 char *
 strchrnul(const char *s, int c_in)

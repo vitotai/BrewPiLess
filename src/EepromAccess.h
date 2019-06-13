@@ -26,7 +26,7 @@
 // ARDUINO is defined for the ESP8266 implementation as well. Specifically break out
 // the ESP8266 implementation, then default to Arduino if we don't use it.
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 #include "ESPEepromAccess.h"
 typedef ESPEepromAccess EepromAccess;
 #else

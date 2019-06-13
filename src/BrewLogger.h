@@ -1,6 +1,11 @@
 #ifndef BrewLogger_H
 #define BrewLogger_H
 #include <FS.h>
+
+#if defined(ESP32)
+#include <SPIFFS.h>
+#endif
+
 #include "BPLSettings.h"
 #include "TimeKeeper.h"
 

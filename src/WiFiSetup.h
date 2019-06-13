@@ -22,6 +22,13 @@
 #define TIME_RECONNECT_TIMEOUT 20000
 #define    DNS_PORT  53
 
+#if defined(ESP32) 
+//WiFiMode
+typedef wifi_mode_t WiFiMode;
+#endif
+
+typedef std::function<void(bool apmode,IPAddress ip, IPAddress gw, IPAddress mask)> NetcfgHandler;
+
 class WiFiSetupClass
 {
 public:

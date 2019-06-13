@@ -36,6 +36,13 @@ BrewLogger::BrewLogger(void){
 
 	String BrewLogger::fsinfo(void)
 	{
+#if defined(ESP32)
+		String ret=String("{\"size\":") + String(SPIFFS.totalBytes())
+			+",\"used\":"  + String(SPIFFS.usedBytes())
+//			+",\"block\":" + String(fs_info.blockSize)
+//			+",\"page\":"  + String(fs_info.pageSize)
+			+"}";
+#else
 		FSInfo fs_info;
 		SPIFFS.info(fs_info);
 		String ret=String("{\"size\":") + String(fs_info.totalBytes)
@@ -44,6 +51,7 @@ BrewLogger::BrewLogger(void){
 			+",\"page\":"  + String(fs_info.pageSize)
 			+"}";
 		return ret;
+#endif
 	}
 	
 	const char* BrewLogger::currentLog(void)
@@ -670,8 +678,20 @@ BrewLogger::BrewLogger(void){
 		_extTileAngle = INVALID_TILT_ANGLE;
 	}
 
+#define RESERVED_SIZE 8196*2
+
 	void BrewLogger::checkspace(void)
 	{
+#if defined(ESP32)
+		_fsspace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
+
+		if(_fsspace > RESERVED_SIZE){
+			_fsspace -= RESERVED_SIZE;
+		}else{
+			_fsspace=0;
+		}
+
+#else
 		FSInfo fs_info;
 		SPIFFS.info(fs_info);
 
@@ -681,6 +701,7 @@ BrewLogger::BrewLogger(void){
 		}else{
 			_fsspace=0;
 		}
+#endif
 		DBG_PRINTF("SPIFFS space:%d\n",_fsspace);
 	}
 

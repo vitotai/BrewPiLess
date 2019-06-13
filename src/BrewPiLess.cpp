@@ -9,8 +9,12 @@
 #include <FS.h>
 
 //#include <Hash.h>
-
+#if defined(ESP32)
+#include <AsyncTCP.h>
+#include <SPIFFS.h>
+#else
 #include <ESPAsyncTCP.h>
+#endif
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 //{ brewpi
@@ -52,7 +56,11 @@
 #endif
 
 extern "C" {
+#if defined(ESP32)
+//#include "lwip/apps/sntp.h"
+#else
 #include <sntp.h>
+#endif
 }
 
 #include "BPLSettings.h"
@@ -212,6 +220,30 @@ class BrewPiWebHandler: public AsyncWebHandler
 	void handleFileList(AsyncWebServerRequest *request) {
 		if(request->hasParam("dir",true)){
         	String path = request->getParam("dir",true)->value();
+			#if defined(ESP32)
+			File dir = SPIFFS.open(path);
+          	String output = "[";
+			if(dir.isDirectory()){
+				File entry = dir.openNextFile();
+          		while(entry){
+            		
+            		if (output != "[") output += ',';
+            		bool isDir = false;
+            		output += "{\"type\":\"";
+            		output += (isDir)?"dir":"file";
+            		output += "\",\"name\":\"";
+            		output += String(entry.name()).substring(1);
+            		output += "\"}";
+            		entry.close();
+					entry = dir.openNextFile();
+          		}
+			  }
+          	output += "]";
+          	request->send(200, "text/json", output);
+          	output = String();
+
+
+			#else
           	Dir dir = SPIFFS.openDir(path);
           	path = String();
           	String output = "[";
@@ -229,6 +261,7 @@ class BrewPiWebHandler: public AsyncWebHandler
           	output += "]";
           	request->send(200, "text/json", output);
           	output = String();
+			#endif
         }
         else
           request->send(400);
@@ -236,7 +269,13 @@ class BrewPiWebHandler: public AsyncWebHandler
 
 	void handleFileDelete(AsyncWebServerRequest *request){
 		if(request->hasParam("path", true)){
-        	ESP.wdtDisable(); SPIFFS.remove(request->getParam("path", true)->value()); ESP.wdtEnable(10);
+			#if !defined(ESP32)
+        	ESP.wdtDisable(); 
+			#endif
+			SPIFFS.remove(request->getParam("path", true)->value()); 
+			#if !defined(ESP32)
+			ESP.wdtEnable(10);
+			#endif
             request->send(200, "", "DELETE: "+request->getParam("path", true)->value());
         } else
           request->send(404);
@@ -245,7 +284,9 @@ class BrewPiWebHandler: public AsyncWebHandler
 	void handleFilePuts(AsyncWebServerRequest *request){
 		if(request->hasParam("path", true)
 			&& request->hasParam("content", true)){
+			#if !defined(ESP32)
         	ESP.wdtDisable();
+			#endif
     		String file=request->getParam("path", true)->value();
     		File fh= SPIFFS.open(file, "w");
     		if(!fh){
@@ -255,7 +296,9 @@ class BrewPiWebHandler: public AsyncWebHandler
     		String c=request->getParam("content", true)->value();
       		fh.print(c.c_str());
       		fh.close();
+			#if !defined(ESP32)
         	ESP.wdtEnable(10);
+			#endif
             request->send(200,"application/json","{}");
             DBG_PRINTF("fputs path=%s\n",file.c_str());
         } else
@@ -312,7 +355,7 @@ class BrewPiWebHandler: public AsyncWebHandler
 				return;
 			}
 		}
-		String pathWithGz = path + ".gz";
+		String pathWithGz = path + String(".gz");
 		if(SPIFFS.exists(pathWithGz)){
 #if 0
 			AsyncWebServerResponse * response = request->beginResponse(SPIFFS, pathWithGz,getContentType(path));
@@ -357,7 +400,20 @@ class BrewPiWebHandler: public AsyncWebHandler
 		if(file){
 			DBG_PRINTF("using embedded file:%s\n",path.c_str());
 			if(gzip){
+				#if defined(ESP32)
+                AsyncWebServerResponse *response = request->beginResponse("text/html", size,[=](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+					 //Write up to "maxLen" bytes into "buffer" and return the amount written.
+  					//index equals the amount of bytes that have been already sent
+  					//You will not be asked for more bytes once the content length has been reached.
+  					//Keep in mind that you can not delay or yield waiting for more data!
+  					//Send what you currently have and you will be asked for more again
+  					memcpy(buffer,file + index, maxLen);
+					return maxLen;
+				});
+
+				#else
                 AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", file, size);
+				#endif
                 response->addHeader("Content-Encoding", "gzip");
                 request->send(response);
 			}else sendProgmem(request,(const char*)file);
@@ -1456,7 +1512,7 @@ WiFiClient serverClient;
 #endif
 void handleReset()
 {
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
 	// The asm volatile method doesn't work on ESP8266. Instead, use ESP.restart
 	ESP.restart();
 #else
@@ -1597,7 +1653,11 @@ void setup(void){
 
 	//0.Initialize file system
 	//start SPI Filesystem
-  	if(!SPIFFS.begin()){
+#if defined(ESP32)
+  	if(!SPIFFS.begin(true)){
+#else
+	if(!SPIFFS.begin()){
+#endif
   		// TO DO: what to do?
   		DBG_PRINTF("SPIFFS.being() failed!\n");
   	}else{
@@ -1631,7 +1691,11 @@ void setup(void){
 	WiFiMode wifiMode= (WiFiMode) syscfg->wifiMode;
 	WiFiSetup.staConfig(IPAddress(syscfg->ip),IPAddress(syscfg->gw),IPAddress(syscfg->netmask),IPAddress(syscfg->dns));
 	WiFiSetup.onEvent(wiFiEvent);
-	WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password);
+	if(strlen(syscfg->hostnetworkname)>0)
+		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password);
+	else // something wrong with the file
+		WiFiSetup.begin(wifiMode,DEFAULT_HOSTNAME,DEFAULT_PASSWORD);
+
 
   	DBG_PRINTF("WiFi Done!\n");
 
@@ -1682,7 +1746,14 @@ void setup(void){
 	//3.1.2 SPIFFS is part of the serving pages
 	//server.serveStatic("/", SPIFFS, "/","public, max-age=259200"); // 3 days
 
-
+#if defined(ESP32)
+	webServer->on("/fs",[](AsyncWebServerRequest *request){
+		request->send(200,"","totalBytes:" +String(SPIFFS.totalBytes()) +
+		" usedBytes:" + String(SPIFFS.usedBytes()) +
+		" heap:"+String(ESP.getFreeHeap()));
+		//testSPIFFS();
+	});
+#else
 	webServer->on("/fs",[](AsyncWebServerRequest *request){
 		FSInfo fs_info;
 		SPIFFS.info(fs_info);
@@ -1693,7 +1764,7 @@ void setup(void){
 		+" heap:"+String(ESP.getFreeHeap()));
 		//testSPIFFS();
 	});
-
+#endif
 	// 404 NOT found.
   	//called when the url is not defined here
 	webServer->onNotFound([](AsyncWebServerRequest *request){

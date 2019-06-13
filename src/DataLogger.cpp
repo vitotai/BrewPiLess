@@ -1,8 +1,16 @@
+
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
 #include <ESP8266HTTPClient.h>
-#include <ArduinoJson.h>
-#include <ESPAsyncTCP.h>
+
+#elif defined(ESP32)
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <AsyncTCP.h>
+
+#endif
+
 #include <ESPAsyncWebServer.h>
 #include "DataLogger.h"
 #include "Config.h"

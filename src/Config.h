@@ -453,7 +453,7 @@
 
 #endif //#if ButtonViaPCF8574
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 //#define ESP8266_WiFi 1			// This disables Serial and enables WiFi support
 //#define ESP8266_WiFi_Control 1	// This adds the headers for WiFi support (so you can disconnect from WiFi via serial)
 #define ESP8266_ONE 1
@@ -514,6 +514,12 @@
 #define MINIMUM_TEMPERATURE_STEP 0.005
 #define MINIMUM_TEMPERATURE_SETTING_PERIOD 60
 
+#if defined(ESP32)
+#undef DEVELOPMENT_OTA
+#undef DEVELOPMENT_FILEMANAGER
+#define DEVELOPMENT_OTA false
+#define DEVELOPMENT_FILEMANAGER true
+#endif
 // for web interface update
 #define UPDATE_SERVER_PORT 8008
 #define FILE_MANAGEMENT_PATH "/filemanager"
