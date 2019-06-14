@@ -4,6 +4,8 @@
 #elif defined(ESP32)
 #include <WiFi.h>
 #include <WebServer.h>
+#include <nvs.h>
+#include <nvs_flash.h>
 #endif
 
 //needed for library
