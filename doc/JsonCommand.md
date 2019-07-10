@@ -5,6 +5,7 @@ By using `http://brewpiless.local/testcmd.htm`, you can control BrewPi core dire
 
 You can set multiple parameters in one command. The command after `j` is in formal JSON format. Please include the double quote(") for key and string value.
 
+_Don't forget to change **tempSetMin** and **tempSetMax** after chaning temperature unit._
 
 | Key            | Meaning       | Note       |
 | -------------- |:-------------:| :--------------------|
