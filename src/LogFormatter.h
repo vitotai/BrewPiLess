@@ -13,6 +13,7 @@
 #define KeyTilt  "tilt"
 #define KeyPressure "pressure"
 #define KeyMode "mode"
+#define KeyState "state"
 
 
 size_t nonNullJson(char *buffer,size_t size);

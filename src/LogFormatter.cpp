@@ -94,6 +94,9 @@ size_t dataSprintf(char *buffer,const char *format,const char* invalid)
 			}else if(ch == 'M'){
 				*(buffer+d)= mode;
 				d++;
+			}else if(ch == 's'){
+				*(buffer+d)= '0' + state;
+				d++;
 			}else{
 				// wrong format
 				return 0;
@@ -157,6 +160,8 @@ size_t nonNullJson(char* buffer,size_t size)
 	float beerTemp,fridgeTemp,roomTemp;
 
 	brewPi.getAllStatus(&state,&mode,& beerTemp,& beerSet,& fridgeTemp,& fridgeSet,& roomTemp);
+
+	root[KeyState] = state;
 
 	if(IS_FLOAT_TEMP_VALID(beerTemp)) root[KeyBeerTemp] = beerTemp;
 	if(IS_FLOAT_TEMP_VALID(beerSet)) root[KeyBeerSet] = beerSet;

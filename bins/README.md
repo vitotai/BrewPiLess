@@ -17,7 +17,7 @@ Those images are prebuilt:
  * Two buttons as input
  * 20x4 LCD at any address
  * Tom's frontend instead of classic one
- * framework 1.8.0
+ * framework 2.2.0
  * flash layout 4m2m(2M program/2M file space)
 
 ## spainish, Portuguese-br, slovak
@@ -42,6 +42,7 @@ Those images are prebuilt:
  * 64K SPIFFS for configurations
  * OTA update supported
  * classic ui
+ * NO longger supported after v3.6
 
 ## Newer SONOFF/esp8285
  * flash mode is set to DOUT

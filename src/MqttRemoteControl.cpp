@@ -114,6 +114,8 @@ void MqttRemoteControl::_reportData(void){
 	    float beerTemp,fridgeTemp,roomTemp;
 
 	    brewPi.getAllStatus(&state,&mode,& beerTemp,& beerSet,& fridgeTemp,& fridgeSet,& roomTemp);
+        
+        lastID=_publish(KeyState, (char)('0'+state));
 
 	    if(IS_FLOAT_TEMP_VALID(beerTemp)) lastID=_publish(KeyBeerTemp, beerTemp,1);
 	    if(IS_FLOAT_TEMP_VALID(beerSet)) lastID=_publish(KeyBeerSet, beerSet,1);
