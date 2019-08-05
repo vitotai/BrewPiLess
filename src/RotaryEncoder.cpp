@@ -72,6 +72,8 @@ volatile bool RotaryEncoder::pushFlag;
 
 #if BREWPI_BUTTONS || ButtonViaPCF8574
 
+#define BUTTON_INTERRUPT 1
+
 #if ButtonViaPCF8574
 PCF8574 pcf8574(PCF8574_ADDRESS,PIN_SDA, PIN_SCL);
 #endif
@@ -107,7 +109,6 @@ static uint8_t _buttonPressed;
 #define btnIsDownContinuousPressed (_buttonPressed == (ButtonDownMask<<4))
 
 
-
 static void btnInit(void){
 	_testButtunStatus=0;
 	_buttonChangeTime=0;
@@ -123,6 +124,159 @@ static void btnInit(void){
 #define BtnDebugPrintf(...)  
 #endif
 
+#if BUTTON_INTERRUPT
+// avoid using digitalRead, supposedly quicker.
+static unsigned char buttonStatus=0;
+
+ICACHE_RAM_ATTR static boolean btnDetect(void)
+{
+	uint32_t currentTimeInMS=millis();
+
+	if(buttonStatus==0)
+	{
+		if(_testButtunStatus ==0) return false;
+
+		unsigned long duration=currentTimeInMS - _buttonChangeTime;
+
+    	BtnDebugPrintf("pressed:%d,%d for %ld\n",_testButtunStatus,buttonStatus,duration);
+
+		if(duration > ButtonPressedDetectMinTime)
+		{
+			if(duration > ButtonLongPressedDetectMinTime) _longPressed=true;
+			else _longPressed =false;
+			_buttonPressed = _testButtunStatus;
+
+			_testButtunStatus =0;
+			_continuousPressedDetected = false;
+
+			BtnDebugPrintf("presse %d long?%d\n",_buttonPressed,_longPressed);
+
+			return true;
+		}
+
+    	BtnDebugPrintf("Not Pressed");
+
+		_testButtunStatus =0;
+		_continuousPressedDetected = false;
+
+		return false;
+	}
+
+	// current button status is not ZERO
+	if(buttonStatus == _testButtunStatus) // pressing persists
+	{
+		if(_continuousPressedDetected )
+		{
+			//if duration exceeds a trigger point
+			if( (currentTimeInMS - _continuousPressedDectedTime) > ButtonContinuousPressedTrigerTime)
+			{
+				_continuousPressedDectedTime=currentTimeInMS;
+
+				BtnDebugPrintf("con-pre:%d @%ld\n",_buttonPressed,currentTimeInMS);
+
+				return true;
+			}
+		}
+		else
+		{
+			unsigned long duration=currentTimeInMS - _buttonChangeTime;
+
+			if(duration > ButtonContinuousPressedDetectMinTime)
+			{
+				_continuousPressedDetected=true;
+				_continuousPressedDectedTime=currentTimeInMS;
+				// fir the first event
+				_buttonPressed = buttonStatus << 4; // user upper 4bits for long pressed
+
+				BtnDebugPrintf("Continue:%d start %ld\n",_buttonPressed,currentTimeInMS);
+
+				return true;
+			}
+		}
+	}
+	else // if(buttonStatus == _testButtunStatus)
+	{
+		// for TWO buttons event, it is very hard to press and depress
+		// two buttons at exactly the same time.
+		// so if new status is contains in OLD status.
+		// it might be the short period when two fingers are leaving, but one is detected
+		// first before the other
+		// the case might be like  01/10 -> 11 -> 01/10
+		//  just handle the depressing case: 11-> 01/10
+		if((_testButtunStatus & buttonStatus)
+			&&  (_testButtunStatus > buttonStatus))
+		{
+			if(_oneFigerUp ==0)
+			{
+				_oneFigerUp = currentTimeInMS;
+				// skip this time
+				return false;
+			}
+			else
+			{
+				// one fat finger is dected
+				if( (currentTimeInMS -_oneFigerUp) < ButtonFatFingerTolerance)
+				{
+					return false;
+				}
+			}
+
+	    	BtnDebugPrintf("Failed fatfinger\n");
+
+		}
+		// first detect, note time to check if presist for a duration.
+		_testButtunStatus = buttonStatus;
+		_buttonChangeTime = currentTimeInMS;
+		_oneFigerUp = 0;
+
+		BtnDebugPrintf("Attempt:%d\n",buttonStatus);
+	}
+
+	return false;
+}
+static bool _buttonStatusChanged=false;
+
+ICACHE_RAM_ATTR static void processbuttons(){
+	if(btnDetect()){
+		_buttonStatusChanged = true;
+	}
+}
+ICACHE_RAM_ATTR static void isr_upChanged(void) {
+	if (digitalRead(UpButtonPin) == 0){
+		buttonStatus |= ButtonUpMask;
+	}else{
+		buttonStatus &= 0xFF ^ ButtonUpMask;
+	}
+	processbuttons();
+}
+
+ICACHE_RAM_ATTR static void isr_downChanged(void) {
+	if (digitalRead(DownButtonPin) == 0){
+		buttonStatus |= ButtonDownMask;
+	}else{
+		buttonStatus &= 0xFF ^ ButtonDownMask;
+	}
+	processbuttons();
+}
+
+static boolean btnReadButtons(void){
+	processbuttons(); // to process continuous pressing
+
+	//noInterrupts();
+	if(_buttonStatusChanged){
+		//  Interrupt happens just before read and write.
+		//  that would result in loss of button pressed event.
+		//  however, disable/enable interrupt seems to make the system unstable.
+		// it's better to lose information instead of instaibliity.
+		_buttonStatusChanged = false;
+		//interrupts();
+		return true;
+	}
+	//interrupts();
+	return false;
+}
+
+#else //#if BUTTON_INTERRUPT
 static boolean btnReadButtons(void)
 {
 	uint32_t currentTimeInMS=millis();
@@ -253,14 +407,26 @@ static boolean btnReadButtons(void)
 	return false;
 }
 
+#endif //#if BUTTON_INTERRUPT
+
+
 void RotaryEncoder::init(void){
 
 #if ButtonViaPCF8574
 
 #else
+
+
+
 // BREWPI_BUTTONS
 	pinMode(UpButtonPin, INPUT_PULLUP);
 	pinMode(DownButtonPin, INPUT_PULLUP);
+
+#if BUTTON_INTERRUPT
+	attachInterrupt(UpButtonPin, isr_upChanged, CHANGE);
+	attachInterrupt(DownButtonPin, isr_downChanged, CHANGE);
+#endif
+
 #endif
 
 	btnInit();
@@ -284,15 +450,20 @@ void RotaryEncoder::process(void){
 		display.resetBacklightTimer();
 
 		if(btnIsSetPressed){
+			DBG_PRINTF("SET\n");
 			setPushed();
 		}else if(btnIsUpPressed){
+			DBG_PRINTF("UP\n");
 			if(steps < maximum) steps++;
 		}else if(btnIsDownPressed){
+			DBG_PRINTF("DOWN\n");
 			if(steps > minimum)  steps--;
 		}else if(btnIsUpContinuousPressed){
+			DBG_PRINTF("UP+\n");
 			steps+=2;
 			if(steps > maximum) steps = maximum;
 		}else if(btnIsDownContinuousPressed){
+			DBG_PRINTF("DOWN+\n");
 			steps-=2;
 			if(steps < minimum) steps = minimum;
 		}

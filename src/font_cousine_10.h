@@ -1,6 +1,6 @@
 // Created by http://oleddisplay.squix.ch/ Consider a donation
 // In case of problems make sure that you are using the font file with the correct version!
-const char Cousine_10[] PROGMEM = {
+const uint8_t Cousine_10[] PROGMEM = {
 	0x06, // Width: 6
 	0x0C, // Height: 12
 	0x20, // First Char: 32

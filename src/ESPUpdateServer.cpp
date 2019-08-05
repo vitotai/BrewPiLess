@@ -7,6 +7,7 @@
 #include <ArduinoJson.h>
 #include "Config.h"
 #include "ExternalData.h"
+#include "BPLSettings.h"
 
 #define EXTERNALDATA_ON_SYNC_SERVER false
 
@@ -284,7 +285,9 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
   server.on(SPIFFS_FORMATTING_PATH,HTTP_GET, [](){
       server.sendHeader("Content-Encoding", "gzip");
 	    server.send_P(200,"text/html",spiffsformating_html,sizeof(spiffsformating_html));
+      theSettings.preFormat();
       SPIFFS.format();      
+      theSettings.postFormat();
   });
 
 #endif

@@ -57,9 +57,6 @@
 #define HighOctect(a) (uint8_t)((a)>>8) 
 #define LowOctect(a) (uint8_t)((a)&0xFF)
 
-
-extern BrewPiProxy brewPi;
-
 class BrewLogger
 {
 
@@ -97,7 +94,8 @@ public:
 	void addTiltInWater(float tilt,float reading);
 	bool isCalibrating(void){ return _calibrating;}
 	void addIgnoredCalPointMask(uint32_t mask);
-
+	//format file system
+	void onFormatFS(void);
 private:
 	size_t _fsspace;
 	uint32_t  _tempLogPeriod;

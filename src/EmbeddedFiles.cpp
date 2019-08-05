@@ -54,7 +54,11 @@ const char file_testcmd_htm [] PROGMEM="/testcmd.htm";
 
 #include "data/dygraph_js.h"
 
+
+const char file_lcd_htm [] PROGMEM="/lcd";
+
 #if FrontEnd == TomsFrontEnd
+#include "data/lcd_htm.h"
 
 #include IndexHtmFile
 #include ControlHtmFile
@@ -83,11 +87,13 @@ EmbeddedFileMapEntry fileMaps[]={
 {file_gravitydevice,gravity_htm_gz,sizeof(gravity_htm_gz),true},
 {file_config,config_htm_gz,sizeof(config_htm_gz),true},
 {file_pressure,pressure_htm_gz,sizeof(pressure_htm_gz),true},
-{file_testcmd_htm,(const uint8_t *)data_testcmd_htm,0,false}
+{file_testcmd_htm,(const uint8_t *)data_testcmd_htm,0,false},
+{file_lcd_htm,lcd_htm_gz,sizeof(lcd_htm_gz),true}
 };
 
 #else
 
+#include "data/c_lcd_htm.h"
 
 #include ClassicIndexHtmFile
 #include ClassicSetupHtmFile
@@ -109,7 +115,8 @@ EmbeddedFileMapEntry fileMaps[]={
 {file_logconfig,data_c_log_htm_gz,sizeof(data_c_log_htm_gz),true},
 {file_gravitydevice,data_c_gdc_htm_gz,sizeof(data_c_gdc_htm_gz),true},
 {file_config,data_c_config_htm_gz,sizeof(data_c_config_htm_gz),true},
-{file_testcmd_htm,(const uint8_t *)data_testcmd_htm,0,false}
+{file_testcmd_htm,(const uint8_t *)data_testcmd_htm,0,false},
+{file_lcd_htm,lcd_htm_gz,sizeof(lcd_htm_gz),true}
 };
 
 #endif

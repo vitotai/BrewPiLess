@@ -7,6 +7,7 @@
 WiFiSetupClass WiFiSetup;
 
 #define TimeForRescueAPMode 60000
+#define TimeForRecoverNetwork 120000
 
 #if SerialDebug == true
 #define DebugOut(a) DebugPort.print(a)
@@ -65,11 +66,16 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 {
 	wifi_info("begin:");
 
+
 	_mode= (mode==WIFI_OFF)? WIFI_AP_STA:mode;
 
+
+	DBG_PRINTF("\nSaved SSID:\"%s\"\n",WiFi.SSID().c_str());
 	DBG_PRINTF("\nAP mode:%d, used;%d\n",mode,_mode);
-
-
+	if(WiFi.SSID() == "[Your SSID]"){
+			DBG_PRINTF("Invalid SSID!");
+			_mode = WIFI_AP;
+	}
 	_apName=(ssid == NULL || *ssid=='\0')? DEFAULT_HOSTNAME:ssid;
 
 	_apPassword=(passwd !=NULL && *passwd=='\0')? NULL:passwd;
@@ -88,10 +94,16 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 	if( _mode == WIFI_STA || _mode == WIFI_AP_STA){
 		_apMode=false;
 		if(_ip !=INADDR_NONE){
-			WiFi.config(_ip,_gw,_nm);
+				WiFi.config(_ip,_gw,_nm);
+		}else{
+			// the weird printout of "[NO IP]" implies that explicitly specification of DHCP
+			// might be necessary.
+			WiFi.config(INADDR_NONE,INADDR_NONE,INADDR_NONE);
 		}
+
 		WiFi.setAutoReconnect(true);
 		WiFi.begin();
+
 		_time=millis();
 	}
 	DBG_PRINTF("\ncreate network:%s pass:%s\n",_apName, passwd);
@@ -150,8 +162,10 @@ bool WiFiSetupClass::stayConnected(void)
 {
 	if(_apMode){
 		dnsServer->processNextRequest();
-	}else{
-		if(_wifiState==WiFiStateChangeConnectPending){
+		return true;
+	}
+
+	if(_wifiState==WiFiStateChangeConnectPending){
 			DBG_PRINTF("Change Connect\n");
 			//if(WiFi.status() == WL_CONNECTED){
 			WiFi.disconnect();
@@ -167,13 +181,13 @@ bool WiFiSetupClass::stayConnected(void)
 			wifi_info("**try:");
 			_time=millis();
 
-		}else if(_wifiState==WiFiStateDisconnectPending){
+	}else if(_wifiState==WiFiStateDisconnectPending){
 			WiFi.disconnect();
 			DBG_PRINTF("Enter AP Mode\n");
     		_apMode=true;
 			_wifiState =WiFiStateDisconnected;
 			return true;
-		}else if(_wifiState==WiFiStateModeChangePending){
+	}else if(_wifiState==WiFiStateModeChangePending){
 			WiFiMode mode= WiFi.getMode();
 
 			if(mode == WIFI_AP_STA){
@@ -207,7 +221,7 @@ bool WiFiSetupClass::stayConnected(void)
 				}
 			}
 
-		}else if(WiFi.status() != WL_CONNECTED){
+	}else if(WiFi.status() != WL_CONNECTED){
  			if(_wifiState==WiFiStateConnected)
  			{
 				wifi_info("**disc:");
@@ -218,17 +232,28 @@ bool WiFiSetupClass::stayConnected(void)
 				return true;
 			}else if (_wifiState==WiFiStateConnectionRecovering){
 				// if sta mode, turn on AP mode
-				if(_time > TimeForRescueAPMode){
+				if(millis() - _time > TimeForRescueAPMode){
+					DBG_PRINTF("Stop recovering\n");
+					_time = millis();
 					_wifiState =WiFiStateDisconnected;
+					WiFi.setAutoConnect(false);
 					if(_mode == WIFI_STA){
 						// create a wifi
-						enterBackupApMode();
-					}
+						WiFi.mode(WIFI_AP_STA);
+						createNetwork();
+					} // _mode == WIFI_STA
+				} // millis() - _time > TimeForRescueAPMode
+			} else if(_wifiState==WiFiStateDisconnected){ // _wifiState == WiFiStateConnectionRecovering
+				if( millis() -  _time  > TimeForRecoverNetwork){
+  					DBG_PRINTF("Start recovering\n");
+						WiFi.setAutoConnect(true);
+						_wifiState = WiFiStateConnectionRecovering;
+						_time = millis();
 				}
-			}
- 		}
- 		else // connected
- 		{
+		  }
+ 	} // WiFi.status() != WL_CONNECTED
+ 	else // connected
+ 	{
  			byte oldState=_wifiState;
  			_wifiState=WiFiStateConnected;
  			_reconnect=0;
@@ -239,8 +264,8 @@ bool WiFiSetupClass::stayConnected(void)
 				onConnected();
 				return true;
 			}
-  		}
-	}
+  } // end of connected
+
 
 	if(_wifiScanState == WiFiScanStatePending){
 		String nets=scanWifi();

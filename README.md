@@ -46,6 +46,21 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * v3.6
+    * update framework to 2.2.0
+    * **4m2m flash layout for All but SONOFF, due to size growth of framework.**
+    * update OLED library to 4.0 (Not verified by me, but SOMEONE@HBT did report working)
+    * update to ArduinoJson V6
+    * add revised LCD page. at /lcd
+    * SOFF OTA configuraton not longer available for space limit
+    * Using interrupt for more responsive button operation.
+    * MQTT publish/subscribe, NEW UI only.
+
+ * v3.5.1 
+    * fixed iSpindel temperature unit issue
+    * update new OLED library(not verified)
+    * The version number is still "3.5"
+
  * v3.5
     * MQTT Remote Control
     * Pressure transducer support

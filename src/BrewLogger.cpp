@@ -945,3 +945,20 @@ BrewLogger::BrewLogger(void){
         theSettings.save();
 	}
 
+	void BrewLogger::onFormatFS(void){
+		// force to end session
+		if(_recording){
+			_recording=false;
+			_logFile.close();
+			_pFileInfo->logname[0]='\0';
+			_pFileInfo->starttime=0;
+		}
+		// clear all logs
+		int index=0;
+		for(;index<MAX_LOG_FILE_NUMBER;index++){
+			_pFileInfo->files[index].name[0] = 0;
+		}
+	}
+
+
+

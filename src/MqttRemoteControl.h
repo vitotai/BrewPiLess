@@ -24,17 +24,25 @@
 
 #define PtcRemoteControlRange 3
 
+#define DefaultLogginQoS 1
 
 class MqttRemoteControl{
 protected:
     AsyncMqttClient _client;
     uint32_t _connectTime;
+    uint32_t _lastReportTime;
     uint16_t _connectAttempt;
 
-    bool _enabled;
+    uint8_t _mode;
+    uint8_t _reportFormat;
+
+    uint32_t _reportPeriod;
+
     bool _reconnecting;
+    bool _reloadConfig;
     char _lvMode;
-    char _lvSetting[MaxSettingLength+1];
+    char _lvBeerSet[MaxSettingLength+1];
+    char _lvFridgeSet[MaxSettingLength+1];
 
     char* _serverAddress;
     uint16_t _serverPort;
@@ -42,7 +50,10 @@ protected:
     char* _password;
 
     char* _modePath;
-    char* _setTempPath;
+    char* _beerSetPath;
+    char* _fridgeSetPath;
+    
+    char* _reportBasePath;
     
     #if EanbleParasiteTempControl
     char* _ptcPath;
@@ -55,12 +66,12 @@ protected:
     void _onConnect(void);
     void _onDisconnect(void);
     void _onMessage(char* topic, uint8_t* payload, size_t len);
-
+    void _onPublish(uint16_t packetId);
     void _onModeChange(char* payload,size_t len);
-    void _onSettingChange(char* payload, size_t len);
+
+    void _onSettingTempChange(bool isBeerSet,char* payload, size_t len);
 
     void _runModeCommand(void);
-    void _runSettingCommand(void);
 
 #if EanbleParasiteTempControl
     void _onPtcChange(char* payload,size_t len);
@@ -70,6 +81,12 @@ protected:
     void _onCapChange(char* payload,size_t len);
 #endif
     void _loadConfig();
+
+    void _reportData();
+    uint16_t _publish(const char* key,float value,int precision);
+    uint16_t _publish(const char* key,char value);
+    uint16_t _lastPacketId;
+    bool     _publishing;
 public:
     MqttRemoteControl();
     bool begin();

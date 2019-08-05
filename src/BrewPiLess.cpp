@@ -417,6 +417,7 @@ public:
 		}else 
 		#endif
 		if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
+			if(!request->authenticate(syscfg->username, syscfg->password)) return request->requestAuthentication();
 			if(request->hasParam("cfg"))
 				request->send(200,"application/json",theSettings.jsonSystemConfiguration());
 			else 
@@ -505,6 +506,7 @@ public:
 	 	#ifdef ENABLE_LOGGING
 	 	else if (request->url() == LOGGING_PATH){
 	 		if(request->method() == HTTP_POST){
+				if(!request->authenticate(syscfg->username, syscfg->password)) return request->requestAuthentication();
 				if(request->hasParam("data", true)){
 		    		if(theSettings.dejsonRemoteLogging(request->getParam("data", true)->value())){
 		    			request->send(200,"application/json","{}");
@@ -586,7 +588,9 @@ public:
 				}
 			}else{
 				// post
-				if(request->hasParam("data",true)){
+				if(!request->authenticate(syscfg->username, syscfg->password)) return request->requestAuthentication();
+
+				if(request->hasParam("data",true)){					
 					if(theSettings.dejsonPressureMonitorSettings(request->getParam("data",true)->value())){
 						theSettings.save();
 						request->send(200,"application/json","{}");
@@ -604,6 +608,9 @@ public:
 			if(request->method() == HTTP_GET){
 				request->send(200,"application/json",theSettings.jsonBeerProfile());
 			}else{ //if(request->method() == HTTP_POST){
+
+				if(!request->authenticate(syscfg->username, syscfg->password)) return request->requestAuthentication();
+
 				if(request->hasParam("data",true)){
 					if(theSettings.dejsonBeerProfile(request->getParam("data",true)->value())){
 						theSettings.save();
@@ -628,6 +635,7 @@ public:
 		 			return;
 		 		}
 		 	}
+			/*
 			bool auth=true;
 
 			for(byte i=0;i< sizeof(public_list)/sizeof(const char*);i++){
@@ -636,8 +644,8 @@ public:
 						break;
 					}
 			}
-
-	 	    if(auth && !request->authenticate(syscfg->username, syscfg->password))
+			*/
+	 	    if(syscfg->passwordLcd && !request->authenticate(syscfg->username, syscfg->password))
 	        return request->requestAuthentication();
 
 	 		sendFile(request,path); //request->send(SPIFFS, path);
@@ -865,7 +873,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 		});
 		#endif
   	} else if(type == WS_EVT_DISCONNECT){
-    	DBG_PRINTF("ws[%s][%u] disconnect: %u\n", server->url(), client->id());
+    	DBG_PRINTF("ws[%s] disconnect: %u\n", server->url(), client->id());
   	} else if(type == WS_EVT_ERROR){
     	DBG_PRINTF("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
   	} else if(type == WS_EVT_PONG){
@@ -885,12 +893,12 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 
 		} else {
       		//message is comprised of multiple frames or the frame is split into multiple packets
-      		if(info->index == 0){
+/*      		if(info->index == 0){
         		if(info->num == 0)
-        		DBG_PRINTF("ws[%u] frame[%u] start[%lu]\n", client->id(), info->num, info->len);
-      		}
+        		DBG_PRINTF("ws[%u] frame[%u] start[%u]\n", client->id(), info->num, info->len);
+      		}*/
 
-      		DBG_PRINTF("ws[%u] frame [%lu - %lu]: ", client->id(), info->num, info->index, info->index + len);
+//      		DBG_PRINTF("ws[%u] frame [%lu - %lu]: ", client->id(), info->num, info->index, info->index + len);
 
 	        for(size_t i=0; i < info->len; i++) {
     	    	//msg += (char) data[i];
@@ -900,7 +908,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
       		//DBG_PRINTF("%s\n",msg.c_str());
 
 			if((info->index + len) == info->len){
-				DBG_PRINTF("ws[%u] frame[%u] end[%lu]\n", client->id(), info->num, info->len);
+//				DBG_PRINTF("ws[%u] frame[%u] end[%lu]\n", client->id(), info->num, info->len);
 //        		if(info->final){
 //        			DBG_PRINTF("ws[%s][%u] %s-message end\n",  client->id());
 //        		}
@@ -1744,6 +1752,7 @@ void loop(void){
 	brewpiLoop();
 #endif
 //}brewpi
+	MDNS.update();
 #if EanbleParasiteTempControl
 	parasiteTempController.run();
 #endif

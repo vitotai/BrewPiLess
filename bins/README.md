@@ -9,13 +9,15 @@ NOTE: The images with **newui** use different flash layout(4m2m) which has 2m fi
  * Online update might not work on changing between those two layout. Flashing by USB is recommended.
  * File system will be reformted after changing. All settings will be gone
 
+NOTE: Due to the size increase of latest framework, all images will use 2m file space after version 3.6. The last version for 4m1m and SONOFF is v3.5.1. 
+
 Those images are prebuilt:
 ## Default Configuration
  * The Pins are defined as the main page.
  * Two buttons as input
  * 20x4 LCD at any address
  * Tom's frontend instead of classic one
- * framework 1.8.0
+ * framework 2.2.0
  * flash layout 4m2m(2M program/2M file space)
 
 ## spainish, Portuguese-br, slovak
@@ -40,6 +42,7 @@ Those images are prebuilt:
  * 64K SPIFFS for configurations
  * OTA update supported
  * classic ui
+ * NO longger supported after v3.6
 
 ## Newer SONOFF/esp8285
  * flash mode is set to DOUT
