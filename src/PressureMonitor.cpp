@@ -5,6 +5,9 @@
 #define MinimumMonitorTime 60000
 #define MinimumControlCheckTime 1000
 
+#define LowPassFilterParameter 0.3
+
+
 PressureMonitorClass PressureMonitor;
 
 #define MULTIPLE_READ_NUMBER 3
@@ -20,9 +23,14 @@ int PressureMonitorClass::currentAdcReading(){
 
 void PressureMonitorClass::_readPressure(){
     float reading=0;
-    for(int i=0;i<MULTIPLE_READ_NUMBER;i++)
+    float max=0;
+    float min=1024;
+    for(int i=0;i<MULTIPLE_READ_NUMBER +2;i++){
         reading +=(float) analogRead(A0);
-    reading = reading / MULTIPLE_READ_NUMBER;
+        if( reading > max) max=reading;
+        if( reading < min) min = reading;
+    }
+    reading = (reading  -max -min) / MULTIPLE_READ_NUMBER;
 
     _currentPsi = (reading - _settings->fb) * _settings->fa;
     //DBG_PRINTF("ADC:%d, PSIx10:%d\n",(int)reading,(int)(_currentPsi*10));
