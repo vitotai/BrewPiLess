@@ -5,17 +5,17 @@ By using a pressure transducer, BPL can read pressure and control the pressure i
 ![Pressure Settings](image/pressure-setting.jpg?raw=true)
 
 ## Pressure Reading
-The pressure transducers supported is something like this: [Pressure Transducer](http://www.auberins.com/index.php?main_page=product_info&cPath=38&products_id=311). Using other types might be possible, but the output should be linear voltage.
+The pressure transducers supported are something like this: [Pressure Transducer](http://www.auberins.com/index.php?main_page=product_info&cPath=38&products_id=311). Using other types might be possible, but the output should be linear voltage.
 
-BPL uses the ADC pin, A0, to read the voltage from pressure transducer and converts the reading into pressure. ADC of ESP8266 reads voltage from 0-1.0V, and there are resistors on D1 mini, and NodeMcu, to make ADC input range 0-3.3v. A resistor might be needed to extend the range 0-5v. The resistors and the specification of the pressure transducer together determine the parameters used to convert A0 reading to pressure, in PSI. The formula is 
+BPL uses the ADC pin, A0, to read the voltage from pressure transducer and converts the reading into pressure. ADC of ESP8266 reads voltage from 0-1.0V, and there are resistors on D1 mini, and NodeMcu, to make ADC input range 0-3.3v. A resistor might be needed to extend the range 0-5v. The resistors and the specification of the pressure transducer together determine the parameters used to convert A0 reading to pressure, in PSI. The formula used is 
 
 PSI=(A0_Reading - b) * a
 
-Take the pressure transducer I used for example, it
+Take the pressure transducer that I have for example,
 output: 0.5 - 4.5v linear
 maximum pressure: 80psi (4.5v)
 
-There the output is
+The output:
 
 | pressure | voltage | A0 reading |
 | ------- | ----- | ----- |
@@ -28,7 +28,7 @@ Given the fact that I don't really care the reading that exceeds 40psi. I just s
 PSI=(A0_Reading - 155) * (40-0)/(775-155) 
 => PSI=(A0_Reading - 155) * 0.06452
 
-In practice, there are errors and the readings sometimes are not exact the same as expected. (In fact, it's close.) A simple way to get the formula is using "calibration" function by
+In practice, there are errors, and the readings sometimes are not exact the same as expected. (In fact, it's close.) A simple way to get the formula is using "calibration" function by
 1. Step 1: make sure there is "NO pressure". And click the button to get "b".
 2. Step 2: put the transducer under a pressure closer maximum the better. Input the pressure and click "Step 2" button.
 
