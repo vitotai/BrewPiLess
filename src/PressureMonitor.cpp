@@ -29,7 +29,7 @@ void PressureMonitorClass::_readPressure(){
 }
 
 PressureMonitorClass::PressureMonitorClass(){
-    _currentPsi = -100;
+    _currentPsi = 0;
     _settings=theSettings.pressureMonitorSettings();
 }
 
