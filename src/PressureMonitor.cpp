@@ -2,8 +2,11 @@
 #include "AutoCapControl.h"
 
 #if SupportPressureTransducer
-#define MinimumMonitorTime 60000
+#define MinimumMonitorTime 10000
 #define MinimumControlCheckTime 1000
+
+#define LowPassFilterParameter 0.15
+
 
 PressureMonitorClass PressureMonitor;
 
@@ -19,13 +22,31 @@ int PressureMonitorClass::currentAdcReading(){
 }
 
 void PressureMonitorClass::_readPressure(){
-    float reading=0;
-    for(int i=0;i<MULTIPLE_READ_NUMBER;i++)
-        reading +=(float) analogRead(A0);
-    reading = reading / MULTIPLE_READ_NUMBER;
+#if 0    
+    float reading;
+    float rsum=0;
+    float max=0;
+    float min=1024;
+    for(int i=0;i<MULTIPLE_READ_NUMBER +2;i++){
+        reading =(float) analogRead(A0);
+        if( reading > max) max=reading;
+        if( reading < min) min = reading;
+        rsum += reading;
+    }
 
-    _currentPsi = (reading - _settings->fb) * _settings->fa;
-    //DBG_PRINTF("ADC:%d, PSIx10:%d\n",(int)reading,(int)(_currentPsi*10));
+    reading = (rsum  -max -min) / MULTIPLE_READ_NUMBER;
+    float psi = (reading - _settings->fb) * _settings->fa;
+    DBG_PRINTF("ADC:%d max:%d, min:%d,  PSIx10:%d\n",(int)reading,(int)max, int(min),(int)(psi*10));
+
+    if(psi < 0 || psi > 60) return;
+    _currentPsi = _currentPsi + LowPassFilterParameter *(psi - _currentPsi);
+#endif
+
+    float reading;
+    reading =(float) analogRead(A0);
+    float psi = (reading - _settings->fb) * _settings->fa;
+    _currentPsi = _currentPsi + LowPassFilterParameter *(psi - _currentPsi);
+    DBG_PRINTF("ADC:%d  PSIx10:%d currentx10:%d\n",(int)reading,(int)(psi*10),(int)_currentPsi*10);
 }
 
 PressureMonitorClass::PressureMonitorClass(){
