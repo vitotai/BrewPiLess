@@ -4,6 +4,8 @@
 #include "BPLSettings.h"
 #include "TimeKeeper.h"
 
+#define LOG_VERSION 0x6
+
 #define INVALID_RECOVERY_TIME 0xFF
 #define INVALID_TEMPERATURE -250
 #define INVALID_GRAVITY -1
@@ -11,7 +13,6 @@
 #define LOG_PATH "/log"
 
 #define LogBufferSize 1024
-
 // Log tags
 #define StartLogTag 0xFF
 #define ResumeBrewTag 0xFE
@@ -27,6 +28,7 @@
 #define CalibrationPointTag 0xF9
 #define IgnoredCalPointMaskTag 0xFA
 
+#define SpecificGravityTag 0xFB
 
 #define INVALID_TEMP_INT 0x7FFF
 #define INVALID_GRAVITY_INT 0x7FFF
@@ -38,14 +40,16 @@
 #define OrderFridgeSet 3
 #define OrderRoomTemp 4
 #define OrderExtTemp 5
-#define OrderGravity 6
+//#define OrderGravity 6
+//#define OrderTiltAngle 7
+// use one for Graviyt or Tilt only.
+// when in calibrating, record only Tilt
+// else record gravity only
+#define OrderGravityInfo  6
+#define OrderPressure 7
 
-#define NumberDataBitMask 7
-
-#undef NumberDataBitMask
 #define NumberDataBitMask 8
 
-#define OrderTiltAngle 7
 #define TiltEncode(g) (uint16_t)(100.0 * (g) + 0.5)
 #define INVALID_TILT_ANGLE 0x7FFF
 
@@ -56,6 +60,12 @@
 
 #define HighOctect(a) (uint8_t)((a)>>8) 
 #define LowOctect(a) (uint8_t)((a)&0xFF)
+
+
+#define INVALID_PRESSURE_INT 0x7FFF
+#define PressureEncode(p) (int16_t)(10.0 * (p) + 0.5)
+#define PressureDecode(p) (float)(p)/10.0
+
 
 class BrewLogger
 {
@@ -123,6 +133,8 @@ private:
 	uint16_t  _extOriginGravity;
 	uint16_t  _extTileAngle;
 
+	int16_t  _lastPressureReading;
+
 	// for circular buffer
 	int _logHead;
 	uint32_t _headTime;
@@ -148,6 +160,8 @@ private:
 	void writeBuffer(int idx,uint8_t data);
 	void commitData(int idx,int len);
 	void addOG(uint16_t og);
+	void addSG(uint16_t sg);
+	void addGravity(bool isOg, uint16_t gravity);
 	void addMode(char mode);
 	void addState(char state);
 	uint16_t convertTemperature(float temp);

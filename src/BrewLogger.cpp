@@ -1,5 +1,8 @@
 #include "BrewPiProxy.h"
 #include "BrewLogger.h"
+#if SupportPressureTransducer
+#include "PressureMonitor.h"
+#endif
 
 BrewLogger brewLogger;
 
@@ -9,6 +12,7 @@ BrewLogger::BrewLogger(void){
 	_tempLogPeriod=60000;
 	resetTempData();
 	_calibrating=false;
+	_lastPressureReading = INVALID_PRESSURE_INT;
 }
 
 	
@@ -178,15 +182,18 @@ BrewLogger::BrewLogger(void){
     			    	   	int d1=_logBuffer[processIndex++];
 							   #endif
 							// get gravity data that we need							
-		        			if( i == OrderGravity){        
-								#if SerialDebug
-								int gravityInt = (d0 << 8) | d1;
-                            	DBG_PRINTF("resume@%u, SG:%d\n",_resumeLastLogTime,gravityInt);
-								#endif
+		    				if(!_calibrating){
+			
+			    				if( i == OrderGravityInfo){        
+									#if SerialDebug
+										int gravityInt = (d0 << 8) | d1;
+    	                        		DBG_PRINTF("resume@%u, SG:%d\n",_resumeLastLogTime,gravityInt);
+									#endif
                                     // dont trust the data
 //                            	if(gravityInt > 8000 && gravityInt < 12500)
 //                                    gravityTracker.add(GravityDecode(gravityInt),_resumeLastLogTime);
-				        	} // if this is gravity data
+				        		} // if this is gravity data
+							}
 			        	} // if the field exists
 			    	} // for each bit
 		    	}else if(tag == ResumeBrewTag){
@@ -198,7 +205,7 @@ BrewLogger::BrewLogger(void){
 		   	 			size_t d0 =(size_t)_logBuffer[processIndex++];
 						size_t tdiff= (mask <<16) + (d1 << 8) + d0;
 			    		_resumeLastLogTime = _pFileInfo->starttime + tdiff;
-				}else if(tag == CalibrationPointTag  || tag == OriginGravityTag || tag == IgnoredCalPointMaskTag) {
+				}else if(tag == CalibrationPointTag  || tag == OriginGravityTag  || tag == SpecificGravityTag || tag == IgnoredCalPointMaskTag) {
 					if (dataRead-processIndex<2 ){
 						processIndex -=2;
 						break;
@@ -277,7 +284,7 @@ BrewLogger::BrewLogger(void){
 		_calibrating = calibrating;
 		
 		resetTempData();
-		loop(); // get once
+		logData(); // get once
 		addMode(_mode);
 		addState(_state);
 
@@ -348,14 +355,25 @@ BrewLogger::BrewLogger(void){
 				changeNum ++;
 		}
 
-		if( _extGravity != INVALID_GRAVITY_INT){
-				changeMask |= (1 << OrderGravity);
+		if(! _calibrating){
+			if( _extGravity != INVALID_GRAVITY_INT){
+					changeMask |= (1 << OrderGravityInfo);
+					changeNum ++;
+			}
+		}else{
+			if( _extTileAngle != INVALID_TILT_ANGLE){
+				changeMask |= (1 << OrderGravityInfo);
 				changeNum ++;
+			}
 		}
-		
-		if( _extTileAngle != INVALID_TILT_ANGLE){
-			changeMask |= (1 << OrderTiltAngle);
-			changeNum ++;
+		// pressure, if any
+		if(PressureMonitor.mode() != PMModeOff){
+			int16_t pressure = PressureEncode(PressureMonitor.currentPsi());
+			if(pressure != _lastPressureReading){
+				changeMask |= (1 << OrderPressure);
+				changeNum ++;
+				_lastPressureReading = pressure;
+			}
 		}
 
 		int startIdx = allocByte(2+ changeNum * 2);
@@ -378,18 +396,24 @@ BrewLogger::BrewLogger(void){
 			writeBuffer(idx++,_extTemp & 0xFF);
 			_extTemp = INVALID_TEMP_INT;
 		}
-
-		if( _extGravity != INVALID_GRAVITY_INT){
-			writeBuffer(idx++,(_extGravity >>8) & 0x7F);
-			writeBuffer(idx++,_extGravity & 0xFF);
-			//DBG_PRINTF("gravity %d: %d %d\n",_extGravity,(_extGravity >>8) & 0x7F,_extGravity & 0xFF);
-			_extGravity = INVALID_GRAVITY_INT;
+		if(! _calibrating){
+			if( _extGravity != INVALID_GRAVITY_INT){
+				writeBuffer(idx++,(_extGravity >>8) & 0x7F);
+				writeBuffer(idx++,_extGravity & 0xFF);
+				//DBG_PRINTF("gravity %d: %d %d\n",_extGravity,(_extGravity >>8) & 0x7F,_extGravity & 0xFF);
+				_extGravity = INVALID_GRAVITY_INT;
+			}
+		}else{
+			if( _extTileAngle != INVALID_TILT_ANGLE){
+				writeBuffer(idx++,(_extTileAngle >>8) & 0x7F);
+				writeBuffer(idx++,_extTileAngle & 0xFF);
+				_extTileAngle = INVALID_TILT_ANGLE;
+			}
 		}
-
-		if( _extTileAngle != INVALID_TILT_ANGLE){
-			writeBuffer(idx++,(_extTileAngle >>8) & 0x7F);
-			writeBuffer(idx++,_extTileAngle & 0xFF);
-			_extTileAngle = INVALID_TILT_ANGLE;
+		// pressure data
+		if(changeMask & (1 << OrderPressure) ){
+			writeBuffer(idx ++,(_lastPressureReading>> 8) & 0x7F);
+			writeBuffer(idx ++,_lastPressureReading & 0xFF);
 		}
 
 		commitData(startIdx,2+ changeNum * 2);
@@ -397,6 +421,13 @@ BrewLogger::BrewLogger(void){
 		if(_extOriginGravity != INVALID_GRAVITY_INT){
 			addOG(_extOriginGravity);
 			_extOriginGravity = INVALID_GRAVITY_INT;
+		}
+
+		if(_calibrating){
+			if( _extGravity != INVALID_GRAVITY_INT){
+				addSG(_extGravity);
+				_extGravity = INVALID_GRAVITY_INT;
+			}
 		}
 
 		if(mode != _mode){
@@ -597,6 +628,7 @@ BrewLogger::BrewLogger(void){
 
 	void BrewLogger::addTiltInWater(float tilt,float reading)
 	{
+		// potential race condition
 		if(!_recording) return;
 		int idx = allocByte(4);
 		if(idx < 0) return;
@@ -682,7 +714,10 @@ BrewLogger::BrewLogger(void){
 
 		// F0FF  peroid   4 bytes
 		// Start system time 4bytes
-		uint8_t headerTag=5;
+		// 0xFF startLogtag
+		//  x |plato |calibrating  |Temp unit| 4-bit = 5 |
+
+		uint8_t headerTag=LOG_VERSION;
 		*ptr++ = StartLogTag;
 
 		headerTag = headerTag | (fahrenheit? 0xF0:0xE0) ;		
@@ -749,7 +784,7 @@ BrewLogger::BrewLogger(void){
 
 			if(tag == PeriodTag) break;
 
-			if(tag == OriginGravityTag || tag == CalibrationPointTag){
+			if(tag == OriginGravityTag || tag == SpecificGravityTag || tag == CalibrationPointTag){
     			idx += 2;
 	    		dataDrop +=2;
 			}
@@ -772,7 +807,7 @@ BrewLogger::BrewLogger(void){
 		// drop any F tag
 		while(_logBuffer[idx] != PeriodTag ){
 			if(idx >= LogBufferSize) idx -= LogBufferSize;
-			if(OriginGravityTag == _logBuffer[idx]){
+			if(OriginGravityTag == _logBuffer[idx] || SpecificGravityTag == _logBuffer[idx]){
 				idx +=4;
 				dataDrop +=4;
 			}else{
@@ -873,16 +908,22 @@ BrewLogger::BrewLogger(void){
 		
 	}
 
-	void BrewLogger::addOG(uint16_t og){
+	void BrewLogger::addGravity(bool isOg, uint16_t gravity){
 		int idx = allocByte(4);
 		if(idx < 0) return;
-		writeBuffer(idx,OriginGravityTag);
+		writeBuffer(idx, isOg? OriginGravityTag:SpecificGravityTag);
 		writeBuffer(idx+1,0);
-		writeBuffer(idx+2,(og >> 8) | 0x80); //*ptr = ModeTag;
-		writeBuffer(idx+3,og & 0xFF); //*(ptr+1) = mode;
+		writeBuffer(idx+2,(gravity >> 8) | 0x80); //*ptr = ModeTag;
+		writeBuffer(idx+3,gravity & 0xFF); //*(ptr+1) = mode;
 		commitData(idx,4);
 	}
 
+	void BrewLogger::addOG(uint16_t og){
+		addGravity(true,og);
+	}
+	void BrewLogger::addSG(uint16_t sg){
+		addGravity(false,sg);
+	}
 
 	void BrewLogger::addMode(char mode){
 		int idx = allocByte(2);
