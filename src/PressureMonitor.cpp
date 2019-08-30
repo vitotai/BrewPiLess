@@ -49,7 +49,6 @@ void PressureMonitorClass::_readPressure(){
 #endif
 
     float reading;
-
     system_soft_wdt_stop();
     ets_intr_lock( ); 
     noInterrupts();
@@ -57,6 +56,7 @@ void PressureMonitorClass::_readPressure(){
     interrupts();
     ets_intr_unlock(); 
     system_soft_wdt_restart();
+
      //analogRead(A0);
 
     float psi = (reading - _settings->fb) * _settings->fa;
