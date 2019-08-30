@@ -27,7 +27,7 @@ BrewLogger::BrewLogger(void){
 
 		if(!resumeSuccess){
 			DBG_PRINTF("start volatiel log\n");
-			logData();
+			loop();
 			startVolatileLog();
 		}
         return resumeSuccess;
@@ -284,7 +284,7 @@ BrewLogger::BrewLogger(void){
 		_calibrating = calibrating;
 		
 		resetTempData();
-		logData(); // get once
+		loop(); // get once
 		addMode(_mode);
 		addState(_state);
 
@@ -367,6 +367,7 @@ BrewLogger::BrewLogger(void){
 			}
 		}
 		// pressure, if any
+		DBG_PRINTF("Pressure mode:%d _lastPressureReading:%d, current:%d\n",PressureMonitor.mode(),_lastPressureReading,PressureEncode(PressureMonitor.currentPsi()));
 		if(PressureMonitor.mode() != PMModeOff){
 			int16_t pressure = PressureEncode(PressureMonitor.currentPsi());
 			if(pressure != _lastPressureReading){
@@ -678,7 +679,7 @@ BrewLogger::BrewLogger(void){
 		bool fahrenheit=(unit == 'F');
 
 		char* ptr=buf;
-		uint8_t headerTag=5;
+		uint8_t headerTag=LOG_VERSION;
 		//8
 		*ptr++ = StartLogTag;
 		headerTag = headerTag | (fahrenheit? 0xF0:0xE0) ;

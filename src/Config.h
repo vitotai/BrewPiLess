@@ -256,7 +256,7 @@
 #define SettableMinimumCoolTime true
 //#endif
 
-#define BPL_VERSION "3.6"
+#define BPL_VERSION "3.7"
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -471,6 +471,16 @@
 
 #define BUFFER_PILINK_PRINTS 1
 
+#define EARLY_DISPLAY 1
+
+//#ifdef EnableGlycolSupport
+#define FridgeSensorFallBack true
+#define SettableMinimumCoolTime true
+//#endif
+
+#define EMIWorkaround 1
+#define BPL_VERSION "3.7"
+
 /**************************************************************************************/
 /*  Configuration: 																	  */
 /*  Only one setting: the serial used to connect to.                                  */
@@ -507,32 +517,3 @@
 #define DEFAULT_HOSTNAME "brewpiless"
 #define DEFAULT_USERNAME "brewpiless"
 #define DEFAULT_PASSWORD "brewpiless"
-
-//#define english 0
-//#define spanish 1
-
-#ifndef WebPageLanguage
-#define WebPageLanguage english
-#endif
-
-#define ClassicFrontEnd 0
-#define TomsFrontEnd 1
-
-#ifndef UseClassicFrontEnd
-#define FrontEnd TomsFrontEnd
-#else
-#define FrontEnd ClassicFrontEnd
-#endif
-
-#ifndef EanbleParasiteTempControl
-#define EanbleParasiteTempControl true
-#endif
-
-#ifndef SupportPressureTransducer
-#define SupportPressureTransducer true
-#endif
-
-#ifndef SupportMqttRemoteControl
-#define SupportMqttRemoteControl true
-#endif
-

@@ -63,7 +63,7 @@
 
 
 #define INVALID_PRESSURE_INT 0x7FFF
-#define PressureEncode(p) (int16_t)(10.0 * (p) + 0.5)
+#define PressureEncode(p) (((p)>125 || (p)<-50)? INVALID_PRESSURE_INT:(int16_t)(10.0 * ((p) + 100 )+ 0.5))
 #define PressureDecode(p) (float)(p)/10.0
 
 

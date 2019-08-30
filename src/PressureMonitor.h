@@ -18,6 +18,7 @@ public:
     int currentAdcReading();
     PMMode mode(){return _settings->mode; };    
     void loop();
+    void setTargetPsi(uint8_t psi);
 protected:
     PressureMonitorSettings *_settings;
     uint32_t _time;
