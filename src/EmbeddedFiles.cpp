@@ -69,7 +69,7 @@ const char file_lcd_htm [] PROGMEM="/lcd";
 #include PressureHtmFile
 
 const char file_index_htm [] PROGMEM="/index.htm";
-const char file_dygraph_js [] PROGMEM="/dygraph-combined.js";
+const char file_dygraph_js [] PROGMEM="/dygraph.min.js";
 const char file_control_htm [] PROGMEM="/control.htm";
 const char file_setup_htm [] PROGMEM="/setup.htm";
 const char file_logconfig [] PROGMEM="/logging.htm";
@@ -80,7 +80,7 @@ const char file_pressure [] PROGMEM="/pressure.htm";
 EmbeddedFileMapEntry fileMaps[]={
 {file_bwf_js,data_bwf_min_js_gz,sizeof(data_bwf_min_js_gz),true},
 {file_index_htm,data_index_htm_gz,sizeof(data_index_htm_gz),true},
-{file_dygraph_js,dygraph_combined_js_gz,sizeof(dygraph_combined_js_gz),true},
+{file_dygraph_js,dygraph_min_js_gz,sizeof(dygraph_min_js_gz),true},
 {file_control_htm,control_htm_gz,sizeof(control_htm_gz),true},
 {file_setup_htm,setup_htm_gz,sizeof(setup_htm_gz),true},
 {file_logconfig,logging_htm_gz,sizeof(logging_htm_gz),true},

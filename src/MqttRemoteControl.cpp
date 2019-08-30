@@ -451,8 +451,12 @@ void MqttRemoteControl::_onPtcChange(char* payload, size_t len){
 void MqttRemoteControl::_onCapChange(char* payload,size_t len){
     bool mode;
 
-    if(*payload >='0' && *payload <= '1'){
+    if(*payload >='0' && *payload <= '9'){
+        // number
         mode = *payload != '0';
+        uint8_t psi =(uint8_t) atoi(payload);
+        if(psi > 0)
+            PressureMonitor.setTargetPsi(psi);
     }else{
         // char. check if it is valid
         if(strncmp(payload,"ON",2) ==0 || strncmp(payload,"on",2) ==0){
