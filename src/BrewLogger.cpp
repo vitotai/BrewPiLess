@@ -366,6 +366,7 @@ BrewLogger::BrewLogger(void){
 				changeNum ++;
 			}
 		}
+		#if SupportPressureTransducer
 		// pressure, if any
 		DBG_PRINTF("Pressure mode:%d _lastPressureReading:%d, current:%d\n",PressureMonitor.mode(),_lastPressureReading,PressureEncode(PressureMonitor.currentPsi()));
 		if(PressureMonitor.mode() != PMModeOff){
@@ -376,6 +377,7 @@ BrewLogger::BrewLogger(void){
 				_lastPressureReading = pressure;
 			}
 		}
+		#endif
 
 		int startIdx = allocByte(2+ changeNum * 2);
 		if(startIdx < 0) return;
@@ -412,11 +414,13 @@ BrewLogger::BrewLogger(void){
 			}
 		}
 		// pressure data
+		#if SupportPressureTransducer
 		if(changeMask & (1 << OrderPressure) ){
 			writeBuffer(idx ++,(_lastPressureReading>> 8) & 0x7F);
 			writeBuffer(idx ++,_lastPressureReading & 0xFF);
 		}
-
+		#endif
+		
 		commitData(startIdx,2+ changeNum * 2);
 
 		if(_extOriginGravity != INVALID_GRAVITY_INT){
