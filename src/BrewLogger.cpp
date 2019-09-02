@@ -13,6 +13,7 @@ BrewLogger::BrewLogger(void){
 	resetTempData();
 	_calibrating=false;
 	_lastPressureReading = INVALID_PRESSURE_INT;
+	_targetPsi =0;
 }
 
 	
@@ -211,7 +212,7 @@ BrewLogger::BrewLogger(void){
 						break;
 					}
 					processIndex +=2;
-				}else if(tag == StateTag  || tag == ModeTag  || tag ==CorrectionTempTag ){
+				}else if(tag == StateTag  || tag == ModeTag  || tag ==CorrectionTempTag ||tag == TargetPsiTag){
 					// DO nothing.
 				}else{
 					DBG_PRINTF("Unknown tag %d,%d @%u\n",tag,mask,offset+processIndex);
@@ -445,6 +446,12 @@ BrewLogger::BrewLogger(void){
 			DBG_PRINTF("state %d => %d\n",_state,state);
 			_state = state;
 			addState(state);
+		}
+
+		uint8_t psi= PressureMonitor.getTargetPsi();
+		if(psi != _targetPsi){
+			_targetPsi = psi;
+			addTargetPsi();
 		}
 	}
 	
@@ -685,33 +692,35 @@ BrewLogger::BrewLogger(void){
 		char* ptr=buf;
 		uint8_t headerTag=LOG_VERSION;
 		//8
-		*ptr++ = StartLogTag;
+		*ptr++ = StartLogTag; // 1
 		headerTag = headerTag | (fahrenheit? 0xF0:0xE0) ;
 		_usePlato =theSettings.GravityConfig()->usePlato;
 		if(_usePlato) headerTag = headerTag ^ 0x40;
 
-		*ptr++ = headerTag;
+		*ptr++ = headerTag; //2
 		int period = _tempLogPeriod/1000;
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
 		*ptr++ = (char) (_headTime >> 24);
 		*ptr++ = (char) (_headTime >> 16);
 		*ptr++ = (char) (_headTime >> 8);
-		*ptr++ = (char) (_headTime & 0xFF);
+		*ptr++ = (char) (_headTime & 0xFF); //8
 		// a record full of all data = 2 + 7 * 2= 16
-		*ptr++ = (char) PeriodTag;
-		*ptr++ = (char) 0x7F;
-		for(int i=0;i<VolatileDataHeaderSize;i++){
+		*ptr++ = (char) PeriodTag; //9
+		*ptr++ = (char) 0x7F; //10
+		for(int i=0;i<VolatileDataHeaderSize;i++){ // 10 + VolatileDataHeaderSize *2
 			*ptr++ = _headData[i] >> 8;
 			*ptr++ = _headData[i] & 0xFF;
 		}
 		// mode : 2
-		*ptr++ = ModeTag;
-		*ptr++ = mode;
+		*ptr++ = ModeTag; // 11 + VolatileDataHeaderSize*2
+		*ptr++ = mode; // // 12 + VolatileDataHeaderSize*2
 		// state: 2
-		*ptr++ = StateTag;
-		*ptr++ = state;
-	}
+		*ptr++ = StateTag; // 13 + VolatileDataHeaderSize*2
+		*ptr++ = state;  // 14 + VolatileDataHeaderSize*2
+		*ptr++ = TargetPsiTag; //15
+		*ptr++ = _targetPsi;  // 16
+ 	}
 	void BrewLogger::startLog(bool fahrenheit,bool calibrating)
 	{
 		char *ptr=_logBuffer;
@@ -755,7 +764,7 @@ BrewLogger::BrewLogger(void){
 		_lastTempLog=0;
 		for(int i=0;i<5;i++) _headData[i]=_iTempData[i];
 		_headData[5]= _extTemp;
-		_headData[6]= _extGravity;
+		_headData[6]= (_calibrating)? _extTileAngle:_extGravity;
 	}
 
 
@@ -938,6 +947,14 @@ BrewLogger::BrewLogger(void){
 		commitData(idx,2);
 	}
 
+	void BrewLogger::addTargetPsi(void){
+		int idx = allocByte(2);
+		if(idx < 0) return;
+		writeBuffer(idx,TargetPsiTag); //*ptr = TargetPsiTag;
+		writeBuffer(idx+1,_targetPsi); //*(ptr+1) = mode;
+		commitData(idx,2);
+	}
+
 	void BrewLogger::addState(char state){
 		int idx = allocByte(2);
 		if(idx <0) return;
@@ -1005,6 +1022,3 @@ BrewLogger::BrewLogger(void){
 			_pFileInfo->files[index].name[0] = 0;
 		}
 	}
-
-
-
