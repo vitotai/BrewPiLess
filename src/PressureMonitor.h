@@ -19,6 +19,8 @@ public:
     PMMode mode(){return _settings->mode; };    
     void loop();
     void setTargetPsi(uint8_t psi);
+    uint8_t getTargetPsi(void);
+    void configChanged(void);
 protected:
     PressureMonitorSettings *_settings;
     uint32_t _time;

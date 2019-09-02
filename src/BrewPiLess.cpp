@@ -552,6 +552,8 @@ public:
 			if(request->hasParam("psi")){
 				theSettings.pressureMonitorSettings()->psi=request->getParam("psi")->value().toInt();
 				DBG_PRINTF("set pressure:%d",theSettings.pressureMonitorSettings()->psi);
+				theSettings.save();
+				PressureMonitor.configChanged();
 			}
 			bool response=true;
 			if(request->hasParam("cap")){
@@ -594,6 +596,7 @@ public:
 				if(request->hasParam("data",true)){					
 					if(theSettings.dejsonPressureMonitorSettings(request->getParam("data",true)->value())){
 						theSettings.save();
+						PressureMonitor.configChanged();
 						request->send(200,"application/json","{}");
 					}else
 						DBG_PRINTF("invalid Json\n");

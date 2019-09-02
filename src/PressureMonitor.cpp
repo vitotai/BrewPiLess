@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include "PressureMonitor.h"
 #include "AutoCapControl.h"
+#include "BrewLogger.h"
 
 #if SupportPressureTransducer
 #define MinimumMonitorTime 10000
@@ -52,9 +53,9 @@ void PressureMonitorClass::_readPressure(){
     float reading;
     system_soft_wdt_stop();
     ets_intr_lock( ); 
-    noInterrupts();
+//    noInterrupts();
     reading =(float) system_adc_read();
-    interrupts();
+//    interrupts();
     ets_intr_unlock(); 
     system_soft_wdt_restart();
 
@@ -73,12 +74,22 @@ void PressureMonitorClass::_readPressure(){
 PressureMonitorClass::PressureMonitorClass(){
     _currentPsi = 0;
     _settings=theSettings.pressureMonitorSettings();
+
     wifi_set_sleep_type(NONE_SLEEP_T);
 }
 
 void PressureMonitorClass::setTargetPsi(uint8_t psi){
     _settings->psi =psi;
     theSettings.save();
+}
+
+uint8_t PressureMonitorClass::getTargetPsi(void){
+    if(_settings->mode != PMModeControl) return 0;
+    return _settings->psi;
+}
+
+void PressureMonitorClass::configChanged(void){
+        
 }
 
 void PressureMonitorClass::loop(){

@@ -23,6 +23,8 @@
 #define CorrectionTempTag 0xF3
 #define ModeTag 0xF4
 
+#define TargetPsiTag 0xF5
+
 #define FillTag 0xF7
 #define OriginGravityTag 0xF8
 #define CalibrationPointTag 0xF9
@@ -32,7 +34,10 @@
 
 #define INVALID_TEMP_INT 0x7FFF
 #define INVALID_GRAVITY_INT 0x7FFF
-#define VolatileHeaderSize 28
+
+#define VolatileDataHeaderSize 7
+
+#define VolatileHeaderSize ( VolatileDataHeaderSize*2 + 16)
 
 #define OrderBeerSet 0
 #define OrderBeerTemp 1
@@ -142,8 +147,8 @@ private:
 	bool _sendHeader;
 	uint32_t _sendOffset;
 	FileIndexes *_pFileInfo;
+	uint8_t _targetPsi;
 
-	#define VolatileDataHeaderSize 7
 	uint16_t  _headData[VolatileDataHeaderSize];
 
 	void resetTempData(void);
@@ -164,6 +169,7 @@ private:
 	void addGravity(bool isOg, uint16_t gravity);
 	void addMode(char mode);
 	void addState(char state);
+	void addTargetPsi(void);
 	uint16_t convertTemperature(float temp);
 	void addResumeTag(void);
 
