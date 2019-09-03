@@ -46,6 +46,9 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * v3.6v2
+    * Bug fixed: system config cann't be saved.
+    * Bug fixed:DHCP service not availbe in AP_STA mode
  * v3.6
     * update framework to 2.2.0
     * **4m2m flash layout for All but SONOFF, due to size growth of framework.**

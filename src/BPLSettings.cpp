@@ -145,7 +145,8 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
 
 	auto error = deserializeJson(root,json);
 
-	if(error)
+	if(!error)
+
 	#else
 
  	StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
@@ -163,16 +164,9 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
         syscfg->passwordLcd = root[KeyProtect];
         syscfg->wifiMode = root[KeyWifi];
         syscfg->backlite = root[KeyLcdBackLight];
-
-//		if(root.containsKey(KeyDNS)){
-//			syscfg->dns = (uint32_t) scanIP(root[KeyDNS]);	
-//		}
-//        syscfg->ip = (uint32_t) scanIP(root[KeyIpAddress]);
-//        syscfg->gw = (uint32_t) scanIP(root[KeyGateway]);
-//        syscfg->netmask = (uint32_t) scanIP(root[KeyNetmask]);
+		return true;
     }
-//    free(buffer);
-	return true;
+	return false;
 }
     // encod json
 String BPLSettings::jsonSystemConfiguration(void){
