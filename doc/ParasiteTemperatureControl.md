@@ -1,4 +1,5 @@
-#Parasite (Glycol) Temperature Control
+# Parasite (Glycol) Temperature Control
+
 Sometimes an additonal temperature controller to control the temperature of glycol itself is necessary when using glycol to cool beer temperature. BrewPiLess provides a simple temperature control named Parasite Temperature Control, or PTC.
 
 To use PTC, an additional actuator(control PIN) is needed, and "room" sensor is used to monitor the temperature of glycol.
