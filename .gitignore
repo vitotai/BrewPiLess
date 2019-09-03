@@ -11,3 +11,4 @@ htmljs/node_modules/
 .DS_Store
 .vscode/*.db
 .vscode/.browse.c_cpp.db*
+.pio/
