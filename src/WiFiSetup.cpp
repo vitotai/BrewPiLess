@@ -101,7 +101,7 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 			WiFi.config(INADDR_NONE,INADDR_NONE,INADDR_NONE);
 		}
 		
-		WiFi.setAutoReconnect(true);
+		//WiFi.setAutoReconnect(true);
 		WiFi.begin();
 		
 		_time=millis();
