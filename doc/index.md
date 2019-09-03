@@ -23,6 +23,7 @@
   * [iSpindel as Beer Sensor](iSpindelAsSensor.md)
 * [Manual Gravity Logging](ManualGravityInput.md)
 * [Use with Glycol](glycol.md)
+  * [Parasite Temperature Control](ParasiteTemperatureControl.md)
 * [Auto Capping(Spunding)](AutoSpunding.md)
 * [MQTT Remote Control](MQTT.md)
   * [ubidots.com](MQTT.ubidots.md)

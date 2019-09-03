@@ -26,10 +26,6 @@
      A: "Erase Setting". The hardware configuration will be gone after erasing. You might need to save the hardware configuration and restore after erashing.
 
 
-* Q: What is "Parasite Temperature Control"?
-
-    A: http://vito.tw/?p=836
-
 * Q: BrewPiLess can't find my sensors.
 
     A: Check if they are parasitic power only version. 
