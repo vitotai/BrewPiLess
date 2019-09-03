@@ -59,7 +59,11 @@ void IIClcd::scanForAddress(void)
     	#if RotaryViaPCF8574 || ButtonViaPCF8574
     	if(address == PCF8574_ADDRESS) continue;
     	#endif
-    	Wire.beginTransmission(address);
+
+		#if PressureViaADS1115
+    	if(address == ADS1115_ADDRESS) continue;
+    	#endif
+		Wire.beginTransmission(address);
     	error = Wire.endTransmission();
 
     	if (error == 0)

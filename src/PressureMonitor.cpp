@@ -16,50 +16,29 @@ PressureMonitorClass PressureMonitor;
 #define MULTIPLE_READ_NUMBER 3
 
 int PressureMonitorClass::currentAdcReading(){
-    float reading=0;
-    
-    #if 0
-    for(int i=0;i<MULTIPLE_READ_NUMBER;i++)
-        reading +=(float) analogRead(A0);
-    reading = reading / MULTIPLE_READ_NUMBER;
+
+    int reading=0;
+    #if PressureViaADS1115
+    if(_settings->adc_type == TransducerADC_ADS1115){
+        if(_ads)
+           reading= _ads->readADC_SingleEnded(ADS1115_Transducer_ADC_NO);
+    }else 
     #endif
+    {
+        system_soft_wdt_stop();
+        ets_intr_lock( ); 
+//      noInterrupts();
+        reading = system_adc_read();
+//      interrupts();
+        ets_intr_unlock(); 
+        system_soft_wdt_restart();
+    }
 
-    reading =(float) system_adc_read();
-
-    return (int)reading;
+    return reading;
 }
 
 void PressureMonitorClass::_readPressure(){
-#if 0    
-    float reading;
-    float rsum=0;
-    float max=0;
-    float min=1024;
-    for(int i=0;i<MULTIPLE_READ_NUMBER +2;i++){
-        reading =(float) analogRead(A0);
-        if( reading > max) max=reading;
-        if( reading < min) min = reading;
-        rsum += reading;
-    }
-
-    reading = (rsum  -max -min) / MULTIPLE_READ_NUMBER;
-    float psi = (reading - _settings->fb) * _settings->fa;
-    DBG_PRINTF("ADC:%d max:%d, min:%d,  PSIx10:%d\n",(int)reading,(int)max, int(min),(int)(psi*10));
-
-    if(psi < 0 || psi > 60) return;
-    _currentPsi = _currentPsi + LowPassFilterParameter *(psi - _currentPsi);
-#endif
-
-    float reading;
-    system_soft_wdt_stop();
-    ets_intr_lock( ); 
-//    noInterrupts();
-    reading =(float) system_adc_read();
-//    interrupts();
-    ets_intr_unlock(); 
-    system_soft_wdt_restart();
-
-     //analogRead(A0);
+    float reading =(float) currentAdcReading();
 
     float psi = (reading - _settings->fb) * _settings->fa;
     #if FilterPressureReading
@@ -76,6 +55,14 @@ PressureMonitorClass::PressureMonitorClass(){
     _settings=theSettings.pressureMonitorSettings();
 
     wifi_set_sleep_type(NONE_SLEEP_T);
+    #if PressureViaADS1115
+    if(_settings->adc_type == TransducerADC_ADS1115){
+        _ads = new Adafruit_ADS1115(ADS1115_ADDRESS);
+        _ads->begin();
+    }else{
+        _ads =(Adafruit_ADS1115*) NULL;
+    }
+    #endif
 }
 
 void PressureMonitorClass::setTargetPsi(uint8_t psi){
@@ -89,7 +76,15 @@ uint8_t PressureMonitorClass::getTargetPsi(void){
 }
 
 void PressureMonitorClass::configChanged(void){
-        
+    #if PressureViaADS1115
+    if(_settings->adc_type == TransducerADC_ADS1115 && _ads == NULL){
+        _ads = new Adafruit_ADS1115(ADS1115_ADDRESS);
+        _ads->begin();
+    }else if (_settings->adc_type != TransducerADC_ADS1115 && _ads != NULL){
+        delete _ads;
+        _ads =(Adafruit_ADS1115*) NULL;
+    }
+    #endif
 }
 
 void PressureMonitorClass::loop(){

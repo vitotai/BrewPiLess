@@ -171,6 +171,12 @@
 #define  AUTO_CAP true
 #endif
 
+#ifndef PressureViaADS1115
+#define PressureViaADS1115 true
+#define ADS1115_ADDRESS 0x48
+#define ADS1115_Transducer_ADC_NO 0
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 //
 // #ifndef BREWPI_EEPROM_HELPER_COMMANDS
