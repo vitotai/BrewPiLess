@@ -842,6 +842,7 @@ String BPLSettings::jsonParasiteTempControlSettings(bool enabled){
 #define PressureMonitorModeKey "mode"
 #define ConversionAKey "a"
 #define ConversionBKey "b"
+#define AdcTypeKey "adc"
 
 bool BPLSettings::dejsonPressureMonitorSettings(String json){
 
@@ -859,6 +860,7 @@ bool BPLSettings::dejsonPressureMonitorSettings(String json){
 #endif
 		|| !root.containsKey(PressureMonitorModeKey)
 		|| !root.containsKey(ConversionAKey)
+		|| !root.containsKey(AdcTypeKey)
 		|| !root.containsKey(ConversionBKey)){
             return false;
         }
@@ -866,6 +868,7 @@ bool BPLSettings::dejsonPressureMonitorSettings(String json){
 	settings->mode = root[PressureMonitorModeKey];
 	settings->fa = root[ConversionAKey];
 	settings->fb = root[ConversionBKey];
+	settings->adc_type = root[AdcTypeKey];
 	return true;
 }
 

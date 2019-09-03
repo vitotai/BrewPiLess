@@ -217,12 +217,16 @@ typedef struct _MqttRemoteControlSettings{
 #define PMModeMonitor 1
 #define PMModeControl 2
 
+#define TransducerADC_Internal 0
+#define TransducerADC_ADS1115 1
+
 typedef struct _PressureMonitorSettings{
     float fa;
     int16_t fb;
     uint8_t mode;
     uint8_t psi;
-    uint8_t _padding[9];
+    uint8_t adc_type;
+    uint8_t _padding[8];
 }PressureMonitorSettings;
 #endif
 

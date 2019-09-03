@@ -5,8 +5,13 @@
 #include "Brewpi.h"
 #include "Actuator.h"
 #include "BPLSettings.h"
-
+#if PressureViaADS1115
+#include <Adafruit_ADS1015.h>
+#endif
 #if SupportPressureTransducer
+
+
+
 
 typedef uint8_t PMMode;
 
@@ -25,6 +30,10 @@ protected:
     PressureMonitorSettings *_settings;
     uint32_t _time;
     float _currentPsi;
+#if PressureViaADS1115
+    Adafruit_ADS1115 *_ads;
+#endif
+
     void _readPressure();
 };
 
