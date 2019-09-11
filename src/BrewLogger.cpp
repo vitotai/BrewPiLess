@@ -50,8 +50,8 @@ BrewLogger::BrewLogger(void){
 			+",\"block\":" + String(fs_info.blockSize)
 			+",\"page\":"  + String(fs_info.pageSize)
 			+"}";
-		return ret;
 #endif
+		return ret;
 	}
 	
 	const char* BrewLogger::currentLog(void)
