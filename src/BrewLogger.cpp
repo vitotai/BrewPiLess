@@ -283,7 +283,9 @@ BrewLogger::BrewLogger(void){
 
 		startLog(unit == 'F',calibrating);
 		_calibrating = calibrating;
-		
+		#if SupportPressureTransducer
+		_targetPsi =0; // force to record
+		#endif
 		resetTempData();
 		loop(); // get once
 		addMode(_mode);
@@ -719,7 +721,7 @@ BrewLogger::BrewLogger(void){
 		// state: 2
 		*ptr++ = StateTag; // 13 + VolatileDataHeaderSize*2
 		*ptr++ = state;  // 14 + VolatileDataHeaderSize*2
-		*ptr++ = TargetPsiTag; //15
+		*ptr++ = TargetPsiTag; //15		
 		*ptr++ = _targetPsi;  // 16
  	}
 	void BrewLogger::startLog(bool fahrenheit,bool calibrating)
