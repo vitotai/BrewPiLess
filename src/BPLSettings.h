@@ -230,6 +230,14 @@ typedef struct _PressureMonitorSettings{
 }PressureMonitorSettings;
 #endif
 
+#ifdef ESP32
+typedef struct _WiFiConfiguration{
+    char ssid[33];
+    char pass[33];
+    char _padding[30];
+} WiFiConfiguration;
+#endif
+
 //####################################################
 // whole structure
 struct Settings{
@@ -249,7 +257,11 @@ struct Settings{
 #if SupportMqttRemoteControl
     MqttRemoteControlSettings mqttRemoteControlSettings;
 #endif
+#ifdef ESP32
+    WiFiConfiguration wifiConfiguration;
+#endif
 };
+
 
 class BPLSettings
 {
@@ -304,6 +316,17 @@ public:
     bool dejsonMqttRemoteControlSettings(String json);
     String jsonMqttRemoteControlSettings(void);
 #endif
+
+#ifdef ESP32
+    WiFiConfiguration *getWifiConfiguration(void){ return &_data.wifiConfiguration;}
+    void setWiFiConfiguration(const char* ssid,const char* pass){
+        if(ssid) strcpy(_data.wifiConfiguration.ssid,ssid);
+        else _data.wifiConfiguration.ssid[0]='\0';
+        if(pass) strcpy(_data.wifiConfiguration.pass,pass);
+        else _data.wifiConfiguration.pass[0]='\0';
+    }
+#endif
+
 protected:
     Settings _data;
 

@@ -30,7 +30,7 @@ WiFiSetupClass WiFiSetup;
 #endif
 
 #if SerialDebug
-#define wifi_info(a)	DBG_PRINTF("%s,SSID:%s pass:%s IP:%s, gw:%s\n",(a),WiFi.SSID().c_str(),WiFi.psk().c_str(),WiFi.localIP().toString().c_str(),WiFi.gatewayIP().toString().c_str())
+#define wifi_info(a)	DBG_PRINTF("%s,SSID:%s NW:%s pass:%s IP:%s, gw:%s\n",(a),_targetSSID? _targetSSID:"NULL", WiFi.SSID().c_str(),WiFi.psk().c_str(),WiFi.localIP().toString().c_str(),WiFi.gatewayIP().toString().c_str())
 #else
 #define wifi_info(a)
 #endif
@@ -172,7 +172,7 @@ bool WiFiSetupClass::stayConnected(void)
 {
 	if(_mode == WIFI_AP || _mode == WIFI_AP_STA){
 		dnsServer->processNextRequest();
-		if(_mode == WIFI_AP) return true;
+//		if(_mode == WIFI_AP) return true;
 	}
 	
 	if(_wifiState==WiFiStateChangeConnectPending){
@@ -273,6 +273,7 @@ bool WiFiSetupClass::stayConnected(void)
 				if(WiFi.getMode() != _mode){
 					WiFi.mode(_mode);
 				}
+				wifi_info("WiFi Connected:");
 				onConnected();
 				//return true;
 			}

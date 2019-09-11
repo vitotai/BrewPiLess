@@ -1459,7 +1459,11 @@ public:
 				WiFiSetup.connect(ssid.c_str(),pass);
 				DBG_PRINTF("dynamic IP\n");
 			}
-			//MDNS.notifyAPChange();		
+		#ifdef ESP32
+		DBG_PRINTF("SSID:%s\n",ssid.c_str());
+		theSettings.setWiFiConfiguration(ssid.c_str(),pass);
+		#endif
+		//MDNS.notifyAPChange();		
 		theSettings.save();
 
 		request->send(200,"application/json","{}");
@@ -1696,6 +1700,12 @@ void setup(void){
 	else // something wrong with the file
 		WiFiSetup.begin(wifiMode,DEFAULT_HOSTNAME,DEFAULT_PASSWORD);
 
+	#ifdef ESP32
+	if(wifiMode == WIFI_MODE_AP || wifiMode == WIFI_MODE_APSTA){
+		WiFiConfiguration *wifiCon=theSettings.getWifiConfiguration();
+		if(wifiCon->ssid) WiFiSetup.connect(wifiCon->ssid,wifiCon->pass);
+	}
+	#endif
 
   	DBG_PRINTF("WiFi Done!\n");
 
