@@ -25,13 +25,13 @@ int PressureMonitorClass::currentAdcReading(){
     }else 
     #endif
     {
-        system_soft_wdt_stop();
+//        system_soft_wdt_stop();
 //        ets_intr_lock( ); 
-      noInterrupts();
+//      noInterrupts();
         reading = system_adc_read();
-      interrupts();
+//      interrupts();
 //        ets_intr_unlock(); 
-        system_soft_wdt_restart();
+//        system_soft_wdt_restart();
     }
 
     return reading;

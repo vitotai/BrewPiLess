@@ -447,12 +447,13 @@ BrewLogger::BrewLogger(void){
 			_state = state;
 			addState(state);
 		}
-
+		#if SupportPressureTransducer
 		uint8_t psi= PressureMonitor.getTargetPsi();
 		if(psi != _targetPsi){
 			_targetPsi = psi;
 			addTargetPsi();
 		}
+		#endif
 	}
 	
 	size_t BrewLogger::beginCopyAfter(size_t last)
