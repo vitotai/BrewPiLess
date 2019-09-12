@@ -153,14 +153,14 @@
 //////////////////////////////////////////////////////////////////////////
 //
 #ifndef BREWPI_ROTARY_ENCODER
-#define BREWPI_ROTARY_ENCODER 0
+#define BREWPI_ROTARY_ENCODER 1
 #endif
 //
 //////////////////////////////////////////////////////////////////////////
 
 // default supports 2 buttons
 #ifndef BREWPI_BUTTONS
-#define BREWPI_BUTTONS 1
+#define BREWPI_BUTTONS 0
 #endif
 
 #ifndef ButtonViaPCF8574 
@@ -282,7 +282,27 @@
 // Pin Configuration - Change the settings below to match your individual pinout
 //
 // pins
+#ifdef ESP32
 
+#define PIN_SDA 21
+#define PIN_SCL 22
+
+
+#define oneWirePin    25
+
+#define actuatorPin1  26
+#define actuatorPin2  16
+#define actuatorPin3  17
+#define actuatorPin4  19
+
+#define BuzzPin       23
+
+// 34,35,26,39 input only
+#define rotaryAPin      34
+#define rotaryBPin      35
+#define rotarySwitchPin 39
+
+#else // #ifdef ESP32
 #define NODEMCU_PIN_A0 17	// Analog
 
 #define NODEMCU_PIN_D0 16	// No interrupt, do not use for rotary encoder,
@@ -376,6 +396,7 @@
 #error "unknown board"
 #endif
 
+#endif // #ifdef ESP32
 
 #if BREWPI_LCD
 // LCD configurations:
@@ -419,37 +440,14 @@
 //#define rotarySwitchPin 0 // INT2
 
 
-#if BREWPI_ROTARY_ENCODER
-
-#define RotaryViaPCF8574 1
-
-#ifdef RotaryViaPCF8574
-
-#define rotaryAPin 0
-#define rotaryBPin 1
-#define rotarySwitchPin 2
-
-#define PCF8574_INT NODEMCU_PIN_D3
-#define PCF8574_ADDRESS 0x20
-
-#else // #ifdef RotaryViaPCF8574
-
-#error "invalid setting"
-#define rotaryAPin NODEMCU_PIN_D3
-#define rotaryBPin NODEMCU_PIN_D7
-#define rotarySwitchPin NODEMCU_PIN_D4
-
-#endif //#ifdef RotaryViaPCF8574
-
-#endif //BREWPI_ROTARY_ENCODER
-
-
+#ifdef ESP8266
 #if ButtonViaPCF8574
 #define PCF8574_INT NODEMCU_PIN_D3
 #define PCF8574_ADDRESS 0x20
 // use the same setting as BrewManiacEx
 #define UpButtonBitMask   2  
 #define DownButtonBitMask  1
+#endif
 
 #endif //#if ButtonViaPCF8574
 

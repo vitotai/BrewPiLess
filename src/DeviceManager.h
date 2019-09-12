@@ -174,6 +174,15 @@ public:
 
 	int8_t enumerateActuatorPins(uint8_t offset)
 	{
+#ifdef ESP32
+		switch (offset) {
+			case 0: return actuatorPin1;
+			case 1: return actuatorPin2;
+			case 2: return actuatorPin3;
+			case 3: return actuatorPin4;
+			default: return -1;
+		}
+#else
 #if BREWPI_ACTUATOR_PINS && defined(ARDUINO)
 #if BREWPI_STATIC_CONFIG<=BREWPI_SHIELD_REV_A
 		switch (offset) {
@@ -192,13 +201,16 @@ public:
 		}
 #endif
 #endif
+#endif
 		return -1;
 	}
 
 	int8_t enumerateSensorPins(uint8_t offset) {
+#ifndef ESP32
 #if BREWPI_SENSOR_PINS && defined(ARDUINO)
 		if (offset==0)
 			return doorPin;
+#endif
 #endif
 		return -1;
 	}

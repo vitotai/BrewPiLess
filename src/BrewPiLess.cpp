@@ -940,10 +940,12 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     	DBG_PRINTF("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len)?(char*)data:"");
   	} else if(type == WS_EVT_DATA){
     	AwsFrameInfo * info = (AwsFrameInfo*)arg;
+		
+		DBG_PRINTF("ws[%u] message[%u]:", client->id(), info->len);
+
 //    	String msg = "";
     	if(info->final && info->index == 0 && info->len == len){
       		//the whole message is in a single frame and we got all of it's data
-//      		DBG_PRINTF("ws[%u] message[%lu]:", client->id(), info->len);
 
 	        for(size_t i=0; i < info->len; i++) {
         	  //msg += (char) data[i];
@@ -980,7 +982,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 
 void stringAvailable(const char *str)
 {
-	//DBG_PRINTF("BroadCast:%s\n",str);
+	DBG_PRINTF("BroadCast:%s\n",str);
 
 #if UseWebSocket == true
 	ws.textAll(str,strlen(str));
