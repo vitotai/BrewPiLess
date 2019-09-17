@@ -1,5 +1,25 @@
 var BackupFile = "/device.cfg";
 var devices = {
+    pinlabel:function(pin){
+        var c = {
+            0: "D3",
+            1: "D10",
+            2: "D4",
+            3: "D9",
+            4: "D2",
+            5: "D1",
+            12: "D6",
+            13: "D7",
+            14: "D5",
+            15: "D8",
+            16: "D0",
+            17: "A0"
+        };
+        if (pin < 0) return "NA";
+        if (window.board == "f")  return "GPIO " + pin;
+        if (window.board == "e") return c[pin];
+        return "Unknown";
+    },
     add: function(a, f) {
         var g;
         if (f.h == 2) {
@@ -21,21 +41,8 @@ var devices = {
             g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : ((f.v) ? "active" : "inactive")
         }
         g.querySelector("select.slot-select").value = f.i;
-        var c = {
-            0: "D3",
-            1: "D10",
-            2: "D4",
-            3: "D9",
-            4: "D2",
-            5: "D1",
-            12: "D6",
-            13: "D7",
-            14: "D5",
-            15: "D8",
-            16: "D0",
-            17: "A0"
-        };
-        g.querySelector("span.device-pin").innerHTML = (f.p > 0) ? c[f.p] : "NA";
+
+        g.querySelector("span.device-pin").innerHTML = this.pinlabel(f.p);
         g.querySelector("select.device-function").value = f.f;
         g.querySelector("div.device-title").innerHTML = "Device " + a;
         g.querySelector("button").onclick = function() {
@@ -196,10 +203,13 @@ function init(classic) {
     window.pinContainer = detachNode(".device-container.pin-device");
     window.extsensorContainer = detachNode(".device-container.extsensor-device");
     window.owContainer = detachNode(".device-container.ow-device");
-
+    window.board= "e"; //default ESP8266
     BWF.init({
         error: function(a) {
             //                alert("error communication between server")
+        },
+        onconnect:function(){
+            BWF.send("n");
         },
         handlers: {
             d: function(a) {
@@ -208,6 +218,9 @@ function init(classic) {
             h: function(a) {
                 available_list = a;
                 listGot()
+            },
+            N:function(a){
+                window.board= a.b;
             }
         }
     })

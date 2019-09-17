@@ -901,8 +901,46 @@ void greeting(std::function<void(const char*)> sendFunc)
 
 #if UseWebSocket == true
 
-AsyncWebSocket ws(WS_PATH);
+class AWSClient{
+	uint32_t _clientId;
+public:
 
+	AWSClient(AsyncWebSocketClient* client){
+		_clientId=client->id();
+	}
+	void text(AsyncWebSocket *websocket,const char* msg){
+		websocket->text(_clientId,msg);
+	}
+	uint32_t clientId(void){ return _clientId; }
+
+};
+
+class WebSocketBroadcast{
+protected:
+	LinkedList<AWSClient *> _clientList;
+	AsyncWebSocket *_ws;
+public:
+	WebSocketBroadcast(AsyncWebSocket *websocket):_clientList(LinkedList<AWSClient *>([](AWSClient *c){ delete  c; })){
+		_ws = websocket;
+	}
+	void addClient(AsyncWebSocketClient* client){
+		_clientList.add(new AWSClient(client));
+	}
+	void removeClient(AsyncWebSocketClient* client){
+		_clientList.remove_first([=](AWSClient * c){
+    		return c->clientId() == client->id();
+  		});
+  	}
+
+	void broadcast(const char* msg){
+		for(const auto& c: _clientList){
+		    c->text(_ws,msg);
+		}
+	}
+};
+
+AsyncWebSocket ws(WS_PATH);
+WebSocketBroadcast wsBroadcast(&ws);
 
 #if GreetingInMainLoop
 AsyncWebSocketClient * _lastWSclient=NULL;
@@ -932,8 +970,10 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 			client->text(msg);
 		});
 		#endif
+		wsBroadcast.addClient(client);
   	} else if(type == WS_EVT_DISCONNECT){
     	DBG_PRINTF("ws[%s] disconnect: %u\n", server->url(), client->id());
+		wsBroadcast.removeClient(client);
   	} else if(type == WS_EVT_ERROR){
     	DBG_PRINTF("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
   	} else if(type == WS_EVT_PONG){
@@ -941,7 +981,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
   	} else if(type == WS_EVT_DATA){
     	AwsFrameInfo * info = (AwsFrameInfo*)arg;
 		
-		DBG_PRINTF("ws[%u] message[%u]:", client->id(), info->len);
+//		DBG_PRINTF("ws[%u] message[%u]:", client->id(), info->len);
 
 //    	String msg = "";
     	if(info->final && info->index == 0 && info->len == len){
@@ -985,7 +1025,8 @@ void stringAvailable(const char *str)
 	DBG_PRINTF("BroadCast:%s\n",str);
 
 #if UseWebSocket == true
-	ws.textAll(str,strlen(str));
+	ws.textAll(str);
+//	wsBroadcast.broadcast(str);
 #endif
 
 #if UseServerSideEvent == true
@@ -1871,7 +1912,7 @@ void loop(void){
 #endif
 	if( (now - _rssiReportTime) > RssiReportPeriod){
 		_rssiReportTime =now;
-		reportRssi();
+//		reportRssi();
 	}
 
   	brewKeeper.keep(now);

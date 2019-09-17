@@ -288,7 +288,7 @@
 #define PIN_SCL 22
 
 
-#define oneWirePin    25
+#define oneWirePin    39
 
 #define actuatorPin1  26
 #define actuatorPin2  16
@@ -298,9 +298,9 @@
 #define BuzzPin       23
 
 // 34,35,26,39 input only
-#define rotaryAPin      34
-#define rotaryBPin      35
-#define rotarySwitchPin 39
+#define rotaryAPin      32
+#define rotaryBPin      33
+#define rotarySwitchPin 27
 
 #else // #ifdef ESP32
 #define NODEMCU_PIN_A0 17	// Analog

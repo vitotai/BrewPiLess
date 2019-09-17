@@ -106,7 +106,7 @@ printBuf = "";
 
 }
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 void formatStandardAnnotation(String &annotation, const char* str_1, const char* str_2, const char* str_3);
 #endif
 
@@ -173,7 +173,7 @@ void PiLink::print(const char *fmt, ... ){
 //void PiLink::print(char c) { piStream.print(c); }
 #endif
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 void PiLink::print(char out) {
 #ifdef ESP8266_ONE
 brewPiTxBuffer.print(out);
@@ -902,7 +902,7 @@ void PiLink::setBeerSetting(const char* val) {
 
 //There's some kind of strange bug with the ESP8266 (probably a memory issue) where if I pass STR_WEB_INTERFACE
 //as str_3, everything dies. Same with using "printFridgeAnnotation" - Everything dies.
-#ifdef ESP8266
+#if defined(ESP8266)  || defined(ESP32)
 void formatStandardAnnotation(String &annotation, const char* str_1, const char* str_2, const char* str_3) {
 	annotation += str_1;
 	annotation += " set to ";

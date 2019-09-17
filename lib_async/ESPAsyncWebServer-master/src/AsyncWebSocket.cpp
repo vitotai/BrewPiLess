@@ -274,6 +274,7 @@ class AsyncWebSocketControl {
     uint8_t opcode(){ return _opcode; }
     uint8_t len(){ return _len + 2; }
     size_t send(AsyncClient *client){
+      if(_finished) return 0;
       _finished = true;
       return webSocketSendFrame(client, true, _opcode & 0x0F, _mask, _data, _len);
     }
@@ -1197,6 +1198,7 @@ AsyncWebSocketMessageBuffer * AsyncWebSocket::makeBuffer(size_t size)
 {
   AsyncWebSocketMessageBuffer * buffer = new AsyncWebSocketMessageBuffer(size); 
   if (buffer) {
+    AsyncWebLockGuard l(_lock);
     _buffers.add(buffer);
   }
   return buffer; 
@@ -1207,6 +1209,7 @@ AsyncWebSocketMessageBuffer * AsyncWebSocket::makeBuffer(uint8_t * data, size_t 
   AsyncWebSocketMessageBuffer * buffer = new AsyncWebSocketMessageBuffer(data, size); 
   
   if (buffer) {
+    AsyncWebLockGuard l(_lock);
     _buffers.add(buffer);
   }
 
@@ -1215,6 +1218,8 @@ AsyncWebSocketMessageBuffer * AsyncWebSocket::makeBuffer(uint8_t * data, size_t 
 
 void AsyncWebSocket::_cleanBuffers()
 {
+  AsyncWebLockGuard l(_lock);
+
   for(AsyncWebSocketMessageBuffer * c: _buffers){
     if(c && c->canDelete()){
         _buffers.remove(c);
