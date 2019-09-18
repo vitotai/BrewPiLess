@@ -288,7 +288,7 @@
 #define PIN_SCL 22
 
 
-#define oneWirePin    39
+#define oneWirePin    5
 
 #define actuatorPin1  26
 #define actuatorPin2  16

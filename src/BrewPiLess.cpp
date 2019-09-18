@@ -1022,7 +1022,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 
 void stringAvailable(const char *str)
 {
-	DBG_PRINTF("BroadCast:%s\n",str);
+	//DBG_PRINTF("BroadCast:%s\n",str);
 
 #if UseWebSocket == true
 	ws.textAll(str);
@@ -1912,7 +1912,7 @@ void loop(void){
 #endif
 	if( (now - _rssiReportTime) > RssiReportPeriod){
 		_rssiReportTime =now;
-//		reportRssi();
+		reportRssi();
 	}
 
   	brewKeeper.keep(now);
