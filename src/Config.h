@@ -262,6 +262,10 @@
 #define SettableMinimumCoolTime true
 //#endif
 
+#if ESP32
+#define FS_EEPROM true
+#endif
+
 #define BPL_VERSION "3.7"
 
 //////////////////////////////////////////////////////////////////////////
@@ -288,19 +292,19 @@
 #define PIN_SCL 22
 
 
-#define oneWirePin    5
+#define oneWirePin    23
 
 #define actuatorPin1  26
 #define actuatorPin2  16
 #define actuatorPin3  17
 #define actuatorPin4  19
 
-#define BuzzPin       23
+#define BuzzPin       18
 
 // 34,35,26,39 input only
 #define rotaryAPin      32
 #define rotaryBPin      33
-#define rotarySwitchPin 27
+#define rotarySwitchPin 25
 
 #else // #ifdef ESP32
 #define NODEMCU_PIN_A0 17	// Analog

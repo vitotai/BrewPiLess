@@ -1,7 +1,16 @@
+#if ESP8266
 #include <ESP8266WiFi.h>
-#include "PressureMonitor.h"
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
+
+#include "Brewpi.h"
+#include "Actuator.h"
+#include "BPLSettings.h"
 #include "AutoCapControl.h"
 #include "BrewLogger.h"
+
+#include "PressureMonitor.h"
 
 #if SupportPressureTransducer
 #define MinimumMonitorTime 10000
@@ -28,7 +37,9 @@ int PressureMonitorClass::currentAdcReading(){
 //        system_soft_wdt_stop();
 //        ets_intr_lock( ); 
 //      noInterrupts();
+#ifdef ESP8266
         reading = system_adc_read();
+#endif
 //      interrupts();
 //        ets_intr_unlock(); 
 //        system_soft_wdt_restart();
@@ -60,7 +71,7 @@ void PressureMonitorClass::_readPressure(){
     _currentPsi = _currentPsi + LowPassFilterParameter *(psi - _currentPsi);
     DBG_PRINTF("ADC:%d  PSIx10:%d currentx10:%d\n",(int)reading,(int)(psi*10),(int)_currentPsi*10);
     #else
-    _currentPsi = psi
+    _currentPsi = psi;
     DBG_PRINTF("ADC:%d  PSIx10:%d\n",(int)reading,(int)(psi*10));
     #endif
 }
@@ -68,8 +79,9 @@ void PressureMonitorClass::_readPressure(){
 PressureMonitorClass::PressureMonitorClass(){
     _currentPsi = 0;
     _settings=theSettings.pressureMonitorSettings();
-
+#if ESP8266
     wifi_set_sleep_type(NONE_SLEEP_T);
+#endif
     #if PressureViaADS1115
     if(_settings->adc_type == TransducerADC_ADS1115){
         _ads = new Adafruit_ADS1115(ADS1115_ADDRESS);

@@ -39,18 +39,25 @@ EepromManager::EepromManager()
 
 bool EepromManager::hasSettings()
 {
+	#if FS_EEPROM
+	return eepromAccess.hasSettings();
+	#else
 	uint8_t version = eepromAccess.readByte(pointerOffset(version));
 	return (version==EEPROM_FORMAT_VERSION);
+	#endif
 }
 
 void EepromManager::zapEeprom()
 {
+#if FS_EEPROM
+	eepromAccess.zapData();
+#else
 	for (uint16_t offset=0; offset<EepromFormat::MAX_EEPROM_SIZE; offset++)
 		eepromAccess.writeByte(offset, 0xFF);
 #ifdef ESP8266
 	eepromAccess.commit();
 #endif
-
+#endif
 }
 
 
@@ -60,7 +67,10 @@ void EepromManager::initializeEeprom()
 //	for (uint16_t offset=0; offset<EepromFormat::MAX_EEPROM_SIZE; offset++)
 //		eepromAccess.writeByte(offset, 0);
 #ifdef ESP8266
+#if !FS_EEPROM
+
 	eepromAccess.set_manual_commit(true);
+#endif
 #endif
 	zapEeprom();
 
@@ -70,6 +80,11 @@ void EepromManager::initializeEeprom()
 	tempControl.loadDefaultConstants();
 	tempControl.loadDefaultSettings();
 
+#if FS_EEPROM
+	eepromAccess.initializeSetting();
+	tempControl.storeConstants(0);
+	tempControl.storeSettings(0);
+#else
 	// write the default constants
 	for (uint8_t c=0; c<EepromFormat::MAX_CHAMBERS; c++) {
 		eptr_t pv = pointerOffset(chambers)+(c*sizeof(ChamberBlock)) ;
@@ -84,14 +99,18 @@ void EepromManager::initializeEeprom()
 
 	// set the version flag - so that storeDevice will work
 	eepromAccess.writeByte(0, EEPROM_FORMAT_VERSION);
-
+#endif
+	
 	saveDefaultDevices();
 	// set state to startup
 	tempControl.init();
 
 #ifdef ESP8266
+#if !FS_EEPROM
+
 	eepromAccess.set_manual_commit(false);
 	eepromAccess.commit();
+#endif
 #endif
 }
 
@@ -156,16 +175,26 @@ void EepromManager::storeTempSettings()
 bool EepromManager::fetchDevice(DeviceConfig& config, uint8_t deviceIndex)
 {
 	bool ok = (hasSettings() && deviceIndex<EepromFormat::MAX_DEVICES);
+#if FS_EEPROM
+	if (ok)
+		eepromAccess.readDeviceDefinition(config, deviceIndex, sizeof(DeviceConfig));
+#else
 	if (ok)
 		eepromAccess.readDeviceDefinition(config, pointerOffset(devices)+sizeof(DeviceConfig)*deviceIndex, sizeof(DeviceConfig));
+#endif
 	return ok;
 }
 
 bool EepromManager::storeDevice(const DeviceConfig& config, uint8_t deviceIndex)
 {
 	bool ok = (hasSettings() && deviceIndex<EepromFormat::MAX_DEVICES);
+#if FS_EEPROM
+	if (ok)
+		eepromAccess.writeDeviceDefinition(deviceIndex, config, sizeof(DeviceConfig));
+#else
 	if (ok)
 		eepromAccess.writeDeviceDefinition(pointerOffset(devices)+sizeof(DeviceConfig)*deviceIndex, config, sizeof(DeviceConfig));
+#endif
 	return ok;
 }
 

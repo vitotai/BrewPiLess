@@ -16,7 +16,7 @@
 */
 
 
-#if !defined(ESP8266) && !defined(ESP32)
+#if !defined(ESP8266) 
 // Generate an error if we have been incorrectly included in an Arduino build
 #error Incorrect processor type!
 #endif

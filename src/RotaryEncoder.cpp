@@ -573,7 +573,11 @@ int16_t RotaryEncoder::read(void){
 #define HS_R_START_M 0x3
 #define HS_R_CW_BEGIN_M 0x4
 #define HS_R_CCW_BEGIN_M 0x5
+#if ESP32
+const uint8_t hs_ttable[7][4] = {
+#else
 const uint8_t PROGMEM hs_ttable[7][4] = {
+#endif
 	// R_START (00)
 	{HS_R_START_M,            HS_R_CW_BEGIN,     HS_R_CCW_BEGIN,  R_START},
 	// HS_R_CCW_BEGIN
@@ -596,8 +600,11 @@ const uint8_t PROGMEM hs_ttable[7][4] = {
 #define R_CCW_BEGIN 0x4
 #define R_CCW_FINAL 0x5
 #define R_CCW_NEXT 0x6
-
+#if ESP32
+const uint8_t ttable[7][4] = {
+#else
 const uint8_t PROGMEM ttable[7][4] = {
+#endif
 	// R_START
 	{R_START,    R_CW_BEGIN,  R_CCW_BEGIN, R_START},
 	// R_CW_FINAL
@@ -622,8 +629,12 @@ const uint8_t PROGMEM ttable[7][4] = {
 
 #ifdef ESP32
 
-static void isr_rotary(void) { rotaryEncoder.process(); }
-static void isr_push(void) {
+ICACHE_RAM_ATTR static void isr_rotary(void) { 
+	rotaryEncoder.process(); 
+}
+
+ICACHE_RAM_ATTR static void isr_push(void) {
+
 	if(! digitalRead(rotarySwitchPin))
 		rotaryEncoder.setPushed();
 }
@@ -666,11 +677,11 @@ ISR(PCINT0_vect){
 #endif //#ifdef ESP8266
 
 
-void RotaryEncoder::process(void){
+ICACHE_RAM_ATTR void RotaryEncoder::process(void){
 	static uint8_t state=R_START;
 	// Grab state of input pins.
 
-	#ifdef ESP32
+	#if ESP32
 
 	uint8_t currPinA = !digitalRead(rotaryAPin);
 	uint8_t currPinB = !digitalRead(rotaryBPin);
@@ -692,10 +703,18 @@ void RotaryEncoder::process(void){
 
 	// Determine new state from the pins and state table.
 	if(tempControl.cc.rotaryHalfSteps){
+		#if ESP32
+		state = hs_ttable[state & 0xf][pinstate];
+		#else
 		state = pgm_read_byte(&(hs_ttable[state & 0xf][pinstate]));
+		#endif
 	}
 	else{
+		#if ESP32
+		state = ttable[state & 0xf][pinstate];
+		#else
 		state = pgm_read_byte(&(ttable[state & 0xf][pinstate]));
+		#endif
 	}
 
 	// Get emit bits, ie the generated event.
@@ -710,29 +729,30 @@ void RotaryEncoder::process(void){
 		else if (s < minimum)
 			s = maximum;
 		steps = s;
-		display.resetBacklightTimer();
+		// this goes too deep, and needed to put in ICACHE display.resetBacklightTimer();
 	}
 }
 #endif  // BREWPI_ROTARY_ENCODER
 
-void RotaryEncoder::setPushed(void){
+ICACHE_RAM_ATTR void RotaryEncoder::setPushed(void){
 	pushFlag = true;
-	display.resetBacklightTimer();
+	
+	// this goes too deep, and needed to put in ICACHE, also it is processed in outer loop 
+	//display.resetBacklightTimer();
 }
 
-	#define BREWPI_INPUT_PULLUP (USE_INTERNAL_PULL_UP_RESISTORS ? INPUT_PULLUP : INPUT)
+#define BREWPI_INPUT_PULLUP (USE_INTERNAL_PULL_UP_RESISTORS ? INPUT_PULLUP : INPUT)
 
 void RotaryEncoder::init(void){
 #if BREWPI_ROTARY_ENCODER
 
 #ifdef ESP32
-	fastPinMode(rotaryAPin, INPUT);
-	fastPinMode(rotaryBPin, INPUT);
-	fastPinMode(rotarySwitchPin, INPUT);
+	fastPinMode(rotaryAPin, BREWPI_INPUT_PULLUP);
+	fastPinMode(rotaryBPin, BREWPI_INPUT_PULLUP);
+	fastPinMode(rotarySwitchPin, BREWPI_INPUT_PULLUP);
 	attachInterrupt(rotaryAPin, isr_rotary, CHANGE);
 	attachInterrupt(rotaryBPin, isr_rotary, CHANGE);
 	attachInterrupt(rotarySwitchPin, isr_push, CHANGE);
-
 #else //#ifdef ESP32
 	#define BREWPI_INPUT_PULLUP (USE_INTERNAL_PULL_UP_RESISTORS ? INPUT_PULLUP : INPUT)
 	fastPinMode(rotaryAPin, BREWPI_INPUT_PULLUP);

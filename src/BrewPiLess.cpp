@@ -1579,6 +1579,10 @@ void brewpi_setup()
 	eepromAccess.set_manual_commit(false); // TODO - Move this where it should actually belong (a class constructor)
 #endif
 
+#if FS_EEPROM
+	eepromAccess.begin();
+#endif
+
 #if BREWPI_BUZZER
 	buzzer.init();
 	buzzer.beep(2, 500);

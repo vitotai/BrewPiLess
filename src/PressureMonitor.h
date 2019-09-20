@@ -2,9 +2,6 @@
 #define PressureMonitor_H
 
 
-#include "Brewpi.h"
-#include "Actuator.h"
-#include "BPLSettings.h"
 #if PressureViaADS1115
 #include <Adafruit_ADS1015.h>
 #endif

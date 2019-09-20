@@ -379,7 +379,7 @@ BrewLogger::BrewLogger(void){
 		}
 		#if SupportPressureTransducer
 		// pressure, if any
-		DBG_PRINTF("Pressure mode:%d _lastPressureReading:%d, current:%d\n",PressureMonitor.mode(),_lastPressureReading,PressureEncode(PressureMonitor.currentPsi()));
+		//DBG_PRINTF("Pressure mode:%d _lastPressureReading:%d, current:%d\n",PressureMonitor.mode(),_lastPressureReading,PressureEncode(PressureMonitor.currentPsi()));
 		if(PressureMonitor.mode() != PMModeOff){
 			int16_t pressure = PressureEncode(PressureMonitor.currentPsi());
 			if(pressure != _lastPressureReading){
