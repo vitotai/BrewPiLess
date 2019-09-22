@@ -10,6 +10,7 @@
 #define WiFiStateDisconnectPending 4
 #define WiFiStateChangeConnectPending 5
 #define WiFiStateConnectionRecovering 6
+#define WiFiStateConnectionRecoveringPending 7
 
 
 #define WiFiScanStateNone 0
@@ -24,7 +25,7 @@
 class WiFiSetupClass
 {
 public:
-	WiFiSetupClass():_wifiState(WiFiStateConnected),_wifiScanState(WiFiScanStateNone),_apMode(false),_switchToAp(true),_autoReconnect(true),
+	WiFiSetupClass():_wifiState(WiFiStateConnected),_wifiScanState(WiFiScanStateNone),_switchToAp(true),_autoReconnect(true),
 		 _maxReconnect(5),_eventHandler(NULL),_targetSSID(NULL),_targetPass(NULL),_ip(INADDR_NONE),_gw(INADDR_NONE),_nm(INADDR_NONE){}
 
 	void begin(WiFiMode mode, char const *ssid,const char *passwd=NULL);
@@ -34,7 +35,7 @@ public:
 	void onEvent(std::function<void(const char*)> handler){ _eventHandler = handler;}
 
 	bool stayConnected(void);
-	bool isApMode(void) {return _apMode;}
+	bool isApMode(void);
 
 	void setMaxReconnect(unsigned int reconnect){_maxReconnect=reconnect;}
 	void setSwitchToApWhenDisconnected(bool toAp){  _switchToAp= toAp; }
@@ -51,7 +52,7 @@ private:
 	WiFiMode _mode;
 	byte _wifiState;
 	byte _wifiScanState;
-	bool _apMode;
+	byte _reconnectAttempt;
 	bool _switchToAp;
 	bool _autoReconnect;
 
