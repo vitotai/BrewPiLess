@@ -58,9 +58,13 @@ public:
 #ifdef print_P_inline
   // print a string stored in PROGMEM
   void print_P(const char * str) {
-    char buf[21]; // create buffer in RAM
+    #if ESP32
+    print((char*)str);
+    #else
+    char buf[21]; // create buffer in RAM    
     strcpy_P(buf, str); // copy string to RAM
     print(buf); // print from RAM
+    #endif
   }
 #else
   void print_P(const char * str);

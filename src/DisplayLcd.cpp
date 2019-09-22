@@ -29,8 +29,6 @@
 #include "TemperatureFormats.h"
 #include "Pins.h"
 
-
-
 uint8_t LcdDisplay::stateOnDisplay;
 uint8_t LcdDisplay::flags;
 

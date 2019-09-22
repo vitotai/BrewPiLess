@@ -49,7 +49,7 @@ class FSEepromAccess
         return false;
     }
     static bool writeToFile(const char* filename,const uint8_t* source,size_t size){
-		File file = SPIFFS.open(filename, "w+b");
+		File file = SPIFFS.open(filename, "w");
 		if (file) {
 			file.write(source, size);
 			file.close();

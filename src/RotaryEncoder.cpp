@@ -27,6 +27,10 @@
 #include "Brewpi.h"
 #include "TempControl.h"
 
+#if ESP32
+#include "rom/gpio.h"
+#endif
+
 #if ButtonViaPCF8574
 #include <pcf8574_esp.h>
 #endif
@@ -573,8 +577,9 @@ int16_t RotaryEncoder::read(void){
 #define HS_R_START_M 0x3
 #define HS_R_CW_BEGIN_M 0x4
 #define HS_R_CCW_BEGIN_M 0x5
-#if ESP32
-const uint8_t hs_ttable[7][4] = {
+#if  ESP32
+// this table is accessed in ISR, needed to stay in RAM
+uint8_t hs_ttable[7][4] = {
 #else
 const uint8_t PROGMEM hs_ttable[7][4] = {
 #endif
@@ -600,8 +605,9 @@ const uint8_t PROGMEM hs_ttable[7][4] = {
 #define R_CCW_BEGIN 0x4
 #define R_CCW_FINAL 0x5
 #define R_CCW_NEXT 0x6
-#if ESP32
-const uint8_t ttable[7][4] = {
+#if  ESP32
+// this table is accessed in ISR, needed to stay in RAM
+uint8_t ttable[7][4] = {
 #else
 const uint8_t PROGMEM ttable[7][4] = {
 #endif
@@ -629,14 +635,22 @@ const uint8_t PROGMEM ttable[7][4] = {
 
 #ifdef ESP32
 
-ICACHE_RAM_ATTR static void isr_rotary(void) { 
+#define GPIO_READ(pin) (((pin)>31)? (gpio_input_get_high() & (1<<(pin-32))):(gpio_input_get() & (1<<pin)))
+
+static void IRAM_ATTR isr_rotary(void) { 
 	rotaryEncoder.process(); 
 }
 
-ICACHE_RAM_ATTR static void isr_push(void) {
+#define MINIMUM_PUSH_GAP 200000
 
-	if(! digitalRead(rotarySwitchPin))
+static void IRAM_ATTR isr_push(void) {
+	// using software debouncing.
+	static uint32_t pushed_time=0;
+	uint32_t now= micros();
+	if(! GPIO_READ(rotarySwitchPin) && (now - pushed_time) > MINIMUM_PUSH_GAP ){
+		pushed_time = now;
 		rotaryEncoder.setPushed();
+	}
 }
 
 #else //#ifdef ESP32
@@ -677,14 +691,19 @@ ISR(PCINT0_vect){
 #endif //#ifdef ESP8266
 
 
-ICACHE_RAM_ATTR void RotaryEncoder::process(void){
+void IRAM_ATTR RotaryEncoder::process(void){
+
 	static uint8_t state=R_START;
 	// Grab state of input pins.
 
 	#if ESP32
+	/* uint8_t currPinA = !digitalRead(rotaryAPin);
+	 uint8_t currPinB = !digitalRead(rotaryBPin); */
 
-	uint8_t currPinA = !digitalRead(rotaryAPin);
-	uint8_t currPinB = !digitalRead(rotaryBPin);
+//	uint32_t input=gpio_input_get();
+
+	uint8_t currPinA = ! GPIO_READ(rotaryAPin);
+	uint8_t currPinB = ! GPIO_READ(rotaryBPin);
 
 	#else // #ifdef ESP32
 	#if BREWPI_STATIC_CONFIG == BREWPI_SHIELD_DIY
@@ -734,7 +753,7 @@ ICACHE_RAM_ATTR void RotaryEncoder::process(void){
 }
 #endif  // BREWPI_ROTARY_ENCODER
 
-ICACHE_RAM_ATTR void RotaryEncoder::setPushed(void){
+void IRAM_ATTR RotaryEncoder::setPushed(void){
 	pushFlag = true;
 	
 	// this goes too deep, and needed to put in ICACHE, also it is processed in outer loop 
@@ -752,7 +771,7 @@ void RotaryEncoder::init(void){
 	fastPinMode(rotarySwitchPin, BREWPI_INPUT_PULLUP);
 	attachInterrupt(rotaryAPin, isr_rotary, CHANGE);
 	attachInterrupt(rotaryBPin, isr_rotary, CHANGE);
-	attachInterrupt(rotarySwitchPin, isr_push, CHANGE);
+	attachInterrupt(rotarySwitchPin, isr_push, FALLING);
 #else //#ifdef ESP32
 	#define BREWPI_INPUT_PULLUP (USE_INTERNAL_PULL_UP_RESISTORS ? INPUT_PULLUP : INPUT)
 	fastPinMode(rotaryAPin, BREWPI_INPUT_PULLUP);
