@@ -49,22 +49,7 @@ int PressureMonitorClass::currentAdcReading(){
 }
 
 void PressureMonitorClass::_readPressure(){
-<<<<<<< HEAD
-    float reading=0;
-
-    float reading;
-    system_soft_wdt_stop();
-    ets_intr_lock( ); 
-//    noInterrupts();
-    reading =(float) system_adc_read();
-//    interrupts();
-    ets_intr_unlock(); 
-    system_soft_wdt_restart();
-
-     //analogRead(A0);
-=======
     float reading =(float) currentAdcReading();
->>>>>>> doc
 
     float psi = (reading - _settings->fb) * _settings->fa;
     #if FilterPressureReading

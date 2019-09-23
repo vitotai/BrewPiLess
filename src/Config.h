@@ -301,10 +301,12 @@
 
 #define BuzzPin       18
 
-// 34,35,26,39 input only
+// 34,35,66,39 input only
 #define rotaryAPin      32
 #define rotaryBPin      33
 #define rotarySwitchPin 25
+
+#define PressureAdcPin  36
 
 #else // #ifdef ESP32
 #define NODEMCU_PIN_A0 17	// Analog

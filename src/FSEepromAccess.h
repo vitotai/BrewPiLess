@@ -45,7 +45,7 @@ class FSEepromAccess
 			file.close();
 			return true;
 		}
-         DBG_PRINTF("read %s error:%d\n",filename);
+         DBG_PRINTF("read %s error:%lu\n",filename,size);
         return false;
     }
     static bool writeToFile(const char* filename,const uint8_t* source,size_t size){
