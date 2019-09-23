@@ -45,7 +45,7 @@ class FSEepromAccess
 			file.close();
 			return true;
 		}
-         DBG_PRINTF("read %s error:%lu\n",filename,size);
+         DBG_PRINTF("read %s error:%u\n",filename,size);
         return false;
     }
     static bool writeToFile(const char* filename,const uint8_t* source,size_t size){
@@ -55,7 +55,7 @@ class FSEepromAccess
 			file.close();
 			return true;
 		} else {
-             DBG_PRINTF("read %s error:%d\n",filename);
+             DBG_PRINTF("read %s error:%u\n",filename,size);
 			return false;
 		}
 	}
@@ -98,7 +98,7 @@ public:
 
 	static void writeControlSettings(eptr_t target, ControlSettings& source, uint16_t size) {
         writeToFile(File_ControlSettings,(const uint8_t*)&source,size);
-        DBG_PRINTF("Write Control Settings:%d\n",size);
+        DBG_PRINTF("Write Control Settings:%u\n",size);
 	}
 
 	static void readControlConstants(ControlConstants& target, eptr_t offset, uint16_t size) {
@@ -108,7 +108,7 @@ public:
 
 	static void writeControlConstants(eptr_t target, ControlConstants& source, uint16_t size) {
         writeToFile(File_ControlConstant,(const uint8_t*) &source, size);
-        DBG_PRINTF("Write Control constants:%d\n",size);
+        DBG_PRINTF("Write Control constants:%u\n",size);
 	}
 
 	static void readDeviceDefinition(DeviceConfig& target, uint8_t deviceIndex, uint16_t size) {
@@ -117,7 +117,7 @@ public:
 
 	static void writeDeviceDefinition(uint8_t deviceIndex, const DeviceConfig& source, uint16_t size) {
 	    memcpy((void*) &devices[deviceIndex],(void*)&source,size);
-        DBG_PRINTF("write device:%d size:\n",deviceIndex,size);
+        DBG_PRINTF("write device:%d size:%u\n",deviceIndex,size);
         saveDeviceDefinition();
 	}
 };

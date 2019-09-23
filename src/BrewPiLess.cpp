@@ -1665,7 +1665,67 @@ void brewpiLoop(void)
 
 #ifdef STATUS_LINE
 extern void makeTime(time_t timeInput, struct tm &tm);
-time_t _displayTime;
+
+typedef enum _StatusLineDisplayItem{
+StatusLineDisplayIP=0,
+StatusLineDisplayTime
+}StatusLineDisplayItem;
+
+#define DisplayTimeDuration 5
+#define DisplayIPDuration 5
+
+class StatusLine{
+protected:
+	static time_t _displayTime;
+	static time_t _switchTime;
+	static StatusLineDisplayItem _displaying;
+
+	static void _printTime(time_t now){
+		struct tm t;
+		if(_displayTime == now) return;
+		_displayTime = now;
+		makeTime(_displayTime,t);
+		char buf[21];
+		sprintf(buf,"%d/%02d/%02d %02d:%02d:%02d",t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
+		display.printStatus(buf);
+	}
+	static void _printIP(void){
+		
+		IPAddress ip =(WiFiSetup.isApMode())? WiFi.softAPIP():WiFi.localIP();
+		char buf[21];
+		sprintf(buf,"IP:%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
+		display.printStatus(buf);
+	}
+
+public:
+	StatusLine(){
+	}
+
+
+	static void loop(time_t now){	
+		if(now == _displayTime) return;
+
+		if(_displaying == StatusLineDisplayIP){
+			if(now - _switchTime > DisplayIPDuration){
+				_printTime(now);
+				_switchTime = now;
+				_displaying = StatusLineDisplayTime;
+			}
+		}else if(_displaying == StatusLineDisplayTime){
+			if(now - _switchTime > DisplayTimeDuration){
+				_printIP();
+				_switchTime = now;
+				_displaying = StatusLineDisplayIP;
+			}else _printTime(now);
+		}
+	}
+};
+time_t StatusLine::_displayTime;
+time_t  StatusLine::_switchTime;
+StatusLineDisplayItem StatusLine::_displaying = StatusLineDisplayTime;
+
+
+StatusLine statusLine;
 #endif
 
 
@@ -1856,12 +1916,7 @@ void setup(void){
 
 
 #ifdef STATUS_LINE
-	// brewpi_setup will "clear" the screen.
-	IPAddress ip =(WiFiSetup.isApMode())? WiFi.softAPIP():WiFi.localIP();
-	char buf[21];
-	sprintf(buf,"IP:%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
-	display.printStatus(buf);
-	_displayTime = TimeKeeper.getTimeSeconds() + 20;
+	statusLine.loop(0);
 #endif
 #ifdef EMIWorkaround
 	_lcdReinitTime = millis();
@@ -1904,15 +1959,7 @@ void loop(void){
 #endif
 
 #ifdef STATUS_LINE
-	if(_displayTime < now){
-		_displayTime=now;
-
-		struct tm t;
-		makeTime(TimeKeeper.getLocalTimeSeconds(),t);
-		char buf[21];
-		sprintf(buf,"%d/%02d/%02d %02d:%02d:%02d",t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
-		display.printStatus(buf);
-	}
+	statusLine.loop(now);
 #endif
 	if( (now - _rssiReportTime) > RssiReportPeriod){
 		_rssiReportTime =now;
