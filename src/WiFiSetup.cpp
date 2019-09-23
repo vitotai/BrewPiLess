@@ -76,18 +76,27 @@ bool WiFiSetupClass::isApMode(){
 	return WiFi.getMode() == WIFI_AP;
 }
 
-void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
+void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,char const* targetSSID,const char *targetPass, uint32_t channel, uint8_t* bssid)
 {
 	wifi_info("begin:");
 	
+	if(targetSSID){
+		if(_targetSSID) free((void*)_targetSSID);
+		_targetSSID=strdup(targetSSID);
+	}
+	if(targetPass){
+		if(_targetPass) free((void*)_targetPass);
+		_targetPass=strdup(targetPass);
+	}
 
 	_mode= mode;
 	WiFiMode mode2use = (_mode == WIFI_OFF)? WIFI_AP_STA:_mode;
 	
-	DBG_PRINTF("\nSaved SSID:\"%s\"\n",WiFi.SSID().c_str());
+	DBG_PRINTF("\nSaved SSID:\"%s\" targetSSID:%s\n",WiFi.SSID().c_str(),targetSSID? targetSSID:"NULL");
 	DBG_PRINTF("\nAP mode:%d, used;%d autoReconect:%d\n",mode,mode2use,WiFi.getAutoReconnect());
 
-	if( (mode2use == WIFI_STA || mode2use == WIFI_AP_STA)
+	if( (mode2use == WIFI_STA || mode2use == WIFI_AP_STA) 
+		 && targetSSID == NULL 
 		 && (WiFi.SSID() == "[Your SSID]" || WiFi.SSID() == "" || WiFi.SSID() == NULL)){
 			DBG_PRINTF("Invalid SSID!");
 			mode2use = WIFI_AP;
@@ -115,7 +124,7 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 		}
 		
 		//WiFi.setAutoReconnect(true);
-		WiFi.begin();
+		WiFi.begin(targetSSID,targetPass,channel,bssid);
 		_time=millis();
 	}
 }

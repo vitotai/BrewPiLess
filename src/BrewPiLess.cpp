@@ -1553,6 +1553,16 @@ void wiFiEvent(const char* msg){
 	sprintf(buff,"W:%s",msg);
 	stringAvailable(buff);
 	free(buff);
+	DBG_PRINTF("channel:%d, BSSID:%s\n",WiFi.channel(),WiFi.BSSIDstr().c_str());
+	#if ESP32
+	WiFiConfiguration *cfg=theSettings.getWifiConfiguration();
+	if(cfg->channel != WiFi.channel() || memcmp(cfg->bssid,WiFi.BSSID(),6) != 0){
+		memcpy(cfg->bssid,WiFi.BSSID(),6);
+		cfg->channel = WiFi.channel();
+		theSettings.save();
+		DBG_PRINTF("Update Channel & BSSID\n");
+	}
+	#endif
 }
 //{brewpi
 
@@ -1823,16 +1833,18 @@ void setup(void){
 	WiFiMode wifiMode= (WiFiMode) syscfg->wifiMode;
 	WiFiSetup.staConfig(IPAddress(syscfg->ip),IPAddress(syscfg->gw),IPAddress(syscfg->netmask),IPAddress(syscfg->dns));
 	WiFiSetup.onEvent(wiFiEvent);
+	#ifdef ESP32
+	WiFiConfiguration *wifiCon=theSettings.getWifiConfiguration();
+
+	if(strlen(syscfg->hostnetworkname)>0)
+		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password,wifiCon->ssid,wifiCon->pass,wifiCon->channel,wifiCon->bssid);
+	else // something wrong with the file
+		WiFiSetup.begin(wifiMode,DEFAULT_HOSTNAME,DEFAULT_PASSWORD);
+	#else
 	if(strlen(syscfg->hostnetworkname)>0)
 		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password);
 	else // something wrong with the file
 		WiFiSetup.begin(wifiMode,DEFAULT_HOSTNAME,DEFAULT_PASSWORD);
-
-	#ifdef ESP32
-	if(wifiMode == WIFI_MODE_AP || wifiMode == WIFI_MODE_APSTA){
-		WiFiConfiguration *wifiCon=theSettings.getWifiConfiguration();
-		if(wifiCon->ssid) WiFiSetup.connect(wifiCon->ssid,wifiCon->pass);
-	}
 	#endif
 
   	DBG_PRINTF("WiFi Done!\n");
