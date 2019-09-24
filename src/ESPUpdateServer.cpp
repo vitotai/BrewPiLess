@@ -12,6 +12,8 @@
 
 #include <FS.h>
 #include <SPIFFS.h>
+
+#include "ESP32HTTPUpdateServer.h"
 #endif
 
 
@@ -41,7 +43,12 @@ static ESP8266WebServer server(UPDATE_SERVER_PORT);
 #endif
 
 #if DEVELOPMENT_OTA == true
+#if ESP8266
 static ESP8266HTTPUpdateServer httpUpdater;
+#elif ESP32
+static ESP32HTTPUpdateServer httpUpdater;
+#endif
+
 #endif
 
 #if DEVELOPMENT_FILEMANAGER == true
@@ -350,7 +357,11 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
 
 #if DEVELOPMENT_OTA == true
  // Flash update server
+#if ESP8266
 	httpUpdater.setup(&server,SYSTEM_UPDATE_PATH,user,pass);
+#elif ESP32
+  httpUpdater.setup(server,SYSTEM_UPDATE_PATH,user,pass);
+#endif
 #endif
 
 

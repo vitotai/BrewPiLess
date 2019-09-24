@@ -518,12 +518,6 @@
 #define MINIMUM_TEMPERATURE_STEP 0.005
 #define MINIMUM_TEMPERATURE_SETTING_PERIOD 60
 
-#if defined(ESP32)
-#undef DEVELOPMENT_OTA
-#undef DEVELOPMENT_FILEMANAGER
-#define DEVELOPMENT_OTA false
-#define DEVELOPMENT_FILEMANAGER true
-#endif
 // for web interface update
 #define UPDATE_SERVER_PORT 8008
 #define FILE_MANAGEMENT_PATH "/filemanager"
