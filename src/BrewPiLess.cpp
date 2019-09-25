@@ -180,6 +180,7 @@ const char *nocache_list[]={
 		else if(filename.endsWith(".pdf")) return "application/x-pdf";
 		else if(filename.endsWith(".zip")) return "application/x-zip";
 		else if(filename.endsWith(".gz")) return "application/x-gzip";
+		else if(filename.endsWith(".jgz")) return "application/javascript";
 		return "text/plain";
 	  }
 
@@ -324,9 +325,9 @@ class BrewPiWebHandler: public AsyncWebHandler
 		return false;
     }
 
-	void sendProgmem(AsyncWebServerRequest *request,const char* html)
+	void sendProgmem(AsyncWebServerRequest *request,const char* html,String contentType)
 	{
-		AsyncWebServerResponse *response = request->beginResponse(String("text/html"),
+		AsyncWebServerResponse *response = request->beginResponse(contentType,
   			strlen_P(html),
   			[=](uint8_t *buffer, size_t maxLen, size_t alreadySent) -> size_t {
     			if (strlen_P(html+alreadySent)>maxLen) {
@@ -416,7 +417,7 @@ class BrewPiWebHandler: public AsyncWebHandler
 				#endif
                 response->addHeader("Content-Encoding", "gzip");
                 request->send(response);
-			}else sendProgmem(request,(const char*)file);
+			}else sendProgmem(request,(const char*)file,getContentType(path));
 		}
 	}	  
 public:
@@ -1892,6 +1893,7 @@ void setup(void){
 	webServer->begin();
 	DBG_PRINTF("HTTP server started\n");
 
+	PressureMonitor.begin();
 
 	// 5. try to connnect Arduino
 	brewpi_setup();

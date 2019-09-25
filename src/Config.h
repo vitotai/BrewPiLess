@@ -306,6 +306,7 @@
 #define rotaryBPin      33
 #define rotarySwitchPin 25
 
+// Only ADC1 (pin 32~39) is allowed 
 #define PressureAdcPin  36
 
 #else // #ifdef ESP32

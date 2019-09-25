@@ -19,36 +19,57 @@
 #if FilterPressureReading
 #define LowPassFilterParameter 0.15
 #endif
+#define DEFAULT_VREF    1100        //Use adc2_vref_to_gpio() to obtain a better estimate
+#define NO_OF_SAMPLES   64          //Multisampling
 
 PressureMonitorClass PressureMonitor;
 
-#define MULTIPLE_READ_NUMBER 3
+// for esp32
+#define ConcateChanel(pin) ADC1_GPIO ## pin ## _CHANNEL
+#define AdcChannelFromPinNr(pin) ConcateChanel(pin)
 
-int PressureMonitorClass::currentAdcReading(){
 
-    int reading=0;
-    #if PressureViaADS1115
-    if(_settings->adc_type == TransducerADC_ADS1115){
-        if(_ads)
-           reading= _ads->readADC_SingleEnded(ADS1115_Transducer_ADC_NO);
-    }else 
-    #endif
-    {
-//        system_soft_wdt_stop();
-//        ets_intr_lock( ); 
-//      noInterrupts();
+int PressureMonitorClass::_readInternalAdc(void){
+ 
 #ifdef ESP8266
-        reading = system_adc_read();
+    return system_adc_read();
 #endif
-//      interrupts();
-//        ets_intr_unlock(); 
-//        system_soft_wdt_restart();
-    }
 
-    return reading;
+#if ESP32
+    //Multisampling
+    uint32_t adc_reading = 0;
+    for (int i = 0; i < NO_OF_SAMPLES; i++) {
+        adc_reading += adc1_get_raw(AdcChannelFromPinNr(PressureAdcPin));
+    }
+    adc_reading /= NO_OF_SAMPLES;
+    //Convert adc_reading to voltage in mV
+    uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_reading, _adcCharacter);
+    DBG_PRINTF("Raw: %d\tVoltage: %dmV\n", adc_reading, voltage);
+    return (int) ((float)voltage / 3.9 * 4095 );
+#endif
+
 }
 
-void PressureMonitorClass::_readPressure(){
+#if PressureViaADS1115
+int PressureMonitorClass::_readExternalAdc(void){
+    if(_ads) return _ads->readADC_SingleEnded(ADS1115_Transducer_ADC_NO);
+    return 0;
+}
+#endif
+
+int PressureMonitorClass::currentAdcReading(void){
+
+#if PressureViaADS1115
+    if(_adcType == TransducerADC_ADS1115){
+        return _readExternalAdc();
+    }else 
+#endif
+    {
+        return _readInternalAdc();
+    }
+}
+
+void PressureMonitorClass::_readPressure(void){
     float reading =(float) currentAdcReading();
 
     float psi = (reading - _settings->fb) * _settings->fa;
@@ -61,20 +82,79 @@ void PressureMonitorClass::_readPressure(){
     #endif
 }
 
-PressureMonitorClass::PressureMonitorClass(){
-    _currentPsi = 0;
-    _settings=theSettings.pressureMonitorSettings();
-#if ESP8266
-    wifi_set_sleep_type(NONE_SLEEP_T);
+PressureMonitorClass::PressureMonitorClass(void){}
+
+void PressureMonitorClass::_initInternalAdc(void){
+#if ESP32
+    if(_adcCharacter) return;
+    //Characterize ADC at particular atten
+    _adcCharacter =(esp_adc_cal_characteristics_t*) calloc(1, sizeof(esp_adc_cal_characteristics_t));
+    esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, DEFAULT_VREF, _adcCharacter);
+    //Check type of calibration value used to characterize ADC
+    if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+        DBG_PRINTF("ESP32 ADC CAL:eFuse Vref");
+    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+        DBG_PRINTF("ESP32 ADC CAL:Two Point");
+    } else {
+        DBG_PRINTF("ESP32 ADC CAL:Default");
+    }
+
 #endif
-    #if PressureViaADS1115
-    if(_settings->adc_type == TransducerADC_ADS1115){
+
+}
+#if PressureViaADS1115
+void PressureMonitorClass::_initExternalAdc(void){
+    if(!_ads){
         _ads = new Adafruit_ADS1115(ADS1115_ADDRESS);
         _ads->begin();
-    }else{
+    }    
+}
+#endif
+
+void PressureMonitorClass::_deinitInternalAdc(void){
+    if(!_adcCharacter) return;
+    free(_adcCharacter);
+    _adcCharacter=NULL;
+}
+
+#if PressureViaADS1115
+void PressureMonitorClass::_deinitExternalAdc(void){
+    if(_ads){
+        delete _ads;
         _ads =(Adafruit_ADS1115*) NULL;
     }
+}
+#endif
+
+
+void PressureMonitorClass::begin(void){
+
+    _currentPsi = 0;
+    _settings=theSettings.pressureMonitorSettings();
+    _ads =(Adafruit_ADS1115*) NULL;
+    #if ESP32
+    _adcCharacter = NULL;
     #endif
+
+ #if ESP8266
+    // move or NOT?
+    wifi_set_sleep_type(NONE_SLEEP_T);
+#endif
+
+    #if PressureViaADS1115
+
+    _adcType = _settings->adc_type; // to avoid race condition.
+
+    if(_adcType == TransducerADC_ADS1115){
+        _initExternalAdc();
+
+    }else{
+        _initInternalAdc();
+    }
+    #else
+    _initInternalAdc();
+    #endif
+
 }
 
 void PressureMonitorClass::setTargetPsi(uint8_t psi){
@@ -89,13 +169,15 @@ uint8_t PressureMonitorClass::getTargetPsi(void){
 
 void PressureMonitorClass::configChanged(void){
     #if PressureViaADS1115
-    if(_settings->adc_type == TransducerADC_ADS1115 && _ads == NULL){
-        _ads = new Adafruit_ADS1115(ADS1115_ADDRESS);
-        _ads->begin();
-    }else if (_settings->adc_type != TransducerADC_ADS1115 && _ads != NULL){
-        delete _ads;
-        _ads =(Adafruit_ADS1115*) NULL;
+    if(_settings->adc_type == _adcType) return;
+    if(_settings->adc_type == TransducerADC_ADS1115){
+        _deinitInternalAdc();
+        _initExternalAdc();
+    }else if (_settings->adc_type != TransducerADC_ADS1115){
+        _deinitExternalAdc();
+        _initInternalAdc();
     }
+    _adcType = _settings->adc_type;
     #endif
 }
 
