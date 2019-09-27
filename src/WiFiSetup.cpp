@@ -80,11 +80,11 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 {
 	wifi_info("begin:");
 	
-	if(targetSSID){
+	if(targetSSID && targetSSID[0]){
 		if(_targetSSID) free((void*)_targetSSID);
 		_targetSSID=strdup(targetSSID);
 	}
-	if(targetPass){
+	if(targetPass && targetPass[0]){
 		if(_targetPass) free((void*)_targetPass);
 		_targetPass=strdup(targetPass);
 	}
@@ -96,7 +96,7 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 	DBG_PRINTF("\nAP mode:%d, used;%d autoReconect:%d\n",mode,mode2use,WiFi.getAutoReconnect());
 
 	if( (mode2use == WIFI_STA || mode2use == WIFI_AP_STA) 
-		 && targetSSID == NULL 
+		 && _targetSSID == NULL 
 		 && (WiFi.SSID() == "[Your SSID]" || WiFi.SSID() == "" || WiFi.SSID() == NULL)){
 			DBG_PRINTF("Invalid SSID!");
 			mode2use = WIFI_AP;
