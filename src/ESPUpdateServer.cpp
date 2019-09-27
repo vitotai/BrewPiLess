@@ -14,6 +14,8 @@
 #include <SPIFFS.h>
 
 #include "ESP32HTTPUpdateServer.h"
+#include "EepromAccess.h"
+#include "EepromManager.h"
 #endif
 
 
@@ -328,6 +330,10 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
       theSettings.preFormat();
       SPIFFS.format();      
       theSettings.postFormat();
+#if ESP32
+      eepromAccess.saveDeviceDefinition();
+      eepromManager.storeTempConstantsAndSettings();
+#endif
   });
 
 #endif

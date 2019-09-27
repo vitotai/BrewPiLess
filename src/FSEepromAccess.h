@@ -62,9 +62,6 @@ class FSEepromAccess
 
     static DeviceConfig devices[MAX_DEVICE_SLOT];
     
-    static void saveDeviceDefinition(){
-        writeToFile(File_DeviceDefinition, (const uint8_t*) devices,sizeof(devices));
-    }
     
     static void loadDeviceDefinition(){
         if(!readFromFile(File_DeviceDefinition,(char*)&devices,sizeof(devices)))
@@ -120,5 +117,8 @@ public:
         DBG_PRINTF("write device:%d size:%u\n",deviceIndex,size);
         saveDeviceDefinition();
 	}
+    static void saveDeviceDefinition(){
+        writeToFile(File_DeviceDefinition, (const uint8_t*) devices,sizeof(devices));
+    }
 };
 #endif
