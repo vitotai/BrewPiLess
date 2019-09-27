@@ -86,6 +86,10 @@ extern "C" {
 #include "PressureMonitor.h"
 #endif
 
+#if SupportTiltHydrometer
+#include "TiltReceiver.h"
+#endif
+
 //WebSocket seems to be unstable, at least on iPhone.
 //Go back to ServerSide Event.
 #define UseWebSocket true
@@ -128,7 +132,6 @@ extern "C" {
 
 #define CHART_LIB_PATH       "/dygraph-combined.js"
 
-#define GRAVITY_PATH       "/gravity"
 
 #define BEER_PROFILE_PATH       "/tschedule"
 
@@ -139,9 +142,14 @@ extern "C" {
 #define ParasiteTempControlPath "/ptc"
 #endif
 
-
+#define GRAVITY_PATH       "/gravity"
 #define GravityDeviceConfigPath "/gdc"
 #define GravityFormulaPath "/coeff"
+
+#if SupportTiltHydrometer
+#define TiltCommandPath "/tcmd"
+#endif
+
 
 #if AUTO_CAP
 #define CAPPER_PATH "/cap"
@@ -1334,12 +1342,24 @@ public:
 		DBG_PRINTF("req: %s\n", request->url().c_str());
 	 	if(request->url() == GRAVITY_PATH	) return true;
 	 	if(request->url() == GravityDeviceConfigPath) return true;
-	 	if(request->url() == GravityFormulaPath) return true;		
+	 	if(request->url() == GravityFormulaPath) return true;
+#if	SupportTiltHydrometer
+	 	if(request->url() == TiltCommandPath) return true;
+#endif
 
 	 	return false;
 	}
 
 	void handleRequest(AsyncWebServerRequest *request){
+#if	SupportTiltHydrometer
+	 	if(request->url() == TiltCommandPath){
+			 if(request->hasParam("scan")){
+				 tiltReceiver.scan(NULL);
+			 }
+			 return;
+		 }
+#endif
+
 		if(request->url() == GRAVITY_PATH){
 			if(request->method() != HTTP_POST){
 				request->send(400);
@@ -1672,8 +1692,8 @@ StatusLineDisplayIP=0,
 StatusLineDisplayTime
 }StatusLineDisplayItem;
 
-#define DisplayTimeDuration 5
-#define DisplayIPDuration 5
+#define DisplayTimeDuration 8
+#define DisplayIPDuration 3
 
 class StatusLine{
 protected:
@@ -1685,7 +1705,7 @@ protected:
 		struct tm t;
 		if(_displayTime == now) return;
 		_displayTime = now;
-		makeTime(_displayTime,t);
+		makeTime(TimeKeeper.getLocalTimeSeconds(),t);
 		char buf[21];
 		sprintf(buf,"%d/%02d/%02d %02d:%02d:%02d",t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
 		display.printStatus(buf);
@@ -1911,6 +1931,10 @@ void setup(void){
 	//Note: necessary to call after brewpi_setup() so that device has been installed.
 	autoCapControl.begin();
 	#endif
+
+#if SupportTiltHydrometer
+	tiltReceiver.begin();
+#endif
 
 #if EanbleParasiteTempControl
 	parasiteTempController.init();

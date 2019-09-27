@@ -28,6 +28,10 @@ PressureMonitorClass PressureMonitor;
 #define ConcateChanel(pin) ADC1_GPIO ## pin ## _CHANNEL
 #define AdcChannelFromPinNr(pin) ConcateChanel(pin)
 
+// Only ADC1 (pin 32~39) is allowed 
+#if PressureAdcPin > 39 || PressureAdcPin < 32
+#error "Only GPIO32 - GPIO 39 can be used as ADC Pin"
+#endif
 
 int PressureMonitorClass::_readInternalAdc(void){
  
