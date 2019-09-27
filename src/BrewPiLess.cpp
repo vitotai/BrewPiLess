@@ -1553,16 +1553,11 @@ void wiFiEvent(const char* msg){
 	sprintf(buff,"W:%s",msg);
 	stringAvailable(buff);
 	free(buff);
-	DBG_PRINTF("channel:%d, BSSID:%s\n",WiFi.channel(),WiFi.BSSIDstr().c_str());
-	#if ESP32
-	WiFiConfiguration *cfg=theSettings.getWifiConfiguration();
-	if(cfg->channel != WiFi.channel() || memcmp(cfg->bssid,WiFi.BSSID(),6) != 0){
-		memcpy(cfg->bssid,WiFi.BSSID(),6);
-		cfg->channel = WiFi.channel();
-		theSettings.save();
-		DBG_PRINTF("Update Channel & BSSID\n");
+
+	if(WiFi.status() == WL_CONNECTED){
+		DBG_PRINTF("channel:%d, BSSID:%s\n",WiFi.channel(),WiFi.BSSIDstr().c_str());
+		if(! TimeKeeper.isSynchronized())TimeKeeper.updateTime();
 	}
-	#endif
 }
 //{brewpi
 
@@ -1833,19 +1828,19 @@ void setup(void){
 	WiFiMode wifiMode= (WiFiMode) syscfg->wifiMode;
 	WiFiSetup.staConfig(IPAddress(syscfg->ip),IPAddress(syscfg->gw),IPAddress(syscfg->netmask),IPAddress(syscfg->dns));
 	WiFiSetup.onEvent(wiFiEvent);
-	#ifdef ESP32
+#ifdef ESP32
 	WiFiConfiguration *wifiCon=theSettings.getWifiConfiguration();
 
 	if(strlen(syscfg->hostnetworkname)>0)
-		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password,wifiCon->ssid,wifiCon->pass,wifiCon->channel,wifiCon->bssid);
+		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password,wifiCon->ssid,wifiCon->pass);
 	else // something wrong with the file
 		WiFiSetup.begin(wifiMode,DEFAULT_HOSTNAME,DEFAULT_PASSWORD);
-	#else
+#else
 	if(strlen(syscfg->hostnetworkname)>0)
 		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password);
 	else // something wrong with the file
 		WiFiSetup.begin(wifiMode,DEFAULT_HOSTNAME,DEFAULT_PASSWORD);
-	#endif
+#endif
 
   	DBG_PRINTF("WiFi Done!\n");
 
@@ -2035,7 +2030,6 @@ void loop(void){
 
 	if(!IS_RESTARTING){
 		WiFiSetup.stayConnected();
-		if(WiFiSetup.isApMode()) TimeKeeper.setInternetAccessibility(false);
 	}
 
   	if(_systemState ==SystemStateRestartPending){

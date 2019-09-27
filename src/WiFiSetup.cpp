@@ -76,7 +76,7 @@ bool WiFiSetupClass::isApMode(){
 	return WiFi.getMode() == WIFI_AP;
 }
 
-void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,char const* targetSSID,const char *targetPass, uint32_t channel, uint8_t* bssid)
+void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,char const* targetSSID,const char *targetPass)
 {
 	wifi_info("begin:");
 	
@@ -123,8 +123,8 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 			WiFi.config(INADDR_NONE,INADDR_NONE,INADDR_NONE);
 		}
 		
-		//WiFi.setAutoReconnect(true);
-		WiFi.begin(targetSSID,targetPass,channel,bssid);
+		wl_status_t status= WiFi.begin(targetSSID,targetPass);
+		DBG_PRINTF("WiFi.begin() return:%d\n",status);
 		_time=millis();
 	}
 }
@@ -250,11 +250,13 @@ bool WiFiSetupClass::stayConnected(void)
 				_time=millis();
 				DBG_PRINTF("Lost Network. auto reconnect %d\n",_autoReconnect);
 				_wifiState = WiFiStateConnectionRecovering;
+				WiFi.begin(_targetSSID,_targetPass);
 				return true;
 			}else if (_wifiState==WiFiStateConnectionRecovering){
 				// if sta mode, turn on AP mode
 				if(millis() - _time > TimeForRescueAPMode){
 					DBG_PRINTF("Stop recovering\n");
+					WiFi.disconnect();
 					_time = millis();
 					_wifiState =WiFiStateDisconnected;
 					WiFi.setAutoConnect(false);

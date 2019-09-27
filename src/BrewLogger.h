@@ -121,6 +121,7 @@ private:
 	uint32_t  _tempLogPeriod;
 	uint32_t _lastTempLog;
     uint32_t _resumeLastLogTime;
+	uint32_t _trackedTime;
 
 	bool _recording;
 	bool _calibrating;
@@ -180,6 +181,7 @@ private:
 
 	void loadIdxFile(void);
 	void saveIdxFile(void);
+	bool checkTime(void);
 };
 
 extern BrewLogger brewLogger;

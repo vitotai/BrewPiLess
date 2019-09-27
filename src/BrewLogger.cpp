@@ -335,8 +335,22 @@ BrewLogger::BrewLogger(void){
 		unsigned long miliseconds = millis();
 
 		if((miliseconds -_lastTempLog) < _tempLogPeriod) return;
-		_lastTempLog = miliseconds;
-		logData();
+		if(! _recording) if(checkTime()){
+			_lastTempLog = miliseconds;
+			logData();
+		}
+	}
+
+	bool BrewLogger::checkTime(void){
+		time_t current= TimeKeeper.getTimeSeconds();
+		if(current - _trackedTime > 300){
+			DBG_PRINTF("Time updated. Restart volatile Log\n");
+			startVolatileLog();
+			return false;
+		}else{
+			_trackedTime = current;
+			return true;
+		}
 	}
 
 	void BrewLogger::logData(void){
@@ -789,6 +803,8 @@ BrewLogger::BrewLogger(void){
 		for(int i=0;i<5;i++) _headData[i]=_iTempData[i];
 		_headData[5]= _extTemp;
 		_headData[6]= (_calibrating)? _extTileAngle:_extGravity;
+
+		_trackedTime = _headTime;
 	}
 
 

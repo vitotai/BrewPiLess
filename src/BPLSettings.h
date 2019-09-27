@@ -234,9 +234,7 @@ typedef struct _PressureMonitorSettings{
 typedef struct _WiFiConfiguration{
     char ssid[33];
     char pass[33];
-    uint8_t bssid[6];
-    uint8_t channel;
-    char _padding[23];
+    char _padding[30];
 } WiFiConfiguration;
 #endif
 

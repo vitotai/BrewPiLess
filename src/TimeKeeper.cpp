@@ -3,6 +3,13 @@
 #include <FS.h>
 #include "Config.h"
 #include "BPLSettings.h"
+
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
+
 extern "C" {
 #if !defined(ESP32)
 #include <sntp.h>
@@ -29,7 +36,6 @@ void TimeKeeperClass::setCurrentTime(time_t now)
 
 void TimeKeeperClass::begin(void)
 {
-	_online = false;
 
 	_referenceSeconds=loadTime();
 	_referenceSeconds += 300; // add 5 minutes.
@@ -38,9 +44,37 @@ void TimeKeeperClass::begin(void)
 	DBG_PRINTF("Load saved time:%ld\n",_referenceSeconds);
 }
 
+time_t TimeKeeperClass::_queryServer(void){
+	time_t secs=0;
+
+	int trial;
+	for(trial=0;trial< 50;trial++)
+  	{
+		#ifdef ESP32
+		time(&secs);
+		#else
+    	secs = sntp_get_current_timestamp();
+		#endif
+		DBG_PRINTF("Time from NTP :%ld\n",secs);
+    	if(secs > 1546265623){ 
+			_ntpSynced=true;
+			break;
+		}
+    	delay(200);
+  	}
+	return secs;
+}
+
+void TimeKeeperClass::updateTime(void){
+	time_t secs=_queryServer();
+	if(secs > 1546265623){
+  		_referenceSystemTime = millis();
+  		_referenceSeconds = secs;
+	}
+}
+
 void TimeKeeperClass::begin(char* server1,char* server2,char* server3)
 {
-	_online=true;
 #ifdef ESP32
 	if(! server1) configTime(0,0,"time.nist.gov");
 	else configTime(0,0,server1,server2,server3);
@@ -53,25 +87,17 @@ void TimeKeeperClass::begin(char* server1,char* server2,char* server3)
   	sntp_set_timezone(0);
 	sntp_init();
 #endif
-  	time_t secs=0;
-	int trial;
-	for(trial=0;trial< 50;trial++)
-  	{
-		#ifdef ESP32
-		time(&secs);
-		#else
-    	secs = sntp_get_current_timestamp();
-		#endif
-		DBG_PRINTF("Time from NTP :%ld\n",secs);
-    	if(secs > 1546265623) break;
-    	delay(200);
-  	}
+	time_t secs=0;
+	if(WiFi.status() == WL_CONNECTED){
+		secs=_queryServer();
+	}
 	if(secs < 1546265623){
 		secs=loadTime() + 300;
 		DBG_PRINTF("failed to connect NTP, load time:%ld\n",secs);
 	}
-  	_referenceSystemTime = millis();
+	_referenceSystemTime = millis();
   	_referenceSeconds = secs;
+
   	_lastSaved=_referenceSeconds;
 }
 
@@ -80,16 +106,9 @@ time_t TimeKeeperClass::getTimeSeconds(void) // get Epoch time
 	unsigned long diff=millis() -  _referenceSystemTime;
 
 	if(diff > RESYNC_TIME){
-		if( _online){
-			time_t newtime;
-			#ifdef ESP32
-			time(&newtime);
-			#else
-			 newtime=sntp_get_current_timestamp();
-			#endif
-			if(newtime){
-  				_referenceSystemTime = millis();
-	  			_referenceSeconds = newtime;
+		if( WiFi.status() == WL_CONNECTED){
+			updateTime();
+			if(_referenceSeconds> 1546265623){
 	  			diff=0;
 			}
 		}else{
