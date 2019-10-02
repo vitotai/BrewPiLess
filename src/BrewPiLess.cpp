@@ -928,32 +928,7 @@ public:
 
 };
 
-class WebSocketBroadcast{
-protected:
-	LinkedList<AWSClient *> _clientList;
-	AsyncWebSocket *_ws;
-public:
-	WebSocketBroadcast(AsyncWebSocket *websocket):_clientList(LinkedList<AWSClient *>([](AWSClient *c){ delete  c; })){
-		_ws = websocket;
-	}
-	void addClient(AsyncWebSocketClient* client){
-		_clientList.add(new AWSClient(client));
-	}
-	void removeClient(AsyncWebSocketClient* client){
-		_clientList.remove_first([=](AWSClient * c){
-    		return c->clientId() == client->id();
-  		});
-  	}
-
-	void broadcast(const char* msg){
-		for(const auto& c: _clientList){
-		    c->text(_ws,msg);
-		}
-	}
-};
-
 AsyncWebSocket ws(WS_PATH);
-WebSocketBroadcast wsBroadcast(&ws);
 
 #if GreetingInMainLoop
 AsyncWebSocketClient * _lastWSclient=NULL;
@@ -983,10 +958,8 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 			client->text(msg);
 		});
 		#endif
-		wsBroadcast.addClient(client);
   	} else if(type == WS_EVT_DISCONNECT){
     	DBG_PRINTF("ws[%s] disconnect: %u\n", server->url(), client->id());
-		wsBroadcast.removeClient(client);
   	} else if(type == WS_EVT_ERROR){
     	DBG_PRINTF("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
   	} else if(type == WS_EVT_PONG){
@@ -1039,7 +1012,6 @@ void stringAvailable(const char *str)
 
 #if UseWebSocket == true
 	ws.textAll(str);
-//	wsBroadcast.broadcast(str);
 #endif
 
 #if UseServerSideEvent == true

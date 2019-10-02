@@ -335,10 +335,9 @@ BrewLogger::BrewLogger(void){
 		unsigned long miliseconds = millis();
 
 		if((miliseconds -_lastTempLog) < _tempLogPeriod) return;
-		if(! _recording) if(checkTime()){
-			_lastTempLog = miliseconds;
-			logData();
-		}
+		if(! _recording) checkTime();
+		_lastTempLog = miliseconds;
+		logData();
 	}
 
 	bool BrewLogger::checkTime(void){
