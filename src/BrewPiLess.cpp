@@ -1865,10 +1865,6 @@ void setup(void){
 	
 	display.setAutoOffPeriod(syscfg->backlite);
 	
-	#ifdef ENABLE_LOGGING
-//  	dataLogger.loadConfig();
-  	#endif
-
 
 	//1. Start WiFi
 	DBG_PRINTF("Starting WiFi...\n");
