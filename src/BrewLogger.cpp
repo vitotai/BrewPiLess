@@ -30,7 +30,7 @@ BrewLogger::BrewLogger(void){
 		}
 
 		if(!resumeSuccess){
-			DBG_PRINTF("start volatiel log\n");
+			DBG_PRINTF("**Resume failed!.start volatiel log\n");
 			loop();
 			startVolatileLog();
 		}
@@ -361,28 +361,19 @@ BrewLogger::BrewLogger(void){
 		_chartTime += LoggingPeriod/1000;
 
 		uint32_t now = TimeKeeper.getTimeSeconds();
-		if( _chartTime -  now >  MinimumGapToSync || now - _chartTime > MinimumGapToSync ){
+		if( ((_chartTime >  now) && (_chartTime -  now >  MinimumGapToSync)) 
+			|| (( _chartTime < now) && (now - _chartTime > MinimumGapToSync)) ){
 			if(_recording){
 				addTimeSyncTag();
 				DBG_PRINTF("**Sync time from:%d  to:%d",_chartTime,now);
 				_chartTime=now;
 			}else{
+				DBG_PRINTF("**Time out of sync :%d :%d",_chartTime,now);
 				startVolatileLog();
+				DBG_PRINTF("**Sync time from:%d  to:%d",_chartTime,_headTime);
 			}
 		}
 		logData();
-	}
-
-	bool BrewLogger::checkTime(void){
-		time_t current= TimeKeeper.getTimeSeconds();
-		if(current - _trackedTime > 300){
-			DBG_PRINTF("Time updated. Restart volatile Log\n");
-			startVolatileLog();
-			return false;
-		}else{
-			_trackedTime = current;
-			return true;
-		}
 	}
 
 	void BrewLogger::logData(void){
