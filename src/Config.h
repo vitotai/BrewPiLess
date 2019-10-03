@@ -164,7 +164,11 @@
 
 // default supports 2 buttons
 #ifndef BREWPI_BUTTONS
+#if ESP8266
 #define BREWPI_BUTTONS 1
+#else
+#define BREWPI_BUTTONS 0
+#endif
 #endif
 
 #ifndef ButtonViaPCF8574 
@@ -266,6 +270,10 @@
 #define SettableMinimumCoolTime true
 //#endif
 
+#if ESP32
+#define FS_EEPROM true
+#endif
+
 #define BPL_VERSION "4.0"
 
 //////////////////////////////////////////////////////////////////////////
@@ -286,7 +294,31 @@
 // Pin Configuration - Change the settings below to match your individual pinout
 //
 // pins
+#ifdef ESP32
 
+#define PIN_SDA 21
+#define PIN_SCL 22
+
+
+#define oneWirePin    23
+
+#define actuatorPin1  16
+#define actuatorPin2  17
+#define actuatorPin3  19
+#define actuatorPin4  25
+#define actuatorPin5  26
+
+#define BuzzPin       18
+
+// 34,35,66,39 input only
+#define rotaryAPin      32
+#define rotaryBPin      33
+#define rotarySwitchPin 25
+
+// Only ADC1 (pin 32~39) is allowed 
+#define PressureAdcPin  36
+
+#else // #ifdef ESP32
 #define NODEMCU_PIN_A0 17	// Analog
 
 #define NODEMCU_PIN_D0 16	// No interrupt, do not use for rotary encoder,
@@ -380,6 +412,7 @@
 #error "unknown board"
 #endif
 
+#endif // #ifdef ESP32
 
 #if BREWPI_LCD
 // LCD configurations:
@@ -423,41 +456,18 @@
 //#define rotarySwitchPin 0 // INT2
 
 
-#if BREWPI_ROTARY_ENCODER
-
-#define RotaryViaPCF8574 1
-
-#ifdef RotaryViaPCF8574
-
-#define rotaryAPin 0
-#define rotaryBPin 1
-#define rotarySwitchPin 2
-
-#define PCF8574_INT NODEMCU_PIN_D3
-#define PCF8574_ADDRESS 0x20
-
-#else // #ifdef RotaryViaPCF8574
-
-#error "invalid setting"
-#define rotaryAPin NODEMCU_PIN_D3
-#define rotaryBPin NODEMCU_PIN_D7
-#define rotarySwitchPin NODEMCU_PIN_D4
-
-#endif //#ifdef RotaryViaPCF8574
-
-#endif //BREWPI_ROTARY_ENCODER
-
-
+#ifdef ESP8266
 #if ButtonViaPCF8574
 #define PCF8574_INT NODEMCU_PIN_D3
 #define PCF8574_ADDRESS 0x20
 // use the same setting as BrewManiacEx
 #define UpButtonBitMask   2  
 #define DownButtonBitMask  1
+#endif
 
 #endif //#if ButtonViaPCF8574
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 //#define ESP8266_WiFi 1			// This disables Serial and enables WiFi support
 //#define ESP8266_WiFi_Control 1	// This adds the headers for WiFi support (so you can disconnect from WiFi via serial)
 #define ESP8266_ONE 1

@@ -118,16 +118,20 @@ BrewLogger::BrewLogger(void){
 	{
     	_resumeLastLogTime = _pFileInfo->starttime;
 
-		char buff[36];
-		sprintf(buff,"%s/%s",LOG_PATH,_pFileInfo->logname);
-
-		_logFile=SPIFFS.open(buff,"a+");
+		char filename[36];
+		sprintf(filename,"%s/%s",LOG_PATH,_pFileInfo->logname);
+#if ESP32
+		// weird behavior of ESP32
+		_logFile=SPIFFS.open(filename,"r");
+#else
+		_logFile=SPIFFS.open(filename,"a+");
+#endif
 		if(! _logFile){
             DBG_PRINTF("resume failed\n");
             return false;
 		}
 		size_t fsize= _logFile.size(); 	
-		DBG_PRINTF("resume file:%s size:%d\n",buff,fsize);
+		DBG_PRINTF("resume file:%s size:%d\n",filename,fsize);
 
 /*		if(fsize < 8){
             DBG_PRINTF("resume failed\n");
@@ -268,6 +272,14 @@ BrewLogger::BrewLogger(void){
 		// add resume tag
 		_chartTime = addResumeTag();
 		//DBG_PRINTF("resume done _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
+#if ESP32
+		_logFile.close();
+		_logFile=SPIFFS.open(filename,"a+");
+		if(! _logFile){
+            DBG_PRINTF("resume failed\n");
+            return false;
+		}
+#endif
 		return true;
 	}
 	bool BrewLogger::startSession(const char *filename,bool calibrating){		
@@ -858,7 +870,7 @@ BrewLogger::BrewLogger(void){
 		byte tag;
 		byte mask;
 		bool timeCorrected=false;
-		uint32_t time;
+		uint32_t time=0;
 
 		while(1){
 			if(idx >= LogBufferSize) idx -= LogBufferSize;
