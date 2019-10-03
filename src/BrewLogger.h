@@ -167,7 +167,7 @@ private:
 	void commitData(int idx,int len);
 	void addOG(uint16_t og);
 	void addSG(uint16_t sg);
-	void addGravity(bool isOg, uint16_t gravity);
+	void addGravityRecord(bool isOg, uint16_t gravity);
 	void addMode(char mode);
 	void addState(char state);
 	void addTargetPsi(void);

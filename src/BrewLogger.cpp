@@ -630,6 +630,14 @@ BrewLogger::BrewLogger(void){
 		}
 	}
 
+
+	void BrewLogger::addOG(uint16_t og){
+		addGravityRecord(true,og);
+	}
+	void BrewLogger::addSG(uint16_t sg){
+		addGravityRecord(false,sg);
+	}
+
 	void BrewLogger::addAuxTemp(float temp)
 	{
 		_extTemp = convertTemperature(temp);
@@ -967,7 +975,7 @@ BrewLogger::BrewLogger(void){
 		
 	}
 
-	void BrewLogger::addGravity(bool isOg, uint16_t gravity){
+	void BrewLogger::addGravityRecord(bool isOg, uint16_t gravity){
 		int idx = allocByte(4);
 		if(idx < 0) return;
 		writeBuffer(idx, isOg? OriginGravityTag:SpecificGravityTag);
