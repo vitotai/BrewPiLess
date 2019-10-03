@@ -4,7 +4,8 @@
 #include "PressureMonitor.h"
 #endif
 
-#define LoggingPeriod 60000
+#define LoggingPeriod 60000  //in ms
+#define MinimumGapToSync  600  // in seconds
 
 BrewLogger brewLogger;
 
@@ -340,12 +341,14 @@ BrewLogger::BrewLogger(void){
 		_chartTime += LoggingPeriod/1000;
 
 		uint32_t now = TimeKeeper.getTimeSeconds();
-		
-		if( _chartTime -  now > LoggingPeriod *5
-			|| now - _chartTime > LoggingPeriod *5){
-			addTimeSyncTag();
-			DBG_PRINTF("**Sync time from:%d  to:%d",_chartTime,now);
-			_chartTime=now;
+		if( _chartTime -  now >  MinimumGapToSync || now - _chartTime > MinimumGapToSync ){
+			if(_recording){
+				addTimeSyncTag();
+				DBG_PRINTF("**Sync time from:%d  to:%d",_chartTime,now);
+				_chartTime=now;
+			}else{
+				startVolatileLog();
+			}
 		}
 		logData();
 	}
@@ -787,6 +790,8 @@ BrewLogger::BrewLogger(void){
 		for(int i=0;i<5;i++) _headData[i]=_iTempData[i];
 		_headData[5]= _extTemp;
 		_headData[6]= (_calibrating)? _extTileAngle:_extGravity;
+
+		_chartTime = _headTime;
 	}
 
 
