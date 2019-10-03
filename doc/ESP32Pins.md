@@ -29,14 +29,16 @@
 | 39 | I | ADC1, RTC | no pull-up/down | | |
 
 Preferences:
+
 | Symbol   | Preferences |
-| ------ |:----- |
+| ------ | :----- |
 | X | Avoid at any cost |
 | * | Avoid |
 | + | avoid if possible |
 
 ### References
-[ESP32 Pinout Reference: Which GPIO pins should you use?](https://randomnerdtutorials.com/esp32-pinout-reference-gpios/)
-[ESP32 Boot Mode Selection](https://github.com/espressif/esptool/wiki/ESP32-Boot-Mode-Selection)
+* [ESP32 Pinout Reference: Which GPIO pins should you use?](https://randomnerdtutorials.com/esp32-pinout-reference-gpios/)
+* [ESP32 Boot Mode Selection](https://github.com/espressif/esptool/wiki/ESP32-Boot-Mode-Selection)
+
 ***
 [Index](index.md)
