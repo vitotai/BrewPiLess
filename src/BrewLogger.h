@@ -173,9 +173,14 @@ private:
 	void commitData(int idx,int len);
 	void addOG(uint16_t og);
 	void addSG(uint16_t sg);
+	void addGravityRecord(bool isOg, uint16_t gravity);
+
 	void addMode(char mode);
 	uint32_t addResumeTag(void);
 	void addTimeSyncTag(void);
+	void addState(char state);
+	uint16_t convertTemperature(float temp);
+	void addTargetPsi(void);
 
 	void loadIdxFile(void);
 	void saveIdxFile(void);
