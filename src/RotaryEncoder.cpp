@@ -765,7 +765,7 @@ void IRAM_ATTR RotaryEncoder::setPushed(void){
 void RotaryEncoder::init(void){
 #if BREWPI_ROTARY_ENCODER
 
-#ifdef ESP32
+#if ESP32
 	fastPinMode(rotaryAPin, BREWPI_INPUT_PULLUP);
 	fastPinMode(rotaryBPin, BREWPI_INPUT_PULLUP);
 	fastPinMode(rotarySwitchPin, BREWPI_INPUT_PULLUP);

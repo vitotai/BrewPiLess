@@ -1,3 +1,4 @@
+#if ESP32
 #include "Config.h"
 #include "ESP32HTTPUpdateServer.h"
 
@@ -55,3 +56,4 @@ void ESP32HTTPUpdateServer::setup(WebServer& server,String servicePath,const cha
         }
     });
 }
+#endif

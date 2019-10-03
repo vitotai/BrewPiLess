@@ -538,10 +538,12 @@ public:
 	 	    if(!request->authenticate(syscfg->username, syscfg->password))
 	        return request->requestAuthentication();
 		 	request->send(200,"text/html","Done, restarting..");
+			#if ESP32
 			WiFiConfiguration *wifiCon=theSettings.getWifiConfiguration();
 			wifiCon->ssid[0]='\0';
 			wifiCon->pass[0]='\0';
 			theSettings.save();
+			#endif
 			requestRestart(true);
 	 	}else if(request->method() == HTTP_POST &&  request->url() == FLIST_PATH){
 	 	    if(!request->authenticate(syscfg->username, syscfg->password))
