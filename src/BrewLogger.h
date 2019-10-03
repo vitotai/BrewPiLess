@@ -24,6 +24,7 @@
 #define ModeTag 0xF4
 
 #define TargetPsiTag 0xF5
+#define TimeSyncTag 0xF6
 
 #define FillTag 0xF7
 #define OriginGravityTag 0xF8
@@ -113,7 +114,7 @@ public:
 	void onFormatFS(void);
 private:
 	size_t _fsspace;
-	uint32_t  _tempLogPeriod;
+	uint32_t  _chartTime;
 	uint32_t _lastTempLog;
     uint32_t _resumeLastLogTime;
 
@@ -171,7 +172,8 @@ private:
 	void addState(char state);
 	void addTargetPsi(void);
 	uint16_t convertTemperature(float temp);
-	void addResumeTag(void);
+	uint32_t addResumeTag(void);
+	void addTimeSyncTag(void);
 
 	void loadIdxFile(void);
 	void saveIdxFile(void);

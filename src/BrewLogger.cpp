@@ -4,12 +4,14 @@
 #include "PressureMonitor.h"
 #endif
 
+#define LoggingPeriod 60000
+
 BrewLogger brewLogger;
 
 BrewLogger::BrewLogger(void){
 	_recording=false;
 	_fsspace=0;
-	_tempLogPeriod=60000;
+	
 	resetTempData();
 	_calibrating=false;
 	_lastPressureReading = INVALID_PRESSURE_INT;
@@ -159,7 +161,7 @@ BrewLogger::BrewLogger(void){
 
 				if(tag == PeriodTag){
 					// advance one tick
-		    	    _resumeLastLogTime += _tempLogPeriod/1000;
+		    	    _resumeLastLogTime += LoggingPeriod/1000;
 
 					//TODO: check available data?
 		       		// int numberInRecord=0;
@@ -214,6 +216,12 @@ BrewLogger::BrewLogger(void){
 					processIndex +=2;
 				}else if(tag == StateTag  || tag == ModeTag  || tag ==CorrectionTempTag ||tag == TargetPsiTag){
 					// DO nothing.
+				}else if(tag == TimeSyncTag){
+					if (dataRead-processIndex<4 ){
+						processIndex -=4;
+						break;
+					}
+					processIndex +=4;
 				}else{
 					DBG_PRINTF("Unknown tag %d,%d @%u\n",tag,mask,offset+processIndex);
 				}
@@ -249,7 +257,7 @@ BrewLogger::BrewLogger(void){
 		brewPi.getLogInfo(&unit,&_mode,&_state);
 
 		// add resume tag
-		addResumeTag();
+		_chartTime = addResumeTag();
 		//DBG_PRINTF("resume done _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
 		return true;
 	}
@@ -272,6 +280,7 @@ BrewLogger::BrewLogger(void){
 		}
 
 		_pFileInfo->starttime= TimeKeeper.getTimeSeconds();
+		_chartTime = _pFileInfo->starttime;
 		_logIndex = 0;
 
 		_lastTempLog=0;
@@ -326,8 +335,18 @@ BrewLogger::BrewLogger(void){
 
 		unsigned long miliseconds = millis();
 
-		if((miliseconds -_lastTempLog) < _tempLogPeriod) return;
+		if((miliseconds -_lastTempLog) < LoggingPeriod) return;
 		_lastTempLog = miliseconds;
+		_chartTime += LoggingPeriod/1000;
+
+		uint32_t now = TimeKeeper.getTimeSeconds();
+		
+		if( _chartTime -  now > LoggingPeriod *5
+			|| now - _chartTime > LoggingPeriod *5){
+			addTimeSyncTag();
+			DBG_PRINTF("**Sync time from:%d  to:%d",_chartTime,now);
+			_chartTime=now;
+		}
 		logData();
 	}
 
@@ -701,7 +720,7 @@ BrewLogger::BrewLogger(void){
 		if(_usePlato) headerTag = headerTag ^ 0x40;
 
 		*ptr++ = headerTag; //2
-		int period = _tempLogPeriod/1000;
+		int period = LoggingPeriod/1000;
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
 		*ptr++ = (char) (_headTime >> 24);
@@ -743,7 +762,7 @@ BrewLogger::BrewLogger(void){
 
 		*ptr++ = headerTag;
 		
-		int period = _tempLogPeriod/1000;
+		int period = LoggingPeriod/1000;
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
 		*ptr++ = (char) (_pFileInfo->starttime >> 24);
@@ -792,6 +811,8 @@ BrewLogger::BrewLogger(void){
 		int dataDrop=0;
 		byte tag;
 		byte mask;
+		bool timeCorrected=false;
+		uint32_t time;
 
 		while(1){
 			if(idx >= LogBufferSize) idx -= LogBufferSize;
@@ -804,6 +825,15 @@ BrewLogger::BrewLogger(void){
 			if(tag == OriginGravityTag || tag == SpecificGravityTag || tag == CalibrationPointTag){
     			idx += 2;
 	    		dataDrop +=2;
+			}else if(tag == TimeSyncTag){
+				// 4 additional bytes
+    			idx += 4;
+	    		dataDrop +=4;
+				time = (_logBuffer[idx] << 24)
+						| (_logBuffer[idx + 1] << 16)
+						| (_logBuffer[idx + 2] << 8)
+						| _logBuffer[idx + 3];				
+				timeCorrected = true;
 			}
 		}
 
@@ -824,7 +854,15 @@ BrewLogger::BrewLogger(void){
 		// drop any F tag
 		while(_logBuffer[idx] != PeriodTag ){
 			if(idx >= LogBufferSize) idx -= LogBufferSize;
-			if(OriginGravityTag == _logBuffer[idx] || SpecificGravityTag == _logBuffer[idx]){
+			if(_logBuffer[idx] == TimeSyncTag){
+				idx +=6;
+				dataDrop +=6;
+				time = (_logBuffer[idx + 2] << 24)
+						| (_logBuffer[idx + 3] << 16)
+						| (_logBuffer[idx + 4] << 8)
+						| _logBuffer[idx + 5];				
+				timeCorrected = true;			
+			}else if(OriginGravityTag == _logBuffer[idx] || SpecificGravityTag == _logBuffer[idx]){
 				idx +=4;
 				dataDrop +=4;
 			}else{
@@ -836,15 +874,14 @@ BrewLogger::BrewLogger(void){
 		if(idx >= LogBufferSize) idx -= LogBufferSize;
 		_startOffset += dataDrop;
 		_logHead = idx;
-		_headTime += _tempLogPeriod/1000;
+		if(timeCorrected) _headTime = time;
+		else _headTime += LoggingPeriod/1000;
 		interrupts();
 		DBG_PRINTF("Drop %d\n",dataDrop);
 	}
 
-	int BrewLogger::volatileLoggingAlloc(int size)
-	{
+	int BrewLogger::volatileLoggingAlloc(int size){
 		int space=freeBufferSpace();
-;
 		while(space < size){
 			//DBG_PRINTF("Free %d req: %d\n",space,size);
 			dropData();
@@ -935,11 +972,18 @@ BrewLogger::BrewLogger(void){
 		commitData(idx,4);
 	}
 
-	void BrewLogger::addOG(uint16_t og){
-		addGravity(true,og);
-	}
-	void BrewLogger::addSG(uint16_t sg){
-		addGravity(false,sg);
+	void BrewLogger::addTimeSyncTag(void){
+		int idx = allocByte(6);
+		if(idx < 0) return;
+		writeBuffer(idx,TimeSyncTag);
+		writeBuffer(idx+1,0);
+		uint32_t now=TimeKeeper.getTimeSeconds();
+		writeBuffer(idx+2,(uint8_t)(now >> 24));
+		writeBuffer(idx+3,(uint8_t)(now >> 16));
+		writeBuffer(idx+4,(uint8_t)(now >> 8));
+		writeBuffer(idx+5,(uint8_t)(now & 0xFF));
+
+		commitData(idx,6);
 	}
 
 	void BrewLogger::addMode(char mode){
@@ -981,17 +1025,18 @@ BrewLogger::BrewLogger(void){
 	}
 
 
-	void BrewLogger::addResumeTag(void)
+	uint32_t BrewLogger::addResumeTag(void)
 	{
 		int idx = allocByte(4);
-		if(idx < 0) return;
+		if(idx < 0) return 0;
 		writeBuffer(idx,ResumeBrewTag); //*ptr = ResumeBrewTag;
 		size_t rtime= TimeKeeper.getTimeSeconds();
 		size_t gap=rtime - _pFileInfo->starttime;
 		if(rtime < 1545211593L || gap > 60*60*24*30){
-			// something wrong. just give it an hour
+			// something wrong. just give it a minute, relying on following TimeSync Tag
 			DBG_PRINTF("abnormal resume, start:%lu, current:%u gap:%u\n",_pFileInfo->starttime,rtime,gap);
-			gap =60*10;
+			gap =60;
+			rtime =  _pFileInfo->starttime + gap;
 		}
 		DBG_PRINTF("resume, start:%lu, current:%u gap:%u\n",_pFileInfo->starttime,rtime,gap);
 		//if (gap > 255) gap = 255;
@@ -999,6 +1044,7 @@ BrewLogger::BrewLogger(void){
 		writeBuffer(idx+2,(uint8_t) (gap>>8)&0xFF );
 		writeBuffer(idx+3,(uint8_t) (gap)&0xFF);
 		commitData(idx,4);
+		return rtime;
 	}
 
 	void BrewLogger::loadIdxFile(void)

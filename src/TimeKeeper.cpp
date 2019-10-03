@@ -56,7 +56,7 @@ void TimeKeeperClass::begin(char* server1,char* server2,char* server3)
     	delay(200);
   	}
 	if(secs < 1546265623){
-		secs=loadTime() + 300;
+		secs=loadTime() + 30;
 		DBG_PRINTF("failed to connect NTP, load time:%ld\n",secs);
 	}
   	_referenceSystemTime = millis();
