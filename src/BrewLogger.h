@@ -1,6 +1,11 @@
 #ifndef BrewLogger_H
 #define BrewLogger_H
 #include <FS.h>
+
+#if defined(ESP32)
+#include <SPIFFS.h>
+#endif
+
 #include "BPLSettings.h"
 #include "TimeKeeper.h"
 
@@ -117,6 +122,7 @@ private:
 	uint32_t  _chartTime;
 	uint32_t _lastTempLog;
     uint32_t _resumeLastLogTime;
+	uint32_t _trackedTime;
 
 	bool _recording;
 	bool _calibrating;
@@ -167,16 +173,13 @@ private:
 	void commitData(int idx,int len);
 	void addOG(uint16_t og);
 	void addSG(uint16_t sg);
-	void addGravityRecord(bool isOg, uint16_t gravity);
 	void addMode(char mode);
-	void addState(char state);
-	void addTargetPsi(void);
-	uint16_t convertTemperature(float temp);
 	uint32_t addResumeTag(void);
 	void addTimeSyncTag(void);
 
 	void loadIdxFile(void);
 	void saveIdxFile(void);
+	bool checkTime(void);
 };
 
 extern BrewLogger brewLogger;

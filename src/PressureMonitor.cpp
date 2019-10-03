@@ -1,7 +1,16 @@
+#if ESP8266
 #include <ESP8266WiFi.h>
-#include "PressureMonitor.h"
+#elif defined(ESP32)
+#include <WiFi.h>
+#endif
+
+#include "Brewpi.h"
+#include "Actuator.h"
+#include "BPLSettings.h"
 #include "AutoCapControl.h"
 #include "BrewLogger.h"
+
+#include "PressureMonitor.h"
 
 #if SupportPressureTransducer
 #define MinimumMonitorTime 10000
@@ -10,34 +19,61 @@
 #if FilterPressureReading
 #define LowPassFilterParameter 0.15
 #endif
+#define DEFAULT_VREF    1100        //Use adc2_vref_to_gpio() to obtain a better estimate
+#define NO_OF_SAMPLES   64          //Multisampling
 
 PressureMonitorClass PressureMonitor;
 
-#define MULTIPLE_READ_NUMBER 3
+// for esp32
+#define ConcateChanel(pin) ADC1_GPIO ## pin ## _CHANNEL
+#define AdcChannelFromPinNr(pin) ConcateChanel(pin)
 
-int PressureMonitorClass::currentAdcReading(){
+// Only ADC1 (pin 32~39) is allowed 
+#if PressureAdcPin > 39 || PressureAdcPin < 32
+#error "Only GPIO32 - GPIO 39 can be used as ADC Pin"
+#endif
 
-    int reading=0;
-    #if PressureViaADS1115
-    if(_settings->adc_type == TransducerADC_ADS1115){
-        if(_ads)
-           reading= _ads->readADC_SingleEnded(ADS1115_Transducer_ADC_NO);
-    }else 
-    #endif
-    {
-//        system_soft_wdt_stop();
-//        ets_intr_lock( ); 
-//      noInterrupts();
-        reading = system_adc_read();
-//      interrupts();
-//        ets_intr_unlock(); 
-//        system_soft_wdt_restart();
+int PressureMonitorClass::_readInternalAdc(void){
+ 
+#ifdef ESP8266
+    return system_adc_read();
+#endif
+
+#if ESP32
+    //Multisampling
+    uint32_t adc_reading = 0;
+    for (int i = 0; i < NO_OF_SAMPLES; i++) {
+        adc_reading += adc1_get_raw(AdcChannelFromPinNr(PressureAdcPin));
     }
+    adc_reading /= NO_OF_SAMPLES;
+    //Convert adc_reading to voltage in mV
+    uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_reading, _adcCharacter);
+    DBG_PRINTF("Raw: %d\tVoltage: %dmV\n", adc_reading, voltage);
+    return (int) ((float)voltage / 3.9 * 4095 );
+#endif
 
-    return reading;
 }
 
-void PressureMonitorClass::_readPressure(){
+#if PressureViaADS1115
+int PressureMonitorClass::_readExternalAdc(void){
+    if(_ads) return _ads->readADC_SingleEnded(ADS1115_Transducer_ADC_NO);
+    return 0;
+}
+#endif
+
+int PressureMonitorClass::currentAdcReading(void){
+
+#if PressureViaADS1115
+    if(_adcType == TransducerADC_ADS1115){
+        return _readExternalAdc();
+    }else 
+#endif
+    {
+        return _readInternalAdc();
+    }
+}
+
+void PressureMonitorClass::_readPressure(void){
     float reading =(float) currentAdcReading();
 
     float psi = (reading - _settings->fb) * _settings->fa;
@@ -45,24 +81,84 @@ void PressureMonitorClass::_readPressure(){
     _currentPsi = _currentPsi + LowPassFilterParameter *(psi - _currentPsi);
     DBG_PRINTF("ADC:%d  PSIx10:%d currentx10:%d\n",(int)reading,(int)(psi*10),(int)_currentPsi*10);
     #else
-    _currentPsi = psi
+    _currentPsi = psi;
     DBG_PRINTF("ADC:%d  PSIx10:%d\n",(int)reading,(int)(psi*10));
     #endif
 }
 
-PressureMonitorClass::PressureMonitorClass(){
-    _currentPsi = 0;
-    _settings=theSettings.pressureMonitorSettings();
+PressureMonitorClass::PressureMonitorClass(void){}
 
-    wifi_set_sleep_type(NONE_SLEEP_T);
-    #if PressureViaADS1115
-    if(_settings->adc_type == TransducerADC_ADS1115){
+void PressureMonitorClass::_initInternalAdc(void){
+#if ESP32
+    if(_adcCharacter) return;
+    //Characterize ADC at particular atten
+    _adcCharacter =(esp_adc_cal_characteristics_t*) calloc(1, sizeof(esp_adc_cal_characteristics_t));
+    esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, DEFAULT_VREF, _adcCharacter);
+    //Check type of calibration value used to characterize ADC
+    if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+        DBG_PRINTF("ESP32 ADC CAL:eFuse Vref");
+    } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+        DBG_PRINTF("ESP32 ADC CAL:Two Point");
+    } else {
+        DBG_PRINTF("ESP32 ADC CAL:Default");
+    }
+
+#endif
+
+}
+#if PressureViaADS1115
+void PressureMonitorClass::_initExternalAdc(void){
+    if(!_ads){
         _ads = new Adafruit_ADS1115(ADS1115_ADDRESS);
         _ads->begin();
-    }else{
+    }    
+}
+#endif
+
+void PressureMonitorClass::_deinitInternalAdc(void){
+    if(!_adcCharacter) return;
+    free(_adcCharacter);
+    _adcCharacter=NULL;
+}
+
+#if PressureViaADS1115
+void PressureMonitorClass::_deinitExternalAdc(void){
+    if(_ads){
+        delete _ads;
         _ads =(Adafruit_ADS1115*) NULL;
     }
+}
+#endif
+
+
+void PressureMonitorClass::begin(void){
+
+    _currentPsi = 0;
+    _settings=theSettings.pressureMonitorSettings();
+    _ads =(Adafruit_ADS1115*) NULL;
+    #if ESP32
+    _adcCharacter = NULL;
     #endif
+
+ #if ESP8266
+    // move or NOT?
+    wifi_set_sleep_type(NONE_SLEEP_T);
+#endif
+
+    #if PressureViaADS1115
+
+    _adcType = _settings->adc_type; // to avoid race condition.
+
+    if(_adcType == TransducerADC_ADS1115){
+        _initExternalAdc();
+
+    }else{
+        _initInternalAdc();
+    }
+    #else
+    _initInternalAdc();
+    #endif
+
 }
 
 void PressureMonitorClass::setTargetPsi(uint8_t psi){
@@ -77,13 +173,6 @@ uint8_t PressureMonitorClass::getTargetPsi(void){
 
 void PressureMonitorClass::configChanged(void){
     #if PressureViaADS1115
-    if(_settings->adc_type == TransducerADC_ADS1115 && _ads == NULL){
-        _ads = new Adafruit_ADS1115(ADS1115_ADDRESS);
-        _ads->begin();
-    }else if (_settings->adc_type != TransducerADC_ADS1115 && _ads != NULL){
-        delete _ads;
-        _ads =(Adafruit_ADS1115*) NULL;
-    }
     #endif
 }
 
@@ -93,7 +182,6 @@ void PressureMonitorClass::loop(){
     if(_settings->mode == PMModeMonitor
             && (current - _time) > MinimumMonitorTime ){
         // read pressure, and report
-        _time=current;
         _readPressure();
 
     }else if(_settings->mode == PMModeControl

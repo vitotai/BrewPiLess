@@ -3,7 +3,13 @@
 #include <string.h>
 #include <IPAddress.h>
 #include <FS.h>
+
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#include <SPIFFS.h>
+#endif
 
 #include "Config.h"
 #include "BPLSettings.h"
@@ -631,8 +637,10 @@ String BPLSettings::jsonBeerProfile(void)
 				DBG_PRINTF("  sg:%d \n",s_step->gravity.sg);
 				if(_data.gdc.usePlato){
 					jstep["g"]= GravityToPlato(s_step->gravity.sg);
+					#if SerialDebug
 					Serial.print("SG:");
 					Serial.println(GravityToPlato(s_step->gravity.sg));
+					#endif
 				}else{
 					jstep["g"]= GravityToSG(s_step->gravity.sg);
 				}

@@ -76,7 +76,7 @@ public:
 
 	static uint8_t saveDefaultDevices();
 };
-
+#if 0
 class EepromStream
 {
 	eptr_t pv;
@@ -103,5 +103,5 @@ class EepromStream
 		eepromAccess.writeDeviceDefinition(pv, source, size);
 	}
 };
-
+#endif
 extern EepromManager eepromManager;

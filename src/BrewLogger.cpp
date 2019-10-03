@@ -39,6 +39,13 @@ BrewLogger::BrewLogger(void){
 
 	String BrewLogger::fsinfo(void)
 	{
+#if defined(ESP32)
+		String ret=String("{\"size\":") + String(SPIFFS.totalBytes())
+			+",\"used\":"  + String(SPIFFS.usedBytes())
+//			+",\"block\":" + String(fs_info.blockSize)
+//			+",\"page\":"  + String(fs_info.pageSize)
+			+"}";
+#else
 		FSInfo fs_info;
 		SPIFFS.info(fs_info);
 		String ret=String("{\"size\":") + String(fs_info.totalBytes)
@@ -46,6 +53,7 @@ BrewLogger::BrewLogger(void){
 			+",\"block\":" + String(fs_info.blockSize)
 			+",\"page\":"  + String(fs_info.pageSize)
 			+"}";
+#endif
 		return ret;
 	}
 	
@@ -353,6 +361,18 @@ BrewLogger::BrewLogger(void){
 		logData();
 	}
 
+	bool BrewLogger::checkTime(void){
+		time_t current= TimeKeeper.getTimeSeconds();
+		if(current - _trackedTime > 300){
+			DBG_PRINTF("Time updated. Restart volatile Log\n");
+			startVolatileLog();
+			return false;
+		}else{
+			_trackedTime = current;
+			return true;
+		}
+	}
+
 	void BrewLogger::logData(void){
 		uint8_t state, mode;
 		float fTemps[5];
@@ -393,7 +413,7 @@ BrewLogger::BrewLogger(void){
 		}
 		#if SupportPressureTransducer
 		// pressure, if any
-		DBG_PRINTF("Pressure mode:%d _lastPressureReading:%d, current:%d\n",PressureMonitor.mode(),_lastPressureReading,PressureEncode(PressureMonitor.currentPsi()));
+		//DBG_PRINTF("Pressure mode:%d _lastPressureReading:%d, current:%d\n",PressureMonitor.mode(),_lastPressureReading,PressureEncode(PressureMonitor.currentPsi()));
 		if(PressureMonitor.mode() != PMModeOff){
 			int16_t pressure = PressureEncode(PressureMonitor.currentPsi());
 			if(pressure != _lastPressureReading){
@@ -700,8 +720,20 @@ BrewLogger::BrewLogger(void){
 		_extTileAngle = INVALID_TILT_ANGLE;
 	}
 
+#define RESERVED_SIZE 8196*2
+
 	void BrewLogger::checkspace(void)
 	{
+#if defined(ESP32)
+		_fsspace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
+
+		if(_fsspace > RESERVED_SIZE){
+			_fsspace -= RESERVED_SIZE;
+		}else{
+			_fsspace=0;
+		}
+
+#else
 		FSInfo fs_info;
 		SPIFFS.info(fs_info);
 
@@ -711,6 +743,7 @@ BrewLogger::BrewLogger(void){
 		}else{
 			_fsspace=0;
 		}
+#endif
 		DBG_PRINTF("SPIFFS space:%d\n",_fsspace);
 	}
 

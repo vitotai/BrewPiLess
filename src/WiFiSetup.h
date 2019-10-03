@@ -3,6 +3,7 @@
 
 #include <DNSServer.h>
 
+#define WiFiStateUnknown 255
 #define WiFiStateConnected 0
 #define WiFiStateModeChangePending 1
 #define WiFiStateConnecting 2
@@ -22,13 +23,20 @@
 #define TIME_RECONNECT_TIMEOUT 20000
 #define    DNS_PORT  53
 
+#if defined(ESP32) 
+//WiFiMode
+typedef wifi_mode_t WiFiMode;
+#endif
+
+typedef std::function<void(bool apmode,IPAddress ip, IPAddress gw, IPAddress mask)> NetcfgHandler;
+
 class WiFiSetupClass
 {
 public:
-	WiFiSetupClass():_wifiState(WiFiStateConnected),_wifiScanState(WiFiScanStateNone),_switchToAp(true),_autoReconnect(true),
+	WiFiSetupClass():_wifiState(WiFiStateUnknown),_wifiScanState(WiFiScanStateNone),_switchToAp(true),_autoReconnect(true),
 		 _maxReconnect(5),_eventHandler(NULL),_targetSSID(NULL),_targetPass(NULL),_ip(INADDR_NONE),_gw(INADDR_NONE),_nm(INADDR_NONE){}
 
-	void begin(WiFiMode mode, char const *ssid,const char *passwd=NULL);
+	void begin(WiFiMode mode, char const *ssid,const char *passwd=NULL,char const* targetSSID=NULL,const char *targetPass=NULL);
 	void setMode(WiFiMode mode);
 	void staConfig(IPAddress ip=(uint32_t)0x00000000,IPAddress gw=(uint32_t)0x00000000, IPAddress nm=(uint32_t)0x00000000, IPAddress dns=(uint32_t)0x00000000);
 

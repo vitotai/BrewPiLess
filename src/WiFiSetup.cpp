@@ -1,6 +1,16 @@
-#include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#include <WebServer.h>
+#include <nvs.h>
+#include <nvs_flash.h>
+#endif
+
 //needed for library
 #include <DNSServer.h>
+#include <FS.h>
 #include "Config.h"
 #include "WiFiSetup.h"
 
@@ -20,7 +30,7 @@ WiFiSetupClass WiFiSetup;
 #endif
 
 #if SerialDebug
-#define wifi_info(a)	DBG_PRINTF("%s,SSID:%s pass:%s IP:%s, gw:%s\n",(a),WiFi.SSID().c_str(),WiFi.psk().c_str(),WiFi.localIP().toString().c_str(),WiFi.gatewayIP().toString().c_str())
+#define wifi_info(a)	DBG_PRINTF("%s,SSID:%s NW:%s pass:%s IP:%s, gw:%s\n",(a),_targetSSID? _targetSSID:"NULL", WiFi.SSID().c_str(),WiFi.psk().c_str(),WiFi.localIP().toString().c_str(),WiFi.gatewayIP().toString().c_str())
 #else
 #define wifi_info(a)
 #endif
@@ -66,18 +76,27 @@ bool WiFiSetupClass::isApMode(){
 	return WiFi.getMode() == WIFI_AP;
 }
 
-void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
+void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,char const* targetSSID,const char *targetPass)
 {
 	wifi_info("begin:");
 	
+	if(targetSSID && targetSSID[0]){
+		if(_targetSSID) free((void*)_targetSSID);
+		_targetSSID=strdup(targetSSID);
+	}
+	if(targetPass && targetPass[0]){
+		if(_targetPass) free((void*)_targetPass);
+		_targetPass=strdup(targetPass);
+	}
 
 	_mode= mode;
 	WiFiMode mode2use = (_mode == WIFI_OFF)? WIFI_AP_STA:_mode;
 	
-	DBG_PRINTF("\nSaved SSID:\"%s\"\n",WiFi.SSID().c_str());
+	DBG_PRINTF("\nSaved SSID:\"%s\" targetSSID:%s\n",WiFi.SSID().c_str(),targetSSID? targetSSID:"NULL");
 	DBG_PRINTF("\nAP mode:%d, used;%d autoReconect:%d\n",mode,mode2use,WiFi.getAutoReconnect());
 
-	if( (mode2use == WIFI_STA || mode2use == WIFI_AP_STA)
+	if( (mode2use == WIFI_STA || mode2use == WIFI_AP_STA) 
+		 && _targetSSID == NULL 
 		 && (WiFi.SSID() == "[Your SSID]" || WiFi.SSID() == "" || WiFi.SSID() == NULL)){
 			DBG_PRINTF("Invalid SSID!");
 			mode2use = WIFI_AP;
@@ -104,8 +123,8 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 			WiFi.config(INADDR_NONE,INADDR_NONE,INADDR_NONE);
 		}
 		
-		//WiFi.setAutoReconnect(true);
-		WiFi.begin();
+		wl_status_t status= WiFi.begin(targetSSID,targetPass);
+		DBG_PRINTF("WiFi.begin() return:%d\n",status);
 		_time=millis();
 	}
 }
@@ -162,7 +181,7 @@ bool WiFiSetupClass::stayConnected(void)
 {
 	if(_mode == WIFI_AP || _mode == WIFI_AP_STA){
 		dnsServer->processNextRequest();
-		if(_mode == WIFI_AP) return true;
+//		if(_mode == WIFI_AP) return true;
 	}
 	
 	if(_wifiState==WiFiStateChangeConnectPending){
@@ -231,11 +250,13 @@ bool WiFiSetupClass::stayConnected(void)
 				_time=millis();
 				DBG_PRINTF("Lost Network. auto reconnect %d\n",_autoReconnect);
 				_wifiState = WiFiStateConnectionRecovering;
+				WiFi.begin(_targetSSID,_targetPass);
 				return true;
 			}else if (_wifiState==WiFiStateConnectionRecovering){
 				// if sta mode, turn on AP mode
 				if(millis() - _time > TimeForRescueAPMode){
 					DBG_PRINTF("Stop recovering\n");
+					WiFi.disconnect();
 					_time = millis();
 					_wifiState =WiFiStateDisconnected;
 					WiFi.setAutoConnect(false);
@@ -263,6 +284,7 @@ bool WiFiSetupClass::stayConnected(void)
 				if(WiFi.getMode() != _mode){
 					WiFi.mode(_mode);
 				}
+				wifi_info("WiFi Connected:");
 				onConnected();
 				//return true;
 			}
@@ -333,7 +355,12 @@ String WiFiSetupClass::scanWifi(void) {
         	//int quality = getRSSIasQuality(WiFi.RSSI(indices[i]));
 			String item=String("{\"ssid\":\"") + WiFi.SSID(indices[i]) + 
 			String("\",\"rssi\":") + WiFi.RSSI(indices[i]) +
-			String(",\"enc\":") +  String((WiFi.encryptionType(indices[i]) != ENC_TYPE_NONE)? "1":"0")
+			String(",\"enc\":") + 
+			#if defined(ESP32)
+			 String((WiFi.encryptionType(indices[i]) != WIFI_AUTH_OPEN)? "1":"0")
+			#else
+			 String((WiFi.encryptionType(indices[i]) != ENC_TYPE_NONE)? "1":"0")
+			#endif
 			+ String("}");
 			if(comma){
 				rst += ",";	

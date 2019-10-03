@@ -9,8 +9,12 @@
 #include <FS.h>
 
 //#include <Hash.h>
-
+#if defined(ESP32)
+#include <AsyncTCP.h>
+#include <SPIFFS.h>
+#else
 #include <ESPAsyncTCP.h>
+#endif
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 //{ brewpi
@@ -52,7 +56,11 @@
 #endif
 
 extern "C" {
+#if defined(ESP32)
+//#include "lwip/apps/sntp.h"
+#else
 #include <sntp.h>
+#endif
 }
 
 #include "BPLSettings.h"
@@ -76,6 +84,10 @@ extern "C" {
 
 #if SupportPressureTransducer
 #include "PressureMonitor.h"
+#endif
+
+#if SupportTiltHydrometer
+#include "TiltReceiver.h"
 #endif
 
 //WebSocket seems to be unstable, at least on iPhone.
@@ -120,7 +132,6 @@ extern "C" {
 
 #define CHART_LIB_PATH       "/dygraph-combined.js"
 
-#define GRAVITY_PATH       "/gravity"
 
 #define BEER_PROFILE_PATH       "/tschedule"
 
@@ -131,9 +142,14 @@ extern "C" {
 #define ParasiteTempControlPath "/ptc"
 #endif
 
-
+#define GRAVITY_PATH       "/gravity"
 #define GravityDeviceConfigPath "/gdc"
 #define GravityFormulaPath "/coeff"
+
+#if SupportTiltHydrometer
+#define TiltCommandPath "/tcmd"
+#endif
+
 
 #if AUTO_CAP
 #define CAPPER_PATH "/cap"
@@ -172,6 +188,7 @@ const char *nocache_list[]={
 		else if(filename.endsWith(".pdf")) return "application/x-pdf";
 		else if(filename.endsWith(".zip")) return "application/x-zip";
 		else if(filename.endsWith(".gz")) return "application/x-gzip";
+		else if(filename.endsWith(".jgz")) return "application/javascript";
 		return "text/plain";
 	  }
 
@@ -212,6 +229,30 @@ class BrewPiWebHandler: public AsyncWebHandler
 	void handleFileList(AsyncWebServerRequest *request) {
 		if(request->hasParam("dir",true)){
         	String path = request->getParam("dir",true)->value();
+			#if defined(ESP32)
+			File dir = SPIFFS.open(path);
+          	String output = "[";
+			if(dir.isDirectory()){
+				File entry = dir.openNextFile();
+          		while(entry){
+            		
+            		if (output != "[") output += ',';
+            		bool isDir = false;
+            		output += "{\"type\":\"";
+            		output += (isDir)?"dir":"file";
+            		output += "\",\"name\":\"";
+            		output += String(entry.name()).substring(1);
+            		output += "\"}";
+            		entry.close();
+					entry = dir.openNextFile();
+          		}
+			  }
+          	output += "]";
+          	request->send(200, "text/json", output);
+          	output = String();
+
+
+			#else
           	Dir dir = SPIFFS.openDir(path);
           	path = String();
           	String output = "[";
@@ -229,6 +270,7 @@ class BrewPiWebHandler: public AsyncWebHandler
           	output += "]";
           	request->send(200, "text/json", output);
           	output = String();
+			#endif
         }
         else
           request->send(400);
@@ -236,7 +278,13 @@ class BrewPiWebHandler: public AsyncWebHandler
 
 	void handleFileDelete(AsyncWebServerRequest *request){
 		if(request->hasParam("path", true)){
-        	ESP.wdtDisable(); SPIFFS.remove(request->getParam("path", true)->value()); ESP.wdtEnable(10);
+			#if !defined(ESP32)
+        	ESP.wdtDisable(); 
+			#endif
+			SPIFFS.remove(request->getParam("path", true)->value()); 
+			#if !defined(ESP32)
+			ESP.wdtEnable(10);
+			#endif
             request->send(200, "", "DELETE: "+request->getParam("path", true)->value());
         } else
           request->send(404);
@@ -245,7 +293,9 @@ class BrewPiWebHandler: public AsyncWebHandler
 	void handleFilePuts(AsyncWebServerRequest *request){
 		if(request->hasParam("path", true)
 			&& request->hasParam("content", true)){
+			#if !defined(ESP32)
         	ESP.wdtDisable();
+			#endif
     		String file=request->getParam("path", true)->value();
     		File fh= SPIFFS.open(file, "w");
     		if(!fh){
@@ -255,7 +305,9 @@ class BrewPiWebHandler: public AsyncWebHandler
     		String c=request->getParam("content", true)->value();
       		fh.print(c.c_str());
       		fh.close();
+			#if !defined(ESP32)
         	ESP.wdtEnable(10);
+			#endif
             request->send(200,"application/json","{}");
             DBG_PRINTF("fputs path=%s\n",file.c_str());
         } else
@@ -281,9 +333,9 @@ class BrewPiWebHandler: public AsyncWebHandler
 		return false;
     }
 
-	void sendProgmem(AsyncWebServerRequest *request,const char* html)
+	void sendProgmem(AsyncWebServerRequest *request,const char* html,String contentType)
 	{
-		AsyncWebServerResponse *response = request->beginResponse(String("text/html"),
+		AsyncWebServerResponse *response = request->beginResponse(contentType,
   			strlen_P(html),
   			[=](uint8_t *buffer, size_t maxLen, size_t alreadySent) -> size_t {
     			if (strlen_P(html+alreadySent)>maxLen) {
@@ -312,7 +364,7 @@ class BrewPiWebHandler: public AsyncWebHandler
 				return;
 			}
 		}
-		String pathWithGz = path + ".gz";
+		String pathWithGz = path + String(".gz");
 		if(SPIFFS.exists(pathWithGz)){
 #if 0
 			AsyncWebServerResponse * response = request->beginResponse(SPIFFS, pathWithGz,getContentType(path));
@@ -357,10 +409,23 @@ class BrewPiWebHandler: public AsyncWebHandler
 		if(file){
 			DBG_PRINTF("using embedded file:%s\n",path.c_str());
 			if(gzip){
+				#if defined(ESP32)
+                AsyncWebServerResponse *response = request->beginResponse("text/html", size,[=](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+					 //Write up to "maxLen" bytes into "buffer" and return the amount written.
+  					//index equals the amount of bytes that have been already sent
+  					//You will not be asked for more bytes once the content length has been reached.
+  					//Keep in mind that you can not delay or yield waiting for more data!
+  					//Send what you currently have and you will be asked for more again
+  					memcpy(buffer,file + index, maxLen);
+					return maxLen;
+				});
+
+				#else
                 AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", file, size);
+				#endif
                 response->addHeader("Content-Encoding", "gzip");
                 request->send(response);
-			}else sendProgmem(request,(const char*)file);
+			}else sendProgmem(request,(const char*)file,getContentType(path));
 		}
 	}	  
 public:
@@ -473,6 +538,10 @@ public:
 	 	    if(!request->authenticate(syscfg->username, syscfg->password))
 	        return request->requestAuthentication();
 		 	request->send(200,"text/html","Done, restarting..");
+			WiFiConfiguration *wifiCon=theSettings.getWifiConfiguration();
+			wifiCon->ssid[0]='\0';
+			wifiCon->pass[0]='\0';
+			theSettings.save();
 			requestRestart(true);
 	 	}else if(request->method() == HTTP_POST &&  request->url() == FLIST_PATH){
 	 	    if(!request->authenticate(syscfg->username, syscfg->password))
@@ -845,8 +914,21 @@ void greeting(std::function<void(const char*)> sendFunc)
 
 #if UseWebSocket == true
 
-AsyncWebSocket ws(WS_PATH);
+class AWSClient{
+	uint32_t _clientId;
+public:
 
+	AWSClient(AsyncWebSocketClient* client){
+		_clientId=client->id();
+	}
+	void text(AsyncWebSocket *websocket,const char* msg){
+		websocket->text(_clientId,msg);
+	}
+	uint32_t clientId(void){ return _clientId; }
+
+};
+
+AsyncWebSocket ws(WS_PATH);
 
 #if GreetingInMainLoop
 AsyncWebSocketClient * _lastWSclient=NULL;
@@ -884,10 +966,12 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     	DBG_PRINTF("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len)?(char*)data:"");
   	} else if(type == WS_EVT_DATA){
     	AwsFrameInfo * info = (AwsFrameInfo*)arg;
+		
+//		DBG_PRINTF("ws[%u] message[%u]:", client->id(), info->len);
+
 //    	String msg = "";
     	if(info->final && info->index == 0 && info->len == len){
       		//the whole message is in a single frame and we got all of it's data
-//      		DBG_PRINTF("ws[%u] message[%lu]:", client->id(), info->len);
 
 	        for(size_t i=0; i < info->len; i++) {
         	  //msg += (char) data[i];
@@ -927,7 +1011,7 @@ void stringAvailable(const char *str)
 	//DBG_PRINTF("BroadCast:%s\n",str);
 
 #if UseWebSocket == true
-	ws.textAll(str,strlen(str));
+	ws.textAll(str);
 #endif
 
 #if UseServerSideEvent == true
@@ -1234,12 +1318,24 @@ public:
 		DBG_PRINTF("req: %s\n", request->url().c_str());
 	 	if(request->url() == GRAVITY_PATH	) return true;
 	 	if(request->url() == GravityDeviceConfigPath) return true;
-	 	if(request->url() == GravityFormulaPath) return true;		
+	 	if(request->url() == GravityFormulaPath) return true;
+#if	SupportTiltHydrometer
+	 	if(request->url() == TiltCommandPath) return true;
+#endif
 
 	 	return false;
 	}
 
 	void handleRequest(AsyncWebServerRequest *request){
+#if	SupportTiltHydrometer
+	 	if(request->url() == TiltCommandPath){
+			 if(request->hasParam("scan")){
+				 tiltReceiver.scan(NULL);
+			 }
+			 return;
+		 }
+#endif
+
 		if(request->url() == GRAVITY_PATH){
 			if(request->method() != HTTP_POST){
 				request->send(400);
@@ -1403,7 +1499,11 @@ public:
 				WiFiSetup.connect(ssid.c_str(),pass);
 				DBG_PRINTF("dynamic IP\n");
 			}
-			//MDNS.notifyAPChange();		
+		#ifdef ESP32
+		DBG_PRINTF("SSID:%s\n",ssid.c_str());
+		theSettings.setWiFiConfiguration(ssid.c_str(),pass);
+		#endif
+		//MDNS.notifyAPChange();		
 		theSettings.save();
 
 		request->send(200,"application/json","{}");
@@ -1429,6 +1529,11 @@ void wiFiEvent(const char* msg){
 	sprintf(buff,"W:%s",msg);
 	stringAvailable(buff);
 	free(buff);
+
+	if(WiFi.status() == WL_CONNECTED){
+		DBG_PRINTF("channel:%d, BSSID:%s\n",WiFi.channel(),WiFi.BSSIDstr().c_str());
+		if(! TimeKeeper.isSynchronized())TimeKeeper.updateTime();
+	}
 }
 //{brewpi
 
@@ -1446,7 +1551,7 @@ DelayImpl wait = DelayImpl(DELAY_IMPL_CONFIG);
 DisplayType realDisplay;
 DisplayType DISPLAY_REF display = realDisplay;
 
-ValueActuator alarm;
+ValueActuator alarmActuator;
 
 #ifdef ESP8266_WiFi
 
@@ -1456,7 +1561,7 @@ WiFiClient serverClient;
 #endif
 void handleReset()
 {
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
 	// The asm volatile method doesn't work on ESP8266. Instead, use ESP.restart
 	ESP.restart();
 #else
@@ -1474,6 +1579,10 @@ void brewpi_setup()
 	// We need to initialize the EEPROM on ESP8266
 	EEPROM.begin(MAX_EEPROM_SIZE_LIMIT);
 	eepromAccess.set_manual_commit(false); // TODO - Move this where it should actually belong (a class constructor)
+#endif
+
+#if FS_EEPROM
+	eepromAccess.begin();
 #endif
 
 #if BREWPI_BUZZER
@@ -1515,7 +1624,7 @@ void brewpiLoop(void)
 		lastUpdate = ticks.millis();
 
 #if BREWPI_BUZZER
-		buzzer.setActive(alarm.isActive() && !buzzer.isActive());
+		buzzer.setActive(alarmActuator.isActive() && !buzzer.isActive());
 #endif
 
 		tempControl.updateTemperatures();
@@ -1558,7 +1667,67 @@ void brewpiLoop(void)
 
 #ifdef STATUS_LINE
 extern void makeTime(time_t timeInput, struct tm &tm);
-time_t _displayTime;
+
+typedef enum _StatusLineDisplayItem{
+StatusLineDisplayIP=0,
+StatusLineDisplayTime
+}StatusLineDisplayItem;
+
+#define DisplayTimeDuration 8
+#define DisplayIPDuration 3
+
+class StatusLine{
+protected:
+	static time_t _displayTime;
+	static time_t _switchTime;
+	static StatusLineDisplayItem _displaying;
+
+	static void _printTime(time_t now){
+		struct tm t;
+		if(_displayTime == now) return;
+		_displayTime = now;
+		makeTime(TimeKeeper.getLocalTimeSeconds(),t);
+		char buf[21];
+		sprintf(buf,"%d/%02d/%02d %02d:%02d:%02d",t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
+		display.printStatus(buf);
+	}
+	static void _printIP(void){
+		
+		IPAddress ip =(WiFiSetup.isApMode())? WiFi.softAPIP():WiFi.localIP();
+		char buf[21];
+		sprintf(buf,"IP:%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
+		display.printStatus(buf);
+	}
+
+public:
+	StatusLine(){
+	}
+
+
+	static void loop(time_t now){	
+		if(now == _displayTime) return;
+
+		if(_displaying == StatusLineDisplayIP){
+			if(now - _switchTime > DisplayIPDuration){
+				_printTime(now);
+				_switchTime = now;
+				_displaying = StatusLineDisplayTime;
+			}
+		}else if(_displaying == StatusLineDisplayTime){
+			if(now - _switchTime > DisplayTimeDuration){
+				_printIP();
+				_switchTime = now;
+				_displaying = StatusLineDisplayIP;
+			}else _printTime(now);
+		}
+	}
+};
+time_t StatusLine::_displayTime;
+time_t  StatusLine::_switchTime;
+StatusLineDisplayItem StatusLine::_displaying = StatusLineDisplayTime;
+
+
+StatusLine statusLine;
 #endif
 
 
@@ -1597,7 +1766,11 @@ void setup(void){
 
 	//0.Initialize file system
 	//start SPI Filesystem
-  	if(!SPIFFS.begin()){
+#if defined(ESP32)
+  	if(!SPIFFS.begin(true)){
+#else
+	if(!SPIFFS.begin()){
+#endif
   		// TO DO: what to do?
   		DBG_PRINTF("SPIFFS.being() failed!\n");
   	}else{
@@ -1631,7 +1804,19 @@ void setup(void){
 	WiFiMode wifiMode= (WiFiMode) syscfg->wifiMode;
 	WiFiSetup.staConfig(IPAddress(syscfg->ip),IPAddress(syscfg->gw),IPAddress(syscfg->netmask),IPAddress(syscfg->dns));
 	WiFiSetup.onEvent(wiFiEvent);
-	WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password);
+#ifdef ESP32
+	WiFiConfiguration *wifiCon=theSettings.getWifiConfiguration();
+
+	if(strlen(syscfg->hostnetworkname)>0)
+		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password,wifiCon->ssid,wifiCon->pass);
+	else // something wrong with the file
+		WiFiSetup.begin(wifiMode,DEFAULT_HOSTNAME,DEFAULT_PASSWORD);
+#else
+	if(strlen(syscfg->hostnetworkname)>0)
+		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password);
+	else // something wrong with the file
+		WiFiSetup.begin(wifiMode,DEFAULT_HOSTNAME,DEFAULT_PASSWORD);
+#endif
 
   	DBG_PRINTF("WiFi Done!\n");
 
@@ -1682,7 +1867,14 @@ void setup(void){
 	//3.1.2 SPIFFS is part of the serving pages
 	//server.serveStatic("/", SPIFFS, "/","public, max-age=259200"); // 3 days
 
-
+#if defined(ESP32)
+	webServer->on("/fs",[](AsyncWebServerRequest *request){
+		request->send(200,"","totalBytes:" +String(SPIFFS.totalBytes()) +
+		" usedBytes:" + String(SPIFFS.usedBytes()) +
+		" heap:"+String(ESP.getFreeHeap()));
+		//testSPIFFS();
+	});
+#else
 	webServer->on("/fs",[](AsyncWebServerRequest *request){
 		FSInfo fs_info;
 		SPIFFS.info(fs_info);
@@ -1693,7 +1885,7 @@ void setup(void){
 		+" heap:"+String(ESP.getFreeHeap()));
 		//testSPIFFS();
 	});
-
+#endif
 	// 404 NOT found.
   	//called when the url is not defined here
 	webServer->onNotFound([](AsyncWebServerRequest *request){
@@ -1704,6 +1896,7 @@ void setup(void){
 	webServer->begin();
 	DBG_PRINTF("HTTP server started\n");
 
+	PressureMonitor.begin();
 
 	// 5. try to connnect Arduino
 	brewpi_setup();
@@ -1722,18 +1915,17 @@ void setup(void){
 	autoCapControl.begin();
 	#endif
 
+#if SupportTiltHydrometer
+	tiltReceiver.begin();
+#endif
+
 #if EanbleParasiteTempControl
 	parasiteTempController.init();
 #endif
 
 
 #ifdef STATUS_LINE
-	// brewpi_setup will "clear" the screen.
-	IPAddress ip =(WiFiSetup.isApMode())? WiFi.softAPIP():WiFi.localIP();
-	char buf[21];
-	sprintf(buf,"IP:%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
-	display.printStatus(buf);
-	_displayTime = TimeKeeper.getTimeSeconds() + 20;
+	statusLine.loop(0);
 #endif
 #ifdef EMIWorkaround
 	_lcdReinitTime = millis();
@@ -1756,7 +1948,9 @@ void loop(void){
 	brewpiLoop();
 #endif
 //}brewpi
+#ifdef ESP8266
 	MDNS.update();
+#endif
 #if EanbleParasiteTempControl
 	parasiteTempController.run();
 #endif
@@ -1774,15 +1968,7 @@ void loop(void){
 #endif
 
 #ifdef STATUS_LINE
-	if(_displayTime < now){
-		_displayTime=now;
-
-		struct tm t;
-		makeTime(TimeKeeper.getLocalTimeSeconds(),t);
-		char buf[21];
-		sprintf(buf,"%d/%02d/%02d %02d:%02d:%02d",t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
-		display.printStatus(buf);
-	}
+	statusLine.loop(now);
 #endif
 	if( (now - _rssiReportTime) > RssiReportPeriod){
 		_rssiReportTime =now;
@@ -1820,7 +2006,6 @@ void loop(void){
 
 	if(!IS_RESTARTING){
 		WiFiSetup.stayConnected();
-		if(WiFiSetup.isApMode()) TimeKeeper.setInternetAccessibility(false);
 	}
 
   	if(_systemState ==SystemStateRestartPending){
