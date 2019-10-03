@@ -180,6 +180,7 @@ public:
 			case 1: return actuatorPin2;
 			case 2: return actuatorPin3;
 			case 3: return actuatorPin4;
+			case 4: return actuatorPin5;
 			default: return -1;
 		}
 #else

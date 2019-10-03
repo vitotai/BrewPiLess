@@ -294,10 +294,11 @@
 
 #define oneWirePin    23
 
-#define actuatorPin1  26
-#define actuatorPin2  16
-#define actuatorPin3  17
-#define actuatorPin4  19
+#define actuatorPin1  16
+#define actuatorPin2  17
+#define actuatorPin3  19
+#define actuatorPin4  25
+#define actuatorPin5  26
 
 #define BuzzPin       18
 
