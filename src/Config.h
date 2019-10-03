@@ -266,7 +266,7 @@
 #define SettableMinimumCoolTime true
 //#endif
 
-#define BPL_VERSION "3.7"
+#define BPL_VERSION "4.0"
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -489,7 +489,6 @@
 //#endif
 
 #define EMIWorkaround 1
-#define BPL_VERSION "3.7"
 
 /**************************************************************************************/
 /*  Configuration: 																	  */
