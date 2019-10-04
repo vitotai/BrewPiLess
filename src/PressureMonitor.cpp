@@ -187,6 +187,7 @@ void PressureMonitorClass::loop(){
     if(_settings->mode == PMModeMonitor
             && (current - _time) > MinimumMonitorTime ){
         // read pressure, and report
+        _time = current;
         _readPressure();
 
     }else if(_settings->mode == PMModeControl
