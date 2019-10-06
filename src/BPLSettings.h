@@ -331,7 +331,7 @@ public:
     TimeInformation* timeInformation(void){ return &_data.timeinfo;}
     // gravity device
     GravityDeviceConfiguration* GravityConfig(void){return &_data.gdc; }
-    bool dejsonGravityConfig(char* json);
+    bool dejsonGravityConfig(const char* json);
     String jsonGravityConfig(void);
     // beer profile
     BeerTempSchedule* beerTempSchedule(void){ return &_data.tempSchedule;}

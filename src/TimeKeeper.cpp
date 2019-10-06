@@ -38,7 +38,7 @@ void TimeKeeperClass::begin(void)
 {
 
 	_referenceSeconds=loadTime();
-	_referenceSeconds += 300; // add 5 minutes.
+	_referenceSeconds += 60; // add 1 minutes.
   	_referenceSystemTime = millis();
 	_lastSaved=_referenceSeconds;
 	DBG_PRINTF("Load saved time:%ld\n",_referenceSeconds);

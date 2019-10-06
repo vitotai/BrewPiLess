@@ -18,8 +18,8 @@ HttpOverAsyncWebSocketClient::~HttpOverAsyncWebSocketClient(){
 
 uint8_t* getStringUntil(String &str,const char delimiter,uint8_t *data, size_t len){
     uint8_t *ptr=data;
-    while( *ptr != delimiter && (ptr - data) < len){
-        str += *ptr;
+    while( *ptr != delimiter && ptr < ( data+len )){
+        str += String((char)*ptr);
         ptr ++;
     }
     return ptr;
@@ -27,34 +27,31 @@ uint8_t* getStringUntil(String &str,const char delimiter,uint8_t *data, size_t l
 
 uint8_t* skipUntil(char delimiter,uint8_t *data, size_t len){
     uint8_t *ptr=data;
-    while( *ptr != delimiter && (ptr - data) < len){
+    while( *ptr != delimiter && ((size_t) (ptr - data) < len)){
         ptr ++;
     }
     return ptr;
 }
 
-#define METHOD_GET_STR "GET"
-#define METHOD_POST_STR "POST"
-#define METHOD_PUT_STR "PUT"
-#define METHOD_DELETE_STR "DELETE"
-
 // header must be in one frame only.
 bool HttpOverAsyncWebSocketClient::_parseBody(uint8_t *data, size_t len,bool final){
-
+    DBG_PRINTF("_parseBody len:%u, final:%d, content-type:%s\n",len,final,_contentType.c_str());
     if(len > 0){
         if(_contentType.startsWith("application/x-www-form-urlencoded")){
             // post
+            DBG_PRINTF("parsePost data\n");
             _parsePostVars(data,len);
         }else{
-            _handler->handleBody(this,data,len,final);
+            if(_handler) _handler->handleBody(this,data,len,final);
         }
     }else{
         // empty body
         DBG_PRINTF("empty BODY\n");
     }
     if(final){
+        DBG_PRINTF("handleRequest\n");
+        if(_handler) _handler->handleRequest(this);
         _state =ParseStateNull;
-        _handler->handleRequest(this);
     }else{
         _state = ParseStateBody;
     }
@@ -67,7 +64,13 @@ void HttpOverAsyncWebSocketClient::_clearParseState(void){
 }
 
 bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
- 
+
+    #if SerialDebug
+    char *pdata = (char*)data;
+    String datastr;
+    for(size_t i=0;i<len;i++) datastr += String(*pdata++);
+    DBG_PRINTF("WS parse:%s\n",datastr.c_str());
+    #endif
  
     if(_state == ParseStateBody){
         return _parseBody(data,len,final);
@@ -80,18 +83,24 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     // { headers}
     // Read the first line of HTTP request
     _clearParseState();
+
     uint8_t *ptr;
     String method="";
     ptr=getStringUntil(method,' ',data,len);
     ptr ++;
 
-    if( method == METHOD_GET_STR) _method = HTTP_GET;
-    else if( method == METHOD_POST_STR) _method = HTTP_POST;
-    else if( method == METHOD_PUT_STR) _method = HTTP_PUT;
-    else if( method == METHOD_DELETE_STR) _method = HTTP_DELETE;
-    else {
-        DBG_PRINTF("Error: unsupport method:%s\n",method.c_str());
+    if( method == "GET"){
+        _method = HTTP_GET;
+    }else if( method == "POST"){
+         _method = HTTP_POST;
+    }else if( method == "PUT"){
+        _method = HTTP_PUT;
+    }else if( method == "DELETE"){
+        _method = HTTP_DELETE;
+    }else {
         _state =final? ParseStateNull:ParseStateError;
+        DBG_PRINTF("Error: unsupported method:\"%s\"\n",method.c_str());
+        send(400);
         return false;
     }
 
@@ -109,14 +118,17 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
 
     _handler=_server->findHandler(this);
     if(!_handler){
-        DBG_PRINTF("Error: unsupport method:%s\n",method.c_str());
+        DBG_PRINTF("Error: unknow handler for:%s\n",_path.c_str());
         _state =final? ParseStateNull:ParseStateError;
+        send(404);
         return false;
     }
     // late proceessing arguments
 
-    if(queryStr.length() > 0) _parseGetQuery(queryStr);
-
+    if(queryStr.length() > 0){
+        DBG_PRINTF("QueryString:%s?\n",queryStr.c_str());
+        _parseGetQuery(queryStr);
+    }
     // skip the HTTP part since we don't care
     ptr= skipUntil('\n',ptr,data-ptr);
     ptr ++;
@@ -126,13 +138,18 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     while(ptr < (data + len) ){
         header="";
         ptr=getStringUntil(header,'\r',ptr,data+len-ptr);
-        if(header == "") break;
-        ptr++; // '\n'
+        
+        //DBG_PRINTF("header:\"%s\"\n",header.c_str());
+        ptr+=2; // '\r\n'
+        if(header == ""){
+            break;
+        }
         // process header
         int index = header.indexOf(':');
         if(index){
             String name = header.substring(0, index);
             String value = header.substring(index + 2);
+            DBG_PRINTF("Add header:\"%s\" : \"%s\"\n",name.c_str(),value.c_str());
             _addHeader(name,value);
         }
     } // while
@@ -199,4 +216,70 @@ void HttpOverAsyncWebSocketClient::_parseQueryString(bool isPost,uint8_t* data, 
         }
         ptr=nptr;
     }
+}
+
+
+void HttpOverAsyncWebSocketClient::sendRawText(String& data){
+    this->_client->text(data);
+}
+
+void HttpOverAsyncWebSocketClient::send(int code,const String& contextType,const String& data){
+    send(new HttpOverAsyncWebSocketResponse(_path,code,contextType,data));
+}
+
+void HttpOverAsyncWebSocketClient::send(HttpOverAsyncWebSocketResponse* response){
+    String msg;
+
+    response->getResponseString(msg);
+    _client->text(msg);
+
+    delete response;
+}
+
+bool HttpOverAsyncWebSocketClient::hasParam(const String& name, bool post, bool file) const {
+  for(const auto& p: _params){
+    if(p->name() == name && p->isPost() == post && p->isFile() == file){
+      return true;
+    }
+  }
+  return false;
+}
+
+bool HttpOverAsyncWebSocketClient::hasParam(const __FlashStringHelper * data, bool post, bool file) const {
+  PGM_P p = reinterpret_cast<PGM_P>(data);
+  size_t n = strlen_P(p);
+
+  char * name = (char*) malloc(n+1);
+  name[n] = 0; 
+  if (name) {
+    strcpy_P(name,p);    
+    bool result = hasParam( name, post, file); 
+    free(name); 
+    return result; 
+  } else {
+    return false; 
+  }
+}
+
+AsyncWebParameter* HttpOverAsyncWebSocketClient::getParam(const String& name, bool post, bool file) const {
+  for(const auto& p: _params){
+    if(p->name() == name && p->isPost() == post && p->isFile() == file){
+      return p;
+    }
+  }
+  return nullptr;
+}
+
+AsyncWebParameter* HttpOverAsyncWebSocketClient::getParam(const __FlashStringHelper * data, bool post, bool file) const {
+  PGM_P p = reinterpret_cast<PGM_P>(data);
+  size_t n = strlen_P(p);
+  char * name = (char*) malloc(n+1);
+  if (name) {
+    strcpy_P(name, p);   
+    AsyncWebParameter* result = getParam(name, post, file); 
+    free(name); 
+    return result; 
+  } else {
+    return nullptr; 
+  }
 }

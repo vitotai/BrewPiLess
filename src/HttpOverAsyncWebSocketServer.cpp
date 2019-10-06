@@ -1,3 +1,4 @@
+#include "Config.h"
 #include "HttpOverAsyncWebSocket.h"
 
 HttpOverAsyncWebSocketServer::HttpOverAsyncWebSocketServer():
@@ -22,15 +23,17 @@ void HttpOverAsyncWebSocketServer::_wsEventHandler(AsyncWebSocketClient * client
 	if(type == WS_EVT_CONNECT){
         // create a client
         _addClient(client);
+        DBG_PRINTF("Add client:%u\n",client->id());
   	} else if(type == WS_EVT_DISCONNECT){
         // remove the client
         _removeClient(client);
+        DBG_PRINTF("Remove client:%u\n",client->id());
   	} else if(type == WS_EVT_ERROR){
   	} else if(type == WS_EVT_PONG){
   	} else if(type == WS_EVT_DATA){
     	AwsFrameInfo * info = (AwsFrameInfo*)arg;
-		
-        _rcvData(client,data,len, (info->index + len) == info->len);
+		DBG_PRINTF("RCV: len:%u  info->len:%u, final:%u\n",len,info->len,(uint32_t) (info->final));
+        _rcvData(client,data,len, info->final);
     }
 }
 
@@ -62,9 +65,19 @@ HttpOverAsyncWebSocketHandler* HttpOverAsyncWebSocketServer::findHandler(HttpOve
 
     for(const auto& h: _handlers){
         if (h->canHandle(client)){
-            return (HttpOverAsyncWebSocketHandler*)&h;
+            return h;
         }
     }
     return NULL;
 }
 
+void HttpOverAsyncWebSocketServer::boradcast(HttpOverAsyncWebSocketResponse* response){
+    String msg;
+    response->getResponseString(msg);
+
+    for(const auto& h: _clients){
+        h->sendRawText(msg);
+    }
+
+    delete response;
+}

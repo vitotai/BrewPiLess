@@ -108,8 +108,8 @@ public:
 
     void sseNotify(char *buf);
 	//configuration processs
-    bool processconfig(char* configdata);
-	void loadConfig(void);
+    bool processconfig(const char* configdata);
+	void begin(void);
 	//update formula
 	void formula(float coeff[4],uint32_t npt);
 

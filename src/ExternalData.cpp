@@ -135,7 +135,7 @@ void ExternalData::reconfig(void){
 	#endif
 }
 
-void ExternalData::loadConfig(void){
+void ExternalData::begin(void){
     _cfg = theSettings.GravityConfig();
 #if SupportTiltHydrometer	
 	_tcfg = theSettings.tiltConfiguration();
@@ -144,7 +144,7 @@ void ExternalData::loadConfig(void){
 }
 
 
-bool ExternalData::processconfig(char* configdata){
+bool ExternalData::processconfig(const char* configdata){
    bool ret= theSettings.dejsonGravityConfig(configdata);
    if(ret){
 	   #if !SupportTiltHydrometer

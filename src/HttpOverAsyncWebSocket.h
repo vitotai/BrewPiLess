@@ -6,7 +6,7 @@
 
 class HttpOverAsyncWebSocketClient;
 class HttpOverAsyncWebSocketHandler;
-
+class HttpOverAsyncWebSocketResponse;
 
 class HttpOverAsyncWebSocketHandler {
   public:
@@ -28,6 +28,8 @@ public:
     void addHandler(HttpOverAsyncWebSocketHandler *handler);
     
     HttpOverAsyncWebSocketHandler* findHandler(HttpOverAsyncWebSocketClient*);
+    
+    void boradcast(HttpOverAsyncWebSocketResponse* response);
 
 protected:
     LinkedList<HttpOverAsyncWebSocketClient *> _clients;
@@ -66,13 +68,17 @@ public:
     AsyncWebParameter* getParam(const String& name, bool post=false, bool file=false) const;
     AsyncWebParameter* getParam(const __FlashStringHelper * data, bool post, bool file) const; 
 
-
+    void send(int code,const String& contextType=String(),const String& data=String());
+    void send(HttpOverAsyncWebSocketResponse* response);
 /* these are not used
     const String& arg(const String& name) const; // get request argument value by name
     const String& arg(const __FlashStringHelper * data) const; // get request argument value by F(name)    
     bool hasArg(const char* name) const;         // check if argument exists
     bool hasArg(const __FlashStringHelper * data) const;         // check if F(argument) exists
 */
+
+    void sendRawText(String& data);
+    const String& url(){ return _path;}
 protected:
     AsyncWebSocketClient* _client;
     HttpOverAsyncWebSocketServer *_server;
@@ -92,6 +98,42 @@ protected:
     void _parsePostVars(uint8_t* data, size_t len);
     void _parseQueryString(bool isPost,uint8_t* data, size_t len);
     void _clearParseState(void);
+};
+
+
+class HttpOverAsyncWebSocketResponse {
+  protected:
+    int _code;
+    LinkedList<AsyncWebHeader *> _headers;
+    String _contentType;
+    String _body;
+    String _path;
+    size_t _contentLength;
+  public:
+    HttpOverAsyncWebSocketResponse(const String& path,int code,const String& contentType=String(),const String& data=String()):
+        _headers(LinkedList<AsyncWebHeader *>([](AsyncWebHeader *h){ delete h; })){
+        _path =path;
+        _code =code;
+        _contentType=contentType;
+        _body = data;
+        if(contentType.length()){
+            addHeader("Content-Type",contentType);
+        }
+    }
+    ~HttpOverAsyncWebSocketResponse(){
+        _headers.free();
+    }
+    void addHeader(const String& name, const String& value){
+        _headers.add(new AsyncWebHeader(name, value));
+    }
+    void getResponseString(String& content){
+        content = String(_code) + " " + _path +"\r\n";
+        for(const auto& h: _headers){
+            content += h->name() +": " + h->value() + "\r\n";
+        }
+        content += "\r\n" + _body;
+    }
+
 };
 
 #endif
