@@ -32,7 +32,7 @@ void HttpOverAsyncWebSocketServer::_wsEventHandler(AsyncWebSocketClient * client
   	} else if(type == WS_EVT_PONG){
   	} else if(type == WS_EVT_DATA){
     	AwsFrameInfo * info = (AwsFrameInfo*)arg;
-		DBG_PRINTF("RCV: len:%u  info->len:%u, final:%u\n",len,info->len,(uint32_t) (info->final));
+		DBG_PRINTF("RCV: len:%u  info->len:%u, final:%d\n",len,info->len,info->final!=0);
         _rcvData(client,data,len, info->final);
     }
 }

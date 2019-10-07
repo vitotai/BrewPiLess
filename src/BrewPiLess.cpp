@@ -1100,7 +1100,6 @@ void sayHello()
 }
 #endif 
 
-#define MAX_DATA_SIZE 256
 
 class LogHandler:public AsyncWebHandler
 {
@@ -1173,7 +1172,9 @@ public:
 LogHandler logHandler;
 
 
-class ExternalDataHandler:public AsyncWebHandler
+#define MAX_DATA_SIZE 256
+
+class ISpindelHandler:public AsyncWebHandler
 {
 private:
 	char _buffer[MAX_DATA_SIZE+2];
@@ -1196,7 +1197,7 @@ private:
 
 public:
 
-	ExternalDataHandler(){
+	ISpindelHandler(){
     	_data = &(_buffer[2]);
     	_buffer[0]='G';
     	_buffer[1]=':';
@@ -1240,7 +1241,7 @@ public:
 	virtual bool isRequestHandlerTrivial() override final {return false;}
 #endif
 };
-ExternalDataHandler externalDataHandler;
+ISpindelHandler ispindelHandler;
 
 IPAddress scanIP(char const *str)
 	{
@@ -1266,6 +1267,77 @@ IPAddress scanIP(char const *str)
     	return sip;
 	}
 
+
+class ChartDataHandler:public HttpOverAsyncWebSocketHandler
+{
+public:
+	ChartDataHandler(){}
+
+	void handleRequest(HttpOverAsyncWebSocketClient *request){
+		// charting
+
+		int offset;
+		if(request->hasParam("offset")){
+			offset=request->getParam("offset")->value().toInt();
+			//DBG_PRINTF("offset= %d\n",offset);
+		}else{
+			offset=0;
+		}
+
+		size_t index;
+		bool indexValid;
+		if(request->hasParam("index")){
+			index=request->getParam("index")->value().toInt();
+			//DBG_PRINTF("index= %d\n",index);
+			indexValid=true;
+		}else{
+			indexValid=false;
+		}
+
+		if(!brewLogger.isLogging()){
+			// volatile logging
+			if(!indexValid){
+				// client in Logging mode. force to reload
+				offset=0;
+				index =0;
+			}
+			size_t size=brewLogger.volatileDataAvailable(index,offset);
+			size_t logoffset=brewLogger.volatileDataOffset();
+
+			if(size >0){
+				HttpOverAsyncWebSocketResponse *response = request->beginResponse("application/octet-stream", size,
+						[](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+					return brewLogger.readVolatileData(buffer, maxLen,index);
+				});
+				response->addHeader("LogOffset",String(logoffset));
+				request->send(response);
+			}else{
+				request->send(204);
+			}
+		}else{
+			if(indexValid){
+				// client in volatile Logging mode. force to reload
+				offset=0;
+			}
+
+			size_t size=brewLogger.beginCopyAfter(offset);
+			if(size >0){
+				HttpOverAsyncWebSocketResponse *response = request->beginResponse("application/octet-stream", size,
+						[](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+					return brewLogger.read(buffer, maxLen,index);
+				});
+				request->send(response);
+			}else{
+				request->send(204);
+			}
+		}
+	}
+
+	bool canHandle(HttpOverAsyncWebSocketClient *request){
+	 	if(request->url() == CHART_DATA_PATH) return true;
+	 	return false;
+	}
+};
 class NetworkConfig:public HttpOverAsyncWebSocketHandler
 {
 protected:
@@ -1709,7 +1781,7 @@ void setup(void){
 	webServer->addHandler(&miscHandler);
 	webServer->addHandler(&logHandler);
 
-	webServer->addHandler(&externalDataHandler);
+	webServer->addHandler(&ispindelHandler);
 
 	//3.1.2 SPIFFS is part of the serving pages
 	//server.serveStatic("/", SPIFFS, "/","public, max-age=259200"); // 3 days

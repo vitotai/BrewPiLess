@@ -3,10 +3,16 @@
 
 #include "ESPAsyncWebServer.h"
 #include "AsyncWebSocket.h"
+/*
+To implement HTTP over WebSocket.
+To make easy transition, mimic the interface of ESPAsyncWebServer.
+*/
+
 
 class HttpOverAsyncWebSocketClient;
 class HttpOverAsyncWebSocketHandler;
 class HttpOverAsyncWebSocketResponse;
+typedef std::function<size_t(uint8_t*, size_t, size_t)> HoawsResponseFiller;
 
 class HttpOverAsyncWebSocketHandler {
   public:
@@ -30,6 +36,7 @@ public:
     HttpOverAsyncWebSocketHandler* findHandler(HttpOverAsyncWebSocketClient*);
     
     void boradcast(HttpOverAsyncWebSocketResponse* response);
+    AsyncWebSocket* webSocket(void){ return _webSocket;}
 
 protected:
     LinkedList<HttpOverAsyncWebSocketClient *> _clients;
@@ -67,9 +74,12 @@ public:
 
     AsyncWebParameter* getParam(const String& name, bool post=false, bool file=false) const;
     AsyncWebParameter* getParam(const __FlashStringHelper * data, bool post, bool file) const; 
+    bool hasHeader(const String& name) const;
+    AsyncWebHeader* getHeader(const String& name) const;
 
     void send(int code,const String& contextType=String(),const String& data=String());
     void send(HttpOverAsyncWebSocketResponse* response);
+    HttpOverAsyncWebSocketResponse* beginResponse(const String& contentType, size_t len, HoawsResponseFiller callback);
 /* these are not used
     const String& arg(const String& name) const; // get request argument value by name
     const String& arg(const __FlashStringHelper * data) const; // get request argument value by F(name)    
@@ -84,7 +94,7 @@ protected:
     HttpOverAsyncWebSocketServer *_server;
     HttpOverAsyncWebSocketHandler *_handler;
     HttpOverAsyncWebSocketParseState _state;
-    
+    HttpOverAsyncWebSocketResponse *_responding;
     WebRequestMethod _method;
     String _path;
     String _contentType;
@@ -101,6 +111,7 @@ protected:
 };
 
 
+
 class HttpOverAsyncWebSocketResponse {
   protected:
     int _code;
@@ -109,31 +120,18 @@ class HttpOverAsyncWebSocketResponse {
     String _body;
     String _path;
     size_t _contentLength;
+    HoawsResponseFiller _filler;
   public:
-    HttpOverAsyncWebSocketResponse(const String& path,int code,const String& contentType=String(),const String& data=String()):
-        _headers(LinkedList<AsyncWebHeader *>([](AsyncWebHeader *h){ delete h; })){
-        _path =path;
-        _code =code;
-        _contentType=contentType;
-        _body = data;
-        if(contentType.length()){
-            addHeader("Content-Type",contentType);
-        }
-    }
-    ~HttpOverAsyncWebSocketResponse(){
-        _headers.free();
-    }
-    void addHeader(const String& name, const String& value){
-        _headers.add(new AsyncWebHeader(name, value));
-    }
-    void getResponseString(String& content){
-        content = String(_code) + " " + _path +"\r\n";
-        for(const auto& h: _headers){
-            content += h->name() +": " + h->value() + "\r\n";
-        }
-        content += "\r\n" + _body;
-    }
+    HttpOverAsyncWebSocketResponse(const String& path,int code,const String& contentType=String(),const String& data=String());
+    HttpOverAsyncWebSocketResponse(const String& path,const String& contentType,size_t size,HoawsResponseFiller datafiller);
 
+    ~HttpOverAsyncWebSocketResponse();
+    void addHeader(const String& name, const String& value);
+    bool isSimpleText(void);
+    String& path(void){ return _path;}
+
+    void getResponseString(String& content);
+    size_t readData(uint8_t *data, size_t index,size_t len);
 };
 
 #endif

@@ -1,11 +1,15 @@
 #include "Config.h"
 #include "HttpOverAsyncWebSocket.h"
 
+/* For "real" webserver, requests are concurrent, and so implemented as "request"-based.
+*  WebSocket connection is maintained for ONE client and keep alive, so it is implemented as "client"-based.
+*/
 
 HttpOverAsyncWebSocketClient::HttpOverAsyncWebSocketClient(AsyncWebSocketClient *client,HttpOverAsyncWebSocketServer *server)
 :_client(client),
 _server(server),
 _state(ParseStateNull),
+_responding(NULL),
 _headers(LinkedList<AsyncWebHeader *>([](AsyncWebHeader *h){ delete h; })),
 _params(LinkedList<AsyncWebParameter *>([](AsyncWebParameter *h){ delete h; }))
 {}
@@ -36,6 +40,7 @@ uint8_t* skipUntil(char delimiter,uint8_t *data, size_t len){
 // header must be in one frame only.
 bool HttpOverAsyncWebSocketClient::_parseBody(uint8_t *data, size_t len,bool final){
     DBG_PRINTF("_parseBody len:%u, final:%d, content-type:%s\n",len,final,_contentType.c_str());
+    // data request can't have body
     if(len > 0){
         if(_contentType.startsWith("application/x-www-form-urlencoded")){
             // post
@@ -50,7 +55,33 @@ bool HttpOverAsyncWebSocketClient::_parseBody(uint8_t *data, size_t len,bool fin
     }
     if(final){
         DBG_PRINTF("handleRequest\n");
-        if(_handler) _handler->handleRequest(this);
+        if(_responding){
+            // data request.
+            //check header
+            if(hasParam("index") && hasParam("size")){
+                int index= getParam("index")->value().toInt();
+                int size = getParam("size")->value().toInt();
+                // allocate buffer
+
+                AsyncWebSocketMessageBuffer * buffer = _server->webSocket()->makeBuffer(size);
+                if (buffer) {
+                    size_t left=_responding->readData(buffer->get(),index,size);
+                    _client->binary(buffer);
+                    if(left==0){
+                        // end of transfer
+                        delete _responding;
+                        _responding = NULL;
+                    }
+                }else{
+                    send(500);
+                }
+            }else{
+                // error
+                send(400);
+            }
+        }else {
+            if(_handler) _handler->handleRequest(this);
+        }
         _state =ParseStateNull;
     }else{
         _state = ParseStateBody;
@@ -115,6 +146,13 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
         _path = _path.substring(0, query);
     }
     // find handler
+    // check path
+    if(_responding && _responding->path() == _path){
+        DBG_PRINTF("Error: expected data transferring.\n");
+        // delete 
+        delete _responding;
+        _responding=NULL;
+    }
 
     _handler=_server->findHandler(this);
     if(!_handler){
@@ -228,13 +266,21 @@ void HttpOverAsyncWebSocketClient::send(int code,const String& contextType,const
 }
 
 void HttpOverAsyncWebSocketClient::send(HttpOverAsyncWebSocketResponse* response){
-    String msg;
+        String msg;
 
-    response->getResponseString(msg);
-    _client->text(msg);
+        response->getResponseString(msg);
+        _client->text(msg);
 
-    delete response;
+    if(response->isSimpleText()){
+        delete response;
+    }else{
+        _responding = response;
+        // enter sending binary data mode. 
+        // 
+    }
 }
+
+
 
 bool HttpOverAsyncWebSocketClient::hasParam(const String& name, bool post, bool file) const {
   for(const auto& p: _params){
@@ -282,4 +328,27 @@ AsyncWebParameter* HttpOverAsyncWebSocketClient::getParam(const __FlashStringHel
   } else {
     return nullptr; 
   }
+}
+
+
+bool HttpOverAsyncWebSocketClient::hasHeader(const String& name) const {
+  for(const auto& h: _headers){
+    if(h->name().equalsIgnoreCase(name)){
+      return true;
+    }
+  }
+  return false;
+}
+
+AsyncWebHeader* HttpOverAsyncWebSocketClient::getHeader(const String& name) const {
+  for(const auto& h: _headers){
+    if(h->name().equalsIgnoreCase(name)){
+      return h;
+    }
+  }
+  return nullptr;
+}
+
+HttpOverAsyncWebSocketResponse* HttpOverAsyncWebSocketClient::beginResponse(const String& contentType, size_t len, HoawsResponseFiller callback){
+    return new HttpOverAsyncWebSocketResponse(_path,contentType,len,callback);
 }
