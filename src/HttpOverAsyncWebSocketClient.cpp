@@ -9,7 +9,7 @@ HttpOverAsyncWebSocketClient::HttpOverAsyncWebSocketClient(AsyncWebSocketClient 
 :_client(client),
 _server(server),
 _state(ParseStateNull),
-_responding(NULL),
+_downloading(NULL),
 _headers(LinkedList<AsyncWebHeader *>([](AsyncWebHeader *h){ delete h; })),
 _params(LinkedList<AsyncWebParameter *>([](AsyncWebParameter *h){ delete h; }))
 {}
@@ -55,36 +55,30 @@ bool HttpOverAsyncWebSocketClient::_parseBody(uint8_t *data, size_t len,bool fin
     }
     if(final){
         DBG_PRINTF("handleRequest\n");
-        if(_responding){
-            // data request.
-            //check header
-            if(hasParam("index") && hasParam("size")){
-                int index= getParam("index")->value().toInt();
-                int size = getParam("size")->value().toInt();
-                // allocate buffer
-
-                AsyncWebSocketMessageBuffer * buffer = _server->webSocket()->makeBuffer(size);
-                if (buffer) {
-                    size_t left=_responding->readData(buffer->get(),index,size);
-                    _client->binary(buffer);
-                    if(left==0){
-                        // end of transfer
-                        delete _responding;
-                        _responding = NULL;
-                    }
-                }else{
-                    send(500);
-                }
-            }else{
-                // error
-                send(400);
-            }
-        }else {
-            if(_handler) _handler->handleRequest(this);
-        }
+        if(_handler) _handler->handleRequest(this);
         _state =ParseStateNull;
     }else{
         _state = ParseStateBody;
+    }
+    return true;
+}
+
+bool HttpOverAsyncWebSocketClient::_sendDataChunk(size_t index,size_t size){
+
+    size_t left = _downloading->dataLeft(index);
+    size_t toSend = (left < size)? left:size;
+
+    AsyncWebSocketMessageBuffer * buffer = _server->webSocket()->makeBuffer(toSend);
+    if (buffer) {
+        size_t dataRead = _downloading->readData(buffer->get(),index,toSend);
+        _client->binary(buffer);
+        if ((dataRead + index) >= _downloading->contentLength() ){
+            // end of transfer
+            delete _downloading;
+             _downloading = NULL;
+        }
+    }else{
+        return false;
     }
     return true;
 }
@@ -147,26 +141,27 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     }
     // find handler
     // check path
-    if(_responding && _responding->path() == _path){
-        DBG_PRINTF("Error: expected data transferring.\n");
-        // delete 
-        delete _responding;
-        _responding=NULL;
-    }
+    bool download=false;
+    if(_downloading && _downloading->path() == _path){
+        DBG_PRINTF("Download continue.\n");
+        download=true;
+    }else{
 
-    _handler=_server->findHandler(this);
-    if(!_handler){
-        DBG_PRINTF("Error: unknow handler for:%s\n",_path.c_str());
-        _state =final? ParseStateNull:ParseStateError;
-        send(404);
-        return false;
+        _handler=_server->findHandler(this);
+        if(!_handler){
+            DBG_PRINTF("Error: unknow handler for:%s\n",_path.c_str());
+            _state =final? ParseStateNull:ParseStateError;
+            send(404);
+            return false;
+        }
+        // late proceessing arguments
     }
-    // late proceessing arguments
-
+    
     if(queryStr.length() > 0){
-        DBG_PRINTF("QueryString:%s?\n",queryStr.c_str());
+        DBG_PRINTF("QueryString:\"%s\"\n",queryStr.c_str());
         _parseGetQuery(queryStr);
     }
+
     // skip the HTTP part since we don't care
     ptr= skipUntil('\n',ptr,data-ptr);
     ptr ++;
@@ -191,7 +186,21 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
             _addHeader(name,value);
         }
     } // while
-    return _parseBody(ptr,data+len-ptr,final);
+    if(download){
+        if(hasParam("index") && hasParam("size")){
+            int index= getParam("index")->value().toInt();
+            int size = getParam("size")->value().toInt();
+                // allocate buffer
+            if(! _sendDataChunk(index,size)){
+                send(500);
+            }
+        }else{
+            // error
+            send(400);
+        }
+        return true;
+    }else
+        return _parseBody(ptr,data+len-ptr,final);
 }
 
 void HttpOverAsyncWebSocketClient::_addHeader(const String& name,const String& value){
@@ -232,27 +241,30 @@ String urlDecode(const String& text){
 }
 
 void HttpOverAsyncWebSocketClient::_parseQueryString(bool isPost,uint8_t* data, size_t len){
-    
+    DBG_PRINTF("_parseQueryString:%u\n",len);
     uint8_t *ptr=data;
     uint8_t *nptr;
+    size_t length=len;
     String arg;
     for(;;){
         arg="";
-        nptr=getStringUntil(arg,'&',ptr,len);
+        nptr=getStringUntil(arg,'&',ptr,length);
         if(arg.length()>0){
             int index = arg.indexOf('=');
             if(index){
                 String name = arg.substring(0, index);
-                String value = arg.substring(index + 2);
+                String value = arg.substring(index + 1);
                 _params.add(new AsyncWebParameter(urlDecode(name), urlDecode(value),isPost));
             }            
         }
         nptr++;
-        if(nptr >= (ptr +len)){
+        if(nptr >= (data +len)){
             // end of string, or
             break;
         }
         ptr=nptr;
+        length = (data +len) - ptr;
+        DBG_PRINTF("_parseQueryString next:%u\n",length);
     }
 }
 
@@ -266,15 +278,17 @@ void HttpOverAsyncWebSocketClient::send(int code,const String& contextType,const
 }
 
 void HttpOverAsyncWebSocketClient::send(HttpOverAsyncWebSocketResponse* response){
-        String msg;
+    String msg;
 
-        response->getResponseString(msg);
-        _client->text(msg);
+    response->getResponseString(msg);
+    _client->text(msg);
 
     if(response->isSimpleText()){
         delete response;
     }else{
-        _responding = response;
+        if(_downloading) delete _downloading;
+        _downloading = response;
+        _sendDataChunk(0,MAX_INITIAL_FRAME_SIZE);
         // enter sending binary data mode. 
         // 
     }

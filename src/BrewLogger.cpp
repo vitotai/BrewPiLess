@@ -622,40 +622,52 @@ BrewLogger::BrewLogger(void){
 	{
 		return _startOffset;
 	}
-
-	size_t BrewLogger::volatileDataAvailable(size_t start,size_t offset)
+	
+	size_t BrewLogger::volatileDataAvailable(size_t startReference,size_t index)
 	{
+		// _startOffset: the current "offset" since boot-up
+		// startReference: the "offset" that the client got when it first connected.
+
 		// get size;
 		size_t dataAvail=(_logHead <= (int)_logIndex)? (_logIndex-_logHead):(LogBufferSize + _logIndex - _logHead);
-		dataAvail += VolatileHeaderSize; // for make-up header
+		dataAvail += VolatileHeaderSize; // add up  header on the fly
 		//DBG_PRINTF("volatileDataAvailable,start:%d, offset:%d, _logHead %d _logIndex %d, _startOffset:%d, dataAvail:%d\n",start, offset,_logHead,_logIndex,_startOffset, dataAvail);
-		if( ((start + offset) == 0)
-			|| ((start + offset) < _startOffset)   // error case
-		    || ((start + offset) > (_startOffset + dataAvail))) {  //error case
-			// force reload, start=offset=0, the same case
-			// send header?
-			_sendHeader=true;
-			_sendOffset=0;
-		}else{
-
-			size_t d= _startOffset + dataAvail - (start + offset);
+		if( ((startReference + index) > 0)
+			&& ((startReference + index) > _startOffset)   // error case
+		    && ((startReference + index) < (_startOffset + dataAvail))) {  //error case
+			// the client has read something before this time( should has read header)
+			size_t d= _startOffset + dataAvail - (startReference + index);
 			dataAvail= d;
-			// assume the header should already be sent.
-			_sendHeader=false;
-			_sendOffset=start + offset - _startOffset - VolatileHeaderSize + _logHead;
-			if(_sendOffset > LogBufferSize) _sendOffset -= LogBufferSize;
-
-			//DBG_PRINTF("prepare send from %d of %d\n",_sendOffset,d);
 		}
 
 		return dataAvail;
 	}
 
-	size_t BrewLogger::readVolatileData(uint8_t *buffer, size_t maxLen, size_t index)
+	size_t BrewLogger::readVolatileData(uint8_t *buffer, size_t maxLen, size_t index, size_t startReference)
 	{
 		size_t bufIdx=0;
 		size_t readIdx;
-		if(_sendHeader){
+		bool sendHeader;
+		size_t sendOffset;
+		if( ((index + startReference) == 0)
+			|| ((index + startReference) < _startOffset)   // error case
+		    || ((index + startReference) > (_startOffset + maxLen))) {  //error case
+			// force reload, index=startReference=0, the same case
+			// send header?
+			sendHeader=true;
+			sendOffset=0;
+		}else{
+
+			// assume the header should already be sent.
+			sendHeader=false;
+			sendOffset=index + startReference - _startOffset - VolatileHeaderSize + _logHead;
+			if(sendOffset > LogBufferSize) sendOffset -= LogBufferSize;
+
+			//DBG_PRINTF("prepare send from %d of %d\n",sendOffset,d);
+		}
+
+
+		if(sendHeader){
 			if(index < VolatileHeaderSize){
 				// maxLen < VolatileHeaderSize?
 				char header[VolatileHeaderSize];
@@ -667,7 +679,7 @@ BrewLogger::BrewLogger(void){
 				readIdx = index -VolatileHeaderSize;
 			}
 		}else{
-			readIdx = _sendOffset + index;
+			readIdx = sendOffset + index;
 		}
 
 		//DBG_PRINTF("readVolatileData maxLen=%d, index=%d, readIdx=%d\n",maxLen,index,readIdx);
@@ -818,16 +830,16 @@ BrewLogger::BrewLogger(void){
 		// a record full of all data = 2 + 7 * 2= 16
 		*ptr++ = (char) PeriodTag; //9
 		*ptr++ = (char) 0x7F; //10
-		for(int i=0;i<VolatileDataHeaderSize;i++){ // 10 + VolatileDataHeaderSize *2
+		for(int i=0;i<VolatileDataHeaderSetNumber;i++){ // 10 + VolatileDataHeaderSetNumber *2
 			*ptr++ = _headData[i] >> 8;
 			*ptr++ = _headData[i] & 0xFF;
 		}
 		// mode : 2
-		*ptr++ = ModeTag; // 11 + VolatileDataHeaderSize*2
-		*ptr++ = mode; // // 12 + VolatileDataHeaderSize*2
+		*ptr++ = ModeTag; // 11 + VolatileDataHeaderSetNumber*2
+		*ptr++ = mode; // // 12 + VolatileDataHeaderSetNumber*2
 		// state: 2
-		*ptr++ = StateTag; // 13 + VolatileDataHeaderSize*2
-		*ptr++ = state;  // 14 + VolatileDataHeaderSize*2
+		*ptr++ = StateTag; // 13 + VolatileDataHeaderSetNumber*2
+		*ptr++ = state;  // 14 + VolatileDataHeaderSetNumber*2
 		*ptr++ = TargetPsiTag; //15		
 		*ptr++ = _targetPsi;  // 16
 

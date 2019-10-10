@@ -1116,30 +1116,29 @@ public:
 			offset=0;
 		}
 
-		size_t index;
-		bool indexValid;
-		if(request->hasParam("index")){
-			index=request->getParam("index")->value().toInt();
-			//DBG_PRINTF("index= %d\n",index);
-			indexValid=true;
+		size_t reference;
+		bool referenceValid;
+		if(request->hasParam("ref")){
+			reference=request->getParam("ref")->value().toInt();
+			referenceValid=true;
 		}else{
-			indexValid=false;
+			referenceValid=false;
 		}
 
 		if(!brewLogger.isLogging()){
 			// volatile logging
-			if(!indexValid){
+			if(!referenceValid){
 				// client in Logging mode. force to reload
 				offset=0;
-				index =0;
+				reference =0;
 			}
-			size_t size=brewLogger.volatileDataAvailable(index,offset);
+			size_t size=brewLogger.volatileDataAvailable(reference,offset);
 			size_t logoffset=brewLogger.volatileDataOffset();
 
 			if(size >0){
 				AsyncWebServerResponse *response = request->beginResponse("application/octet-stream", size,
-						[](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-					return brewLogger.readVolatileData(buffer, maxLen,index);
+						[=](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+					return brewLogger.readVolatileData(buffer, maxLen,index,reference);
 				});
 				response->addHeader("LogOffset",String(logoffset));
 				request->send(response);
@@ -1147,7 +1146,7 @@ public:
 				request->send(204);
 			}
 		}else{
-			if(indexValid){
+			if(referenceValid){
 				// client in volatile Logging mode. force to reload
 				offset=0;
 			}
@@ -1279,35 +1278,35 @@ public:
 		int offset;
 		if(request->hasParam("offset")){
 			offset=request->getParam("offset")->value().toInt();
-			//DBG_PRINTF("offset= %d\n",offset);
+			DBG_PRINTF("offset= %d\n",offset);
 		}else{
 			offset=0;
 		}
 
-		size_t index;
-		bool indexValid;
-		if(request->hasParam("index")){
-			index=request->getParam("index")->value().toInt();
-			//DBG_PRINTF("index= %d\n",index);
-			indexValid=true;
+		size_t reference;
+		bool referenceValid;
+		if(request->hasParam("ref")){
+			reference=request->getParam("ref")->value().toInt();
+			DBG_PRINTF("ref= %d\n",reference);
+			referenceValid=true;
 		}else{
-			indexValid=false;
+			referenceValid=false;
 		}
 
 		if(!brewLogger.isLogging()){
 			// volatile logging
-			if(!indexValid){
+			if(!referenceValid){
 				// client in Logging mode. force to reload
 				offset=0;
-				index =0;
+				reference =0;
 			}
-			size_t size=brewLogger.volatileDataAvailable(index,offset);
+			size_t size=brewLogger.volatileDataAvailable(reference,offset);
 			size_t logoffset=brewLogger.volatileDataOffset();
 
 			if(size >0){
 				HttpOverAsyncWebSocketResponse *response = request->beginResponse("application/octet-stream", size,
-						[](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-					return brewLogger.readVolatileData(buffer, maxLen,index);
+						[=](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+					return brewLogger.readVolatileData(buffer, maxLen,index,reference);
 				});
 				response->addHeader("LogOffset",String(logoffset));
 				request->send(response);
@@ -1315,7 +1314,7 @@ public:
 				request->send(204);
 			}
 		}else{
-			if(indexValid){
+			if(referenceValid){
 				// client in volatile Logging mode. force to reload
 				offset=0;
 			}
@@ -1671,7 +1670,7 @@ class PiLinkHandler:public HttpOverAsyncWebSocketHandler {
 NetworkConfig networkConfig;
 PiLinkHandler piLinkHandler;
 BrewPiWebSocketHandler brewPiWebSocketHandler;
-
+ChartDataHandler chartDataHandler;
 HttpOverAsyncWebSocketServer wsServer;
 
 
@@ -1773,6 +1772,7 @@ void setup(void){
 	wsServer.addHandler(&brewPiWebSocketHandler);
 	wsServer.addHandler(&piLinkHandler);
 	wsServer.addHandler(&networkConfig);
+	wsServer.addHandler(&chartDataHandler);
 	wsServer.setup(ws);
 
 	webServer->addHandler(&ws);

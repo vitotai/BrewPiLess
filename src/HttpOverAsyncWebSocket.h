@@ -8,6 +8,7 @@ To implement HTTP over WebSocket.
 To make easy transition, mimic the interface of ESPAsyncWebServer.
 */
 
+#define MAX_INITIAL_FRAME_SIZE 1400
 
 class HttpOverAsyncWebSocketClient;
 class HttpOverAsyncWebSocketHandler;
@@ -94,7 +95,7 @@ protected:
     HttpOverAsyncWebSocketServer *_server;
     HttpOverAsyncWebSocketHandler *_handler;
     HttpOverAsyncWebSocketParseState _state;
-    HttpOverAsyncWebSocketResponse *_responding;
+    HttpOverAsyncWebSocketResponse *_downloading;
     WebRequestMethod _method;
     String _path;
     String _contentType;
@@ -108,6 +109,7 @@ protected:
     void _parsePostVars(uint8_t* data, size_t len);
     void _parseQueryString(bool isPost,uint8_t* data, size_t len);
     void _clearParseState(void);
+    bool _sendDataChunk(size_t index,size_t size);
 };
 
 
@@ -131,6 +133,9 @@ class HttpOverAsyncWebSocketResponse {
     String& path(void){ return _path;}
 
     void getResponseString(String& content);
+
+    size_t dataLeft(size_t offset){ return _contentLength - offset;}
+    size_t contentLength(void){ return _contentLength;}
     size_t readData(uint8_t *data, size_t index,size_t len);
 };
 

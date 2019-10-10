@@ -118,8 +118,8 @@ public:
 	void getFilePath(char* buf,int index);
 	// read data
 	size_t volatileDataOffset(void);
-	size_t volatileDataAvailable(size_t start,size_t offset);
-	size_t readVolatileData(uint8_t *buffer, size_t maxLen, size_t index);
+	size_t volatileDataAvailable(size_t startReference,size_t index);
+	size_t readVolatileData(uint8_t *buffer, size_t maxLen, size_t index,size_t offset);
 	// add data
 	void addGravity(float gravity,bool isOg=false);
 	void addAuxTemp(float temp);
