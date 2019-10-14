@@ -122,8 +122,10 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 			// might be necessary.
 			WiFi.config(INADDR_NONE,INADDR_NONE,INADDR_NONE);
 		}
-		
-		wl_status_t status= WiFi.begin(targetSSID,targetPass);
+		wl_status_t status;
+		if(targetSSID)
+			status= WiFi.begin(targetSSID,targetPass);
+		else WiFi.begin();
 		DBG_PRINTF("WiFi.begin() return:%d\n",status);
 		_time=millis();
 	}
@@ -196,7 +198,10 @@ bool WiFiSetupClass::stayConnected(void)
 			if(_ip != INADDR_NONE){
 				WiFi.config(_ip,_gw,_nm,_dns);
 			}
-			WiFi.begin(_targetSSID,_targetPass);
+			if(_targetSSID)
+				WiFi.begin(_targetSSID,_targetPass);
+			else
+				WiFi.begin();
 			_reconnect =0;
 			_wifiState = WiFiStateConnecting;
 
