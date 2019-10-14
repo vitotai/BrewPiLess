@@ -10,7 +10,9 @@
     </title>
     <meta name="apple-mobile-web-app-title" content="BrewPiLess">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <script type="text/javascript" src="dygraph-combined.js" ignore></script>
+    <script type="text/javascript" src="/dygraph.min.js" ignore></script>
+    <script type="text/javascript" src="js/vendor/synchronizer.js"></script>
+
     <script type="text/javascript" src="js/vendor/bwf.js"></script>
     <script type="text/javascript" src="js/vendor/chart.js"></script>
     <script type="text/javascript" src="js/vendor/regression.js"></script>
@@ -18,6 +20,9 @@
     <script type="text/javascript" src="js/shared.js"></script>
     <script type="text/javascript" src="js/capper.js"></script>
     <script type="text/javascript" src="js/script.js"></script>
+
+
+    <link rel="stylesheet" href="js/vendor/dygraph.css">
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -29,6 +34,8 @@
     <div style="display:none">
         <span id="ylabel"><%= chart_temperature %></span>
         <span id="y2label"><%= chart_gravity %></span>
+        <span id="psilabel"><%= chart_pressure %></span>
+        <span id="vollabel"><%= chart_co2vol %></span>
     </div>
 
     <div viewport layout horizontal>
@@ -125,7 +132,10 @@
         </div>
         <div main flex>
             <div layout horizontal>
-                <div id="div_g" class="chart"></div>
+                <div class=chart>
+                    <div id=div_g class=chart-main></div>
+                    <div id=div_p class="chart-p pressure-group"></div>
+                </div>
                 <ul flex class="chart-legend">
                     <li layout horizontal main-justified class="chart-legend-row time">
                         <span class="beer-chart-legend-time"><%= legend_date %></span>
@@ -171,6 +181,24 @@
                         <label onclick="BChart.toggle(FilteredSgLine)" for="filtersg" class="switch-label"><%= legend_filteredsg %><span class=platounit>&deg;P</span></label>
                         <div class="legend-value">--</div>
                     </li>
+                    <li layout horizontal main-justified class="chart-legend-row pressure pressure-group">
+                        <input type="checkbox" id="pressure" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(PressureLine,1)" for="pressure" class="switch-label"><%= legend_pressure %></label>
+                        <div class="legend-value">--</div>
+                    </li>
+
+                    <li layout horizontal main-justified class="chart-legend-row pressure-set pressure-group">
+                        <input type="checkbox" id="pressure-set" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(PressureSetLine,1)" for="pressure-set" class="switch-label"><%= legend_pressure_set %></label>
+                        <div class="legend-value">--</div>
+                    </li>
+
+                    <li layout horizontal main-justified class="chart-legend-row carbonation pressure-group">
+                        <input type="checkbox" id="carbonation" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(CarbonationLine,1)" for="carbonation" class="switch-label"><%= legend_carbonation %></label>
+                        <div class="legend-value">--</div>
+                    </li>
+
                     <li layout horizontal main-justified class="chart-legend-row" id="formula-btn" onclick="openpolynomialpane()">f</li>
                 </ul>
             </div>

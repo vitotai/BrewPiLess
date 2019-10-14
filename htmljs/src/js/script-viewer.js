@@ -1,10 +1,13 @@
         var BChart = {
-            toggle: function(type) {
-                this.chart.toggleLine(type);
+            toggle: function(line,p) {
+                if(typeof p !="undefined" && p)  this.chart.togglePsiLine(line);
+                else this.chart.toggleLine(line);
             },
-            init: function(id, y1, y2) {
+    
+            init: function(id, y1, y2,id2,pl,carbonation) {
                 this.chart = new BrewChart(id);
                 this.chart.setLabels(y1, y2);
+                this.chart.setPChart(id2,pl,carbonation)
             },
             setIgnoredMask: function(m) {
                 var t = this;
@@ -61,7 +64,7 @@
                 }
             }
 
-            BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
+            BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML);
 
             if (Q('#dropfile')) {
                 Q('#dropfile').ondragover = function(e) {
@@ -111,7 +114,7 @@
             for (var i = 1; i < BrewChart.Labels.length; i++) {
                 csv = csv + ((i == 0) ? "" : ",") + BrewChart.Labels[i];
             }
-            csv = csv + ",Tilt,state\n";
+            csv = csv + ",Tilt,state,pressure\n";
 
             for (var row = 0; row < BChart.chart.data.length; row++) {
                 for (var i = 0; i < BrewChart.Labels.length; i++) {
@@ -127,7 +130,9 @@
 
                 var state = parseInt(BChart.chart.state[row]);
                 var st = (!isNaN(state)) ? STATES[state].text : "";
-                csv = csv + "," + st + "\n";
+                csv = csv + "," + st;
+                csv = csv + "," + BChart.chart.psi[row][1];
+                csv = csv + "\n";
             }
             var blob = new Blob([csv], {
                 type: 'text/csv;'
@@ -142,10 +147,11 @@
             var data = BChart.chart.partial(ranges[0], ranges[1]);
             download(new Blob(data, { type: 'octet/stream' }), window.file.name + "-partial");
         }
-
+/*
         function cutrange2p() {
             if (typeof window.file == "undefined") return;
             var ranges = BChart.chart.chart.xAxisRange();
             var data = BChart.chart.partial2Plato(ranges[0], ranges[1]);
             download(new Blob(data, { type: 'octet/stream' }), window.file.name + "-partial");
         }
+        */

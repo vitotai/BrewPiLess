@@ -7,6 +7,8 @@
     "lcdline4": "",
     "chart_temperature": "Temperatura",
     "chart_gravity": "Densidade",
+    "chart_pressure": "Pressure(psi)",
+    "chart_co2vol":"CO2 Vol",
 
     "menu_logging": "Registros",
     "menu_setup": "Dispositivos",
@@ -34,6 +36,9 @@
     "legend_gravity": "Densidade",
     "legend_filteredsg": "SG Ajustada",
     "legend_state": "status",
+    "legend_pressure":"Pressure",
+    "legend_pressure_set":"Pressure Set",
+    "legend_carbonation":"CO2 Vol.",
 
     "control_title": "",
     "control_beerprofile": "Perfil de Fermentação",
@@ -97,6 +102,14 @@
     "dlg_poly_cal": "Calculado",
     "dlg_poly_error": "Erro",
     "dlg_poly_ignored": "Ignorado",
+    "dlg_co2_volume_desired":"CO2 Volume Desired:",
+    "dlg_beer_temperature":"Beer Temperature:",
+    "dlg_pressure":"Pressure:",
+    "ctrl_glycol_temperature_control":"Glycol Temperature Control",
+    "ctrl_glycol_target":"Target Temperature",
+    "ctrl_glycol_triggering":"Triggering Temperauture",
+    "ctrl_glycol_minimum_cooling":"Minimum Cooling Time",
+    "ctrl_glycol_minimum_idle":"Miminum Idle Time",
 
     "__delimiter__": "A seguir, interface do Tom.",
 
@@ -424,6 +437,7 @@
     "pressure_calibrate_step2_2": "psi, pressione",
     "pressure_calibrate_step2_button": "Calibrando passo 2",
     "dismiss": "Ignorar",
+    "external_ads1115":"Use ADS1115",
 
     "__new_for_logging": "Novos itens de registro",
 

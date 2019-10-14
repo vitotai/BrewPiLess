@@ -47,11 +47,16 @@
 
 .chart {
     width: calc(100% - 280px);
-    height: 390px;
     @include for-phone-only {
         width: 100%;
         margin-bottom: 16px;
     }
+}
+.chart-main {
+    height: 390px
+}
+.chart-p {
+    height: 130px
 }
 
 .chart-legend {
@@ -79,6 +84,10 @@
         background-color: #ddeeff;
         padding-bottom: 8px;
     }
+}
+
+.pressure-group {
+    visibility: hidden;
 }
 
 #gravity-sg,

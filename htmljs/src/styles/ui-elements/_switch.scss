@@ -65,3 +65,15 @@
 .switch-input:checked + label[for=filtersg].switch-label:after {
 	background-color: $filtersg-color;
 }
+
+.switch-input:checked + label[for=pressure].switch-label:after {
+	background-color: $pressure-color;
+}
+
+.switch-input:checked + label[for=pressure-set].switch-label:after {
+	background-color: $pressure-set-color;
+}
+
+.switch-input:checked + label[for=carbonation].switch-label:after {
+	background-color: $carbonation-color;
+}

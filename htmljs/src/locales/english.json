@@ -7,6 +7,8 @@
     "lcdline4": "",
     "chart_temperature": "Temperature",
     "chart_gravity": "Gravity",
+    "chart_pressure": "Pressure(psi)",
+    "chart_co2vol":"CO2 Vol",
 
     "menu_logging": "Data Logging",
     "menu_setup": "Device Setup",
@@ -34,7 +36,10 @@
     "legend_gravity": "Gravity",
     "legend_filteredsg": "Filtered SG",
     "legend_state": "state",
-
+    "legend_pressure":"Pressure",
+    "legend_pressure_set":"Pressure Set",
+    "legend_carbonation":"CO2 Vol.",
+    
     "control_title": "Set temperature mode:",
     "control_beerprofile": "Beer Profile",
     "control_beerconst": "Beer Const.",
@@ -66,15 +71,15 @@
     "control_setbeertemp": "Set Beer Temp:",
     "control_setfridgetemp": "Set Fridge temp:",
     "control_setoff": "Turning temperature control {B}off{/B}.",
-    "control_capstate": "Capping Status:",
+    "control_capstate": "Spunding Status:",
     "control_open": "Open",
-    "control_capped": "Capped",
-    "control_manualcapped": "Manual capped",
+    "control_capped": "Spunding",
+    "control_manualcapped": "Manual Spunding",
     "control_manualopen": "Manual Open",
     "control_manual": "Manual",
     "control_gravity": "Gravity",
-    "control_capgravity": "Cap when gravity is less than",
-    "control_capafter": "Cap after",
+    "control_capgravity": "Spunding when gravity is less than",
+    "control_capafter": "Spunding after",
 
     "dlg_connecting": "Communicating with BrewPiLess controller...",
 
@@ -98,6 +103,14 @@
     "dlg_poly_cal": "Calculated",
     "dlg_poly_error": "Error",
     "dlg_poly_ignored": "Ignored",
+    "dlg_co2_volume_desired":"CO2 Volume Desired:",
+    "dlg_beer_temperature":"Beer Temperature:",
+    "dlg_pressure":"Pressure:",
+    "ctrl_glycol_temperature_control":"Glycol Temperature Control",
+    "ctrl_glycol_target":"Target Temperature",
+    "ctrl_glycol_triggering":"Triggering Temperauture",
+    "ctrl_glycol_minimum_cooling":"Minimum Cooling Time",
+    "ctrl_glycol_minimum_idle":"Miminum Idle Time",
 
     "__delimiter__": "The following is for Tom's frontend.",
 
@@ -131,8 +144,8 @@
     "menu2_graph": "graph",
     "menu2_control": "control",
     "menu2_logs": "logs",
-    "menu2_setup": "setup",
-    "menu2_config": "config",
+    "menu2_setup": "Device",
+    "menu2_config": "System",
     "menu2_gravity": "gravity",
     "menu2_pressure": "Pressure",
 
@@ -399,7 +412,7 @@
     "mqtt_mode_path": "Path for mode:",
     "mqtt_beerset_path": "Path for beerSet:",
     "mqtt_fridgeset_path": "Path for fridgeSet:",
-    "mqtt_cap_control_path": "Path for capping control:",
+    "mqtt_cap_control_path": "Path for Spunding control:",
     "mqtt_ptc_path": "Path for PTC temperature:",
 
     "mqtt_settings": "MQTT Settings",
@@ -423,6 +436,7 @@
     "pressure_calibrate_step2_2": "psi, press",
     "pressure_calibrate_step2_button": "Calibrate step 2",
     "dismiss": "Dismiss",
+    "external_ads1115":"Use ADS1115",
 
     "__new_for_logging": "New logging items",
 

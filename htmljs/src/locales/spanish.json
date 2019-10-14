@@ -7,6 +7,8 @@
     "lcdline4": "",
     "chart_temperature": "Temperatura",
     "chart_gravity": "Densidad",
+    "chart_pressure": "Pressure(psi)",
+    "chart_co2vol":"CO2 Vol",
 
     "menu_logging": "Registro de datos",
     "menu_setup": "Ajustes del dispositivo",
@@ -34,6 +36,9 @@
     "legend_gravity": "Densidad",
     "legend_filteredsg": "SG filtrada",
     "legend_state": "estado",
+    "legend_pressure":"Pressure",
+    "legend_pressure_set":"Pressure Set",
+    "legend_carbonation":"CO2 Vol.",
 
     "control_title": "Establecer modo de temperatura:",
     "control_beerprofile": "Cerveza Perfil",
@@ -98,6 +103,14 @@
     "dlg_poly_cal": "Calculado",
     "dlg_poly_error": "Error",
     "dlg_poly_ignored": "Ignorado",
+    "dlg_co2_volume_desired":"CO2 Volume Desired:",
+    "dlg_beer_temperature":"Beer Temperature:",
+    "dlg_pressure":"Pressure:",
+    "ctrl_glycol_temperature_control":"Glycol Temperature Control",
+    "ctrl_glycol_target":"Target Temperature",
+    "ctrl_glycol_triggering":"Triggering Temperauture",
+    "ctrl_glycol_minimum_cooling":"Minimum Cooling Time",
+    "ctrl_glycol_minimum_idle":"Miminum Idle Time",
 
     "__delimiter__": "The following is for Tom's frontend.",
 
@@ -398,7 +411,7 @@
     "mqtt_mode_path": "Path for mode:",
     "mqtt_beerset_path": "Path for beerSet:",
     "mqtt_fridgeset_path": "Path for fridgeSet:",
-    "mqtt_cap_control_path": "Path for capping control:",
+    "mqtt_cap_control_path": "Path for Spunding control:",
     "mqtt_ptc_path": "Path for PTC temperature:",
 
     "mqtt_settings": "MQTT Settings",
@@ -423,6 +436,7 @@
     "pressure_calibrate_step2_2": "psi, press",
     "pressure_calibrate_step2_button": "Calibrate step 2",
     "dismiss": "Dismiss",
+    "external_ads1115":"Use ADS1115",
 
     "__new_for_logging": "New logging items",
 

@@ -22,12 +22,14 @@
     <!-- build:include partials/header.html -->
     <!-- /build -->
     <div viewport>
-        <div class="navbar corner-top corner-bottom">
-            <span class="bar-title"><%= setup_device_list %></span>
-            <button onclick=backup()><%= setup_backup %></button>
-            <button onclick=restore()><%= setup_restore %></button>
-            <button onclick=erase()><%= setup_erase_eeprom %></button>
-            <button onclick=list()><%= setup_refresh %></button>
+        <div class="navbar" horizontal layout main-justified cross-center>
+            <div class="navitems" >
+                <div class="navitem"><%= setup_device_list %></div>
+            <button  class="btn btn--raised" onclick=backup()><%= setup_backup %></button>
+            <button  class="btn btn--raised" onclick=restore()><%= setup_restore %></button>
+            <button  class="btn btn--raised" onclick=erase()><%= setup_erase_eeprom %></button>
+            <button  class="btn btn--raised" onclick=list()><%= setup_refresh %></button>
+        </div>
         </div>
         <div id="device-list">
             <div id="installed-device">

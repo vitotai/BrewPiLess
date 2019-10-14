@@ -42,17 +42,11 @@ var Capper = {
     psi_valid: false,
     hidepset: function(hide) {
         this.psi_valid = !hide;
-        var psets = document.querySelectorAll(".psi-set-group");
-        for (var i = 0; i < psets.length; i++) {
-            psets[i].style.display = hide ? "none" : "block";
-        }
+        Q(".psi-set-group").style.display = hide ? "none" : "block";        
     },
     setpsi: function(psi) {
         this.target_psi = psi;
-        var psets = document.querySelectorAll(".cappressure");
-        for (var i = 0; i < psets.length; i++) {
-            psets[i].value = psi;
-        }
+        Q("#cappressure").value = psi;        
     },
     init: function() {
         var t = this;
@@ -110,12 +104,9 @@ var Capper = {
             }
         };
         t.hidepset(true);
-        var psets = document.querySelectorAll(".cappressure");
-        for (var i = 0; i < psets.length; i++) {
-            psets[i].onchange = function() {
-                t.setpsi(this.value);
-            };
-        }
+        Q("#cappressure").onchange = function() {
+                t.target_psi=this.value;
+        };
     },
     send: function(arg) {
         console.log("send " + arg);
@@ -199,5 +190,27 @@ var Capper = {
                 this.setpsi(capst.psi);
             }
         }
+    },
+    tunit:'C',
+    calpsi:function(){
+        if(typeof BrewPiSetting !="undefined")
+            this.tunit=BrewPiSetting.tempUnit;
+
+        Q("#dlg_carbonation").style.display="block";
+    },
+    calCancel:function(){
+        Q("#dlg_carbonation").style.display="none";
+    },
+    calOk:function(){
+        var p=Q("#carcal-psi").innerHTML;
+        if(!isNaN(p)) this.setpsi(p);
+        Q("#dlg_carbonation").style.display="none";
+    },
+    cal:function(){
+        var V=Q("#carcal-vol").value;
+        var T = Q("#carcal-temp").value;
+        if(this.tunit == 'C') T = C2F(T);
+        var P = -16.6999 - 0.0101059 * T + 0.00116512 * T * T + 0.173354 * T * V + 4.24267 *V - 0.0684226 *V * V;
+        Q("#carcal-psi").innerHTML=Math.round(P);
     }
 };

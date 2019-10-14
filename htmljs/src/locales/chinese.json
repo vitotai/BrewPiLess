@@ -8,6 +8,8 @@
 
     "chart_temperature": "溫度",
     "chart_gravity": "比重",
+    "chart_pressure": "壓力(psi)",
+    "chart_co2vol":"CO2氣體數",
 
     "menu_logging": "資料記錄",
     "menu_setup": "設備設定",
@@ -35,6 +37,9 @@
     "legend_gravity": "比重",
     "legend_filteredsg": "均化比重",
     "legend_state": "狀態",
+    "legend_pressure":"壓力",
+    "legend_pressure_set":"設定壓力",
+    "legend_carbonation":"氣體數",
 
     "control_title": "設定溫控模式:",
     "control_beerprofile": "溫度行程",
@@ -67,10 +72,10 @@
     "control_setbeertemp": "啤酒溫度設為:",
     "control_setfridgetemp": "冰箱溫度設為:",
     "control_setoff": "關閉溫控",
-    "control_capstate": "Capping Status:",
+    "control_capstate": "Spunding Status:",
     "control_open": "Open",
-    "control_capped": "Capped",
-    "control_manualcapped": "Manual capped",
+    "control_capped": "Spunding",
+    "control_manualcapped": "Manual Spunding",
     "control_manualopen": "Manual Open",
     "control_manual": "Manual",
     "control_gravity": "Gravity",
@@ -99,6 +104,14 @@
     "dlg_poly_cal": "計算結果",
     "dlg_poly_error": "誤差",
     "dlg_poly_ignored": "忽略",
+    "dlg_co2_volume_desired":"CO2 氣體數:",
+    "dlg_beer_temperature":"啤酒溫度:",
+    "dlg_pressure":"壓力:",
+    "ctrl_glycol_temperature_control":"Glycol溫控設定",
+    "ctrl_glycol_target":"目標溫度",
+    "ctrl_glycol_triggering":"啓動溫度",
+    "ctrl_glycol_minimum_cooling":"最小啓動時間",
+    "ctrl_glycol_minimum_idle":"最小停止間隔",
 
     "00_delimiter": "***The following is for Tom's frontend.***",
 
@@ -132,7 +145,7 @@
     "menu2_graph": "狀態",
     "menu2_control": "控制",
     "menu2_logs": "記錄",
-    "menu2_setup": "設定",
+    "menu2_setup": "設備",
     "menu2_config": "系統",
     "menu2_gravity": "比重",
     "menu2_pressure": "壓力",
@@ -399,7 +412,7 @@
     "mqtt_mode_path": "模式 Path:",
     "mqtt_beerset_path": "啤酒設定溫度Path:",
     "mqtt_fridgeset_path": "冰箱設定溫度Path:",
-    "mqtt_cap_control_path": "加蓋Path:",
+    "mqtt_cap_control_path": "壓力控制Path:",
     "mqtt_ptc_path": "冷水溫度Path:",
 
     "mqtt_settings": "MQTT設定",
@@ -423,6 +436,8 @@
     "pressure_calibrate_step2_2": "psi壓力下, 按下",
     "pressure_calibrate_step2_button": "步驟二",
     "dismiss": "離開",
+    "external_ads1115":"使用ADS1115",
+
 
     "__new_for_logging": "New logging items",
 

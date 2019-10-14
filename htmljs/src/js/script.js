@@ -9,8 +9,9 @@
     var BChart = {
         offset: 0,
         url: 'chart.php',
-        toggle: function(line) {
-            this.chart.toggleLine(line);
+        toggle: function(line,p) {
+            if(typeof p !="undefined" && p)  this.chart.togglePsiLine(line);
+            else this.chart.toggleLine(line);
         },
         updateFormula: function() {
             var coeff = this.chart.coefficients;
@@ -166,11 +167,12 @@
                 t.reqdata();
             }, t.chart.interval * 1000);
         },
-        init: function(id, y1, y2) {
+        init: function(id, y1, y2,id2,pl,carbonation) {
             this.chart = new BrewChart(id);
             this.chart.setLabels(y1, y2);
+            this.chart.setPChart(id2,pl,carbonation)
         },
-        timer: null,
+    timer: null,
         start: function() {
             if (this.running) return;
             this.running = true;
@@ -776,7 +778,7 @@
 
     function init_classic() {
         window.plato = false;
-        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
+        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML);
         initRssi();
         Capper.init();
         BWF.gotMsg = true;
@@ -788,7 +790,7 @@
     function init() {
         Q("#pressure-info-pane").style.display = "none";
         window.plato = false;
-        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
+        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML);
         initRssi();
         Capper.init();
         BWF.gotMsg = true;
