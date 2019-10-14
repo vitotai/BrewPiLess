@@ -379,6 +379,7 @@ BrewLogger::BrewLogger(void){
 		if((miliseconds -_lastTempLog) < LoggingPeriod) return;
 		_lastTempLog = miliseconds;
 		_chartTime += LoggingPeriod/1000;
+		
 
 		uint32_t now = TimeKeeper.getTimeSeconds();
 //		if( ((_chartTime >  now) && (_chartTime -  now >  MinimumGapToSync)) 
@@ -622,7 +623,10 @@ BrewLogger::BrewLogger(void){
 	{
 		return _startOffset;
 	}
-	
+	// browser data: ...xxxxxxxxxxxxxxxxxxxxxx
+	//             startReference           index
+	// BPL data      .........xxxxxxxxxxxxxxxxxxx
+	//                      _startOffset
 	size_t BrewLogger::volatileDataAvailable(size_t startReference,size_t index)
 	{
 		// _startOffset: the current "offset" since boot-up
@@ -633,37 +637,44 @@ BrewLogger::BrewLogger(void){
 		dataAvail += VolatileHeaderSize; // add up  header on the fly
 		//DBG_PRINTF("volatileDataAvailable,start:%d, offset:%d, _logHead %d _logIndex %d, _startOffset:%d, dataAvail:%d\n",start, offset,_logHead,_logIndex,_startOffset, dataAvail);
 		if( ((startReference + index) > 0)
-			&& ((startReference + index) > _startOffset)   // error case
-		    && ((startReference + index) < (_startOffset + dataAvail))) {  //error case
+			&& ((startReference + index) >= _startOffset)   // error case
+		    && ((startReference + index) <= (_startOffset + dataAvail))) {  //error case
 			// the client has read something before this time( should has read header)
 			size_t d= _startOffset + dataAvail - (startReference + index);
 			dataAvail= d;
+		}else{
+			//force reload
+			// dataAvail has correct data
 		}
 
 		return dataAvail;
 	}
 
-	size_t BrewLogger::readVolatileData(uint8_t *buffer, size_t maxLen, size_t index, size_t startReference)
+	size_t BrewLogger::readVolatileData(uint8_t *buffer, size_t maxLen, size_t index, size_t startReference,size_t offset)
 	{
 		size_t bufIdx=0;
 		size_t readIdx;
 		bool sendHeader;
 		size_t sendOffset;
-		if( ((index + startReference) == 0)
-			|| ((index + startReference) < _startOffset)   // error case
-		    || ((index + startReference) > (_startOffset + maxLen))) {  //error case
-			// force reload, index=startReference=0, the same case
-			// send header?
-			sendHeader=true;
-			sendOffset=0;
-		}else{
+		size_t dataAvail=(_logHead <= (int)_logIndex)? (_logIndex-_logHead):(LogBufferSize + _logIndex - _logHead);
+		dataAvail += VolatileHeaderSize;
+		
+		DBG_PRINTF("volatileDataAvailable,off:%d, ref:%d, index:%d, _logHead %d _logIndex %d, _startOffset:%d, dataAvail:%d\n",offset,startReference, index,_logHead,_logIndex,_startOffset, dataAvail);
 
+		if( ((offset + startReference) > 0)
+			&& ((offset + startReference) >= _startOffset)   // error case
+		    && ((offset + startReference) <= (_startOffset + dataAvail))) {  //error case
 			// assume the header should already be sent.
 			sendHeader=false;
-			sendOffset=index + startReference - _startOffset - VolatileHeaderSize + _logHead;
+			sendOffset= offset+ startReference - _startOffset - VolatileHeaderSize + _logHead;
 			if(sendOffset > LogBufferSize) sendOffset -= LogBufferSize;
 
 			//DBG_PRINTF("prepare send from %d of %d\n",sendOffset,d);
+		}else{
+
+			sendHeader=true;
+			sendOffset=0;
+
 		}
 
 

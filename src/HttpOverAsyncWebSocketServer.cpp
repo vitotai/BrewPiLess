@@ -1,4 +1,3 @@
-#include "Config.h"
 #include "HttpOverAsyncWebSocket.h"
 
 HttpOverAsyncWebSocketServer::HttpOverAsyncWebSocketServer():
@@ -23,16 +22,16 @@ void HttpOverAsyncWebSocketServer::_wsEventHandler(AsyncWebSocketClient * client
 	if(type == WS_EVT_CONNECT){
         // create a client
         _addClient(client);
-        DBG_PRINTF("Add client:%u\n",client->id());
+        HOAWS_PRINTF("Add client:%u\n",client->id());
   	} else if(type == WS_EVT_DISCONNECT){
         // remove the client
         _removeClient(client);
-        DBG_PRINTF("Remove client:%u\n",client->id());
+        HOAWS_PRINTF("Remove client:%u\n",client->id());
   	} else if(type == WS_EVT_ERROR){
   	} else if(type == WS_EVT_PONG){
   	} else if(type == WS_EVT_DATA){
     	AwsFrameInfo * info = (AwsFrameInfo*)arg;
-		DBG_PRINTF("RCV: len:%u  info->len:%u, final:%d\n",len,info->len,info->final!=0);
+		HOAWS_PRINTF("RCV: len:%u  info->len:%u, final:%d\n",len,info->len,info->final!=0);
         _rcvData(client,data,len, info->final);
     }
 }

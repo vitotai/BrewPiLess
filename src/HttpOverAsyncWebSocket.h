@@ -1,6 +1,7 @@
 #ifndef HttpOverAsyncWebSocket_H
 #define HttpOverAsyncWebSocket_H
 
+#include "Config.h"
 #include "ESPAsyncWebServer.h"
 #include "AsyncWebSocket.h"
 /*
@@ -9,6 +10,12 @@ To make easy transition, mimic the interface of ESPAsyncWebServer.
 */
 
 #define MAX_INITIAL_FRAME_SIZE 1400
+
+#if 1
+#define HOAWS_PRINTF(...) DebugPort.printf(__VA_ARGS__)
+#else
+#define HOAWS_PRINTF(...)
+#endif
 
 class HttpOverAsyncWebSocketClient;
 class HttpOverAsyncWebSocketHandler;

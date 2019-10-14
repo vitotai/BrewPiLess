@@ -119,7 +119,7 @@ extern "C" {
 
 #define WS_PATH 		"/ws"
 
-
+#define ESTABLISH_PATH "/hi"
 // file operation
 #define FPUTS_PATH       "/fputs"
 #define FLIST_PATH       "/list"
@@ -433,11 +433,72 @@ public:
 		return false;
 	 }
 };
-void notifyLogStatus(void);
+
+void localLogStatus(String &status)
+{
+	const char *logname= brewLogger.currentLog();
+	String logstr=(logname)? String(logname):String("");
+	status=String("A:{\"reload\":\"chart\", \"log\":\"") +  logstr + String("\"}");
+}
+
+#if AUTO_CAP
+String capControlStatus(void);
+#endif
 
 class BrewPiWebSocketHandler: public HttpOverAsyncWebSocketHandler
 {
 protected:
+	void _greeting(String &ret)
+	{
+		char buf[512];
+		// gravity related info., starting from "G"
+		//if(externalData.iSpindelEnabled()){
+		//externalData.sseNotify(buf);
+		//sendFunc(buf);
+		//}
+
+		// misc informatoin, including
+
+		// RSSI && 
+		const char *logname= brewLogger.currentLog();
+		if(logname == NULL) logname="";
+		SystemConfiguration *syscfg= theSettings.systemConfiguration();
+		#if AUTO_CAP
+		String capstate= capControlStatus();
+
+		#if EanbleParasiteTempControl
+	
+		String ptcstate= parasiteTempController.getSettings();
+
+		sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
+				\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s},\"ptcs\":%s}"
+			,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
+			TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
+			logname, capstate.c_str(),ptcstate.c_str());
+
+
+		#else //EanbleParasiteTempControl
+		sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
+					\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s}}"
+			,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
+			TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
+			logname, capstate.c_str());
+		#endif //EanbleParasiteTempControl
+	
+		#else //AUTO_CAP
+		sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld, \"log\":\"%s\"}"
+			,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
+			TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset(),
+			logname);
+		#endif //AUTO_CAP
+
+//		sendFunc(buf);
+
+		//String nwstatus=String("W:") + WiFiSetup.status();
+		//sendFunc(nwstatus.c_str());
+		ret = String(buf);
+	}
+
 	void _handleFileList(HttpOverAsyncWebSocketClient *request) {
 		if(request->hasParam("dir",true)){
         	String path = request->getParam("dir",true)->value();
@@ -540,6 +601,7 @@ public:
 			return true;
 		}else if (request->method() == HTTP_POST || request->method() == HTTP_GET){
 			if (request->url() == CONFIG_PATH  // GET and POST
+				  || request->url() == ESTABLISH_PATH
 				  || request->url() == BEER_PROFILE_PATH
 				  || request->url() == MQTT_PATH
 				  || request->url() == LOGGING_PATH
@@ -620,21 +682,21 @@ public:
 					}
 
 					brewLogger.addCorrectionTemperature(externalData.hydrometerCalibration());
-
-					request->send(200);
-					notifyLogStatus();
+		
+					String status=brewLogger.loggingStatus();
+					request->send(200,"application/json",status);
 				}else
 					request->send(404);
 			}else if(request->hasParam("stop")){
 				DBG_PRINTF("Stop logging\n");
 				brewLogger.endSession();
 				externalData.setCalibrating(false);
-				request->send(200);
-				notifyLogStatus();
+				String status=brewLogger.loggingStatus();
+				request->send(200,"application/json",status);
 			}else{
 				// default. list information
 				String status=brewLogger.loggingStatus();
-				request->send(200);
+				request->send(200,"application/json",status);
 			}
 		} // end of logist path
 		/** tilt **/
@@ -867,6 +929,11 @@ public:
 					request->send(401);
 				}
 			}
+		}else if(request->url() == ESTABLISH_PATH){
+			//TODO: handle quthentication here
+			String ret;
+			_greeting(ret);
+			request->send(200,"application/json",ret);
 		}
 
 	} // handle()
@@ -942,94 +1009,12 @@ void capStatusReport(void)
 }
 #endif
 
-void greeting(std::function<void(const char*)> sendFunc)
-{
-	char buf[512];
-	// gravity related info., starting from "G"
-	if(externalData.gravityDeviceEnabled()){
-		externalData.sseNotify(buf);
-		sendFunc(buf);
-	} 
-
-	// misc informatoin, including
-
-	// RSSI && 
-	const char *logname= brewLogger.currentLog();
-	if(logname == NULL) logname="";
-	SystemConfiguration *syscfg= theSettings.systemConfiguration();
-
-	DynamicJsonDocument doc(1024);
-
-	doc["nn"] = String(syscfg->titlelabel);
-	doc["ver"] =  String(BPL_VERSION);
-	doc["rssi"]= WiFi.RSSI();
-	doc["tm"] = TimeKeeper.getTimeSeconds();
-	doc["off"]= TimeKeeper.getTimezoneOffset();
-	doc["log"] = String(logname);
-
-#if AUTO_CAP
-	JsonObject cap = doc.createNestedObject("cap");
-	capControlStatusJson(cap);
-
-#endif		 
-#if EanbleParasiteTempControl
-	
-	doc["ptc"]= serialized(parasiteTempController.getSettings());
-#endif
-
-#if EnableDHTSensorSupport
-	JsonObject hum = doc.createNestedObject("rh");
-	hum["m"] = humidityControl.mode();
-	hum["t"] = humidityControl.targetRH();
-#endif
-
-	String out="A:";
-	serializeJson(doc,out);
-
-	sendFunc(out.c_str());
-
-	// beer profile:
-	String profile=String("B:") + theSettings.jsonBeerProfile();
-	sendFunc(profile.c_str());
-	//network status:
-
-	String nwstatus=String("W:") + WiFiSetup.status();
-	sendFunc(nwstatus.c_str());
-
-}
-
-#define GreetingInMainLoop 1
 
 FileHandler fileHandler;
 MiscHandler miscHandler;
 
 AsyncWebSocket ws(WS_PATH);
 
-#if GreetingInMainLoop
-AsyncWebSocketClient * _lastWSclient=NULL;
-void sayHelloWS()
-{
-	if(! _lastWSclient) return;
-	
-	greeting([=](const char* msg){
-			_lastWSclient->text(msg);
-	});
-	
-	_lastWSclient = NULL;
-}
-
-#endif
-
-
-
-void notifyLogStatus(void)
-{
-	externalData.waitFormula();
-	const char *logname= brewLogger.currentLog();
-	String logstr=(logname)? String(logname):String("");
-	String status=String("A:{\"reload\":\"chart\", \"log\":\"") +  logstr + String("\"}");
-	stringAvailable(status.c_str());
-}
 
 void reportRssi(void)
 {
@@ -1092,83 +1077,6 @@ void reportRssi(void)
 
 
 
-
-#if GreetingInMainLoop 
-void sayHello()
-{
-	sayHelloWS();
-}
-#endif 
-
-
-class LogHandler:public AsyncWebHandler
-{
-public:
-
-	void handleRequest(AsyncWebServerRequest *request){
-		// charting
-
-		int offset;
-		if(request->hasParam("offset")){
-			offset=request->getParam("offset")->value().toInt();
-			//DBG_PRINTF("offset= %d\n",offset);
-		}else{
-			offset=0;
-		}
-
-		size_t reference;
-		bool referenceValid;
-		if(request->hasParam("ref")){
-			reference=request->getParam("ref")->value().toInt();
-			referenceValid=true;
-		}else{
-			referenceValid=false;
-		}
-
-		if(!brewLogger.isLogging()){
-			// volatile logging
-			if(!referenceValid){
-				// client in Logging mode. force to reload
-				offset=0;
-				reference =0;
-			}
-			size_t size=brewLogger.volatileDataAvailable(reference,offset);
-			size_t logoffset=brewLogger.volatileDataOffset();
-
-			if(size >0){
-				AsyncWebServerResponse *response = request->beginResponse("application/octet-stream", size,
-						[=](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-					return brewLogger.readVolatileData(buffer, maxLen,index,reference);
-				});
-				response->addHeader("LogOffset",String(logoffset));
-				request->send(response);
-			}else{
-				request->send(204);
-			}
-		}else{
-			if(referenceValid){
-				// client in volatile Logging mode. force to reload
-				offset=0;
-			}
-
-			size_t size=brewLogger.beginCopyAfter(offset);
-			if(size >0){
-				request->send("application/octet-stream", size, [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-					return brewLogger.read(buffer, maxLen,index);
-				});
-			}else{
-				request->send(204);
-			}
-		}
-	}
-
-	LogHandler(){}
-	bool canHandle(AsyncWebServerRequest *request){
-	 	if(request->url() == CHART_DATA_PATH) return true;
-	 	return false;
-	}
-};
-LogHandler logHandler;
 
 
 #define MAX_DATA_SIZE 256
@@ -1306,7 +1214,7 @@ public:
 			if(size >0){
 				HttpOverAsyncWebSocketResponse *response = request->beginResponse("application/octet-stream", size,
 						[=](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-					return brewLogger.readVolatileData(buffer, maxLen,index,reference);
+					return brewLogger.readVolatileData(buffer, maxLen,index,reference,offset);
 				});
 				response->addHeader("LogOffset",String(logoffset));
 				request->send(response);
@@ -1779,7 +1687,7 @@ void setup(void){
 
 	webServer->addHandler(&fileHandler);
 	webServer->addHandler(&miscHandler);
-	webServer->addHandler(&logHandler);
+//	webServer->addHandler(&logHandler);
 
 	webServer->addHandler(&ispindelHandler);
 
@@ -1932,10 +1840,6 @@ void loop(void){
 
 	#if EnableDHTSensorSupport
 	humidityControl.loop();
-	#endif
-
-	#if GreetingInMainLoop
-	sayHello();
 	#endif
 
 	if(!IS_RESTARTING){

@@ -1,4 +1,3 @@
-#include "Config.h"
 #include "HttpOverAsyncWebSocket.h"
 
 /* For "real" webserver, requests are concurrent, and so implemented as "request"-based.
@@ -39,22 +38,22 @@ uint8_t* skipUntil(char delimiter,uint8_t *data, size_t len){
 
 // header must be in one frame only.
 bool HttpOverAsyncWebSocketClient::_parseBody(uint8_t *data, size_t len,bool final){
-    DBG_PRINTF("_parseBody len:%u, final:%d, content-type:%s\n",len,final,_contentType.c_str());
+    HOAWS_PRINTF("_parseBody len:%u, final:%d, content-type:%s\n",len,final,_contentType.c_str());
     // data request can't have body
     if(len > 0){
         if(_contentType.startsWith("application/x-www-form-urlencoded")){
             // post
-            DBG_PRINTF("parsePost data\n");
+            //HOAWS_PRINTF("parsePost data\n");
             _parsePostVars(data,len);
         }else{
             if(_handler) _handler->handleBody(this,data,len,final);
         }
     }else{
         // empty body
-        DBG_PRINTF("empty BODY\n");
+//        HOAWS_PRINTF("empty BODY\n");
     }
     if(final){
-        DBG_PRINTF("handleRequest\n");
+        HOAWS_PRINTF("handleRequest:\n");
         if(_handler) _handler->handleRequest(this);
         _state =ParseStateNull;
     }else{
@@ -76,6 +75,8 @@ bool HttpOverAsyncWebSocketClient::_sendDataChunk(size_t index,size_t size){
             // end of transfer
             delete _downloading;
              _downloading = NULL;
+            HOAWS_PRINTF("Finish downloading.\n");
+
         }
     }else{
         return false;
@@ -94,7 +95,7 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     char *pdata = (char*)data;
     String datastr;
     for(size_t i=0;i<len;i++) datastr += String(*pdata++);
-    DBG_PRINTF("WS parse:%s\n",datastr.c_str());
+    HOAWS_PRINTF("WS parse:%s\n",datastr.c_str());
     #endif
  
     if(_state == ParseStateBody){
@@ -124,7 +125,7 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
         _method = HTTP_DELETE;
     }else {
         _state =final? ParseStateNull:ParseStateError;
-        DBG_PRINTF("Error: unsupported method:\"%s\"\n",method.c_str());
+        HOAWS_PRINTF("Error: unsupported method:\"%s\"\n",method.c_str());
         send(400);
         return false;
     }
@@ -143,13 +144,13 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     // check path
     bool download=false;
     if(_downloading && _downloading->path() == _path){
-        DBG_PRINTF("Download continue.\n");
+        HOAWS_PRINTF("Download continue.\n");
         download=true;
     }else{
 
         _handler=_server->findHandler(this);
         if(!_handler){
-            DBG_PRINTF("Error: unknow handler for:%s\n",_path.c_str());
+            HOAWS_PRINTF("Error: unknow handler for:%s\n",_path.c_str());
             _state =final? ParseStateNull:ParseStateError;
             send(404);
             return false;
@@ -158,7 +159,7 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     }
     
     if(queryStr.length() > 0){
-        DBG_PRINTF("QueryString:\"%s\"\n",queryStr.c_str());
+        HOAWS_PRINTF("QueryString:\"%s\"\n",queryStr.c_str());
         _parseGetQuery(queryStr);
     }
 
@@ -172,7 +173,7 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
         header="";
         ptr=getStringUntil(header,'\r',ptr,data+len-ptr);
         
-        //DBG_PRINTF("header:\"%s\"\n",header.c_str());
+        //HOAWS_PRINTF("header:\"%s\"\n",header.c_str());
         ptr+=2; // '\r\n'
         if(header == ""){
             break;
@@ -182,16 +183,16 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
         if(index){
             String name = header.substring(0, index);
             String value = header.substring(index + 2);
-            DBG_PRINTF("Add header:\"%s\" : \"%s\"\n",name.c_str(),value.c_str());
+            HOAWS_PRINTF("Add header:\"%s\" : \"%s\"\n",name.c_str(),value.c_str());
             _addHeader(name,value);
         }
     } // while
     if(download){
-        if(hasParam("index") && hasParam("size")){
-            int index= getParam("index")->value().toInt();
-            int size = getParam("size")->value().toInt();
+        if(hasHeader("offset") && hasHeader("size")){
+            int offset= getHeader("offset")->value().toInt();
+            int size = getHeader("size")->value().toInt();
                 // allocate buffer
-            if(! _sendDataChunk(index,size)){
+            if(! _sendDataChunk(offset,size)){
                 send(500);
             }
         }else{
@@ -241,7 +242,7 @@ String urlDecode(const String& text){
 }
 
 void HttpOverAsyncWebSocketClient::_parseQueryString(bool isPost,uint8_t* data, size_t len){
-    DBG_PRINTF("_parseQueryString:%u\n",len);
+    HOAWS_PRINTF("_parseQueryString:%u\n",len);
     uint8_t *ptr=data;
     uint8_t *nptr;
     size_t length=len;
@@ -264,7 +265,7 @@ void HttpOverAsyncWebSocketClient::_parseQueryString(bool isPost,uint8_t* data, 
         }
         ptr=nptr;
         length = (data +len) - ptr;
-        DBG_PRINTF("_parseQueryString next:%u\n",length);
+        HOAWS_PRINTF("_parseQueryString next:%u\n",length);
     }
 }
 
@@ -286,7 +287,10 @@ void HttpOverAsyncWebSocketClient::send(HttpOverAsyncWebSocketResponse* response
     if(response->isSimpleText()){
         delete response;
     }else{
-        if(_downloading) delete _downloading;
+        if(_downloading != NULL){
+            HOAWS_PRINTF("!!Error non-finished downloading!\n");
+            delete _downloading;
+        }
         _downloading = response;
         _sendDataChunk(0,MAX_INITIAL_FRAME_SIZE);
         // enter sending binary data mode. 
