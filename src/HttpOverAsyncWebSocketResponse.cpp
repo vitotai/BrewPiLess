@@ -1,12 +1,12 @@
 #include "HttpOverASyncWebSocket.h"
 
 HttpOverAsyncWebSocketResponse::HttpOverAsyncWebSocketResponse(const String& path,int code,const String& contentType,const String& data):
+        _code(code),
         _headers(LinkedList<AsyncWebHeader *>([](AsyncWebHeader *h){ delete h; })),
+        _contentType(contentType),
+        _body(data),
+        _path(path),
         _filler(NULL){
-        _path =path;
-        _code =code;
-        _contentType=contentType;
-        _body = data;
         if(contentType.length()){
             addHeader("Content-Type",contentType);
         }

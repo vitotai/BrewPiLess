@@ -9,6 +9,8 @@ HttpOverAsyncWebSocketClient::HttpOverAsyncWebSocketClient(AsyncWebSocketClient 
 _server(server),
 _state(ParseStateNull),
 _downloading(NULL),
+_path(),
+_contentType(),
 _headers(LinkedList<AsyncWebHeader *>([](AsyncWebHeader *h){ delete h; })),
 _params(LinkedList<AsyncWebParameter *>([](AsyncWebParameter *h){ delete h; }))
 {}
