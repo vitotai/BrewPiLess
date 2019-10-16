@@ -13,14 +13,7 @@ HttpOverAsyncWebSocketResponse::HttpOverAsyncWebSocketResponse(const String& pat
     }
 
 HttpOverAsyncWebSocketResponse::HttpOverAsyncWebSocketResponse(const String& path,const String& contentType,size_t size,HoawsResponseFiller dataFiller):
-        _headers(LinkedList<AsyncWebHeader *>([](AsyncWebHeader *h){ delete h; })){
-        _path =path;
-        _code =206;
-        _contentType=contentType;
-        _body = String();
-        if(contentType.length()){
-            addHeader("Content-Type",contentType);
-        }
+        HttpOverAsyncWebSocketResponse(path,206,contentType){
         _filler = dataFiller;
         _contentLength=size;
         addHeader("Content-Length",String(_contentLength));

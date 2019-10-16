@@ -448,14 +448,15 @@ String capControlStatus(void);
 class BrewPiWebSocketHandler: public HttpOverAsyncWebSocketHandler
 {
 protected:
-	void _greeting(String &ret)
+	String _greeting(void)
 	{
 		char buf[512];
 		// gravity related info., starting from "G"
-		//if(externalData.iSpindelEnabled()){
-		//externalData.sseNotify(buf);
-		//sendFunc(buf);
-		//}
+		// TODO: remove this!!
+		if(externalData.iSpindelEnabled()){
+			externalData.sseNotify(buf);
+			stringAvailable(buf);
+		}
 
 		// misc informatoin, including
 
@@ -463,40 +464,25 @@ protected:
 		const char *logname= brewLogger.currentLog();
 		if(logname == NULL) logname="";
 		SystemConfiguration *syscfg= theSettings.systemConfiguration();
-		#if AUTO_CAP
-		String capstate= capControlStatus();
 
-		#if EanbleParasiteTempControl
+	#if AUTO_CAP
+		String capstate= capControlStatus();
+	#else
+		String capstate= String();
+	#endif
+
+	#if EanbleParasiteTempControl
 	
 		String ptcstate= parasiteTempController.getSettings();
-
-		sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
-				\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s},\"ptcs\":%s}"
+	#else
+		String ptcstate=String("{\"enabled\":false}");
+	#endif
+		sprintf(buf,"{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s},\"ptcs\":%s}"
 			,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
 			TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
 			logname, capstate.c_str(),ptcstate.c_str());
 
-
-		#else //EanbleParasiteTempControl
-		sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
-					\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s}}"
-			,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
-			TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
-			logname, capstate.c_str());
-		#endif //EanbleParasiteTempControl
-	
-		#else //AUTO_CAP
-		sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld, \"log\":\"%s\"}"
-			,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
-			TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset(),
-			logname);
-		#endif //AUTO_CAP
-
-//		sendFunc(buf);
-
-		//String nwstatus=String("W:") + WiFiSetup.status();
-		//sendFunc(nwstatus.c_str());
-		ret = String(buf);
+		return String(buf);
 	}
 
 	void _handleFileList(HttpOverAsyncWebSocketClient *request) {
@@ -932,8 +918,7 @@ public:
 			}
 		}else if(request->url() == ESTABLISH_PATH){
 			//TODO: handle quthentication here
-			String ret;
-			_greeting(ret);
+			String ret=_greeting();
 			request->send(200,"application/json",ret);
 		}
 
