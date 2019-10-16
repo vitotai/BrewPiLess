@@ -117,9 +117,11 @@ public:
 	size_t read(uint8_t *buffer, size_t maxLen, size_t index);
 	void getFilePath(char* buf,int index);
 	// read data
-	size_t volatileDataOffset(void);
-	size_t volatileDataAvailable(size_t startReference,size_t index);
-	size_t readVolatileData(uint8_t *buffer, size_t maxLen, size_t index,size_t startReference,size_t offset);
+	size_t volatileStartIndex(void);
+	// read data
+	size_t volatileDataAvailable(void);
+	size_t volatileDataAvailable(size_t logicalAfter);
+	size_t readVolatileData(uint8_t *buffer, size_t maxLen, size_t index, size_t logicalAfter);
 	// add data
 	void addGravity(float gravity,bool isOg=false);
 	void addAuxTemp(float temp);
@@ -164,8 +166,8 @@ private:
 	int _logHead;
 	uint32_t _headTime;
 	uint32_t _startOffset;
-	bool _sendHeader;
-	uint32_t _sendOffset;
+	//bool _sendHeader;
+	//uint32_t _sendOffset;
 	FileIndexes *_pFileInfo;
 	uint8_t _targetPsi;
 

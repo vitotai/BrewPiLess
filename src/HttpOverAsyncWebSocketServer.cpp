@@ -71,8 +71,7 @@ HttpOverAsyncWebSocketHandler* HttpOverAsyncWebSocketServer::findHandler(HttpOve
 }
 
 void HttpOverAsyncWebSocketServer::boradcast(HttpOverAsyncWebSocketResponse* response){
-    String msg;
-    response->getResponseString(msg);
+    String msg=response->getResponseString();
 
     for(const auto& h: _clients){
         h->sendRawText(msg);

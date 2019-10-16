@@ -127,7 +127,7 @@ extern "C" {
 
 
 // logging
-#define LOGGING_PATH	"/log"
+#define REMOTE_LOG_PATH	"/log"
 #define LOGLIST_PATH  "/loglist.php"
 #define CHART_DATA_PATH "/chart.php"
 
@@ -233,7 +233,7 @@ void initTime(bool apmode)
 		TimeKeeper.begin();
 	}else{
 		DBG_PRINTF("connect to Time server\n");
-		TimeKeeper.begin((char*)"time.google.com",(char*)"pool.ntp.org",(char*)"time.windows.com");
+		TimeKeeper.begin((char*)"time1.google.com",(char*)"pool.ntp.org",(char*)"time.windows.com");
 	}
 */
 	TimeKeeper.begin((char*)"time.google.com",(char*)"pool.ntp.org",(char*)"time.windows.com");
@@ -604,7 +604,7 @@ public:
 				  || request->url() == ESTABLISH_PATH
 				  || request->url() == BEER_PROFILE_PATH
 				  || request->url() == MQTT_PATH
-				  || request->url() == LOGGING_PATH
+				  || request->url() == REMOTE_LOG_PATH
 				  || request->url() == ParasiteTempControlPath
 				  || request->url() == PRESSURE_PATH					
 	 			  || request->url() == CAPPER_PATH
@@ -627,7 +627,7 @@ public:
 	void handleRequest(HttpOverAsyncWebSocketClient *request){
 		//SystemConfiguration *syscfg=theSettings.systemConfiguration();
 		// LOGGING
-		if (request->url() == LOGGING_PATH){
+		if (request->url() == REMOTE_LOG_PATH){
 	 		if(request->method() == HTTP_POST){
 				if(request->hasParam("data", true)){
 		    		if(theSettings.dejsonRemoteLogging(request->getParam("data", true)->value())){
@@ -662,7 +662,8 @@ public:
 				DBG_PRINTF("Delete log file %d\n",index);
 				brewLogger.rmLog(index);
 
-				request->send(200);
+				String status=brewLogger.loggingStatus();
+				request->send(200,"application/json",status);
 			}else if(request->hasParam("start")){
 				String filename=request->getParam("start")->value();
 				DBG_PRINTF("start logging:%s\n",filename.c_str());
@@ -1183,38 +1184,39 @@ public:
 	void handleRequest(HttpOverAsyncWebSocketClient *request){
 		// charting
 
-		int offset;
-		if(request->hasParam("offset")){
-			offset=request->getParam("offset")->value().toInt();
-			DBG_PRINTF("offset= %d\n",offset);
+		int after;
+		if(request->hasParam("after")){
+			after=request->getParam("after")->value().toInt();
+			DBG_PRINTF("after= %d\n",after);
 		}else{
-			offset=0;
+			after=0;
 		}
 
-		size_t reference;
-		bool referenceValid;
-		if(request->hasParam("ref")){
-			reference=request->getParam("ref")->value().toInt();
-			DBG_PRINTF("ref= %d\n",reference);
-			referenceValid=true;
+		size_t startIndex;
+		bool startIndexValid;
+		if(request->hasParam("si")){
+			startIndex=request->getParam("si")->value().toInt();
+			DBG_PRINTF("ref= %d\n",startIndex);
+			startIndexValid=true;
 		}else{
-			referenceValid=false;
+			startIndexValid=false;
 		}
-
+		// it is not "client"-safe way.
+		// it can't handle two or more clients requesting at the same time
 		if(!brewLogger.isLogging()){
 			// volatile logging
-			if(!referenceValid){
+			if(!startIndexValid){
 				// client in Logging mode. force to reload
-				offset=0;
-				reference =0;
+				after=0;
+				startIndex =0;
 			}
-			size_t size=brewLogger.volatileDataAvailable(reference,offset);
-			size_t logoffset=brewLogger.volatileDataOffset();
+			size_t size=brewLogger.volatileDataAvailable(startIndex+after);
+			size_t logoffset=brewLogger.volatileStartIndex();
 
 			if(size >0){
 				HttpOverAsyncWebSocketResponse *response = request->beginResponse("application/octet-stream", size,
 						[=](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-					return brewLogger.readVolatileData(buffer, maxLen,index,reference,offset);
+					return brewLogger.readVolatileData(buffer, maxLen,index, startIndex + after);
 				});
 				response->addHeader("LogOffset",String(logoffset));
 				request->send(response);
@@ -1222,12 +1224,12 @@ public:
 				request->send(204);
 			}
 		}else{
-			if(referenceValid){
+			if(startIndexValid){
 				// client in volatile Logging mode. force to reload
-				offset=0;
+				after=0;
 			}
 
-			size_t size=brewLogger.beginCopyAfter(offset);
+			size_t size=brewLogger.beginCopyAfter(after);
 			if(size >0){
 				HttpOverAsyncWebSocketResponse *response = request->beginResponse("application/octet-stream", size,
 						[](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
@@ -1562,11 +1564,11 @@ class PiLinkHandler:public HttpOverAsyncWebSocketHandler {
   public:
     PiLinkHandler(){}
     bool canHandle(HttpOverAsyncWebSocketClient *client){
-		if(client->path() == PILINK_PATH) return true;
+		if(client->url() == PILINK_PATH) return true;
 		return false;
     }
     void handleRequest(HttpOverAsyncWebSocketClient *client){
-		DBG_PRINTF("handleRequest:%s, method%d\n",client->path().c_str(),client->method());
+		DBG_PRINTF("handleRequest:%s, method%d\n",client->url().c_str(),client->method());
 	}
     void handleBody(HttpOverAsyncWebSocketClient *client __attribute__((unused)), uint8_t *data, size_t len, bool final __attribute__((unused))){
 		for(size_t i=0; i < len; i++) {

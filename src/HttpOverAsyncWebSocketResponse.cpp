@@ -13,7 +13,14 @@ HttpOverAsyncWebSocketResponse::HttpOverAsyncWebSocketResponse(const String& pat
     }
 
 HttpOverAsyncWebSocketResponse::HttpOverAsyncWebSocketResponse(const String& path,const String& contentType,size_t size,HoawsResponseFiller dataFiller):
-        HttpOverAsyncWebSocketResponse(path,206,contentType){
+        _headers(LinkedList<AsyncWebHeader *>([](AsyncWebHeader *h){ delete h; })){
+        _path =path;
+        _code =206;
+        _contentType=contentType;
+        _body = String();
+        if(contentType.length()){
+            addHeader("Content-Type",contentType);
+        }
         _filler = dataFiller;
         _contentLength=size;
         addHeader("Content-Length",String(_contentLength));
@@ -44,8 +51,8 @@ void HttpOverAsyncWebSocketResponse::addHeader(const String& name, const String&
         _headers.add(new AsyncWebHeader(name, value));
 }
 
-void HttpOverAsyncWebSocketResponse::getResponseString(String& content){
-        content = String(_code) + " " + _path +"\r\n";
+String HttpOverAsyncWebSocketResponse::getResponseString(void){
+        String content = String(_code) + " " + _path +"\r\n";
         for(const auto& h: _headers){
             content += h->name() +": " + h->value() + "\r\n";
         }
@@ -54,4 +61,5 @@ void HttpOverAsyncWebSocketResponse::getResponseString(String& content){
         if(_path != "/pi")
         HOAWS_PRINTF("rsp:%s\n",content.c_str());
         #endif
+        return content;
 }

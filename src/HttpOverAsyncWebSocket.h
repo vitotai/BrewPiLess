@@ -17,6 +17,12 @@ To make easy transition, mimic the interface of ESPAsyncWebServer.
 #define HOAWS_PRINTF(...)
 #endif
 
+#if 0 // debuging parsing parts
+#define HOAWS_PARSE_PRINTF(...) DebugPort.printf(__VA_ARGS__)
+#else
+#define HOAWS_PARSE_PRINTF(...)
+#endif
+
 class HttpOverAsyncWebSocketClient;
 class HttpOverAsyncWebSocketHandler;
 class HttpOverAsyncWebSocketResponse;
@@ -73,7 +79,6 @@ public:
     
     bool parse(uint8_t *data, size_t len,bool final);
 
-    String path(){ return _path;}
     WebRequestMethod method(){ return _method;}
 
     // interface to minic ESPAsyncWebRequest for minimum modification
@@ -137,9 +142,9 @@ class HttpOverAsyncWebSocketResponse {
     ~HttpOverAsyncWebSocketResponse();
     void addHeader(const String& name, const String& value);
     bool isSimpleText(void);
-    String& path(void){ return _path;}
+    const String& path(void) { return _path;}
 
-    void getResponseString(String& content);
+    String getResponseString(void);
 
     size_t dataLeft(size_t offset){ return _contentLength - offset;}
     size_t contentLength(void){ return _contentLength;}

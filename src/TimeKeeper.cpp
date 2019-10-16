@@ -57,11 +57,17 @@ time_t TimeKeeperClass::_queryServer(void){
 		#endif
 		DBG_PRINTF("Time from NTP :%ld, %d\n",secs,trial);
     	if(secs > 1546265623){ 
+			DBG_PRINTF("Time from NTP :%ld\n",secs);
 			_ntpSynced=true;
 			break;
 		}
-    	delay(200);
+    	delay(500);
   	}
+	#if SerialDebug
+    if(secs < 1546265623)
+			DBG_PRINTF("!!Error getting time from NTP\n");
+	#endif
+
 	return secs;
 }
 
@@ -76,12 +82,12 @@ void TimeKeeperClass::updateTime(void){
 void TimeKeeperClass::begin(char* server1,char* server2,char* server3)
 {
 #ifdef ESP32
-	if(! server1) configTime(0,0,"time.nist.gov");
+	if(! server1) configTime(0,0,"time.google.com");
 	else configTime(0,0,server1,server2,server3);
 
 #else
   	if(server1) sntp_setservername(0,server1);
-  	else sntp_setservername(0,(char*)"time.nist.gov");
+  	else sntp_setservername(0,(char*)"time.google.com");
   	if(server2) sntp_setservername(1,server2);
   	if(server3) sntp_setservername(2,server3);
   	sntp_set_timezone(0);
@@ -125,6 +131,18 @@ time_t TimeKeeperClass::getTimeSeconds(void) // get Epoch time
 	time_t now= _referenceSeconds + diff/1000;
 
 	if(	(now - _lastSaved) > TIME_SAVING_PERIOD){
+		time_t secs;
+		#ifdef ESP32
+		time(&secs);
+		#else
+    	secs = sntp_get_current_timestamp();
+		#endif
+		if(secs > 1546265623){
+			DBG_PRINTF("Time from NTP :%ld\n",secs);
+  			_referenceSystemTime = millis();
+	  		_referenceSeconds = secs;
+		}
+		
 		saveTime(now);
 		_lastSaved=now;
 	}

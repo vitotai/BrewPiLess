@@ -16,16 +16,19 @@ _params(LinkedList<AsyncWebParameter *>([](AsyncWebParameter *h){ delete h; }))
 HttpOverAsyncWebSocketClient::~HttpOverAsyncWebSocketClient(){
     _headers.free();
     _params.free();
-
+    if(_downloading) delete _downloading;
 }
 
-uint8_t* getStringUntil(String &str,const char delimiter,uint8_t *data, size_t len){
-    uint8_t *ptr=data;
-    while( *ptr != delimiter && ptr < ( data+len )){
+String getStringUntil(const char delimiter,uint8_t **pptr, size_t len){
+    String str;
+    uint8_t *ptr=*pptr;
+    uint8_t *limit = ptr + len;
+    while( *ptr != delimiter && ptr <  limit ){
         str += String((char)*ptr);
         ptr ++;
     }
-    return ptr;
+    *pptr = ptr;
+    return str;
 }
 
 uint8_t* skipUntil(char delimiter,uint8_t *data, size_t len){
@@ -38,22 +41,22 @@ uint8_t* skipUntil(char delimiter,uint8_t *data, size_t len){
 
 // header must be in one frame only.
 bool HttpOverAsyncWebSocketClient::_parseBody(uint8_t *data, size_t len,bool final){
-    HOAWS_PRINTF("_parseBody len:%u, final:%d, content-type:%s\n",len,final,_contentType.c_str());
+    HOAWS_PARSE_PRINTF("_parseBody len:%u, final:%d, content-type:%s\n",len,final,_contentType.c_str());
     // data request can't have body
     if(len > 0){
         if(_contentType.startsWith("application/x-www-form-urlencoded")){
             // post
-            //HOAWS_PRINTF("parsePost data\n");
+            //HOAWS_PARSE_PRINTF("parsePost data\n");
             _parsePostVars(data,len);
         }else{
             if(_handler) _handler->handleBody(this,data,len,final);
         }
     }else{
         // empty body
-//        HOAWS_PRINTF("empty BODY\n");
+//        HOAWS_PARSE_PRINTF("empty BODY\n");
     }
     if(final){
-        HOAWS_PRINTF("handleRequest:\n");
+        HOAWS_PARSE_PRINTF("handleRequest:\n");
         if(_handler) _handler->handleRequest(this);
         _state =ParseStateNull;
     }else{
@@ -75,7 +78,7 @@ bool HttpOverAsyncWebSocketClient::_sendDataChunk(size_t index,size_t size){
             // end of transfer
             delete _downloading;
              _downloading = NULL;
-            HOAWS_PRINTF("Finish downloading.\n");
+            HOAWS_PARSE_PRINTF("Finish downloading.\n");
 
         }
     }else{
@@ -95,7 +98,7 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     char *pdata = (char*)data;
     String datastr;
     for(size_t i=0;i<len;i++) datastr += String(*pdata++);
-    HOAWS_PRINTF("WS parse:%s\n",datastr.c_str());
+    HOAWS_PARSE_PRINTF("WS parse:%s\n",datastr.c_str());
     #endif
  
     if(_state == ParseStateBody){
@@ -110,9 +113,9 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     // Read the first line of HTTP request
     _clearParseState();
 
-    uint8_t *ptr;
+    uint8_t* ptr=data;
     String method="";
-    ptr=getStringUntil(method,' ',data,len);
+    method=getStringUntil(' ',&ptr,len);
     ptr ++;
 
     if( method == "GET"){
@@ -125,14 +128,12 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
         _method = HTTP_DELETE;
     }else {
         _state =final? ParseStateNull:ParseStateError;
-        HOAWS_PRINTF("Error: unsupported method:\"%s\"\n",method.c_str());
+        HOAWS_PARSE_PRINTF("Error: unsupported method:\"%s\"\n",method.c_str());
         send(400);
         return false;
     }
-
-    _path="";
     
-    ptr = getStringUntil(_path,' ',ptr,data+len-ptr);
+    _path = getStringUntil(' ',&ptr,data+len-ptr);
 
     int query=_path.indexOf('?');
     String queryStr;
@@ -144,13 +145,13 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     // check path
     bool download=false;
     if(_downloading && _downloading->path() == _path){
-        HOAWS_PRINTF("Download continue.\n");
+        HOAWS_PARSE_PRINTF("Download continue.\n");
         download=true;
     }else{
 
         _handler=_server->findHandler(this);
         if(!_handler){
-            HOAWS_PRINTF("Error: unknow handler for:%s\n",_path.c_str());
+            HOAWS_PARSE_PRINTF("Error: unknow handler for:%s\n",_path.c_str());
             _state =final? ParseStateNull:ParseStateError;
             send(404);
             return false;
@@ -159,7 +160,7 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     }
     
     if(queryStr.length() > 0){
-        HOAWS_PRINTF("QueryString:\"%s\"\n",queryStr.c_str());
+        HOAWS_PARSE_PRINTF("QueryString:\"%s\"\n",queryStr.c_str());
         _parseGetQuery(queryStr);
     }
 
@@ -170,10 +171,9 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     // parse headers
     String header;
     while(ptr < (data + len) ){
-        header="";
-        ptr=getStringUntil(header,'\r',ptr,data+len-ptr);
+        header=getStringUntil('\r',&ptr,data+len-ptr);
         
-        //HOAWS_PRINTF("header:\"%s\"\n",header.c_str());
+        //HOAWS_PARSE_PRINTF("header:\"%s\"\n",header.c_str());
         ptr+=2; // '\r\n'
         if(header == ""){
             break;
@@ -183,7 +183,7 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
         if(index){
             String name = header.substring(0, index);
             String value = header.substring(index + 2);
-            HOAWS_PRINTF("Add header:\"%s\" : \"%s\"\n",name.c_str(),value.c_str());
+            HOAWS_PARSE_PRINTF("Add header:\"%s\" : \"%s\"\n",name.c_str(),value.c_str());
             _addHeader(name,value);
         }
     } // while
@@ -242,14 +242,12 @@ String urlDecode(const String& text){
 }
 
 void HttpOverAsyncWebSocketClient::_parseQueryString(bool isPost,uint8_t* data, size_t len){
-    HOAWS_PRINTF("_parseQueryString:%u\n",len);
+    HOAWS_PARSE_PRINTF("_parseQueryString:%u\n",len);
     uint8_t *ptr=data;
-    uint8_t *nptr;
     size_t length=len;
     String arg;
     for(;;){
-        arg="";
-        nptr=getStringUntil(arg,'&',ptr,length);
+        arg=getStringUntil('&',&ptr,length);
         if(arg.length()>0){
             int index = arg.indexOf('=');
             if(index){
@@ -258,14 +256,13 @@ void HttpOverAsyncWebSocketClient::_parseQueryString(bool isPost,uint8_t* data, 
                 _params.add(new AsyncWebParameter(urlDecode(name), urlDecode(value),isPost));
             }            
         }
-        nptr++;
-        if(nptr >= (data +len)){
+        ptr++;
+        if(ptr >= (data +len)){
             // end of string, or
             break;
         }
-        ptr=nptr;
         length = (data +len) - ptr;
-        HOAWS_PRINTF("_parseQueryString next:%u\n",length);
+        HOAWS_PARSE_PRINTF("_parseQueryString next:%u\n",length);
     }
 }
 
@@ -279,16 +276,15 @@ void HttpOverAsyncWebSocketClient::send(int code,const String& contextType,const
 }
 
 void HttpOverAsyncWebSocketClient::send(HttpOverAsyncWebSocketResponse* response){
-    String msg;
 
-    response->getResponseString(msg);
+    String msg=response->getResponseString();
     _client->text(msg);
 
     if(response->isSimpleText()){
         delete response;
     }else{
         if(_downloading != NULL){
-            HOAWS_PRINTF("!!Error non-finished downloading!\n");
+            HOAWS_PARSE_PRINTF("!!Error non-finished downloading!\n");
             delete _downloading;
         }
         _downloading = response;
