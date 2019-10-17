@@ -876,9 +876,10 @@ public:
 						theSettings.save();
 						PressureMonitor.configChanged();
 						request->send(200);
-					}else
+					}else{
 						DBG_PRINTF("invalid Json\n");
 						request->send(402);
+					}
 				}else{
 					DBG_PRINTF("no data\n");
 					request->send(401);
