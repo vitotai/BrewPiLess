@@ -6,6 +6,7 @@ HttpOverAsyncWebSocketResponse::HttpOverAsyncWebSocketResponse(const String& pat
         _contentType(contentType),
         _body(data),
         _path(path),
+        _contentLength(0),
         _filler(NULL){
         if(contentType.length()){
             addHeader("Content-Type",contentType);
@@ -51,8 +52,8 @@ String HttpOverAsyncWebSocketResponse::getResponseString(void){
         }
         content += "\r\n" + _body;
         #if SerialDebug
-        if(_path != "/pi")
-        HOAWS_PRINTF("rsp:%s\n",content.c_str());
+        //if(_path != "/pi")
+        //HOAWS_PRINTF("rsp:%s\n",content.c_str());
         #endif
         return content;
 }

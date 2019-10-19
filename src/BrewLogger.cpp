@@ -554,12 +554,12 @@ BrewLogger::BrewLogger(void){
 		//                        that is,  total size = _savedLength + _logIndex
 		// in abnormal cases, the file size is total size since all data are "written".
 
-		DBG_PRINTF("beginCopyAfter:%d, _logIndex=%u, saved=%u, return:%u, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
+		//DBG_PRINTF("beginCopyAfter:%d, _logIndex=%u, saved=%u, return:%u, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
 		if(last >= (_logIndex +_savedLength)){
             DBG_PRINTF(" return:0\n");
             return 0;
         }
-        DBG_PRINTF(" return:%u\n",_logIndex+_savedLength - last);
+        //DBG_PRINTF(" return:%u\n",_logIndex+_savedLength - last);
 		return ( _logIndex+_savedLength - last);
 	}
 
@@ -571,7 +571,7 @@ BrewLogger::BrewLogger(void){
 		// rindex is the real index of the whole log
 		size_t rindex= index + _lastRead;
 
-		DBG_PRINTF("read index:%u, max:%u, _lastRead =%u, rindex=%u\n",index,maxLen,_lastRead,rindex);
+		//DBG_PRINTF("read index:%u, max:%u, _lastRead =%u, rindex=%u\n",index,maxLen,_lastRead,rindex);
 
 		// the reqeust data index is more than what we have.
 		if(rindex > (_savedLength +_logIndex)) return maxLen; // return whatever it wants.
@@ -599,7 +599,7 @@ BrewLogger::BrewLogger(void){
                 memcpy(buffer+ sizeRead,_logBuffer,insufficient);
 				sizeRead += insufficient;
 			}
-			DBG_PRINTF("read file:%u\n",sizeRead);
+			//DBG_PRINTF("read file:%u\n",sizeRead);
 		}else{
 			//DBG_PRINTF("read from buffer\n");
 			// read from buffer
@@ -608,7 +608,7 @@ BrewLogger::BrewLogger(void){
 			sizeRead = _logIndex - rindex;
 			if(sizeRead > maxLen) sizeRead=maxLen;
 			memcpy(buffer,_logBuffer+rindex,sizeRead);
-			DBG_PRINTF("read buffer:%u\n",sizeRead);
+			//DBG_PRINTF("read buffer:%u\n",sizeRead);
 		}
 		
 		return sizeRead;

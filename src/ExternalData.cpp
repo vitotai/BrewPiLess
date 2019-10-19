@@ -262,15 +262,16 @@ float  ExternalData::temperatureCorrection(float sg, float t, float c){
 	return nsg;
 }
 
-bool ExternalData::processGravityReport(char data[],size_t length, bool authenticated, uint8_t& error)
+bool ExternalData::processGravityUpdate(const String& data, uint8_t& error)
 {
 	//const int BUFFER_SIZE = JSON_OBJECT_SIZE(20);
 	//StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	DynamicJsonDocument root(512);
-	auto jsonerror=deserializeJson(root,data,length);
+	auto jsonerror=deserializeJson(root,data);
 	if(jsonerror 
 	#else
+	#warning "ArduinoJson v5 is not yet updated!"
 	DynamicJsonBuffer jsonBuffer(512);
 	JsonObject& root = jsonBuffer.parseObject((char*)data,length);
 	if (!root.success() 
@@ -284,11 +285,6 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 	String name= root["name"];
     // web interface
 	if(name.equals("webjs")){
-		if(! authenticated){
-			error = ErrorAuthenticateNeeded;
-    	    return false;
-        }
-
 		if(!root.containsKey("gravity")){
   			DBG_PRINTF("No gravity\n");
   			error = ErrorMissingField;
@@ -311,9 +307,37 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 				// gravity data from user
 			setGravity(gravity,TimeKeeper.getTimeSeconds());
 		}
-	}else if(name.startsWith("iSpindel")){
+	}else{
+		    error = ErrorUnknownSource;
+		    return false;
+	}
+	return true;
+}
+
+bool ExternalData::processISpindelReport(char data[],size_t length, uint8_t& error)
+{
+	//const int BUFFER_SIZE = JSON_OBJECT_SIZE(20);
+	//StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
+	#if ARDUINOJSON_VERSION_MAJOR == 6
+	DynamicJsonDocument root(512);
+	auto jsonerror=deserializeJson(root,data,length);
+	if(jsonerror 
+	#else
+	DynamicJsonBuffer jsonBuffer(512);
+	JsonObject& root = jsonBuffer.parseObject((char*)data,length);
+	if (!root.success() 
+	#endif
+		|| !root.containsKey("name")){
+  		DBG_PRINTF("Invalid JSON\n");
+  		error = ErrorJSONFormat;
+  		return false;
+	}
+
+	// ignore name 
+	String name= root["name"];
+    // if(name.startsWith("iSpindel")){
 		//{"name": "iSpindel01", "id": "XXXXX-XXXXXX", "temperature": 20.5, "angle": 89.5, "gravityP": 13.6, "battery": 3.87}
-		DBG_PRINTF("%s\n",name.c_str());
+		//DBG_PRINTF("%s\n",name.c_str());
 
 		if(!_ispindelName){
 			_ispindelName=(char*) malloc(name.length()+1);
@@ -359,10 +383,10 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 			float sgreading=root["gravity"];
             setGravity(sgreading, TimeKeeper.getTimeSeconds());
         }
-	}else{
-		    error = ErrorUnknownSource;
-		    return false;
-	}
+	//}else{
+	//	    error = ErrorUnknownSource;
+	//	    return false;
+	//}
 	return true;
 }
 

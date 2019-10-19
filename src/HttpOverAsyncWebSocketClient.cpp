@@ -12,7 +12,9 @@ _downloading(NULL),
 _path(),
 _contentType(),
 _headers(LinkedList<AsyncWebHeader *>([](AsyncWebHeader *h){ delete h; })),
-_params(LinkedList<AsyncWebParameter *>([](AsyncWebParameter *h){ delete h; }))
+_params(LinkedList<AsyncWebParameter *>([](AsyncWebParameter *h){ delete h; })),
+_packet(NULL),
+_dataLen(0)
 {}
 
 HttpOverAsyncWebSocketClient::~HttpOverAsyncWebSocketClient(){
@@ -42,8 +44,9 @@ uint8_t* skipUntil(char delimiter,uint8_t *data, size_t len){
 }
 
 // header must be in one frame only.
-bool HttpOverAsyncWebSocketClient::_parseBody(uint8_t *data, size_t len,bool final){
-    HOAWS_PARSE_PRINTF("_parseBody len:%u, final:%d, content-type:%s\n",len,final,_contentType.c_str());
+bool HttpOverAsyncWebSocketClient::_parseBody(uint8_t *data, size_t len){
+    //Be careful, index is index of the "total frame", not start of body
+    HOAWS_PARSE_PRINTF("_parseBody len:%u, content-type:%s\n",len,_contentType.c_str());
     // data request can't have body
     if(len > 0){
         if(_contentType.startsWith("application/x-www-form-urlencoded")){
@@ -51,19 +54,15 @@ bool HttpOverAsyncWebSocketClient::_parseBody(uint8_t *data, size_t len,bool fin
             //HOAWS_PARSE_PRINTF("parsePost data\n");
             _parsePostVars(data,len);
         }else{
-            if(_handler) _handler->handleBody(this,data,len,final);
+            if(_handler) _handler->handleBody(this,data,len,true);
         }
     }else{
         // empty body
 //        HOAWS_PARSE_PRINTF("empty BODY\n");
     }
-    if(final){
-        HOAWS_PARSE_PRINTF("handleRequest:\n");
-        if(_handler) _handler->handleRequest(this);
-        _state =ParseStateNull;
-    }else{
-        _state = ParseStateBody;
-    }
+    HOAWS_PRINTF("handleRequest: %s %d\n",_path.c_str(),_method);
+    if(_handler) _handler->handleRequest(this);
+    _state =ParseStateNull;
     return true;
 }
 
@@ -94,7 +93,43 @@ void HttpOverAsyncWebSocketClient::_clearParseState(void){
     _headers.free();
 }
 
-bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
+bool HttpOverAsyncWebSocketClient::onData(uint8_t *data, size_t len,size_t index, size_t total,bool final){
+    if(index==0 && final){
+        // singal packet
+        return _parse(data,len);
+    }else{
+        // multiple data
+        if(index ==0){
+            // first frame
+            if(_packet) free(_packet);
+            _packet=(uint8_t*) malloc(total);
+            if(_packet == NULL){
+                send(500);
+                return false;
+            }
+            memcpy(_packet,data,len);
+            _dataLen = len;
+        }else{
+            // copy the rest 
+            if(_packet == NULL){
+                return false;
+            }
+            // ERROR handling? data exceeds total length?
+            memcpy(_packet + _dataLen, data,len);
+            _dataLen += len;
+
+            if(final){
+                _parse(_packet,_dataLen);
+                free(_packet);
+                _packet = NULL;
+            }
+        }
+
+    }
+    return true;
+}
+
+bool HttpOverAsyncWebSocketClient::_parse(uint8_t *data, size_t len){
 
     #if SerialDebug
     char *pdata = (char*)data;
@@ -104,9 +139,9 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     #endif
  
     if(_state == ParseStateBody){
-        return _parseBody(data,len,final);
+        return _parseBody(data,len);
     }else if(_state == ParseStateError){
-        if(final) _state =ParseStateNull;        
+        _state =ParseStateNull;        
         return false;
     }
 
@@ -129,7 +164,7 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
     }else if( method == "DELETE"){
         _method = HTTP_DELETE;
     }else {
-        _state =final? ParseStateNull:ParseStateError;
+        _state =ParseStateNull;
         HOAWS_PARSE_PRINTF("Error: unsupported method:\"%s\"\n",method.c_str());
         send(400);
         return false;
@@ -154,7 +189,7 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
         _handler=_server->findHandler(this);
         if(!_handler){
             HOAWS_PARSE_PRINTF("Error: unknow handler for:%s\n",_path.c_str());
-            _state =final? ParseStateNull:ParseStateError;
+            _state =ParseStateNull;
             send(404);
             return false;
         }
@@ -202,8 +237,9 @@ bool HttpOverAsyncWebSocketClient::parse(uint8_t *data, size_t len,bool final){
             send(400);
         }
         return true;
-    }else
-        return _parseBody(ptr,data+len-ptr,final);
+    }else{
+        return _parseBody(ptr,data+len-ptr);
+    }
 }
 
 void HttpOverAsyncWebSocketClient::_addHeader(const String& name,const String& value){

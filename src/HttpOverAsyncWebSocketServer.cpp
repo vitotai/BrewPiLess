@@ -31,8 +31,8 @@ void HttpOverAsyncWebSocketServer::_wsEventHandler(AsyncWebSocketClient * client
   	} else if(type == WS_EVT_PONG){
   	} else if(type == WS_EVT_DATA){
     	AwsFrameInfo * info = (AwsFrameInfo*)arg;
-		HOAWS_PRINTF("RCV: len:%u  info->len:%u, final:%d\n",len,info->len,info->final!=0);
-        _rcvData(client,data,len, info->final);
+//        DBG_PRINTF("RX i:%u len:%u info->len:%u final:%d\n",(size_t) info->index,len,(size_t)info->len,((size_t)info->index + len) == (size_t) info->len);
+        _rcvData(client,data,len,info->index, info->len , ((size_t)info->index + len) == (size_t) info->len);
     }
 }
 
@@ -46,10 +46,10 @@ void HttpOverAsyncWebSocketServer::_removeClient(AsyncWebSocketClient * client){
     });
 }
 
-void HttpOverAsyncWebSocketServer::_rcvData(AsyncWebSocketClient * client,uint8_t *data, size_t len,bool final){
+void HttpOverAsyncWebSocketServer::_rcvData(AsyncWebSocketClient * client,uint8_t *data, size_t len,size_t index, size_t total,bool final){
     for(const auto& c: _clients){
         if(c->isEqualClient(client)){
-            c->parse(data,len,final);
+            c->onData(data,len,index, total,final);
             return;
         }
     }

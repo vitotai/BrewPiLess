@@ -126,7 +126,9 @@ public:
 	float tiltValue(void){return _ispindelTilt;}
 	void invalidateDeviceVoltage(void) { _deviceVoltage= INVALID_VOLTAGE; }
 
-	bool processGravityReport(char data[],size_t length, bool authenticated, uint8_t& error);
+	bool processGravityUpdate(const String& data, uint8_t& error);
+	bool processISpindelReport(char data[],size_t length, uint8_t& error);
+
 };
 
 extern ExternalData externalData;

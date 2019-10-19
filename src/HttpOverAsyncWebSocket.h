@@ -11,7 +11,9 @@ To make easy transition, mimic the interface of ESPAsyncWebServer.
 
 #define MAX_INITIAL_FRAME_SIZE 1400
 
-#if 1
+// Warnning: too much Serial.print() will result in CRASHES!!!!
+
+#if 0
 #define HOAWS_PRINTF(...) DebugPort.printf(__VA_ARGS__)
 #else
 #define HOAWS_PRINTF(...)
@@ -60,7 +62,7 @@ protected:
     void _wsEventHandler(AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len);
     void _addClient(AsyncWebSocketClient * client);
     void _removeClient(AsyncWebSocketClient * client);
-    void _rcvData(AsyncWebSocketClient * client,uint8_t *data, size_t len,bool final);
+    void _rcvData(AsyncWebSocketClient * client,uint8_t *data, size_t len,size_t index, size_t total,bool final);
 };
 
 typedef enum _HttpOverAsyncWebSocketParseState{
@@ -77,7 +79,7 @@ public:
     ~HttpOverAsyncWebSocketClient();
     bool isEqualClient(AsyncWebSocketClient *client){ return _client->id() == client->id();}
     
-    bool parse(uint8_t *data, size_t len,bool final);
+    bool onData(uint8_t *data, size_t len,size_t index, size_t total,bool final);
 
     WebRequestMethod method(){ return _method;}
 
@@ -115,7 +117,11 @@ protected:
     LinkedList<AsyncWebHeader *> _headers;
     LinkedList<AsyncWebParameter *> _params;
 
-    bool _parseBody(uint8_t *data, size_t len,bool final);
+    uint8_t *_packet;
+    uint32_t _dataLen;
+
+    bool _parse(uint8_t *data, size_t len);
+    bool _parseBody(uint8_t *data, size_t len);
     void _addHeader(const String& name,const String& value);
     void _parseGetQuery(const String& query);
     void _parsePostVars(uint8_t* data, size_t len);

@@ -121,7 +121,7 @@ extern "C" {
 
 #define ESTABLISH_PATH "/hi"
 // file operation
-#define FPUTS_PATH       "/fputs"
+#define FILE_PATH       "/fop"
 #define FLIST_PATH       "/list"
 #define DELETE_PATH       "/rm"
 
@@ -567,10 +567,47 @@ protected:
 			#if !defined(ESP32)
         	ESP.wdtEnable(10);
 			#endif
+			//DBG_PRINTF("fputs:%d",c.length());
             request->send(200);
-            DBG_PRINTF("fputs path=%s\n",file.c_str());
-        } else
-          request->send(404);
+        } else{
+          request->send(400);
+		}
+    }
+
+	void _handleFileGets(HttpOverAsyncWebSocketClient *request){
+		if(request->hasParam("path")){
+			#if !defined(ESP32)
+        	ESP.wdtDisable();
+			#endif
+    		String file=request->getParam("path")->value();
+            DBG_PRINTF("fgets path=%s, %d\n",file.c_str(),SPIFFS.exists(file));
+
+			if(! SPIFFS.exists(file)){
+				request->send(404);
+				return;
+			}
+
+    		File fh= SPIFFS.open(file, "r");
+    		if(!fh){
+				DBG_PRINTF("File open error!");
+    			request->send(500);
+    			return;
+    		}
+			if(fh.size() > 1024){ // for small text file only
+    			request->send(403);
+    			return;
+			}
+      		String content=fh.readString();
+      		fh.close();
+
+			#if !defined(ESP32)
+        	ESP.wdtEnable(10);
+			#endif
+
+            request->send(200,"text/plain",content);
+        } else{
+          request->send(400);
+		}
     }
 
 
@@ -581,12 +618,13 @@ public:
 			return true;
 	 	}else if(request->method() == HTTP_POST && request->url() == FLIST_PATH){
 	 		return true;
-		}else if(request->method() == HTTP_POST &&  request->url() == FPUTS_PATH){
-	 		return true;
 		}else if (request->method() == HTTP_POST && request->url() == TIME_PATH){
+			return true;
+		}else if (request->method() == HTTP_POST && request->url() == GRAVITY_PATH){
 			return true;
 		}else if (request->method() == HTTP_POST || request->method() == HTTP_GET){
 			if (request->url() == CONFIG_PATH  // GET and POST
+				  || request->url() == FILE_PATH
 				  || request->url() == ESTABLISH_PATH
 				  || request->url() == BEER_PROFILE_PATH
 				  || request->url() == MQTT_PATH
@@ -697,7 +735,20 @@ public:
 		}
 #endif
 		/*** iSpindel ***/
-		else if(request->url() == GravityFormulaPath){
+		else if (request->method() == HTTP_POST && request->url() == GRAVITY_PATH){
+			if(request->hasParam("data",true)){
+				String data=request->getParam("data",true)->value();
+				uint8_t error;
+				if(externalData.processGravityUpdate(data,error)){
+					request->send(200);
+				}else{
+					request->send(500);
+				}
+			}else{
+				request->send(401);
+			}
+
+		}else if(request->url() == GravityFormulaPath){
 			if(request->hasParam("a0") && request->hasParam("a1") 
 					&& request->hasParam("a2") && request->hasParam("a3")
 					&& request->hasParam("pt")){
@@ -722,7 +773,7 @@ public:
 		}else if( request->url() == GravityDeviceConfigPath){
 			if(request->method() == HTTP_POST){
 				if(request->hasParam("data",true)){
-	  				if(externalData.processconfig(request->getParam("data")->value().c_str())){
+	  				if(externalData.processconfig(request->getParam("data",true)->value().c_str())){
 			  			request->send(200);
 					}else{
 						request->send(400);
@@ -743,8 +794,11 @@ public:
 			_handleFileList(request);
 	 	}else if(request->method() == HTTP_DELETE &&  request->url() == DELETE_PATH){
 			_handleFileDelete(request);
-	 	}else if(request->method() == HTTP_POST &&  request->url() == FPUTS_PATH){
-			_handleFilePuts(request);
+	 	}else if(request->url() == FILE_PATH){
+			 if(request->method() == HTTP_POST)
+				_handleFilePuts(request);
+			else
+				_handleFileGets(request);
 		}
 		/*** System config */
 		else if(request->method() == HTTP_GET && request->url() == CONFIG_PATH){
@@ -758,7 +812,7 @@ public:
 				DBG_PRINTF("config to save: %s\n",request->getParam("data", true)->value().c_str());
 				if(theSettings.dejsonSystemConfiguration(request->getParam("data", true)->value())){
 					theSettings.save();
-					DBG_PRINTF("config saved: %s\n",theSettings.systemConfiguration()->hostnetworkname);
+//					DBG_PRINTF("config saved: %s\n",theSettings.systemConfiguration()->hostnetworkname);
 					request->send(200,"application/json","{}");
 					display.setAutoOffPeriod(theSettings.systemConfiguration()->backlite);
 
@@ -1079,13 +1133,11 @@ private:
 
 	void processGravity(AsyncWebServerRequest *request,char data[],size_t length){
 		if(length ==0) return request->send(500);;
-		SystemConfiguration *syscfg=theSettings.systemConfiguration();
         uint8_t error;
-		if(externalData.processGravityReport(data,length,request->authenticate(syscfg->username,syscfg->password),error)){
+		if(externalData.processISpindelReport(data,length,error)){
     		request->send(200,"application/json","{}");
 		}else{
-		    if(error == ErrorAuthenticateNeeded) return request->requestAuthentication();
-		    else request->send(500);
+		    request->send(500);
 		}
 	}
 
@@ -1173,7 +1225,7 @@ public:
 		int after;
 		if(request->hasParam("after")){
 			after=request->getParam("after")->value().toInt();
-			DBG_PRINTF("after= %d\n",after);
+			//DBG_PRINTF("after= %d\n",after);
 		}else{
 			after=0;
 		}
@@ -1554,9 +1606,10 @@ class PiLinkHandler:public HttpOverAsyncWebSocketHandler {
 		return false;
     }
     void handleRequest(HttpOverAsyncWebSocketClient *client){
-		DBG_PRINTF("handleRequest:%s, method%d\n",client->url().c_str(),client->method());
+//		DBG_PRINTF("PinLink request\n");
 	}
     void handleBody(HttpOverAsyncWebSocketClient *client __attribute__((unused)), uint8_t *data, size_t len, bool final __attribute__((unused))){
+//		DBG_PRINTF("PinLink write:%u final:%d\n",len,final);
 		for(size_t i=0; i < len; i++) {
         	brewPi.write(data[i]);
         }
