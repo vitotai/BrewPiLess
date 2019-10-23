@@ -753,6 +753,10 @@ void IRAM_ATTR RotaryEncoder::process(void){
 }
 #endif  // BREWPI_ROTARY_ENCODER
 
+#if ESP8266
+#define IRAM_ATTR 
+#endif
+
 void IRAM_ATTR RotaryEncoder::setPushed(void){
 	pushFlag = true;
 	

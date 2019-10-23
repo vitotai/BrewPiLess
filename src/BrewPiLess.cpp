@@ -1897,9 +1897,9 @@ void setup(void){
 	//4. start Web server
 	webServer->begin();
 	DBG_PRINTF("HTTP server started\n");
-
+#if SupportPressureTransducer
 	PressureMonitor.begin();
-
+#endif
 	// 5. try to connnect Arduino
 	brewpi_setup();
   	brewPi.begin(stringAvailable);
