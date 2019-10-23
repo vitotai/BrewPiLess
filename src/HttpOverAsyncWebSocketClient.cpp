@@ -12,7 +12,7 @@ _downloading(NULL),
 _path(),
 _contentType(),
 _headers(LinkedList<AsyncWebHeader *>([](AsyncWebHeader *h){ delete h; })),
-_params(LinkedList<AsyncWebParameter *>([](AsyncWebParameter *h){ delete h; })),
+_params(LinkedList<AsyncWebParameter *>([](AsyncWebParameter *p){ delete p; })),
 _packet(NULL),
 _dataLen(0)
 {}
@@ -89,8 +89,8 @@ bool HttpOverAsyncWebSocketClient::_sendDataChunk(size_t index,size_t size){
 }
 
 void HttpOverAsyncWebSocketClient::_clearParseState(void){
-    _params.free();
-    _headers.free();
+    if(!_headers.isEmpty()) _headers.free();
+    if(!_params.isEmpty()) _params.free();
 }
 
 bool HttpOverAsyncWebSocketClient::onData(uint8_t *data, size_t len,size_t index, size_t total,bool final){
@@ -137,18 +137,19 @@ bool HttpOverAsyncWebSocketClient::_parse(uint8_t *data, size_t len){
     for(size_t i=0;i<len;i++) datastr += String(*pdata++);
     HOAWS_PARSE_PRINTF("WS parse:%s\n",datastr.c_str());
     #endif
- 
+
+    /* The WHOLE frame is assembled and then parsed.
+    The state will be cleared in one funciton call
     if(_state == ParseStateBody){
         return _parseBody(data,len);
     }else if(_state == ParseStateError){
         _state =ParseStateNull;        
         return false;
     }
-
+    */
     //GET /path HTTP/1.1\r\n
     // { headers}
     // Read the first line of HTTP request
-    _clearParseState();
 
     uint8_t* ptr=data;
     String method="";
@@ -164,9 +165,11 @@ bool HttpOverAsyncWebSocketClient::_parse(uint8_t *data, size_t len){
     }else if( method == "DELETE"){
         _method = HTTP_DELETE;
     }else {
-        _state =ParseStateNull;
         HOAWS_PARSE_PRINTF("Error: unsupported method:\"%s\"\n",method.c_str());
         send(400);
+        _state =ParseStateNull;
+        _clearParseState();
+
         return false;
     }
     
@@ -189,8 +192,9 @@ bool HttpOverAsyncWebSocketClient::_parse(uint8_t *data, size_t len){
         _handler=_server->findHandler(this);
         if(!_handler){
             HOAWS_PARSE_PRINTF("Error: unknow handler for:%s\n",_path.c_str());
-            _state =ParseStateNull;
             send(404);
+            _state =ParseStateNull;
+            _clearParseState();
             return false;
         }
         // late proceessing arguments
@@ -236,9 +240,15 @@ bool HttpOverAsyncWebSocketClient::_parse(uint8_t *data, size_t len){
             // error
             send(400);
         }
+        _state =ParseStateNull;
+        _clearParseState();
         return true;
     }else{
-        return _parseBody(ptr,data+len-ptr);
+        bool ret=_parseBody(ptr,data+len-ptr);
+        _state =ParseStateNull;
+        _clearParseState();
+
+        return ret;
     }
 }
 

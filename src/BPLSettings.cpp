@@ -728,7 +728,7 @@ String BPLSettings::jsonBeerProfile(void)
 				jstep["g"]= pertages[pertageIndex];
 				pertageIndex++;
 			}else{
-				DBG_PRINTF("  sg:%d \n",s_step->gravity.sg);
+				//DBG_PRINTF("  sg:%d \n",s_step->gravity.sg);
 				if(_data.gdc.usePlato){
 					jstep["g"]= GravityToPlato(s_step->gravity.sg);
 					#if SerialDebug

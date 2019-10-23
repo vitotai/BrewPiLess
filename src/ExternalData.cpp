@@ -205,7 +205,7 @@ void ExternalData::setIspindelAngle(float tilt,float temp,time_t now){
 	    	sg = temperatureCorrection(sg,C2F(temp),C2F((float)_cfg->ispindelCalibrationBaseTemp));
 	}
 	// update, gravity data calculated
-	setGravity(sg,now,!_calibrating); // save only when not calibrating.
+	if(_cfg->calculateGravity) setGravity(sg,now,!_calibrating); // save only when not calibrating.
 }
 
 void ExternalData::setGravity(float sg, time_t now,bool log){

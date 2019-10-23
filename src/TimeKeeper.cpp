@@ -46,7 +46,7 @@ void TimeKeeperClass::begin(void)
 
 time_t TimeKeeperClass::_queryServer(void){
 	time_t secs=0;
-
+	#ifndef VERIFY_BEER_PROFILE
 	int trial;
 	for(trial=0;trial< 25;trial++)
   	{
@@ -67,6 +67,8 @@ time_t TimeKeeperClass::_queryServer(void){
     if(secs < 1546265623)
 			DBG_PRINTF("!!Error getting time from NTP\n");
 	#endif
+
+	#endif //	#ifndef VERIFY_BEER_PROFILE
 
 	return secs;
 }
@@ -107,8 +109,10 @@ void TimeKeeperClass::begin(char* server1,char* server2,char* server3)
   	_lastSaved=_referenceSeconds;
 }
 
+#ifndef VERIFY_BEER_PROFILE
 time_t TimeKeeperClass::getTimeSeconds(void) // get Epoch time
 {
+
 	unsigned long diff=millis() -  _referenceSystemTime;
 
 	if(diff > RESYNC_TIME){
@@ -128,6 +132,8 @@ time_t TimeKeeperClass::getTimeSeconds(void) // get Epoch time
 	  		diff=0;
 		}
 	}
+	
+
 	time_t now= _referenceSeconds + diff/1000;
 
 	if(	(now - _lastSaved) > TIME_SAVING_PERIOD){
@@ -148,6 +154,13 @@ time_t TimeKeeperClass::getTimeSeconds(void) // get Epoch time
 	}
 	return now;
 }
+
+#else //#ifndef VERIFY_BEER_PROFILE
+time_t TimeKeeperClass::getTimeSeconds(void) // get Epoch time
+{
+		return _referenceSeconds;
+}
+#endif
 
 static char _dateTimeStrBuff[24];
 

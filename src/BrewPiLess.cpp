@@ -376,7 +376,9 @@ public:
 	 	_sendFile(request,path); 
 	}
 };
-
+#if VERIFY_BEER_PROFILE
+#define BeerProfileStatus "/bp"
+#endif
 class MiscHandler: public AsyncWebHandler
 {
 protected:
@@ -421,6 +423,25 @@ public:
 			+String("}");
 			request->send(200,"application/json",json);
 		}
+#if VERIFY_BEER_PROFILE
+		else if(request->method() == HTTP_POST &&  request->url() == TIME_PATH){
+			if(request->hasParam("time", true)){
+				AsyncWebParameter* tvalue = request->getParam("time", true);
+				time_t time=(time_t)tvalue->value().toInt();
+  				DBG_PRINTF("Set Time:%lu from:%s\n",time,tvalue->value().c_str());
+	 			TimeKeeper.setCurrentTime(time);
+			}
+			if(request->hasParam("off", true)){
+				AsyncWebParameter* tvalue = request->getParam("off", true);
+				//DBG_PRINTF("Set timezone:%ld\n",tvalue->value().toInt());
+			    TimeKeeper.setTimezoneOffset(tvalue->value().toInt());
+		    }	   
+			request->send(200);
+		}
+		else if(request->url() == BeerProfileStatus){
+			request->send(200,"text/plain",brewKeeper.currentStatus());
+		}
+#endif
 	}
 
 	bool canHandle(AsyncWebServerRequest *request){
@@ -430,6 +451,14 @@ public:
 			 || request->url() == GETSTATUS_PATH)
 	 			return true;
 		}
+#if VERIFY_BEER_PROFILE
+		else if(request->method() == HTTP_POST &&  request->url() == TIME_PATH){
+			return true;
+		}
+		else if(request->url() == BeerProfileStatus){
+			return true;
+		}
+#endif
 		return false;
 	 }
 };
@@ -835,15 +864,17 @@ public:
 		 }
 		 // update time and timezone
 		else if(request->method() == HTTP_POST &&  request->url() == TIME_PATH){
+			#ifndef VERIFY_BEER_PROFILE
 			if(request->hasParam("time", true)){
 				AsyncWebParameter* tvalue = request->getParam("time", true);
 				time_t time=(time_t)tvalue->value().toInt();
-  				DBG_PRINTF("Set Time:%lu from:%s\n",time,tvalue->value().c_str());
+  				//DBG_PRINTF("Set Time:%lu from:%s\n",time,tvalue->value().c_str());
 	 			TimeKeeper.setCurrentTime(time);
 			}
+			#endif
 			if(request->hasParam("off", true)){
 				AsyncWebParameter* tvalue = request->getParam("off", true);
-				DBG_PRINTF("Set timezone:%ld\n",tvalue->value().toInt());
+				//DBG_PRINTF("Set timezone:%ld\n",tvalue->value().toInt());
 			    TimeKeeper.setTimezoneOffset(tvalue->value().toInt());
 		    }	   
 			request->send(200);
@@ -1168,7 +1199,7 @@ public:
 
 	virtual void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)override final{
 		if(!index){
-		    DBG_PRINTF("BodyStart-len:%d total: %u\n",len, total);
+		    //DBG_PRINTF("BodyStart-len:%d total: %u\n",len, total);
 			_dataLength =0;
 			_error=(total >= MAX_DATA_SIZE);
 		}
@@ -1234,7 +1265,7 @@ public:
 		bool startIndexValid;
 		if(request->hasParam("si")){
 			startIndex=request->getParam("si")->value().toInt();
-			DBG_PRINTF("ref= %d\n",startIndex);
+//			DBG_PRINTF("ref= %d\n",startIndex);
 			startIndexValid=true;
 		}else{
 			startIndexValid=false;
@@ -1845,10 +1876,18 @@ void loop(void){
 #ifdef STATUS_LINE
 	statusLine.loop(now);
 #endif
+#if VERIFY_BEER_PROFILE
+	uint32_t ticks=millis();
+	if( (ticks - _rssiReportTime) > RssiReportPeriod*1000){
+		_rssiReportTime =ticks;
+		reportRssi();
+	}
+#else
 	if( (now - _rssiReportTime) > RssiReportPeriod){
 		_rssiReportTime =now;
 		reportRssi();
 	}
+#endif
 
   	brewKeeper.keep(now);
 

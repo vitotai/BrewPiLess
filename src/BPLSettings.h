@@ -85,7 +85,7 @@ typedef struct _TiltConfiguratoin{
 typedef int16_t Gravity;
 
 #define INVALID_GRAVITY -1
-#define IsGravityValid(g) ((g)>0)
+#define IsGravityValid(g) ((g)>0.8)
 
 #define PointToGravity(p) (1000+(Gravity)((p)+0.5))
 

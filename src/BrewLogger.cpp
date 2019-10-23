@@ -12,6 +12,12 @@
 #define LoggingPeriod 60000  //in ms
 #define MinimumGapToSync  600  // in seconds
 
+#if VERIFY_BEER_PROFILE
+#ifndef VERIFY_BEER_PROFILE_PERIOD
+#define VERIFY_BEER_PROFILE_PERIOD 600
+#endif
+#endif
+
 BrewLogger brewLogger;
 
 BrewLogger::BrewLogger(void){
@@ -184,8 +190,11 @@ BrewLogger::BrewLogger(void){
 
 				if(tag == PeriodTag){
 					// advance one tick
+					#ifdef VERIFY_BEER_PROFILE
+					_resumeLastLogTime += VERIFY_BEER_PROFILE_PERIOD;
+					#else
 		    	    _resumeLastLogTime += LoggingPeriod/1000;
-
+					#endif
 					//TODO: check available data?
 		       		// int numberInRecord=0;
 					size_t recordSize;
@@ -373,14 +382,13 @@ BrewLogger::BrewLogger(void){
 
 	void BrewLogger::loop(void){
 		//if(!_recording) return;
-
+		#ifndef VERIFY_BEER_PROFILE
 		unsigned long miliseconds = millis();
 
 		if((miliseconds -_lastTempLog) < LoggingPeriod) return;
 		_lastTempLog = miliseconds;
 		_chartTime += LoggingPeriod/1000;
 		
-
 		uint32_t now = TimeKeeper.getTimeSeconds();
 //		if( ((_chartTime >  now) && (_chartTime -  now >  MinimumGapToSync)) 
 //			|| (( _chartTime < now) && (now - _chartTime > MinimumGapToSync)) ){
@@ -396,6 +404,11 @@ BrewLogger::BrewLogger(void){
 				DBG_PRINTF("**Sync time from:%d  to:%d",_chartTime,_headTime);
 			}
 		}
+		#else
+		uint32_t now = TimeKeeper.getTimeSeconds();
+		if((now -_lastTempLog) <= VERIFY_BEER_PROFILE_PERIOD) return;
+		_lastTempLog = now;
+		#endif
 		logData();
 	}
 
@@ -507,13 +520,13 @@ BrewLogger::BrewLogger(void){
 		}
 
 		if(mode != _mode){
-			DBG_PRINTF("mode %c => %c\n",_mode,mode);
+			//DBG_PRINTF("mode %c => %c\n",_mode,mode);
 			_mode = mode;
 			_addModeRecord(mode);
 		}
 
 		if(state != _state){
-			DBG_PRINTF("state %d => %d\n",_state,state);
+			//DBG_PRINTF("state %d => %d\n",_state,state);
 			_state = state;
 			_addStateRecord(state);
 		}
@@ -556,7 +569,7 @@ BrewLogger::BrewLogger(void){
 
 		//DBG_PRINTF("beginCopyAfter:%d, _logIndex=%u, saved=%u, return:%u, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
 		if(last >= (_logIndex +_savedLength)){
-            DBG_PRINTF(" return:0\n");
+            //DBG_PRINTF(" return:0\n");
             return 0;
         }
         //DBG_PRINTF(" return:%u\n",_logIndex+_savedLength - last);
@@ -817,7 +830,11 @@ BrewLogger::BrewLogger(void){
 		if(_usePlato) headerTag = headerTag ^ 0x40;
 
 		*ptr++ = headerTag; //2
+		#if VERIFY_BEER_PROFILE
+		int period = VERIFY_BEER_PROFILE_PERIOD;
+		#else
 		int period = LoggingPeriod/1000;
+		#endif
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
 		*ptr++ = (char) (_headTime >> 24);
@@ -866,8 +883,11 @@ BrewLogger::BrewLogger(void){
 		if(_usePlato) headerTag = headerTag ^ 0x40;
 
 		*ptr++ = headerTag;
-		
+		#if VERIFY_BEER_PROFILE
+		int period = VERIFY_BEER_PROFILE_PERIOD;
+		#else
 		int period = LoggingPeriod/1000;
+		#endif
 		*ptr++ = (char) (period >> 8);
 		*ptr++ = (char) (period & 0xFF);
 		*ptr++ = (char) (_pFileInfo->starttime >> 24);
@@ -945,7 +965,7 @@ BrewLogger::BrewLogger(void){
 		}
 
 
-		DBG_PRINTF("before tag %d, mask=%x\n",dataDrop,mask);
+		//DBG_PRINTF("before tag %d, mask=%x\n",dataDrop,mask);
 
 
 		for(int i=0;i<NumberDataBitMask;i++){
@@ -955,7 +975,7 @@ BrewLogger::BrewLogger(void){
 				byte d1=_logBuffer[idx++];
 				dataDrop +=2;
 				_headData[i] = (d0<<8) | d1;
-				DBG_PRINTF("update idx:%d to %d\n",i,_headData[i]);
+				//DBG_PRINTF("update idx:%d to %d\n",i,_headData[i]);
 			}
 		}
 		// drop any F tag
@@ -989,7 +1009,11 @@ BrewLogger::BrewLogger(void){
 		_startOffset += dataDrop;
 		_logHead = idx;
 		if(timeCorrected) _headTime = time;
+		#ifdef VERIFY_BEER_PROFILE
+		else _headTime += VERIFY_BEER_PROFILE_PERIOD;
+		#else
 		else _headTime += LoggingPeriod/1000;
+		#endif
 		interrupts();
 		DBG_PRINTF("Drop %d\n",dataDrop);
 	}
