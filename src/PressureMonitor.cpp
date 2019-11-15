@@ -25,7 +25,7 @@ void PressureMonitorClass::_readPressure(){
     reading = reading / MULTIPLE_READ_NUMBER;
 
     _currentPsi = (reading - _settings->fb) * _settings->fa;
-    DBG_PRINTF("ADC:%d, PSIx10:%d\n",(int)reading,(int)(_currentPsi*10));
+    //DBG_PRINTF("ADC:%d, PSIx10:%d\n",(int)reading,(int)(_currentPsi*10));
 }
 
 PressureMonitorClass::PressureMonitorClass(){

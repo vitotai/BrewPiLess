@@ -194,6 +194,67 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
+
+//////////////////////////////////////////////////////////////////////////
+//
+// BrewPiLess feature optoins
+// #endif
+//
+//////////////////////////////////////////////////////////////////////////
+//values of Front-end
+#define ClassicFrontEnd 0
+#define TomsFrontEnd 1
+
+// default language
+#ifndef WebPageLanguage
+#define WebPageLanguage english
+#endif
+
+
+#ifndef UseClassicFrontEnd
+#define FrontEnd TomsFrontEnd
+#else
+#define FrontEnd ClassicFrontEnd
+#endif
+
+
+#ifndef EanbleParasiteTempControl
+#define EanbleParasiteTempControl true
+#endif
+
+#ifndef SupportPressureTransducer
+#define SupportPressureTransducer true
+#endif
+
+#ifndef SupportMqttRemoteControl
+#define SupportMqttRemoteControl true
+#endif
+
+#ifndef AUTO_CAP
+#define  AUTO_CAP true
+#endif
+
+
+#ifndef DEVELOPMENT_OTA
+#define DEVELOPMENT_OTA true
+#endif
+
+#ifndef DEVELOPMENT_FILEMANAGER
+#define DEVELOPMENT_FILEMANAGER true
+#endif
+
+#define EnableGravitySchedule true
+#define ENABLE_LOGGING 1
+#define EARLY_DISPLAY 1
+#define EMIWorkaround 1
+
+//#ifdef EnableGlycolSupport
+#define FridgeSensorFallBack true
+#define SettableMinimumCoolTime true
+//#endif
+
+#define BPL_VERSION "3.6"
+
 //////////////////////////////////////////////////////////////////////////
 //
 // Board Definition
@@ -242,20 +303,37 @@
 #define heatingPin NODEMCU_PIN_D0
 #define doorPin    NODEMCU_PIN_D7
 #define BuzzPin NODEMCU_PIN_D3
+
+// NO LCD, NO BUTTONs
 #ifdef BREWPI_LCD
 #undef BREWPI_LCD 
 #endif
-// NO LCD, NO BUTTONs
 #define BREWPI_LCD false
 #undef BREWPI_MENU
 #define BREWPI_MENU 0
 #undef  BREWPI_BUTTONS 
 #define  BREWPI_BUTTONS 0
 
+//overwrite feature set
+#undef EanbleParasiteTempControl
 #define EanbleParasiteTempControl flase
+#undef SupportPressureTransducer
 #define SupportPressureTransducer false
+#undef SupportMqttRemoteControl
 #define SupportMqttRemoteControl false
+#undef AUTO_CAP
 #define  AUTO_CAP false
+#ifdef NO_SPIFFS
+    #undef DEVELOPMENT_OTA 
+    #define DEVELOPMENT_OTA true
+    #undef DEVELOPMENT_FILEMANAGER
+    #define DEVELOPMENT_FILEMANAGER false
+#else
+    #undef DEVELOPMENT_OTA 
+    #define DEVELOPMENT_OTA false
+    #undef DEVELOPMENT_FILEMANAGER
+    #define DEVELOPMENT_FILEMANAGER false
+#endif
 
 
 #elif BOARD == Thorrak_PCB
@@ -390,16 +468,6 @@
 
 #define BUFFER_PILINK_PRINTS 1
 
-#define EARLY_DISPLAY 1
-
-//#ifdef EnableGlycolSupport
-#define FridgeSensorFallBack true
-#define SettableMinimumCoolTime true
-//#endif
-
-#define EMIWorkaround 1
-#define BPL_VERSION "3.6"
-
 /**************************************************************************************/
 /*  Configuration: 																	  */
 /*  Only one setting: the serial used to connect to.                                  */
@@ -418,30 +486,14 @@
 #define DBG_PRINT(...)
 #endif
 
-#define ENABLE_LOGGING 1
-
 /**************************************************************************************/
 /*  Advanced Configuration:  														  */
 /*   URLs .										  									  */
 /**************************************************************************************/
 
-#define EnableGravitySchedule true
 
 #define MINIMUM_TEMPERATURE_STEP 0.005
 #define MINIMUM_TEMPERATURE_SETTING_PERIOD 60
-#if SONOFF
-
-#ifdef NO_SPIFFS
-#define DEVELOPMENT_OTA true
-#else
-#define DEVELOPMENT_OTA false
-#endif
-
-#define DEVELOPMENT_FILEMANAGER false
-#else
-#define DEVELOPMENT_OTA true
-#define DEVELOPMENT_FILEMANAGER true
-#endif
 
 // for web interface update
 #define UPDATE_SERVER_PORT 8008
@@ -452,35 +504,3 @@
 #define DEFAULT_HOSTNAME "brewpiless"
 #define DEFAULT_USERNAME "brewpiless"
 #define DEFAULT_PASSWORD "brewpiless"
-
-//#define english 0
-//#define spanish 1
-
-#ifndef WebPageLanguage
-#define WebPageLanguage english
-#endif
-
-#define ClassicFrontEnd 0
-#define TomsFrontEnd 1
-
-#ifndef UseClassicFrontEnd
-#define FrontEnd TomsFrontEnd
-#else
-#define FrontEnd ClassicFrontEnd
-#endif
-
-#ifndef EanbleParasiteTempControl
-#define EanbleParasiteTempControl true
-#endif
-
-#ifndef SupportPressureTransducer
-#define SupportPressureTransducer true
-#endif
-
-#ifndef SupportMqttRemoteControl
-#define SupportMqttRemoteControl true
-#endif
-
-#ifndef AUTO_CAP
-#define  AUTO_CAP true
-#endif

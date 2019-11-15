@@ -428,9 +428,10 @@ public:
 
 			if(request->hasParam("data", true)){
 				uint8_t oldMode = theSettings.systemConfiguration()->wifiMode;
-
+				DBG_PRINTF("config to save: %s\n",request->getParam("data", true)->value().c_str());
 				if(theSettings.dejsonSystemConfiguration(request->getParam("data", true)->value())){
 					theSettings.save();
+					DBG_PRINTF("config saved: %s\n",theSettings.systemConfiguration()->hostnetworkname);
 					request->send(200,"application/json","{}");
 					display.setAutoOffPeriod(theSettings.systemConfiguration()->backlite);
 
