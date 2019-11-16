@@ -16,7 +16,7 @@ WiFiSetupClass WiFiSetup;
 #else
 #define DebugOut(a)
 #define DBG_PRINTF(...)
-#define DBG_PRINTLN(a) 
+#define DBG_PRINTLN(a)
 #endif
 
 #if SerialDebug
@@ -33,7 +33,7 @@ void WiFiSetupClass::staConfig(IPAddress ip,IPAddress gw, IPAddress nm,IPAddress
 }
 
 void WiFiSetupClass::setMode(WiFiMode mode){
-	DBG_PRINTF("WiFi mode from:%d to %d\n",_mode,_mode);	
+	DBG_PRINTF("WiFi mode from:%d to %d\n",_mode,_mode);
 
 	if(mode == _mode) return;
 	_mode = mode;
@@ -51,7 +51,7 @@ void WiFiSetupClass::createNetwork(){
 		WiFi.softAP(_apName, _apPassword);
 	else
 		WiFi.softAP(_apName);
-	
+
 	DBG_PRINTF("\ncreate network:%s pass:%s\n",_apName, _apPassword);
 }
 
@@ -69,11 +69,11 @@ bool WiFiSetupClass::isApMode(){
 void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 {
 	wifi_info("begin:");
-	
+
 
 	_mode= mode;
 	WiFiMode mode2use = (_mode == WIFI_OFF)? WIFI_AP_STA:_mode;
-	
+
 	DBG_PRINTF("\nSaved SSID:\"%s\"\n",WiFi.SSID().c_str());
 	DBG_PRINTF("\nAP mode:%d, used;%d autoReconect:%d\n",mode,mode2use,WiFi.getAutoReconnect());
 
@@ -82,7 +82,7 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 			DBG_PRINTF("Invalid SSID!");
 			mode2use = WIFI_AP;
 	}
-	_apName=(ssid == NULL || *ssid=='\0')? DEFAULT_HOSTNAME:ssid;	
+	_apName=(ssid == NULL || *ssid=='\0')? DEFAULT_HOSTNAME:ssid;
 	_apPassword=(passwd !=NULL && *passwd=='\0')? NULL:passwd;
 
 	// let the underlined library do the reconnection jobs.
@@ -99,11 +99,11 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd)
 		if(_ip !=INADDR_NONE){
 				WiFi.config(_ip,_gw,_nm);
 		}else{
-			// the weird printout of "[NO IP]" implies that explicitly specification of DHCP 
+			// the weird printout of "[NO IP]" implies that explicitly specification of DHCP
 			// might be necessary.
 			WiFi.config(INADDR_NONE,INADDR_NONE,INADDR_NONE);
 		}
-		
+
 		//WiFi.setAutoReconnect(true);
 		WiFi.begin();
 		_time=millis();
@@ -148,7 +148,7 @@ String WiFiSetupClass::status(void){
 	ret  = String("{\"md\":") + String(_mode) + String(",\"con\":") + String((WiFi.status() == WL_CONNECTED)? 1:0);
 
 	if(_mode != WIFI_AP){
-		ret += String(",\"ssid\":\"") + WiFi.SSID() 
+		ret += String(",\"ssid\":\"") + WiFi.SSID()
 			 + String("\",\"ip\":\"") + WiFi.localIP().toString()
 			 + String("\",\"gw\":\"") + WiFi.gatewayIP().toString()
 			 + String("\",\"nm\":\"") + WiFi.subnetMask().toString() + String("\"");
@@ -164,7 +164,7 @@ bool WiFiSetupClass::stayConnected(void)
 		dnsServer->processNextRequest();
 		if(_mode == WIFI_AP) return true;
 	}
-	
+
 	if(_wifiState==WiFiStateChangeConnectPending){
 			DBG_PRINTF("Change Connect\n");
 			//if(WiFi.status() == WL_CONNECTED){
@@ -253,7 +253,7 @@ bool WiFiSetupClass::stayConnected(void)
 						_time = millis();
 				}
 		    }
- 	} // WiFi.status() != WL_CONNECTED 
+ 	} // WiFi.status() != WL_CONNECTED
  	else // connected
  	{
  			byte oldState=_wifiState;
@@ -268,7 +268,7 @@ bool WiFiSetupClass::stayConnected(void)
 			}
   } // end of connected
 
-	
+
 	if(_wifiScanState == WiFiScanStatePending){
 		String nets=scanWifi();
 		_wifiScanState = WiFiScanStateNone;
@@ -287,9 +287,9 @@ bool WiFiSetupClass::requestScanWifi(void) {
 }
 
 String WiFiSetupClass::scanWifi(void) {
-	
+
 	String rst="{\"list\":[";
-	
+
 	DBG_PRINTF("Scan Networks...\n");
 	int n = WiFi.scanNetworks();
     DBG_PRINTF("Scan done");
@@ -306,7 +306,7 @@ String WiFiSetupClass::scanWifi(void) {
         	for (int j = i + 1; j < n; j++) {
           		if (WiFi.RSSI(indices[j]) > WiFi.RSSI(indices[i])) {
             		std::swap(indices[i], indices[j]);
-          		}	
+          		}
         	}
       	}
 
@@ -323,7 +323,7 @@ String WiFiSetupClass::scanWifi(void) {
             	}
           	}
         }
-		
+
       	//display networks in page
 		bool comma=false; // i==0 might not the "first", might be duplicated.
       	for (int i = 0; i < n; i++) {
@@ -331,12 +331,12 @@ String WiFiSetupClass::scanWifi(void) {
         	DBG_PRINTLN(WiFi.SSID(indices[i]));
 	        DBG_PRINTLN(WiFi.RSSI(indices[i]));
         	//int quality = getRSSIasQuality(WiFi.RSSI(indices[i]));
-			String item=String("{\"ssid\":\"") + WiFi.SSID(indices[i]) + 
+			String item=String("{\"ssid\":\"") + WiFi.SSID(indices[i]) +
 			String("\",\"rssi\":") + WiFi.RSSI(indices[i]) +
 			String(",\"enc\":") +  String((WiFi.encryptionType(indices[i]) != ENC_TYPE_NONE)? "1":"0")
 			+ String("}");
 			if(comma){
-				rst += ",";	
+				rst += ",";
 			}else{
 				comma=true;
 			}
