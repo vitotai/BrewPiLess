@@ -171,8 +171,8 @@ module.exports = (grunt) ->
           'build/setup.tmpl.html': ['src/setup.tmpl.html']
           'build/gravity.tmpl.html': ['src/gravity.tmpl.html']
           'build/logging.tmpl.html': ['src/logging.tmpl.html']
-          'build/config.tmpl.html': ['src/config.tmpl.html'],
-          'build/pressure.tmpl.html': ['src/pressure.tmpl.html'],
+          'build/config.tmpl.html': ['src/config.tmpl.html'],          
+          'build/pressure.tmpl.html': ['src/pressure.tmpl.html'],          
           'build/classic-index.tmpl.html': ['src/classic-index.tmpl.html']
           'build/classic-setup.tmpl.html': ['src/classic-setup.tmpl.html']
           'build/classic-gdc.tmpl.html': ['src/classic-gdc.tmpl.html']
@@ -183,7 +183,7 @@ module.exports = (grunt) ->
           'build/lcd.html' : ['src/lcd.html']
           'build/classic-lcd.html' : ['src/classic-lcd.html']
         ]
-
+  
     multi_lang_site_generator:
       default:
           options:
