@@ -25,10 +25,11 @@ HttpOverAsyncWebSocketClient::~HttpOverAsyncWebSocketClient(){
 
 String getStringUntil(const char delimiter,uint8_t **pptr, size_t len){
     String str;
+    str.reserve(len);
     uint8_t *ptr=*pptr;
     uint8_t *limit = ptr + len;
     while( *ptr != delimiter && ptr <  limit ){
-        str += String((char)*ptr);
+        str += (char)*ptr;
         ptr ++;
     }
     *pptr = ptr;
