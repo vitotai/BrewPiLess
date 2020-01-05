@@ -1,5 +1,5 @@
 function mqttLoadSetting() {
-    BWF.ajax({
+    s_ajax({
         url: "mqtt",
         m: "GET",
         success: function(data) {
@@ -34,7 +34,7 @@ function mqttSave() {
     });
 
     console.log(JSON.stringify(json));
-    BWF.ajax({
+    s_ajax({
         url: "mqtt",
         data: "data=" + encodeURIComponent(JSON.stringify(json)),
         m: "POST",
