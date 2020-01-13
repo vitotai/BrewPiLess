@@ -64,8 +64,8 @@ and send.
  
  and send.
  
- The respons is similar to this:
- `{"i":0,"t":1,"c":1,.....,"a":"28BE07Dxxxxxxxx","j":0.00}`
+ The respons is similar to this:    
+ `{"i":0,"t":1,"c":1,.....,"a":"28BE07Dxxxxxxxx","j":0.00}`     
  "i" is device index, and "j" is the calibration value.
 
 ## A note about PID control
