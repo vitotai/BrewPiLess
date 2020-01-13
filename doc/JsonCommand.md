@@ -57,6 +57,16 @@ and send.
  `U{i:0,j:0.36}`
  
  where **0** is the **Device Slot** that is assigned to the sensor during device setup, and **0.36** is the adjustment to the sensor.
+ 
+ To view current calibration setting, issue a single character
+ 
+ `h`
+ 
+ and send.
+ 
+ The respons is similar to this:
+ `{"i":0,"t":1,"c":1,.....,"a":"28BE07Dxxxxxxxx","j":0.00}`
+ "i" is device index, and "j" is the calibration value.
 
 ## A note about PID control
 The fridge temperature is controlled with PID. The fridge setting = beer setting + PID. The proportional part is linear with the temperature error. The integral part slowly increases when an error stays present, this prevents steady state errors. The derivative part is in the opposite direction to the proportional part. This prevents overshoot: it lowers the PID value when there's 'momentum' in the right direction.  
