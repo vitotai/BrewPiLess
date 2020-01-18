@@ -17,7 +17,7 @@
 WiFiSetupClass WiFiSetup;
 
 #define TimeForRescueAPMode 5000
-#define TimeForRecoverNetwork 60000
+#define TimeForRecoverNetwork 30000
 
 #if SerialDebug == true
 #define DebugOut(a) DebugPort.print(a)
@@ -129,6 +129,7 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 		DBG_PRINTF("WiFi.begin() return:%d\n",status);
 		_time=millis();
 	}
+	_wifiState=WiFiStateDisconnected;
 }
 
 bool WiFiSetupClass::connect(char const *ssid,const char *passwd,IPAddress ip,IPAddress gw, IPAddress nm, IPAddress dns){
@@ -262,6 +263,7 @@ bool WiFiSetupClass::stayConnected(void)
 				if(millis() - _time > TimeForRescueAPMode){
 					DBG_PRINTF("Stop recovering\n");
 					WiFi.disconnect();
+					WiFi.mode(WIFI_AP);
 					_time = millis();
 					_wifiState =WiFiStateDisconnected;
 					WiFi.setAutoConnect(false);
@@ -272,6 +274,7 @@ bool WiFiSetupClass::stayConnected(void)
 					} // _mode == WIFI_STA
 				} // millis() - _time > TimeForRescueAPMode
 			} else if(_wifiState==WiFiStateDisconnected){ // _wifiState == WiFiStateConnectionRecovering
+				if(_mode == WIFI_AP) return true;
 				if( millis() -  _time  > TimeForRecoverNetwork){
   						DBG_PRINTF("Start recovering\n");
 						WiFi.setAutoConnect(true);

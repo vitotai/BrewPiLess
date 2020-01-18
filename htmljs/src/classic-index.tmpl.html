@@ -822,7 +822,7 @@
 
     <!-- end of bottom frame -->
     <!-- capper -->
-    <div class="frame" id="capper-frame">
+    <div class="frame capping-info-pane" id="capper-frame">
         <div class="navbar" id="cap-header" class="captimeset">
             <div id="set-mode-text" class="capping-info-pane"> <span><%= control_capstate %></span>
                 <span id="capstate-open" class="capstate"><%= control_open %></span>
@@ -852,6 +852,10 @@
 
             </div>
         </div>
+        <div class="psi-set-group">                
+             <input type="number" step="1" size="6" id="cappressure" style="max-width:60px;margin:16px;display:inline">psi
+            <button class="btn" onclick="Capper.calpsi();">...</button>
+            </div>
     </div>
     <!-- Dialogs -->
     <div id="dlg_beerprofilereminder" class="modal">

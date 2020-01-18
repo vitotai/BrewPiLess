@@ -170,7 +170,7 @@
         init: function(id, y1, y2,id2,pl,carbonation) {
             this.chart = new BrewChart(id);
             this.chart.setLabels(y1, y2);
-            this.chart.setPChart(id2,pl,carbonation)
+            if(typeof id2 != "undefined") this.chart.setPChart(id2,pl,carbonation)
         },
     timer: null,
         start: function() {
@@ -778,7 +778,7 @@
 
     function init_classic() {
         window.plato = false;
-        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML);
+        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
         initRssi();
         Capper.init();
         BWF.gotMsg = true;
