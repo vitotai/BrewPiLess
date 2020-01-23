@@ -18,7 +18,7 @@ variables=(data_index_htm_gz control_htm_gz config_htm_gz setup_htm_gz logging_h
 outfiles=(index_htm control_htm config_htm setup_htm log_htm gdc_htm pressure_htm \
  c_index_htm c_config_htm c_setup_htm c_gdc_htm c_log_htm)
 
-languages=(english spanish portuguese-br slovak chinese)
+languages=(english spanish portuguese-br slovak chinese italian)
 
 
 gen_C_file()
