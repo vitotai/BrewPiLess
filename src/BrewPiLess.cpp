@@ -1395,6 +1395,7 @@ public:
 				syscfg->ip = ip;
 				syscfg->gw = gw;
 				syscfg->netmask = nm;
+				syscfg->dns = dns;
 				theSettings.save();
 			}else{
 				WiFiSetup.connect(ssid.c_str(),pass);
