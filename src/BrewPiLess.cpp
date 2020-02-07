@@ -1503,6 +1503,7 @@ public:
 				syscfg->ip = ip;
 				syscfg->gw = gw;
 				syscfg->netmask = nm;
+				syscfg->dns = dns;
 			}else{
 				WiFiSetup.connect(ssid.c_str(),pass);
 				DBG_PRINTF("dynamic IP\n");
