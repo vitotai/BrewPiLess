@@ -22,14 +22,16 @@ var devices = {
     },
     add: function(a, f) {
         var g;
-        if (f.h == 2) {
+        if (f.h == 2) { // sensor
             g = window.sensorContainer.cloneNode(true);
             g.querySelector("span.device-address").innerHTML = f.a;
             g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : f.v
-        } else if (f.h == 5) {
+            g.querySelector("input.device-calibration").value = f.j;
+        } else if (f.h == 5) { // external sensor
             g = window.extsensorContainer.cloneNode(true);
             g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : f.v;
-        } else if (f.h == 3) {
+            g.querySelector("input.device-calibration").value = f.j;
+        } else if (f.h == 3) { // owContainer
             g = window.owContainer.cloneNode(true);
             g.querySelector("span.device-address").innerHTML = f.a;
             g.querySelector("span.device-channel").innerHTML = f.n;
@@ -86,6 +88,9 @@ function cmdfrom(b) {
         c.x = d.querySelector("select.device-pintype").value
     } else if (c.h == 1) {
         c.x = d.querySelector("select.device-pintype").value
+    }
+    if(c.h == 2 || c.h == 5){
+        c.j = d.querySelector("select.device-calibration").value
     }
     return c
 }

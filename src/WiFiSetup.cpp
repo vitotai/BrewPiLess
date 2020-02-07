@@ -16,8 +16,8 @@
 
 WiFiSetupClass WiFiSetup;
 
-#define TimeForRescueAPMode 5000
-#define TimeForRecoverNetwork 30000
+#define TimeForRecoveringNetwork 5000
+#define TimeWaitToRecoverNetwork 60000
 
 #if SerialDebug == true
 #define DebugOut(a) DebugPort.print(a)
@@ -43,7 +43,7 @@ void WiFiSetupClass::staConfig(IPAddress ip,IPAddress gw, IPAddress nm,IPAddress
 }
 
 void WiFiSetupClass::setMode(WiFiMode mode){
-	DBG_PRINTF("WiFi mode from:%d to %d\n",_mode,_mode);	
+	DBG_PRINTF("WiFi mode from:%d to %d\n",_mode,mode);	
 
 	if(mode == _mode) return;
 	_mode = mode;
@@ -129,7 +129,7 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 		DBG_PRINTF("WiFi.begin() return:%d\n",status);
 		_time=millis();
 	}
-	_wifiState=WiFiStateDisconnected;
+	_wifiState=(mode2use == WIFI_AP)? WiFiStateDisconnected:WiFiStateConnectionRecovering;
 }
 
 bool WiFiSetupClass::connect(char const *ssid,const char *passwd,IPAddress ip,IPAddress gw, IPAddress nm, IPAddress dns){
@@ -146,6 +146,10 @@ bool WiFiSetupClass::connect(char const *ssid,const char *passwd,IPAddress ip,IP
 	_dns=dns;
 
 	_wifiState = WiFiStateChangeConnectPending;
+	// mode change implicitly in AP mode.
+	if(_mode == WIFI_AP){
+		_mode = WIFI_AP_STA;
+	}
 	return true;
 }
 
@@ -219,7 +223,8 @@ bool WiFiSetupClass::stayConnected(void)
 
 			if(mode == WIFI_AP_STA){
 				if( _mode == WIFI_AP){
-					//WiFi.disconnect();
+					DBG_PRINTF("Change from AP_STA to AP\n");
+					WiFi.disconnect();
 					_wifiState =WiFiStateDisconnected;
 				}else if (_mode == WIFI_STA){
 				}
@@ -252,50 +257,69 @@ bool WiFiSetupClass::stayConnected(void)
  			if(_wifiState==WiFiStateConnected)
  			{
 				wifi_info("**disc:");
-
-				_time=millis();
-				DBG_PRINTF("Lost Network. auto reconnect %d\n",_autoReconnect);
-				_wifiState = WiFiStateConnectionRecovering;
-				WiFi.begin(_targetSSID,_targetPass);
-				return true;
+				if(_mode != WIFI_AP){
+					_time=millis();
+					DBG_PRINTF("Lost Network.WiFi.status()= %d\n",WiFi.status());
+					_wifiState = WiFiStateConnectionRecovering;
+					WiFi.begin(_targetSSID,_targetPass);
+				}
 			}else if (_wifiState==WiFiStateConnectionRecovering){
 				// if sta mode, turn on AP mode
-				if(millis() - _time > TimeForRescueAPMode){
+				if(millis() - _time > TimeForRecoveringNetwork){
 					DBG_PRINTF("Stop recovering\n");
 					WiFi.disconnect();
-					WiFi.mode(WIFI_AP);
-					_time = millis();
-					_wifiState =WiFiStateDisconnected;
+					// enter AP mode, or the underlying WiFi stack would keep searching and block
+					//  connections to AP mode.
+					WiFiMode mode= WiFi.getMode();
+
 					WiFi.setAutoConnect(false);
-					if(_mode == WIFI_STA){
+					WiFi.mode(WIFI_AP);
+					
+					if(_mode == WIFI_STA && mode == WIFI_STA){
 						// create a wifi
-						WiFi.mode(WIFI_AP_STA);
 						createNetwork();
 					} // _mode == WIFI_STA
-				} // millis() - _time > TimeForRescueAPMode
-			} else if(_wifiState==WiFiStateDisconnected){ // _wifiState == WiFiStateConnectionRecovering
-				if(_mode == WIFI_AP) return true;
-				if( millis() -  _time  > TimeForRecoverNetwork){
+
+					_time = millis();
+					_wifiState =WiFiStateDisconnected;
+				} // millis() - _time > TimeForRecoveringNetwork
+			} else if(_wifiState==WiFiStateDisconnected){
+				if(_mode == WIFI_AP){
+
+				 // Can "return", if it returns here, the "canning networking will never run."
+				 //  // don't try to restore network, since there is none to be rediscover
+				}else{
+				// in AP_STA or STA mode
+					if( millis() -  _time  > TimeWaitToRecoverNetwork){
   						DBG_PRINTF("Start recovering\n");
+						WiFi.mode(WIFI_AP_STA);
+
 						WiFi.setAutoConnect(true);
 						_wifiState = WiFiStateConnectionRecovering;
 						_time = millis();
+					}
 				}
 		    }
  	} // WiFi.status() != WL_CONNECTED 
  	else // connected
  	{
+		 if(_mode == WIFI_AP){
+			 DBG_PRINTF("Connected in AP_mode\n");
+		 }else{
  			byte oldState=_wifiState;
  			_wifiState=WiFiStateConnected;
  			_reconnect=0;
  			if(oldState != _wifiState){
+				
 				if(WiFi.getMode() != _mode){
+					DBG_PRINTF("Change mode to desired:%d from %d\n",_mode,WiFi.getMode());
 					WiFi.mode(_mode);
 				}
+				
 				wifi_info("WiFi Connected:");
 				onConnected();
-				//return true;
 			}
+		 }
   } // end of connected
 
 	
@@ -317,7 +341,12 @@ bool WiFiSetupClass::requestScanWifi(void) {
 }
 
 String WiFiSetupClass::scanWifi(void) {
-	
+	bool apmode=false;
+	if(WiFi.getMode() == WIFI_AP){
+		apmode=true;
+		WiFi.mode(WIFI_AP_STA);
+	}
+
 	String rst="{\"list\":[";
 	
 	DBG_PRINTF("Scan Networks...\n");
@@ -380,5 +409,9 @@ String WiFiSetupClass::scanWifi(void) {
     }
 	rst += "]}";
 	DBG_PRINTF("scan result:%s\n",rst.c_str());
+	if(apmode){
+		WiFi.mode(WIFI_AP);
+	}
+
 	return rst;
 }

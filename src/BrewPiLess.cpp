@@ -501,7 +501,8 @@ public:
 					display.setAutoOffPeriod(theSettings.systemConfiguration()->backlite);
 
 					if(oldMode !=  theSettings.systemConfiguration()->wifiMode){
-						WiFiSetup.setMode((WiFiMode)theSettings.systemConfiguration()->wifiMode);
+						DBG_PRINTF("change from %d to %d\n",oldMode,theSettings.systemConfiguration()->wifiMode);
+						WiFiSetup.setMode((WiFiMode) (theSettings.systemConfiguration()->wifiMode));
 					}
 
 					if(!request->hasParam("nb")){
@@ -1478,6 +1479,12 @@ public:
 			if(request->hasParam("pass",true)){
 				pass = request->getParam("pass",true)->value().c_str();
 			}
+			
+			if(syscfg->wifiMode == WIFI_AP){
+				// change to WIFI_STA mode
+				syscfg->wifiMode = WIFI_AP_STA;
+			}
+
 			if(request->hasParam("ip",true) && request->hasParam("gw",true) && request->hasParam("nm",true)){
 				DBG_PRINTF("static IP\n");
 				IPAddress ip=scanIP(request->getParam("ip",true)->value().c_str());
@@ -1496,11 +1503,12 @@ public:
 				syscfg->ip = ip;
 				syscfg->gw = gw;
 				syscfg->netmask = nm;
-				theSettings.save();
 			}else{
 				WiFiSetup.connect(ssid.c_str(),pass);
 				DBG_PRINTF("dynamic IP\n");
 			}
+			theSettings.save();
+
 		#ifdef ESP32
 		DBG_PRINTF("SSID:%s\n",ssid.c_str());
 		theSettings.setWiFiConfiguration(ssid.c_str(),pass);

@@ -106,8 +106,6 @@ function validIP(t) {
     return value;
 }
 
-function modechange(sel) {}
-
 var Net = {
     select: function(l) {
         document.getElementById('ssid').value = l.innerText || l.textContent;
@@ -202,3 +200,14 @@ var Net = {
         Q("#networkselection").style.display = "none";
     }
 };
+
+function savewifi(){
+    Net.save();
+    div = Q("select[name=wifi]");
+    if(div.value ==2){
+        div.value = 3;
+        if(typeof window.oridata != "undefined"){
+            window.oridata.wifi=3;
+        }
+    }
+}
