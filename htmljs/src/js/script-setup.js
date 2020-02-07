@@ -90,7 +90,7 @@ function cmdfrom(b) {
         c.x = d.querySelector("select.device-pintype").value
     }
     if(c.h == 2 || c.h == 5){
-        c.j = d.querySelector("select.device-calibration").value
+        c.j = d.querySelector("input.device-calibration").value
     }
     return c
 }
