@@ -45,7 +45,7 @@ class FSEepromAccess
 			file.close();
 			return true;
 		}
-         DBG_PRINTF("read %s error:%u\n",filename,size);
+        DBG_PRINTF("read %s error:%u\n",filename,size);
         return false;
     }
     static bool writeToFile(const char* filename,const uint8_t* source,size_t size){
@@ -83,9 +83,11 @@ public:
     }
 
     static void zapData(){
+        DBG_PRINTF("Remove EEPROM files.\n");
         remove(File_ControlSettings);
         remove(File_ControlConstant);
         remove(File_DeviceDefinition);
+        memset((void*) devices,0,sizeof(devices));
     }
 
 	static void readControlSettings(ControlSettings& target, eptr_t offset, uint16_t size) {
