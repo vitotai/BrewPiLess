@@ -305,7 +305,7 @@
 #define actuatorPin1  16
 #define actuatorPin2  17
 #define actuatorPin3  19
-#define actuatorPin4  25
+#define actuatorPin4  27
 #define actuatorPin5  26
 
 #define BuzzPin       18

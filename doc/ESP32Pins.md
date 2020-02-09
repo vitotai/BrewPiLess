@@ -18,9 +18,9 @@
 | 21 | IO | I2C | | | I2C(SDA) |
 | 22 | IO | I2C | | | I2C(SCL) |
 | 23 | IO | VSPI | | | OneWire |
-| 25 | IO | DAC2, RTC| | | actuator |
+| 25 | IO | DAC2, RTC| | | Rotary Push |
 | 26 | IO | DAC2, RTC| | | actuator |
-| 27 | IO | Touch, RTC| | | Rotary Push |
+| 27 | IO | Touch, RTC| | |  actuator |
 | 32 | IO | Touch, ADC1, RTC | | | Rotary A |
 | 33 | IO | Touch, ADC1, RTC | | | Rotary B |
 | 34 | I | ADC1, RTC | no pull-up/down | | |
