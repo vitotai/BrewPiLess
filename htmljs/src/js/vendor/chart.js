@@ -728,7 +728,8 @@ var  CHART_VERSION = 6;
                 } else if (d0 == 0xF1) { // state
                     t.cstate = d1;
                 } else if (d0 == 0xF6) { // Time Sync
-                    t.ctime = (data[i] << 24) + (data[i + 1] << 16) + (data[i + 2] << 8) + data[i + 3];
+                    var utime = (data[i] << 24) + (data[i + 1] << 16) + (data[i + 2] << 8) + data[i + 3];
+                    if(utime > t.ctime) t.ctime =utime;
                 } else if (d0 == 0xFE) { // resume
                     t.lidx = 0;
                     var d2 = data[i++];

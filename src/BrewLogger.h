@@ -158,33 +158,32 @@ private:
 
 	uint16_t  _headData[VolatileDataHeaderSize];
 
-	void resetTempData(void);
-	void checkspace(void);
+	void _resetTempData(void);
+	void _checkspace(void);
 
-	void volatileHeader(char *buf);
+	void _volatileHeader(char *buf);
 
-	void startLog(bool fahrenheit,bool calibrating);
-	void startVolatileLog(void);
-	int freeBufferSpace(void);
-	void dropData(void);
-	int volatileLoggingAlloc(int size);
-	int allocByte(byte size);
-	void writeBuffer(int idx,uint8_t data);
-	void commitData(int idx,int len);
-	void addOG(uint16_t og);
-	void addSG(uint16_t sg);
-	void addGravityRecord(bool isOg, uint16_t gravity);
+	void _startLog(bool fahrenheit,bool calibrating);
+	void _startVolatileLog(void);
+	int _availableBufferSpace(void);
+	void _dropData(void);
+	int _volatileLoggingAlloc(int size);
+	int _allocByte(byte size);
+	void _writeBuffer(int idx,uint8_t data);
+	void _commitData(int idx,int len);
+	void _addOgRecord(uint16_t og);
+	void _addSgRecord(uint16_t sg);
+	void _addGravityRecord(bool isOg, uint16_t gravity);
 
-	void addMode(char mode);
-	uint32_t addResumeTag(void);
-	void addTimeSyncTag(void);
-	void addState(char state);
-	uint16_t convertTemperature(float temp);
-	void addTargetPsi(void);
+	void _addModeRecord(char mode);
+	uint32_t _addResumeTag(void);
+	void _addTimeSyncTag(void);
+	void _addStateRecord(char state);
+	uint16_t _convertTemperature(float temp);
+	void _addTargetPsiRecord(void);
 
-	void loadIdxFile(void);
-	void saveIdxFile(void);
-	bool checkTime(void);
+	void _loadIdxFile(void);
+	void _saveIdxFile(void);
 };
 
 extern BrewLogger brewLogger;

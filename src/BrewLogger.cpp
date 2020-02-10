@@ -13,7 +13,7 @@ BrewLogger::BrewLogger(void){
 	_recording=false;
 	_fsspace=0;
 	
-	resetTempData();
+	_resetTempData();
 	_calibrating=false;
 	_lastPressureReading = INVALID_PRESSURE_INT;
 	_targetPsi =0;
@@ -23,8 +23,8 @@ BrewLogger::BrewLogger(void){
 	bool BrewLogger::begin(void)
 	{
     	bool resumeSuccess=false;
-		loadIdxFile();
-		checkspace();
+		_loadIdxFile();
+		_checkspace();
 		if(_pFileInfo->logname[0]!='\0'){
 			resumeSuccess=resumeSession();
 		}
@@ -32,7 +32,7 @@ BrewLogger::BrewLogger(void){
 		if(!resumeSuccess){
 			DBG_PRINTF("**Resume failed!.start volatiel log\n");
 			loop();
-			startVolatileLog();
+			_startVolatileLog();
 		}
         return resumeSuccess;
 	}
@@ -110,8 +110,8 @@ BrewLogger::BrewLogger(void){
 		_pFileInfo->files[i-1].name[0]='\0';
 		_pFileInfo->files[i-1].time =0;
 
-		checkspace();
-		saveIdxFile();
+		_checkspace();
+		_saveIdxFile();
 	}
 
 	bool BrewLogger::resumeSession()
@@ -270,7 +270,7 @@ BrewLogger::BrewLogger(void){
 		brewPi.getLogInfo(&unit,&_mode,&_state);
 
 		// add resume tag
-		_chartTime = addResumeTag();
+		_chartTime = _addResumeTag();
 		//DBG_PRINTF("resume done _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
 #if ESP32
 		_logFile.close();
@@ -311,17 +311,17 @@ BrewLogger::BrewLogger(void){
 		char unit;
 		brewPi.getLogInfo(&unit,&_mode,&_state);
 
-		startLog(unit == 'F',calibrating);
+		_startLog(unit == 'F',calibrating);
 		_calibrating = calibrating;
 		#if SupportPressureTransducer
 		_targetPsi =0; // force to record
 		#endif
-		resetTempData();
+		_resetTempData();
 		loop(); // get once
-		addMode(_mode);
-		addState(_state);
+		_addModeRecord(_mode);
+		_addStateRecord(_state);
 
-		saveIdxFile();
+		_saveIdxFile();
 		// flush to force write to file system.
 		_logFile.flush();
 		return true;
@@ -346,9 +346,9 @@ BrewLogger::BrewLogger(void){
 		_pFileInfo->files[index].time = _pFileInfo->starttime;
 		_pFileInfo->logname[0]='\0';
 		_pFileInfo->starttime=0;
-		saveIdxFile();
+		_saveIdxFile();
 
-		startVolatileLog();
+		_startVolatileLog();
 	}
 
 	void BrewLogger::loop(void){
@@ -361,15 +361,17 @@ BrewLogger::BrewLogger(void){
 		_chartTime += LoggingPeriod/1000;
 
 		uint32_t now = TimeKeeper.getTimeSeconds();
-		if( ((_chartTime >  now) && (_chartTime -  now >  MinimumGapToSync)) 
-			|| (( _chartTime < now) && (now - _chartTime > MinimumGapToSync)) ){
+//		if( ((_chartTime >  now) && (_chartTime -  now >  MinimumGapToSync)) 
+//			|| (( _chartTime < now) && (now - _chartTime > MinimumGapToSync)) ){
+		if(  ( _chartTime < now) && ((now - _chartTime) > MinimumGapToSync) ){
+
 			if(_recording){
-				addTimeSyncTag();
+				_addTimeSyncTag();
 				DBG_PRINTF("**Sync time from:%d  to:%d",_chartTime,now);
 				_chartTime=now;
 			}else{
 				DBG_PRINTF("**Time out of sync :%d :%d",_chartTime,now);
-				startVolatileLog();
+				_startVolatileLog();
 				DBG_PRINTF("**Sync time from:%d  to:%d",_chartTime,_headTime);
 			}
 		}
@@ -390,7 +392,7 @@ BrewLogger::BrewLogger(void){
 		int   changeNum=0;
 
 		for(int i=0;i<5;i++){
-			iTemp=convertTemperature(fTemps[i]);
+			iTemp=_convertTemperature(fTemps[i]);
 			if(_iTempData[i] != iTemp){
 				changeMask |= (1 << i);
 				_iTempData[i] = iTemp;
@@ -427,58 +429,58 @@ BrewLogger::BrewLogger(void){
 		}
 		#endif
 
-		int startIdx = allocByte(2+ changeNum * 2);
+		int startIdx = _allocByte(2+ changeNum * 2);
 		if(startIdx < 0) return;
 		int idx=startIdx;
-		writeBuffer(idx++,PeriodTag);
-		writeBuffer(idx++,changeMask);
+		_writeBuffer(idx++,PeriodTag);
+		_writeBuffer(idx++,changeMask);
 
 		for(int i=0;i<5;i++){
 			if(changeMask & (1<<i)){
 
-				writeBuffer(idx ++,(_iTempData[i]>> 8) & 0x7F);
-				writeBuffer(idx ++,_iTempData[i] & 0xFF);
+				_writeBuffer(idx ++,(_iTempData[i]>> 8) & 0x7F);
+				_writeBuffer(idx ++,_iTempData[i] & 0xFF);
 			}
 		}
 
 
-		if( _extTemp != INVALID_TEMP_INT){
-			writeBuffer(idx++,(_extTemp >>8) & 0x7F);
-			writeBuffer(idx++,_extTemp & 0xFF);
+		//if( _extTemp != INVALID_TEMP_INT){
+		if(changeMask & (1 << OrderExtTemp)){
+			_writeBuffer(idx++,(_extTemp >>8) & 0x7F);
+			_writeBuffer(idx++,_extTemp & 0xFF);
 			_extTemp = INVALID_TEMP_INT;
 		}
-		if(! _calibrating){
-			if( _extGravity != INVALID_GRAVITY_INT){
-				writeBuffer(idx++,(_extGravity >>8) & 0x7F);
-				writeBuffer(idx++,_extGravity & 0xFF);
+
+		if(changeMask & (1 << OrderGravityInfo)){
+			if(! _calibrating){
+				_writeBuffer(idx++,(_extGravity >>8) & 0x7F);
+				_writeBuffer(idx++,_extGravity & 0xFF);
 				//DBG_PRINTF("gravity %d: %d %d\n",_extGravity,(_extGravity >>8) & 0x7F,_extGravity & 0xFF);
 				_extGravity = INVALID_GRAVITY_INT;
-			}
-		}else{
-			if( _extTileAngle != INVALID_TILT_ANGLE){
-				writeBuffer(idx++,(_extTileAngle >>8) & 0x7F);
-				writeBuffer(idx++,_extTileAngle & 0xFF);
+			}else{
+				_writeBuffer(idx++,(_extTileAngle >>8) & 0x7F);
+				_writeBuffer(idx++,_extTileAngle & 0xFF);
 				_extTileAngle = INVALID_TILT_ANGLE;
 			}
 		}
 		// pressure data
 		#if SupportPressureTransducer
 		if(changeMask & (1 << OrderPressure) ){
-			writeBuffer(idx ++,(_lastPressureReading>> 8) & 0x7F);
-			writeBuffer(idx ++,_lastPressureReading & 0xFF);
+			_writeBuffer(idx ++,(_lastPressureReading>> 8) & 0x7F);
+			_writeBuffer(idx ++,_lastPressureReading & 0xFF);
 		}
 		#endif
 		
-		commitData(startIdx,2+ changeNum * 2);
+		_commitData(startIdx,2+ changeNum * 2);
 
 		if(_extOriginGravity != INVALID_GRAVITY_INT){
-			addOG(_extOriginGravity);
+			_addOgRecord(_extOriginGravity);
 			_extOriginGravity = INVALID_GRAVITY_INT;
 		}
 
 		if(_calibrating){
 			if( _extGravity != INVALID_GRAVITY_INT){
-				addSG(_extGravity);
+				_addSgRecord(_extGravity);
 				_extGravity = INVALID_GRAVITY_INT;
 			}
 		}
@@ -486,19 +488,19 @@ BrewLogger::BrewLogger(void){
 		if(mode != _mode){
 			DBG_PRINTF("mode %c => %c\n",_mode,mode);
 			_mode = mode;
-			addMode(mode);
+			_addModeRecord(mode);
 		}
 
 		if(state != _state){
 			DBG_PRINTF("state %d => %d\n",_state,state);
 			_state = state;
-			addState(state);
+			_addStateRecord(state);
 		}
 		#if SupportPressureTransducer
 		uint8_t psi= PressureMonitor.getTargetPsi();
 		if(psi != _targetPsi){
 			_targetPsi = psi;
-			addTargetPsi();
+			_addTargetPsiRecord();
 		}
 		#endif
 	}
@@ -621,7 +623,7 @@ BrewLogger::BrewLogger(void){
 			if(index < VolatileHeaderSize){
 				// maxLen < VolatileHeaderSize?
 				char header[VolatileHeaderSize];
-				volatileHeader(header);
+				_volatileHeader(header);
 				for(int i=index;bufIdx<maxLen && i<VolatileHeaderSize;i++)
 					buffer[bufIdx++]=header[i];
 				readIdx = _logHead;
@@ -654,16 +656,16 @@ BrewLogger::BrewLogger(void){
 	}
 
 
-	void BrewLogger::addOG(uint16_t og){
-		addGravityRecord(true,og);
+	void BrewLogger::_addOgRecord(uint16_t og){
+		_addGravityRecord(true,og);
 	}
-	void BrewLogger::addSG(uint16_t sg){
-		addGravityRecord(false,sg);
+	void BrewLogger::_addSgRecord(uint16_t sg){
+		_addGravityRecord(false,sg);
 	}
 
 	void BrewLogger::addAuxTemp(float temp)
 	{
-		_extTemp = convertTemperature(temp);
+		_extTemp = _convertTemperature(temp);
 		DBG_PRINTF("AuxTemp:%d\n",_extTemp);
 	}
 	void BrewLogger::addTiltAngle(float tilt)
@@ -673,11 +675,11 @@ BrewLogger::BrewLogger(void){
 	void BrewLogger::addCorrectionTemperature(float temp)
 	{
 		if(!_recording) return;
-		int idx = allocByte(2);
+		int idx = _allocByte(2);
 		if(idx < 0) return;
-		writeBuffer(idx,CorrectionTempTag);
-		writeBuffer(idx+1,(uint8_t)temp);
-		commitData(idx,2);
+		_writeBuffer(idx,CorrectionTempTag);
+		_writeBuffer(idx+1,(uint8_t)temp);
+		_commitData(idx,2);
 	}
 	#define ICPM_B1(m)  (((m)>>14) & 0x7F)
 	#define ICPM_B2(m)  (((m)>>7) & 0x7F)
@@ -685,20 +687,20 @@ BrewLogger::BrewLogger(void){
 	void BrewLogger::addIgnoredCalPointMask(uint32_t mask)
 	{
 		if(!_recording) return;
-		int idx = allocByte(4);
+		int idx = _allocByte(4);
 		if(idx < 0) return;
-		writeBuffer(idx,IgnoredCalPointMaskTag);
-		writeBuffer(idx+1,ICPM_B1(mask));
-		writeBuffer(idx+2,ICPM_B2(mask));
-		writeBuffer(idx+3,ICPM_B3(mask));
-		commitData(idx,4);
+		_writeBuffer(idx,IgnoredCalPointMaskTag);
+		_writeBuffer(idx+1,ICPM_B1(mask));
+		_writeBuffer(idx+2,ICPM_B2(mask));
+		_writeBuffer(idx+3,ICPM_B3(mask));
+		_commitData(idx,4);
 	}
 
 	void BrewLogger::addTiltInWater(float tilt,float reading)
 	{
 		// potential race condition
 		if(!_recording) return;
-		int idx = allocByte(4);
+		int idx = _allocByte(4);
 		if(idx < 0) return;
 		// the readings of water is suppose to be in a very small ranges
 		// around 1.000
@@ -708,13 +710,13 @@ BrewLogger::BrewLogger(void){
 		// subtract 0.9 to make it ranges from 0.059 - 0.102
 		uint8_t compressed_reading =(uint8_t)((int)(reading * 1000.0) - 900);
 		uint16_t angle=TiltEncode(tilt);		
-		writeBuffer(idx,CalibrationPointTag);
-		writeBuffer(idx+1,compressed_reading);
-		writeBuffer(idx+2,HighOctect(angle));
-		writeBuffer(idx+3,LowOctect(angle));
-		commitData(idx,4);		
+		_writeBuffer(idx,CalibrationPointTag);
+		_writeBuffer(idx+1,compressed_reading);
+		_writeBuffer(idx+2,HighOctect(angle));
+		_writeBuffer(idx+3,LowOctect(angle));
+		_commitData(idx,4);		
 	}
-	void BrewLogger::resetTempData(void)
+	void BrewLogger::_resetTempData(void)
 	{
 		for(int i=0;i<5;i++) _iTempData[i]=INVALID_TEMP_INT;
 		_extTemp=INVALID_TEMP_INT;
@@ -725,7 +727,7 @@ BrewLogger::BrewLogger(void){
 
 #define RESERVED_SIZE 8196*2
 
-	void BrewLogger::checkspace(void)
+	void BrewLogger::_checkspace(void)
 	{
 #if defined(ESP32)
 		_fsspace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
@@ -750,7 +752,7 @@ BrewLogger::BrewLogger(void){
 		DBG_PRINTF("SPIFFS space:%d\n",_fsspace);
 	}
 
-	void BrewLogger::volatileHeader(char *buf)
+	void BrewLogger::_volatileHeader(char *buf)
 	{
 		char unit;
 		uint8_t mode,state;
@@ -790,7 +792,7 @@ BrewLogger::BrewLogger(void){
 		*ptr++ = TargetPsiTag; //15		
 		*ptr++ = _targetPsi;  // 16
  	}
-	void BrewLogger::startLog(bool fahrenheit,bool calibrating)
+	void BrewLogger::_startLog(bool fahrenheit,bool calibrating)
 	{
 		char *ptr=_logBuffer;
 		_usePlato=theSettings.GravityConfig()->usePlato;
@@ -818,14 +820,14 @@ BrewLogger::BrewLogger(void){
 		*ptr++ = (char) (_pFileInfo->starttime & 0xFF);
 		_logIndex=0;
 		_savedLength=0;
-		commitData(_logIndex,ptr - _logBuffer );
+		_commitData(_logIndex,ptr - _logBuffer );
 
-		//DBG_PRINTF("*startLog*\n");
+		//DBG_PRINTF("*_startLog*\n");
 	}
 
-	void BrewLogger::startVolatileLog(void)
+	void BrewLogger::_startVolatileLog(void)
 	{
-		DBG_PRINTF("startVolatileLog, mode=%c, beerteemp=%d\n",_mode,_iTempData[OrderBeerTemp]);
+		DBG_PRINTF("_startVolatileLog, mode=%c, beerteemp=%d\n",_mode,_iTempData[OrderBeerTemp]);
 		_headTime=TimeKeeper.getTimeSeconds();
 		_logHead = 0;
 		_logIndex = 0;
@@ -840,7 +842,7 @@ BrewLogger::BrewLogger(void){
 
 
 
-	int BrewLogger::freeBufferSpace(void)
+	int BrewLogger::_availableBufferSpace(void)
 	{
 		//DBG_PRINTF("_logHead:%d, _logIndex: %d\n",_logHead,_logIndex);
 		if(_logIndex >= (size_t)_logHead){
@@ -851,7 +853,7 @@ BrewLogger::BrewLogger(void){
 		}
 	}
 
-	void BrewLogger::dropData(void)
+	void BrewLogger::_dropData(void)
 	{
 		noInterrupts();
 		// move headto nex time stamp.
@@ -929,21 +931,21 @@ BrewLogger::BrewLogger(void){
 		DBG_PRINTF("Drop %d\n",dataDrop);
 	}
 
-	int BrewLogger::volatileLoggingAlloc(int size){
-		int space=freeBufferSpace();
+	int BrewLogger::_volatileLoggingAlloc(int size){
+		int space=_availableBufferSpace();
 		while(space < size){
 			//DBG_PRINTF("Free %d req: %d\n",space,size);
-			dropData();
-			space=freeBufferSpace();
+			_dropData();
+			space=_availableBufferSpace();
 		}
 
 		return _logIndex;
 	}
 
-	int BrewLogger::allocByte(byte size)
+	int BrewLogger::_allocByte(byte size)
 	{
 		if(!_recording){
-			return volatileLoggingAlloc(size);
+			return _volatileLoggingAlloc(size);
 		}
 		if((_logIndex+size) > LogBufferSize){
 			DBG_PRINTF("buffer full, %d + %d >= %d! saved=%d\n",_logIndex,size,LogBufferSize,_savedLength);
@@ -962,7 +964,7 @@ BrewLogger::BrewLogger(void){
 		return _logIndex;
 	}
 
-	void BrewLogger::writeBuffer(int idx,uint8_t data)
+	void BrewLogger::_writeBuffer(int idx,uint8_t data)
 	{
 		if(idx < LogBufferSize){
 			_logBuffer[idx] = data;
@@ -971,7 +973,7 @@ BrewLogger::BrewLogger(void){
 		}
 	}
 
-	void BrewLogger::commitData(int idx,int len)
+	void BrewLogger::_commitData(int idx,int len)
 	{
 		//WARNNING: we are relying on the write cache of SPIFFS
 		 _logIndex += len;
@@ -1011,55 +1013,55 @@ BrewLogger::BrewLogger(void){
 		
 	}
 
-	void BrewLogger::addGravityRecord(bool isOg, uint16_t gravity){
-		int idx = allocByte(4);
+	void BrewLogger::_addGravityRecord(bool isOg, uint16_t gravity){
+		int idx = _allocByte(4);
 		if(idx < 0) return;
-		writeBuffer(idx, isOg? OriginGravityTag:SpecificGravityTag);
-		writeBuffer(idx+1,0);
-		writeBuffer(idx+2,(gravity >> 8) | 0x80); //*ptr = ModeTag;
-		writeBuffer(idx+3,gravity & 0xFF); //*(ptr+1) = mode;
-		commitData(idx,4);
+		_writeBuffer(idx, isOg? OriginGravityTag:SpecificGravityTag);
+		_writeBuffer(idx+1,0);
+		_writeBuffer(idx+2,(gravity >> 8) | 0x80); //*ptr = ModeTag;
+		_writeBuffer(idx+3,gravity & 0xFF); //*(ptr+1) = mode;
+		_commitData(idx,4);
 	}
 
-	void BrewLogger::addTimeSyncTag(void){
-		int idx = allocByte(6);
+	void BrewLogger::_addTimeSyncTag(void){
+		int idx = _allocByte(6);
 		if(idx < 0) return;
-		writeBuffer(idx,TimeSyncTag);
-		writeBuffer(idx+1,0);
+		_writeBuffer(idx,TimeSyncTag);
+		_writeBuffer(idx+1,0);
 		uint32_t now=TimeKeeper.getTimeSeconds();
-		writeBuffer(idx+2,(uint8_t)(now >> 24));
-		writeBuffer(idx+3,(uint8_t)(now >> 16));
-		writeBuffer(idx+4,(uint8_t)(now >> 8));
-		writeBuffer(idx+5,(uint8_t)(now & 0xFF));
+		_writeBuffer(idx+2,(uint8_t)(now >> 24));
+		_writeBuffer(idx+3,(uint8_t)(now >> 16));
+		_writeBuffer(idx+4,(uint8_t)(now >> 8));
+		_writeBuffer(idx+5,(uint8_t)(now & 0xFF));
 
-		commitData(idx,6);
+		_commitData(idx,6);
 	}
 
-	void BrewLogger::addMode(char mode){
-		int idx = allocByte(2);
+	void BrewLogger::_addModeRecord(char mode){
+		int idx = _allocByte(2);
 		if(idx < 0) return;
-		writeBuffer(idx,ModeTag); //*ptr = ModeTag;
-		writeBuffer(idx+1,mode); //*(ptr+1) = mode;
-		commitData(idx,2);
+		_writeBuffer(idx,ModeTag); //*ptr = ModeTag;
+		_writeBuffer(idx+1,mode); //*(ptr+1) = mode;
+		_commitData(idx,2);
 	}
 
-	void BrewLogger::addTargetPsi(void){
-		int idx = allocByte(2);
+	void BrewLogger::_addTargetPsiRecord(void){
+		int idx = _allocByte(2);
 		if(idx < 0) return;
-		writeBuffer(idx,TargetPsiTag); //*ptr = TargetPsiTag;
-		writeBuffer(idx+1,_targetPsi); //*(ptr+1) = mode;
-		commitData(idx,2);
+		_writeBuffer(idx,TargetPsiTag); //*ptr = TargetPsiTag;
+		_writeBuffer(idx+1,_targetPsi); //*(ptr+1) = mode;
+		_commitData(idx,2);
 	}
 
-	void BrewLogger::addState(char state){
-		int idx = allocByte(2);
+	void BrewLogger::_addStateRecord(char state){
+		int idx = _allocByte(2);
 		if(idx <0) return;
-		writeBuffer(idx,StateTag); //*ptr = StateTag;
-		writeBuffer(idx+1,state); //*(ptr+1) = state;
-		commitData(idx,2);
+		_writeBuffer(idx,StateTag); //*ptr = StateTag;
+		_writeBuffer(idx+1,state); //*(ptr+1) = state;
+		_commitData(idx,2);
 	}
 
-	uint16_t BrewLogger::convertTemperature(float temp){
+	uint16_t BrewLogger::_convertTemperature(float temp){
 		if(temp >= 225 || temp < -100) 
 			return INVALID_TEMP_INT;
 		
@@ -1074,11 +1076,11 @@ BrewLogger::BrewLogger(void){
 	}
 
 
-	uint32_t BrewLogger::addResumeTag(void)
+	uint32_t BrewLogger::_addResumeTag(void)
 	{
-		int idx = allocByte(4);
+		int idx = _allocByte(4);
 		if(idx < 0) return 0;
-		writeBuffer(idx,ResumeBrewTag); //*ptr = ResumeBrewTag;
+		_writeBuffer(idx,ResumeBrewTag); //*ptr = ResumeBrewTag;
 		size_t rtime= TimeKeeper.getTimeSeconds();
 		size_t gap=rtime - _pFileInfo->starttime;
 		if(rtime < 1545211593L || gap > 60*60*24*30){
@@ -1089,19 +1091,19 @@ BrewLogger::BrewLogger(void){
 		}
 		DBG_PRINTF("resume, start:%lu, current:%u gap:%u\n",_pFileInfo->starttime,rtime,gap);
 		//if (gap > 255) gap = 255;
-		writeBuffer(idx+1,(uint8_t) (gap>>16)&0xFF );
-		writeBuffer(idx+2,(uint8_t) (gap>>8)&0xFF );
-		writeBuffer(idx+3,(uint8_t) (gap)&0xFF);
-		commitData(idx,4);
+		_writeBuffer(idx+1,(uint8_t) (gap>>16)&0xFF );
+		_writeBuffer(idx+2,(uint8_t) (gap>>8)&0xFF );
+		_writeBuffer(idx+3,(uint8_t) (gap)&0xFF);
+		_commitData(idx,4);
 		return rtime;
 	}
 
-	void BrewLogger::loadIdxFile(void)
+	void BrewLogger::_loadIdxFile(void)
 	{
         _pFileInfo = theSettings.logFileIndexes();
 	}
 
-	void BrewLogger::saveIdxFile(void)
+	void BrewLogger::_saveIdxFile(void)
 	{
         theSettings.save();
 	}
