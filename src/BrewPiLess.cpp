@@ -389,7 +389,6 @@ public:
 #if LegacyEspAsyncLibraries != true
 	virtual bool isRequestHandlerTrivial() override final {return false;}
 #endif
-
 	void handleRequest(AsyncWebServerRequest *request){
 		SystemConfiguration *syscfg=theSettings.systemConfiguration();
 
