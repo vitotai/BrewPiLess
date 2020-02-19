@@ -63,7 +63,7 @@ protected:
     char* _ptcPath;
     #endif
 
-    #if Auto_CAP
+    #if Auto_Spunding
     char* _capPath;
     #endif
 
@@ -81,7 +81,7 @@ protected:
     void _onPtcChange(char* payload,size_t len);
 #endif
 
-#if Auto_CAP
+#if Auto_Spunding
     void _onCapChange(char* payload,size_t len);
 #endif
     void _loadConfig();

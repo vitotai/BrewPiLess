@@ -1076,9 +1076,10 @@ String BPLSettings::jsonMqttRemoteControlSettings(void){
 	}
 #endif
 
-#if Auto_CAP
+#if Auto_Spunding
 	if(settings->capControlPathOffset){
 		root[CapPathKey] = settings->_strings + settings->capControlPathOffset;
+		DBG_PRINTF("Cap path:%s offset:%d\n",root[CapPathKey] , settings->capControlPathOffset);
 	}
 #endif
 
@@ -1190,7 +1191,7 @@ bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 	if(!(ptr=copyIfExist(root,PtcPathKey,settings->ptcPathOffset,ptr,base))) return false;
 	#endif
 
-	#if Auto_CAP
+	#if Auto_Spunding
 	if(!(ptr=copyIfExist(root,CapPathKey,settings->capControlPathOffset,ptr,base))) return false;
 	#endif
 

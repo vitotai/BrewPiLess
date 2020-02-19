@@ -20,7 +20,7 @@ extern BrewPiProxy brewpi;
 #include "ParasiteTempController.h"
 #endif
 
-#if Auto_CAP
+#if Auto_Spunding
 #include "AutoCapContro.h"
 #endif
 
@@ -207,6 +207,32 @@ void MqttRemoteControl::_loadConfig()
     _mode = settings->mode;
     
     if(_mode == MqttModeOff) return;
+    // the structure is bug prone, sanitary check is necessary
+    if(_mode > MqttModeBothControlLoggging){
+        DBG_PRINTF("Invalid MQTT mode:%d\n",_mode);
+        _mode = MqttModeOff;
+    }
+
+    DBG_PRINTF("server:%d, user:%d, pass%d, mode%d, beerset:%d, cap:%d, ptc:%d, fridgest:%d, base:%d, \n",
+        settings->serverOffset,settings->usernameOffset,settings->passwordOffset,settings->modePathOffset,
+        settings->beerSetPathOffset,settings->capControlPathOffset,settings->ptcPathOffset,
+        settings->fridgeSetPathOffset,settings->reportBasePathOffset);
+
+    if( settings->serverOffset >= MqttSettingStringSpace
+        || settings->usernameOffset >= MqttSettingStringSpace
+        || settings->passwordOffset >= MqttSettingStringSpace
+        || settings->modePathOffset  >= MqttSettingStringSpace
+        || settings->beerSetPathOffset >= MqttSettingStringSpace
+        || settings->capControlPathOffset  >= MqttSettingStringSpace
+        || settings->ptcPathOffset  >= MqttSettingStringSpace
+        || settings->fridgeSetPathOffset  >= MqttSettingStringSpace
+        || settings->reportBasePathOffset >= MqttSettingStringSpace){
+        
+        DBG_PRINTF("Invalid MQTT settings\n");
+        _mode = MqttModeOff;
+        return;
+    }
+
     _serverPort = settings->port;
 
     _serverAddress=settings->serverOffset? (char*)settings->_strings + settings->serverOffset:NULL;
@@ -248,7 +274,7 @@ void MqttRemoteControl::_loadConfig()
         _ptcPath = settings->ptcPathOffset? (char*)settings->_strings + settings->ptcPathOffset:NULL;
 #endif
 
-#if Auto_CAP
+#if Auto_Spunding
         _capPath = settings->capControlPathOffset? (char*)settings->_strings + settings->capControlPathOffset:NULL;
 #endif
 
@@ -263,7 +289,7 @@ void MqttRemoteControl::_loadConfig()
         if(_ptcPath) DBG_PRINTF("_ptcPath:%s\n",_ptcPath);
         #endif
 
-        #if Auto_CAP
+        #if Auto_Spunding
         if(_capPath) DBG_PRINTF("_capPath:%s\n",_capPath);
         #endif        
         #endif
@@ -280,6 +306,7 @@ bool MqttRemoteControl::begin()
     _connectAttempt=0;
     _reloadConfig=false;
     _reconnecting=false;
+    DBG_PRINTF("End of MQTT begin\n\n");
     return false;
 }
 
@@ -332,7 +359,7 @@ void MqttRemoteControl::_onConnect(void){
     }
     #endif
 
-    #if Auto_CAP
+    #if Auto_Spunding
     if(_capPath){
         if(_client.subscribe(_capPath, 1)){
             DBG_PRINTF("MQTT:Subscribing %s\n",_capPath);
@@ -365,7 +392,7 @@ void MqttRemoteControl::_onMessage(char* topic, uint8_t* payload, size_t len) {
         this->_onPtcChange((char*)payload,len);
     }
 #endif 
-#if Auto_CAP
+#if Auto_Spunding
     else if(strcmp(topic, _capPath) ==0){
         this->_onCapChange((char*)payload,len);
     }
@@ -447,7 +474,7 @@ void MqttRemoteControl::_onPtcChange(char* payload, size_t len){
 #endif
 
 
-#if Auto_CAP
+#if Auto_Spunding
 void MqttRemoteControl::_onCapChange(char* payload,size_t len){
     bool mode;
 
