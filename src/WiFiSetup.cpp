@@ -307,9 +307,7 @@ bool WiFiSetupClass::stayConnected(void)
 						_time = millis();
 					}
 				}
-		    }else if(_wifiState==WiFiStateUnknown){
-				_wifiState= WiFiStateConnectionRecovering;
-			}
+		    }
  	} // WiFi.status() != WL_CONNECTED 
  	else // connected
  	{
