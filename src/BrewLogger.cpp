@@ -47,8 +47,8 @@ BrewLogger::BrewLogger(void){
 
 		if(!resumeSuccess){
 			DBG_PRINTF("**Resume failed!.start volatiel log\n");
-			loop();
 			_startVolatileLog();
+			loop();
 		}
         return resumeSuccess;
 	}
@@ -520,13 +520,13 @@ BrewLogger::BrewLogger(void){
 		}
 
 		if(mode != _mode){
-			//DBG_PRINTF("mode %c => %c\n",_mode,mode);
+			DBG_PRINTF("mode %c => %c\n",_mode,mode);
 			_mode = mode;
 			_addModeRecord(mode);
 		}
 
 		if(state != _state){
-			//DBG_PRINTF("state %d => %d\n",_state,state);
+			DBG_PRINTF("state %d => %d\n",_state,state);
 			_state = state;
 			_addStateRecord(state);
 		}
@@ -567,12 +567,12 @@ BrewLogger::BrewLogger(void){
 		//                        that is,  total size = _savedLength + _logIndex
 		// in abnormal cases, the file size is total size since all data are "written".
 
-		//DBG_PRINTF("beginCopyAfter:%d, _logIndex=%u, saved=%u, return:%u, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
+		DBG_PRINTF("beginCopyAfter:%d, _logIndex=%u, saved=%u, return:%u, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
 		if(last >= (_logIndex +_savedLength)){
-            //DBG_PRINTF(" return:0\n");
+            DBG_PRINTF(" return:0\n");
             return 0;
         }
-        //DBG_PRINTF(" return:%u\n",_logIndex+_savedLength - last);
+        DBG_PRINTF(" return:%u\n",_logIndex+_savedLength - last);
 		return ( _logIndex+_savedLength - last);
 	}
 
@@ -584,7 +584,7 @@ BrewLogger::BrewLogger(void){
 		// rindex is the real index of the whole log
 		size_t rindex= index + _lastRead;
 
-		//DBG_PRINTF("read index:%u, max:%u, _lastRead =%u, rindex=%u\n",index,maxLen,_lastRead,rindex);
+		DBG_PRINTF("read index:%u, max:%u, _lastRead =%u, rindex=%u\n",index,maxLen,_lastRead,rindex);
 
 		// the reqeust data index is more than what we have.
 		if(rindex > (_savedLength +_logIndex)) return maxLen; // return whatever it wants.
@@ -612,7 +612,7 @@ BrewLogger::BrewLogger(void){
                 memcpy(buffer+ sizeRead,_logBuffer,insufficient);
 				sizeRead += insufficient;
 			}
-			//DBG_PRINTF("read file:%u\n",sizeRead);
+			DBG_PRINTF("read file:%u\n",sizeRead);
 		}else{
 			//DBG_PRINTF("read from buffer\n");
 			// read from buffer
@@ -965,7 +965,7 @@ BrewLogger::BrewLogger(void){
 		}
 
 
-		//DBG_PRINTF("before tag %d, mask=%x\n",dataDrop,mask);
+		DBG_PRINTF("before tag %d, mask=%x\n",dataDrop,mask);
 
 
 		for(int i=0;i<NumberDataBitMask;i++){
@@ -975,7 +975,7 @@ BrewLogger::BrewLogger(void){
 				byte d1=_logBuffer[idx++];
 				dataDrop +=2;
 				_headData[i] = (d0<<8) | d1;
-				//DBG_PRINTF("update idx:%d to %d\n",i,_headData[i]);
+				DBG_PRINTF("update idx:%d to %d\n",i,_headData[i]);
 			}
 		}
 		// drop any F tag
