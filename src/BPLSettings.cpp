@@ -897,6 +897,7 @@ String BPLSettings::jsonPressureMonitorSettings(void){
 	root[PressureMonitorModeKey]=settings->mode;
 	root[ConversionAKey]=settings->fa;
 	root[ConversionBKey]=settings->fb;
+	root[AdcTypeKey] = settings->adc_type;
     String ret;
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	serializeJson(root,ret);
