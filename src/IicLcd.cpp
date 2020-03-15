@@ -61,7 +61,10 @@ void IIClcd::scanForAddress(void)
     	#endif
 
 		#if PressureViaADS1115
-    	if(address == ADS1115_ADDRESS) continue;
+    	if(address == ADS1115_ADDRESS){
+			Serial.print("Found ADS11115\n");
+			continue;
+		}
     	#endif
 		Wire.beginTransmission(address);
     	error = Wire.endTransmission();

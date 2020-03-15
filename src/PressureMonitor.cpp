@@ -118,6 +118,7 @@ void PressureMonitorClass::_initExternalAdc(void){
     if(!_ads){
         _ads = new Adafruit_ADS1115(ADS1115_ADDRESS);
         _ads->begin();
+        _ads->setGain(GAIN_ONE); // +-4.096v
     }    
 }
 #endif
@@ -182,6 +183,16 @@ uint8_t PressureMonitorClass::getTargetPsi(void){
 
 void PressureMonitorClass::configChanged(void){
     #if PressureViaADS1115
+    if(_settings->adc_type != _adcType){
+        if(_settings->adc_type == TransducerADC_ADS1115){
+            _initExternalAdc();
+            _deinitInternalAdc();
+        }else{
+            _initInternalAdc();
+            _deinitExternalAdc();
+        }
+        _adcType = _settings->adc_type; 
+    }
     #endif
 }
 
