@@ -226,7 +226,8 @@ typedef struct _PressureMonitorSettings{
     uint8_t mode;
     uint8_t psi;
     uint8_t adc_type;
-    uint8_t _padding[8];
+    uint8_t adc_gain;
+    uint8_t _padding[7];
 }PressureMonitorSettings;
 #endif
 

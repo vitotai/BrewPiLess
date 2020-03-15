@@ -118,7 +118,7 @@ void PressureMonitorClass::_initExternalAdc(void){
     if(!_ads){
         _ads = new Adafruit_ADS1115(ADS1115_ADDRESS);
         _ads->begin();
-        _ads->setGain(GAIN_ONE); // +-4.096v
+        _ads->setGain((adsGain_t)( _settings->adc_gain << 9 )); 
     }    
 }
 #endif
@@ -192,6 +192,10 @@ void PressureMonitorClass::configChanged(void){
             _deinitExternalAdc();
         }
         _adcType = _settings->adc_type; 
+    }
+    // gain might change
+    if(_adcType == TransducerADC_ADS1115 ){
+        _ads->setGain((adsGain_t)( _settings->adc_gain << 9 )); 
     }
     #endif
 }

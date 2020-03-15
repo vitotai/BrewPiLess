@@ -851,6 +851,7 @@ String BPLSettings::jsonParasiteTempControlSettings(bool enabled){
 #define ConversionAKey "a"
 #define ConversionBKey "b"
 #define AdcTypeKey "adc"
+#define GainKey "gn"
 
 bool BPLSettings::dejsonPressureMonitorSettings(String json){
 
@@ -877,6 +878,7 @@ bool BPLSettings::dejsonPressureMonitorSettings(String json){
 	settings->fa = root[ConversionAKey];
 	settings->fb = root[ConversionBKey];
 	settings->adc_type = root[AdcTypeKey];
+	settings->adc_gain = root[GainKey];
 	return true;
 }
 
@@ -898,6 +900,8 @@ String BPLSettings::jsonPressureMonitorSettings(void){
 	root[ConversionAKey]=settings->fa;
 	root[ConversionBKey]=settings->fb;
 	root[AdcTypeKey] = settings->adc_type;
+	root[GainKey] =	settings->adc_gain;
+
     String ret;
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	serializeJson(root,ret);

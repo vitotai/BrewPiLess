@@ -13,6 +13,9 @@ The pressure transducers supported are something like this: [Pressure Transducer
 On-board ADC, A0, and external ADS1115 can be used to read from the transducer. 
 The reading of A0, on-board ADC, is not stable when WiFi is activated, because ESP8266 uses the ADC for WiFi related tasks. Therefore, it is highly recommended to use external ADS1115 when **controlling** is required.
 ADC of ESP8266 reads voltage from 0-1.0V, and there are resistors on D1 mini, and NodeMcu, to make ADC input range 0-3.3v. A resistor might be needed to extend the range 0-5v. 
+
+**ADS1115 Gain/Max input voltage** should be set according to the real value of the transducer. The bigger the maximum voltage, the lower the resolution. It is only applicable when ADS1115 is used.
+
 ## Conversion
 BPL converts ADC readings from pressure transducer into pressure.
 
