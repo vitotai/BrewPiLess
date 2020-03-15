@@ -272,7 +272,7 @@ bool WiFiSetupClass::stayConnected(void)
 					//  connections to AP mode.
 					WiFiMode mode= WiFi.getMode();
 
-					WiFi.setAutoConnect(false);
+					WiFi.setAutoReconnect(false);
 					WiFi.mode(WIFI_AP);
 					
 					if(_mode == WIFI_STA && mode == WIFI_STA){
@@ -294,7 +294,7 @@ bool WiFiSetupClass::stayConnected(void)
   						DBG_PRINTF("Start recovering\n");
 						WiFi.mode(WIFI_AP_STA);
 
-						WiFi.setAutoConnect(true);
+						WiFi.setAutoReconnect(true);
 						_wifiState = WiFiStateConnectionRecovering;
 						_time = millis();
 					}

@@ -59,7 +59,11 @@ int PressureMonitorClass::_readInternalAdc(void){
 
 #if PressureViaADS1115
 int PressureMonitorClass::_readExternalAdc(void){
-    if(_ads) return _ads->readADC_SingleEnded(ADS1115_Transducer_ADC_NO);
+    if(_ads){
+        uint16_t val= _ads->readADC_SingleEnded(ADS1115_Transducer_ADC_NO);
+        DBG_PRINTF("ADS1115 return:%d\n",val);
+        return val;
+    } 
     return 0;
 }
 #endif
