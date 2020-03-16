@@ -105,7 +105,7 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 	_apPassword=(passwd !=NULL && *passwd=='\0')? NULL:passwd;
 
 	// let the underlined library do the reconnection jobs.
-	//WiFi.setAutoConnect(_autoReconnect);
+	//WiFi.setAutoReconnect(_autoReconnect);
 
 	WiFi.mode(mode2use);
 	// start AP
@@ -272,7 +272,7 @@ bool WiFiSetupClass::stayConnected(void)
 					//  connections to AP mode.
 					WiFiMode mode= WiFi.getMode();
 
-					WiFi.setAutoReconnect(false);
+					//WiFi.setAutoReconnect(false);
 					WiFi.mode(WIFI_AP);
 					
 					if(_mode == WIFI_STA && mode == WIFI_STA){
@@ -294,7 +294,7 @@ bool WiFiSetupClass::stayConnected(void)
   						DBG_PRINTF("Start recovering\n");
 						WiFi.mode(WIFI_AP_STA);
 
-						WiFi.setAutoReconnect(true);
+						//WiFi.setAutoReconnect(true);
 						_wifiState = WiFiStateConnectionRecovering;
 						_time = millis();
 					}
