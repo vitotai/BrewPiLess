@@ -45,6 +45,22 @@
 
                 <div layout horizontal cross-center>
                     <h6 class="inline-header">
+                        <%= ads1115_max_vol %>
+                    </h6>
+                    <select  id="pt-gain" name="pt-gain">
+                        <option value=0>6.144V</option>
+                        <option value=1>4.096V</option>
+                        <option value=2>2.048V</option>
+                        <option value=3>1.024V</option>
+                        <option value=4>0.512V</option>
+                        <option value=5>0.256V</option>
+                    </select>
+                    <label for="pt-gain" style="min-width: 0;"></label>
+
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
                         <%= control_pressure %>
                     </h6>
                     <input type="checkbox" id="pt-control" name="p-control" class="switch-input" checked>

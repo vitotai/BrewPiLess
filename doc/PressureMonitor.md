@@ -16,6 +16,16 @@ ADC of ESP8266 reads voltage from 0-1.0V, and there are resistors on D1 mini, an
 
 **ADS1115 Gain/Max input voltage** should be set according to the real value of the transducer. The bigger the maximum voltage, the lower the resolution. It is only applicable when ADS1115 is used.
 
+| Max Voltage | resolution |
+| ------- |---- |
+| 6.144 V | 187.5 uV  = 0.000187 V |
+| 4.096 V | 125 uV    = 0.000125 V |
+| 2.048 V | 62.5 uV   = 0.0000625 V |
+| 1.024 V | 31.25 uV  = 0.00003125 V |
+| 0.512 V | 15.625 uV = 0.000015625 V |
+| 0.256 V | 7.8125 uV = 0.0000078125 V |
+
+
 ## Conversion
 BPL converts ADC readings from pressure transducer into pressure.
 
@@ -39,6 +49,19 @@ Given the fact that I don't really care the reading that exceeds 40psi. I just s
 
 PSI=(A0_Reading - 155) * (40-0)/(775-155) 
 => PSI=(A0_Reading - 155) * 0.06452
+
+example 2: ADS1115
+In my case, **Max input voltage** is set to 4.096V, in which one step increase of ADC value is 0.000125V. So
+
+| pressure | voltage | ADC reading |
+| ------- | ----- | ----- |
+| 0    |  0.5v | 0.5/0.000125= 4,000 |
+| 40   |  2.5v | 2.5/0.000125= 20,000 |
+
+The formula would be
+
+PSI=(ADC_Reading - 4,000) * (40-0)/(20,000-4,000) 
+  => (ADC_Reading - 4,000) * 0.0025
 
 ### Getting parameters by real readings
 In practice, there are errors, and the readings sometimes are not exact the same as expected. A simple way to get the formula is using "calibration" function by

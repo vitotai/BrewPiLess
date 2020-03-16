@@ -20,7 +20,7 @@
 #define LowPassFilterParameter 0.15
 #endif
 #define DEFAULT_VREF    1100        //Use adc2_vref_to_gpio() to obtain a better estimate
-#define NO_OF_SAMPLES   64          //Multisampling
+#define NO_OF_SAMPLES   8          //Multisampling
 
 PressureMonitorClass PressureMonitor;
 
@@ -47,12 +47,13 @@ int PressureMonitorClass::_readInternalAdc(void){
     uint32_t adc_reading = 0;
     for (int i = 0; i < NO_OF_SAMPLES; i++) {
         adc_reading += adc1_get_raw(AdcChannelFromPinNr(PressureAdcPin));
+        delay(10);
     }
     adc_reading /= NO_OF_SAMPLES;
     //Convert adc_reading to voltage in mV
     uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_reading, _adcCharacter);
-    DBG_PRINTF("Raw: %d\tVoltage: %dmV\n", adc_reading, voltage);
-    return (int) ((float)voltage / 3.9 * 4095 );
+    DBG_PRINTF("Raw: %d\tVoltage: %dmV, converted:%d, analogRead:%d\n", adc_reading, voltage,(int) ((float)voltage / 3900 * 2048 ),analogRead(PressureAdcPin));
+    return (int) ((float)voltage / 3900 * 4095 );
 #endif
 
 }
@@ -109,7 +110,10 @@ void PressureMonitorClass::_initInternalAdc(void){
     } else {
         DBG_PRINTF("ESP32 ADC CAL:Default");
     }
+    pinMode(PressureAdcPin, INPUT);
 
+    adc1_config_width(ADC_WIDTH_BIT_11); // 12 bits seems too jittery, 11 bits work just fine.
+    adc1_config_channel_atten(AdcChannelFromPinNr(PressureAdcPin),ADC_ATTEN_DB_11); // 3.9v scale
 #endif
 
 }

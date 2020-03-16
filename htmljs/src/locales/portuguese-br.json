@@ -293,7 +293,8 @@
     "setup_ptc_cooler": "Resfriador PTC",
     "setup_1wire_actuator": "Atuador 1-wire",
     "setup_channel": "Canal",
-
+    "setup_calibration":"Calibration",
+    
     "__capper_js": "capper.js",
     "capper_invalid_gravity": "Densidade Inválida",
     "capper_failed_set_capper": "falha ao configurar Spunding",
@@ -438,6 +439,7 @@
     "pressure_calibrate_step2_button": "Calibrando passo 2",
     "dismiss": "Ignorar",
     "external_ads1115":"Use ADS1115",
+    "ads1115_max_vol":"ADS1115 Gain/Max input voltage",
 
     "__new_for_logging": "Novos itens de registro",
 

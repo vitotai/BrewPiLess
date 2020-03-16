@@ -295,7 +295,8 @@
     "setup_ptc_cooler": "PTC Cooler",
     "setup_1wire_actuator": "1-wire actuator",
     "setup_channel": "Channel",
-
+    "setup_calibration":"Calibration",
+    
     "__capper_js": "capper.js",
     "capper_invalid_gravity": "比重值不對",
     "capper_failed_set_capper": "設定失敗。",
@@ -437,7 +438,7 @@
     "pressure_calibrate_step2_button": "步驟二",
     "dismiss": "離開",
     "external_ads1115":"使用ADS1115",
-
+    "ads1115_max_vol":"ADS1115增益/最大電壓",
 
     "__new_for_logging": "New logging items",
 

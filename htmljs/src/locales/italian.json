@@ -294,6 +294,7 @@
     "setup_ptc_cooler": "PTC Cooler",
     "setup_1wire_actuator": "attuatore 1-wire",
     "setup_channel": "Canale",
+    "setup_calibration":"Calibrazione",
 
     "__capper_js": "capper.js",
     "capper_invalid_gravity": "Densità invalida",
@@ -437,6 +438,7 @@
     "pressure_calibrate_step2_button": "Calibrazzione passo 2",
     "dismiss": "Rifiuta",
     "external_ads1115": "Usa ADS1115",
+    "ads1115_max_vol":"ADS1115 Gain/Max input voltage",
 
     "__new_for_logging": "Nuovi log",
 

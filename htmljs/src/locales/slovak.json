@@ -294,7 +294,8 @@
     "setup_ptc_cooler": "PTC chladič",
     "setup_1wire_actuator": "1-vodičový pohon",
     "setup_channel": "Kanál",
-
+    "setup_calibration":"Calibration",
+    
     "__capper_js": "capper.js",
     "capper_invalid_gravity": "Neplatná hustota",
     "capper_failed_set_capper": "neúspešné nastavenie uzáveru",
@@ -436,6 +437,8 @@
     "pressure_calibrate_step2_2": "psi, stlačiť",
     "pressure_calibrate_step2_button": "Kalibrovať krok 2",
     "dismiss": "Zamietnuť",
+    "external_ads1115":"Use ADS1115",
+    "ads1115_max_vol":"ADS1115 Gain/Max input voltage",
 
     "__new_for_logging": "Nové položky záznamu",
 

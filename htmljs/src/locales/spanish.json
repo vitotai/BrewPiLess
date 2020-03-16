@@ -293,7 +293,8 @@
     "setup_ptc_cooler": "Enfriador PTC",
     "setup_1wire_actuator": "Actuador 1-wire",
     "setup_channel": "Canal",
-
+    "setup_calibration":"Calibration",
+    
     "__capper_js": "capper.js",
     "capper_invalid_gravity": "Densidad inv&aacute;lida",
     "capper_failed_set_capper": "fallo al setear el tap&oacute;n",
@@ -437,6 +438,7 @@
     "pressure_calibrate_step2_button": "Calibrate step 2",
     "dismiss": "Dismiss",
     "external_ads1115":"Use ADS1115",
+    "ads1115_max_vol":"ADS1115 Gain/Max input voltage",
 
     "__new_for_logging": "New logging items",
 
