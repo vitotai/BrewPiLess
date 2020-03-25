@@ -26,6 +26,16 @@ function loadSetting() {
                     }
                 }
             });
+            // system info
+            var mac="";
+            for(var i=0;i<j.mac.length;i++){
+                mac += ((mac=="")?  "":":") + j.mac[i].toString(16);
+            }
+            Q("#mac-address").innerText=mac;
+            Q("#flash-id").innerText = "0x" + j.fid.toString(16);
+            Q("#real-flash-size").innerText=j.frsize;
+            Q("#specified-flash-size").innerText=j.fsize;
+            Q("#fs-size").innerText=j.fs;
         },
         fail: function(d) {
             alert("<%= script_config_error_getting_data %>:" + d);
@@ -33,6 +43,12 @@ function loadSetting() {
     });
 }
 
+function hidesysinfo(){
+    Q("#sysinfo").style.display = "none";
+}
+function showsysinfo(){
+    Q("#sysinfo").style.display = "block";
+}
 function waitrestart() {
     Q("#waitprompt").style.display = "block";
     Q("#inputform").style.display = "none";

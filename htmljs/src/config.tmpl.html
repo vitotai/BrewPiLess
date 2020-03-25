@@ -98,6 +98,10 @@
                         <span id="sta-ip"></span>
                     </div>
 
+                    <div layout horizontal cross-center>
+                        <button class="btn" onclick="showsysinfo(); return false;">Sysinfo</button>
+                    </div>
+
                     <div class="card-footer">
                         <input type="submit" id="submitsave" name="submit" class="btn"></input>
                     </div>
@@ -129,7 +133,7 @@
                 <input id="gateway" name="gw" length="1" placeholder="<%= config_gateway %>" class="nb iptype"><br>
                 <input id="netmask" name="mask" length="1" placeholder="<%= config_netmask %>" class="nb iptype"><br>
                 <input id="dns" name="dns" length="1" placeholder="<%= config_dns %>" class="nb iptype"><br><br>
-                <button type="button" onclick="return Net.save()"><%= config_save_change %></button>
+                <button type="button" onclick="return savewifi()"><%= config_save_change %></button>
                 <button onclick="Net.hide();return false;"><%= dlg_cancel %></button>
             </form>
         </div>
@@ -143,6 +147,23 @@
             <%= config_wait_restart %>
         </div>
     </div>
+
+    <li id="sysinfo" class="modal">
+        <div class="modal-content" style="width:320px">
+            <ul>
+                <li layout horizontal main-justified>
+                    <h6 class="inline-header"><strong>System Information</strong></h6></li>
+                <li layout horizontal main-justified><span class="descriptor">MAC Address</span>    <span id="mac-address"></span></li>
+                <li layout horizontal main-justified><span class="descriptor">Flash Chip ID</span>  <span id="flash-id"></span></li>
+                <li layout horizontal main-justified><span class="descriptor">Real Flash Size</span>    <span id="real-flash-size"></span></li>
+                <li layout horizontal main-justified><span class="descriptor">Specified Flash Size</span>   <span id="specified-flash-size"></span></li>
+                <li layout horizontal main-justified><span class="descriptor">File System Size</span>   <span id="fs-size"></span></li>
+            </ul>
+            <button onclick="hidesysinfo();return false;">Done</button>
+
+        </div>
+    </div>
+
 
 </body>
 

@@ -5,7 +5,7 @@
             },
     
             init: function(id, y1, y2,id2,pl,carbonation) {
-                this.chart = new BrewChart(id);
+                this.chart = new UniBrewChart(id);
                 this.chart.setLabels(y1, y2);
                 this.chart.setPChart(id2,pl,carbonation)
             },
@@ -41,7 +41,7 @@
                         window.file = f;
                         //chart.clear();
                         var data = new Uint8Array(e.target.result);
-                        if (BrewChart.testData(data) !== false) {
+                        if (UniBrewChart.testData(data) !== false) {
                             BChart.raw = data;
                             BChart.chart.process(data);
                             if (BChart.chart.calibrating) {

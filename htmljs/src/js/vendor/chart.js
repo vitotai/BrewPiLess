@@ -176,7 +176,7 @@ var  CHART_VERSION = 6;
         var FridgeSetLine = 4;
         var RoomTempLine = 5;
         var AuxTempLine = 6;
-        var GravityLineIndex = 7;
+        var GravityLine = 7;
         var FilteredSgLine = 8;
 
         var PressureLine = 9;
@@ -238,7 +238,7 @@ var  CHART_VERSION = 6;
 
             Q(".chart-legend-row.aux-temp .legend-value").innerHTML = this.tempFormat(this.chart.getValue(row, AuxTempLine));
 
-            var g = this.chart.getValue(row, GravityLineIndex);
+            var g = this.chart.getValue(row, GravityLine);
             Q(".chart-legend-row.gravity .legend-value").innerHTML = (!g || isNaN(g)) ? "--" : (this.plato ? g.toFixed(2) + "&deg;P" : g.toFixed(4));
             var filteredG = this.chart.getValue(row, FilteredSgLine);
             Q(".chart-legend-row.filtersg .legend-value").innerHTML = (!filteredG || isNaN(filteredG)) ? "--" : (this.plato ? filteredG.toFixed(2) + "&deg;P" : filteredG.toFixed(4));
@@ -888,7 +888,7 @@ var  CHART_VERSION = 6;
                 //  3. in special record
                 
                 var sg = NaN;
-                var gravityTilt = t.dataset[GravityLineIndex];
+                var gravityTilt = t.dataset[GravityLine];
                 if(! t.calibrating){
                     if(gravityTilt != null) sg = gravityTilt;
                 }else if (!t.calculateSG && t.specificGravity != null) {
@@ -898,14 +898,14 @@ var  CHART_VERSION = 6;
                 } else if (t.calculateSG) {
                     // must be in calibrating mode
                     // data field #8 is tilt in source data
-                    if (minuteRecord[GravityLineIndex] != null){
+                    if (minuteRecord[GravityLine] != null){
                         var temp = (this.celius) ? C2F(t.dataset[AuxTempLine]) : t.dataset[AuxTempLine];
-                        sg = t.sgByTilt(t.dataset[GravityLineIndex]);
+                        sg = t.sgByTilt(t.dataset[GravityLine]);
 
                         if (t.plato) {
                             sg = BrewMath.sg2pla(BrewMath.tempCorrectionF(BrewMath.pla2sg(sg), temp, C2F(t.coTemp)));
                         }
-                        minuteRecord[GravityLineIndex] = sg;
+                        minuteRecord[GravityLine] = sg;
                     }
                 }
                 if (!isNaN(sg)) {

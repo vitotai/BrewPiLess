@@ -17,6 +17,8 @@
 
 BPLSettings theSettings;
 
+FS& FileSystem=SPIFFS;
+
 #define BPLSettingFileName "/bpl.cfg"
 
 
@@ -105,6 +107,12 @@ void BPLSettings::defaultLogFileIndexes(void){}
 #define  KeyGateway   "gw"
 #define  KeyNetmask    "mask"
 #define  KeyDNS "dns"
+
+#define KeyFlashChipId "fid"
+#define KeyFlashRealSize "frsize"
+#define KeyFlashAssignedSize "fsize"
+#define KeyFileSystemSize "fs"
+#define KeyMacAddress "mac"
 
 extern IPAddress scanIP(const char *str);
 
@@ -199,6 +207,24 @@ String BPLSettings::jsonSystemConfiguration(void){
     root[KeyGateway]= IPAddress(syscfg->gw).toString();
     root[KeyNetmask]= IPAddress(syscfg->netmask).toString();
 	root[KeyDNS] = IPAddress(syscfg->dns).toString();
+
+// system info
+	root[KeyFlashChipId]=ESP.getFlashChipId();
+	root[KeyFlashRealSize]=ESP.getFlashChipRealSize();
+	root[KeyFlashAssignedSize]=ESP.getFlashChipSize();
+
+	FSInfo fs_info;
+	FileSystem.info(fs_info);
+	root[KeyFileSystemSize]=fs_info.totalBytes;
+
+
+	uint8_t mac[WL_MAC_ADDR_LENGTH];
+	WiFi.macAddress(mac);
+	JsonArray data = root.createNestedArray(KeyMacAddress);
+	
+	for(int i=0;i<WL_MAC_ADDR_LENGTH;i++){
+		data.add(mac[i]);
+	}
 
     String ret;
 	#if ARDUINOJSON_VERSION_MAJOR == 6
