@@ -9,6 +9,7 @@
 #elif defined(ESP32)
 #include <WiFi.h>
 #include <SPIFFS.h>
+#include <rom/spi_flash.h>
 #endif
 
 #include "Config.h"
@@ -21,6 +22,10 @@ FS& FileSystem=SPIFFS;
 
 #define BPLSettingFileName "/bpl.cfg"
 
+
+#ifndef WL_MAC_ADDR_LENGTH
+#define WL_MAC_ADDR_LENGTH 6
+#endif
 
 void BPLSettings::preFormat(void){
 	brewLogger.onFormatFS();
@@ -209,14 +214,21 @@ String BPLSettings::jsonSystemConfiguration(void){
 	root[KeyDNS] = IPAddress(syscfg->dns).toString();
 
 // system info
+#if ESP32
+	root[KeyFlashChipId]=g_rom_flashchip.device_id;
+	root[KeyFlashRealSize]=g_rom_flashchip.chip_size;
+	root[KeyFileSystemSize]=SPIFFS.totalBytes();
+#else
 	root[KeyFlashChipId]=ESP.getFlashChipId();
 	root[KeyFlashRealSize]=ESP.getFlashChipRealSize();
-	root[KeyFlashAssignedSize]=ESP.getFlashChipSize();
 
 	FSInfo fs_info;
 	FileSystem.info(fs_info);
 	root[KeyFileSystemSize]=fs_info.totalBytes;
 
+#endif
+
+	root[KeyFlashAssignedSize]=ESP.getFlashChipSize();
 
 	uint8_t mac[WL_MAC_ADDR_LENGTH];
 	WiFi.macAddress(mac);
