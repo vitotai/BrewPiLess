@@ -10,11 +10,21 @@ By using a pressure transducer, BPL can read pressure and **control** the pressu
 The pressure transducers supported are something like this: [Pressure Transducer](http://www.auberins.com/index.php?main_page=product_info&cPath=38&products_id=311). Using other types might be possible, but the output should be linear voltage.
 
 ### ADC
-On-board ADC, A0, and external ADS1115 can be used to read from the transducer. 
+On-board ADC, A0 of ESP8266, 36 of ESP32, and external ADS1115 can be used to read from the transducer. 
+
+#### ESP8266 bulit-in ADC, A0
 The reading of A0, on-board ADC, is not stable when WiFi is activated, because ESP8266 uses the ADC for WiFi related tasks. Therefore, it is highly recommended to use external ADS1115 when **controlling** is required.
+
 ADC of ESP8266 reads voltage from 0-1.0V, and there are resistors on D1 mini, and NodeMcu, to make ADC input range 0-3.3v. A resistor might be needed to extend the range 0-5v. 
 
-**ADS1115 Gain/Max input voltage** should be set according to the real value of the transducer. The bigger the maximum voltage, the lower the resolution. It is only applicable when ADS1115 is used.
+### ESP32
+Only ADC1 is allowed. Pin 36 is choosen by default. ADC of ESP32 isn't linear, and calibration is necessary. The calibration recommended by the the chip vendor has been adapted. However, the result might not be satisfiying.
+
+### ADS1115
+Connect I2C of ADS1115, and A0 to the transducer. Connect ADDR, address selection pin, to GND, so that the address is 0x48.
+**I2C LCDs of address 0x48 are unusable unless disabling ADS1115 support.**
+
+**ADS1115 Gain/Max input voltage** should be set according to the real value of the transducer. The bigger the maximum voltage, the lower the resolution.
 
 | Max Voltage | resolution |
 | ------- |---- |
