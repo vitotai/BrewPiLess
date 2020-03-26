@@ -38,14 +38,18 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
 ## Known issues
 * ESP8266 won't restart after saving system configuration.
  Sometimes ESP8266 can't restart after a software watchdog timer reset, which is the only way to reset the system by software. It happened on my NodeMcu and D1 mini boards that didn't connect to anything but USB. I have no solution for it.
-* ESP8266 won't start after selecting WiFi network.
- The web server used is ESPAsyncWebServer which uses ESPAsyncTCP. I found that if ESP8266 ever enters SoftAP mode before connecting to the network, the Web server will fail on tcp_bind() and the web service will be unavailable. Not tracing the source code of the LWIP, I just worked around by reseting the system. However, ESP8266 sometimes doesn't reset.
 * The page can't be loaded correctly.
  It rarely happens after HTTP caching is used, but it does happen especially when Javascript Console is opened. During developing and testing, I found corrupted html/javascript pages. Without the abliity and time to debug or develop the web server and or TCP/IP stack, I decide to live with it.
 * Incorrect temperature chart.
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * 4.0
+    * Arduino Framework 2.2.0
+    * Pressure chart
+    * [Prewssure transducer ADC refined. ADS1115 support.](doc/PresssureMonitor.md)
+    * Display MAC address and Flash related information.
+
  * v3.6r3
     * Shorten recovering time. Resolving disconnection in AP mode for WiFi Auto Reconnect.
  
