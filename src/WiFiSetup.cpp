@@ -122,6 +122,8 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 			// might be necessary.
 			WiFi.config(INADDR_NONE,INADDR_NONE,INADDR_NONE);
 		}
+		WiFi.setAutoReconnect(true);		
+		
 		wl_status_t status;
 		if(targetSSID)
 			status= WiFi.begin(targetSSID,targetPass);
@@ -272,7 +274,7 @@ bool WiFiSetupClass::stayConnected(void)
 					//  connections to AP mode.
 					WiFiMode mode= WiFi.getMode();
 
-					//WiFi.setAutoReconnect(false);
+					WiFi.setAutoReconnect(false);
 					WiFi.mode(WIFI_AP);
 					
 					if(_mode == WIFI_STA && mode == WIFI_STA){
@@ -286,15 +288,15 @@ bool WiFiSetupClass::stayConnected(void)
 			} else if(_wifiState==WiFiStateDisconnected){
 				if(_mode == WIFI_AP){
 
-				 // Can "return", if it returns here, the "canning networking will never run."
+				 // Can't "return" here, if it returns here, the "canning networking will never run."
 				 //  // don't try to restore network, since there is none to be rediscover
 				}else{
 				// in AP_STA or STA mode
 					if( millis() -  _time  > TimeWaitToRecoverNetwork){
   						DBG_PRINTF("Start recovering\n");
+						WiFi.setAutoReconnect(true);
 						WiFi.mode(WIFI_AP_STA);
 
-						//WiFi.setAutoReconnect(true);
 						_wifiState = WiFiStateConnectionRecovering;
 						_time = millis();
 					}

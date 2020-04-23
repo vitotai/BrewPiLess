@@ -56,3 +56,6 @@ Those images are prebuilt:
 ## thorrax
  * Thorrax's board, Cooling and heating PIN on D5, D0
  * new ui
+
+## esp32 & esp32.oled
+ * ESP32 w/ 20x4 LCD & OLED LCD

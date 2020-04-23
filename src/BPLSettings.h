@@ -231,7 +231,7 @@ typedef struct _PressureMonitorSettings{
 }PressureMonitorSettings;
 #endif
 
-#ifdef ESP32
+#ifdef SaveWiFiConfiguration
 typedef struct _WiFiConfiguration{
     char ssid[33];
     char pass[33];
@@ -258,7 +258,7 @@ struct Settings{
 #if SupportMqttRemoteControl
     MqttRemoteControlSettings mqttRemoteControlSettings;
 #endif
-#ifdef ESP32
+#ifdef SaveWiFiConfiguration
     WiFiConfiguration wifiConfiguration;
 #endif
 };
@@ -318,7 +318,7 @@ public:
     String jsonMqttRemoteControlSettings(void);
 #endif
 
-#ifdef ESP32
+#ifdef SaveWiFiConfiguration
     WiFiConfiguration *getWifiConfiguration(void){ return &_data.wifiConfiguration;}
     void setWiFiConfiguration(const char* ssid,const char* pass){
         if(ssid) strcpy(_data.wifiConfiguration.ssid,ssid);

@@ -256,6 +256,8 @@
 #define DEVELOPMENT_OTA true
 #endif
 
+#define SaveWiFiConfiguration true
+
 #ifndef DEVELOPMENT_FILEMANAGER
 #define DEVELOPMENT_FILEMANAGER true
 #endif
