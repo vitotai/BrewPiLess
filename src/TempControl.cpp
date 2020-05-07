@@ -497,7 +497,7 @@ void TempControl::detectPeaks(void){
 
 // Increase estimator at least 20%, max 50%s
 void TempControl::increaseEstimator(temperature * estimator, temperature error){
-	temperature factor = 614 + constrainTemp(abs(error)>>5, 0, 154); // 1.2 + 3.1% of error, limit between 1.2 and 1.5
+	temperature factor = 614 + constrainTemp(abs((int)error)>>5, 0, 154); // 1.2 + 3.1% of error, limit between 1.2 and 1.5
 	*estimator = multiplyFactorTemperatureDiff(factor, *estimator);
 	if(*estimator < 25){
 		*estimator = intToTempDiff(5)/100; // make estimator at least 0.05
@@ -507,7 +507,7 @@ void TempControl::increaseEstimator(temperature * estimator, temperature error){
 
 // Decrease estimator at least 16.7% (1/1.2), max 33.3% (1/1.5)
 void TempControl::decreaseEstimator(temperature * estimator, temperature error){
-	temperature factor = 426 - constrainTemp(abs(error)>>5, 0, 85); // 0.833 - 3.1% of error, limit between 0.667 and 0.833
+	temperature factor = 426 - constrainTemp(abs((int)error)>>5, 0, 85); // 0.833 - 3.1% of error, limit between 0.667 and 0.833
 	*estimator = multiplyFactorTemperatureDiff(factor, *estimator);
 	eepromManager.storeTempSettings();
 }
