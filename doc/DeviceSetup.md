@@ -8,6 +8,8 @@ For cooling and heating control, you will need to chose `Pin type`, which is Not
 
 After editing and applying all devices, click `Refresh Device List` to review the setting. If the assigned devices are not listed in the "installed" section, you might need to `Erase EEPROM` and try again.
 
+Temperature sensors include a calibration offset field, which is added to the sensor value as a single-point calibration.
+
 To uninstall a device, set the `Function` to `None`.
 
 ***
