@@ -2,6 +2,7 @@
   * [Example#1](HardwareExample1.md)
   * [SONOFF](HarddwareSONOFF.md)
   * [Thorrax’s Board](https://github.com/thorrak/brewpi-esp8266)
+  * [Electrodragon](HardwareElectrodragon.md)
 * [Localization of web frontend](LocalizationWebPage.md)
 * [Flash layout and New Frontend](FlashLayoutAndNewUI.md)
 * [Software Installation](SoftwareInstallation.md)
