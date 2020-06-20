@@ -286,6 +286,7 @@
 #define BrewShield 0
 #define Sonoff 1
 #define Thorrak_PCB 2
+#define Electrodragon_SPDT 3
 
 #ifndef BOARD
 #define BOARD BrewShield
@@ -409,6 +410,25 @@
 
 #define UpButtonPin NODEMCU_PIN_D3
 #define DownButtonPin NODEMCU_PIN_D4
+
+#elif BOARD == Electrodragon_SPDT
+
+// builtin
+#define coolingPin NODEMCU_PIN_D6 // IO12 - Relay1 - built-in
+#define heatingPin NODEMCU_PIN_D7 // IO13 - Relay2 - built-in
+#define UpButtonPin NODEMCU_PIN_D3 // IO0 - Btn2 - built-in
+#define DownButtonPin NODEMCU_PIN_D4 // IO2 - Btn1 - built-in
+
+// IO14 (marked DHT sometimes) already has a pull-up resistor
+#define oneWirePin NODEMCU_PIN_D5  // IO14
+
+// usable pins on electrodragon - IO05, IO04, IO15
+// pins 9 and 10 should not be used
+#define doorPin NODEMCU_PIN_D8
+#define BuzzPin 10 //not really available, for compiling purposes
+
+
+
 
 #else
 #error "unknown board"
