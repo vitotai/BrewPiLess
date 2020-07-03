@@ -210,7 +210,7 @@ bool WiFiSetupClass::stayConnected(void)
 			else
 				WiFi.begin();
 			_reconnect =0;
-			_wifiState = WiFiStateConnecting;
+			_wifiState = WiFiStateConnectionRecovering;
 
 			wifi_info("**try:");
 			_time=millis();
@@ -269,13 +269,13 @@ bool WiFiSetupClass::stayConnected(void)
 				// if sta mode, turn on AP mode
 				if(millis() - _time > TimeForRecoveringNetwork){
 					DBG_PRINTF("Stop recovering\n");
-					WiFi.disconnect();
+					// WiFi.disconnect();
 					// enter AP mode, or the underlying WiFi stack would keep searching and block
 					//  connections to AP mode.
 					WiFiMode mode= WiFi.getMode();
 
 					WiFi.setAutoReconnect(false);
-					WiFi.mode(WIFI_AP);
+					// WiFi.mode(WIFI_AP);
 					
 					if(_mode == WIFI_STA && mode == WIFI_STA){
 						// create a wifi
@@ -295,7 +295,11 @@ bool WiFiSetupClass::stayConnected(void)
 					if( millis() -  _time  > TimeWaitToRecoverNetwork){
   						DBG_PRINTF("Start recovering\n");
 						WiFi.setAutoReconnect(true);
-						WiFi.mode(WIFI_AP_STA);
+						// WiFi.mode(WIFI_AP_STA);
+						if(_targetSSID)
+							WiFi.begin(_targetSSID,_targetPass);
+						else
+							WiFi.begin();
 
 						_wifiState = WiFiStateConnectionRecovering;
 						_time = millis();
