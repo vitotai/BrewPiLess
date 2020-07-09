@@ -4,5 +4,3 @@ Remote logging, or cloud logging, is used to push data to a remote server. Most 
 * [Brewfahter](brewfather.md)
 * [Brewer's Friend](brewersfriend.md)
 
-***
-[Index](index.md)

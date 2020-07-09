@@ -11,6 +11,3 @@ Please note that input of OG won't generate a "SG" record. If local logging is s
 ![Input SG](image/gravity_input.jpg?raw=true)
 
 When input SG/OG, the temperature of wort/beer should be input at the same time. BPL will correct the reading based on the correction temperature set in "Gravity Device" and the temperature of Beer Temp. If you correct the hydrometer reading, enter the calibration temperature of your hydrometer.
-
-***
-[Index](index.md)

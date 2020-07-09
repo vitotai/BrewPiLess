@@ -56,6 +56,3 @@ No longer available after v2.7. Two-button configuration will work on the hardwa
 
 ### 2 Buttons via PCF8574 _Not Recommended_
 Use this option to share the same hardware with BrewManiacEx. UP is connect to P1 while DOWN is connect to P0. (Enter is at P2, and Start is at P3. BrewPiLess uses only two buttons.)
-
-***
-[Index](index.md)

@@ -1,9 +1,41 @@
-Welcome to the BrewPiLess wiki!
-
-This project uses a single ESP8266 to replace RPI and Arduino.
-![Main Screen](image/bplmain.jpg?raw=true)
-BrewPi is the greatest, if not the ultimate, fermentation temperature controller. The original design uses a RPI to log temperatures and maintain a temperature schedule. The RPI also hosts a web server as the front-end of internet web access. 
-
-ESP8266 is cheap and powerful WiFi-enabling IOT solution. Although it can't be as powerful as a RPI, it's a good solution to maximize the functionality and minimize the cost. Using a single ESP8266 as the temperature controller(replacing Arduino), web server and schedule maintainer(replacing RPI) also reduces the work in building a brewpi system.
-
-[Wiki Index](index.md)
+* [Hardware Setup](HardwareGeneral.md)
+  * [Example#1](HardwareExample1.md)
+  * [SONOFF](HarddwareSONOFF.md)
+  * [Thorrax’s Board](https://github.com/thorrak/brewpi-esp8266)
+  * [ESP32](ESP32Pins.md)
+    * [ESP32 Build](ESP32BuildInstructions.md)
+* [Localization of web frontend](LocalizationWebPage.md)
+* [Flash layout and New Frontend](FlashLayoutAndNewUI.md)
+* [Software Installation](SoftwareInstallation.md)
+  * [Software Configuration](SoftwareConfiguration.md)
+* [WiFi Setup](WiFiSetupV32.md)
+* [System Setup](SystemSetup.md)
+  * [SoftAP mode](SoftAPMode.md)
+* [Device Setup](DeviceSetup.md)
+* [Using Buttons & Menu](UsingButtonsAndUI.md)
+* [Temperature Logging](TemperatureLogging.md)
+* [Cloud Logging](CloudLogging.md)
+  * [Generic HTTP](GenericHttpLogging.md)
+  * [ubidots.com](ubidots.md)
+  * [thingspeak.com](thingspeak.md)
+  * [Brewfather](brewfather.md)
+* [Beer Profile](BeerProfile.md)
+* [iSpindel Support](iSpindelSupport.md)
+  * [Brew and Calibrate](BrewNCalibrate.md)
+  * [iSpindel as Beer Sensor](iSpindelAsSensor.md)
+* [Manual Gravity Logging](ManualGravityInput.md)
+* [Use with Glycol](glycol.md)
+  * [Parasite Temperature Control](ParasiteTemperatureControl.md)
+* [Auto Capping(Spunding)](AutoSpunding.md)
+* [MQTT Remote Control](MQTT.md)
+  * [ubidots.com](MQTT.ubidots.md)
+* [Pressure Monitor and Control](PressureMonitor.md)
+* [Other URLs](OtherUrl.md)
+  * Clear WiFi setting
+  * Format file system
+  * OTA update
+* [Overwrite pages](OverwritePages.md)
+* [JSON Commands](JsonCommand.md)
+  * Temperature Unit
+  * Sensor Calibration
+* [FAQ](FAQ.md)

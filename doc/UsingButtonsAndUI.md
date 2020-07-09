@@ -4,5 +4,3 @@ _You might feel lag when using the buttons. Press the buttons a little longer to
 
 To enter setup, press `UP+DOWN` at the same time. `Mode` will start to blink, indicating the current editing item.  Press `UP+DOWN` to change control mode, or `UP` to change editing item. 
 
-***
-[Index](index.md)

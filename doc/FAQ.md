@@ -33,5 +33,3 @@
 [REF#2](https://www.homebrewtalk.com/forum/threads/howto-make-a-brewpi-fermentation-controller-for-cheap.466106/page-136#post-7556259)
 
 
- ***
-[Index](index.md)
