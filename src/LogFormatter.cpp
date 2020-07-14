@@ -6,6 +6,7 @@
 #include "TemperatureFormats.h"
 #include "BrewPiProxy.h"
 #include "ExternalData.h"
+#include "BPLSettings.h"
 #if SupportPressureTransducer
 #include "PressureMonitor.h"
 #endif
@@ -97,6 +98,9 @@ size_t dataSprintf(char *buffer,const char *format,const char* invalid)
 			}else if(ch == 's'){
 				*(buffer+d)= '0' + state;
 				d++;
+			}else if(ch == 'H'){
+				strcpy(buffer+d,theSettings.systemConfiguration()->hostnetworkname);
+				d += strlen(theSettings.systemConfiguration()->hostnetworkname);
 			}else{
 				// wrong format
 				return 0;

@@ -6,5 +6,3 @@ Change "Network Mode" to "AP + Station" if not already done.
 
 Click the button after the "Network", and network selection page will show. Scan, select and save, just like what in WiFiManager.
  
- ***
-[Index](index.md)

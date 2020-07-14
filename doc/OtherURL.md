@@ -24,5 +24,3 @@ Web-based file manager to manipulate the files directly.
 
 The access portal to BrewPi core. The temperature control parameters can be accessed by this page.
 
-***
-[Index](index.md)

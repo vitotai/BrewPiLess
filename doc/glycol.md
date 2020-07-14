@@ -23,6 +23,3 @@ Ref:
 [JSON commands](JsonCommand.md)
 [Parasite Temperature Control](ParasiteTemperatureControl.md)
 
-
-***
-[Index](index.md)

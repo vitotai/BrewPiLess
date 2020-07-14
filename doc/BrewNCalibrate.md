@@ -22,5 +22,3 @@ Check the checkbox of "ignore" if that set of data is erroneous. BPL will derive
 
 Please note that the maximum number of data set is **21**. Tilt and gravity data set beyond 21 can't be ignored.
 
-***
-[Index](index.md)

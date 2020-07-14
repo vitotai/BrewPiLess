@@ -3,12 +3,12 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
 #include <ESP8266HTTPClient.h>
-
+//#include <WiFiClientSecureBearSSL.h>
 #elif defined(ESP32)
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <AsyncTCP.h>
-
+#include <WiFiClientSecure.h>
 #endif
 
 #include <ESPAsyncWebServer.h>
@@ -41,7 +41,7 @@ void DataLogger::loop(time_t now)
 }
 
 
-#define BUFFERSIZE 512
+#define BUFFERSIZE 756
 
 void DataLogger::sendData(void)
 {
@@ -68,17 +68,42 @@ void DataLogger::sendData(void)
 	DBG_PRINTF("data= %d, \"%s\"\n",len,data);
 
 	int code;
-	WiFiClient wifiClient;
+	WiFiClient *pClient;
+
 	HTTPClient _http;
   	_http.setUserAgent(F("ESP8266"));
+#if ESP32	
+	if( strncasecmp(_loggingInfo->url,"https",5) ==0){
+		//HTTPS
+		#if ESP32		
+		pClient=new WiFiClientSecure;
+		#else
+		BearSSL::WiFiClientSecure* sClient =new BearSSL::WiFiClientSecure;
+		if(sClient){
+			sClient->setBufferSizes(1024, 1024);
+			sClient->setInsecure();
+		}
+		pClient = sClient;
+		#endif
+	}else{
+		pClient = new WiFiClient;
+	}
+#else
+	pClient = new WiFiClient;
+#endif
+
+	if(!pClient){
+		DBG_PRINTF("Error create WiFiClientSecure\n");
+		return;
+	}
+
 
 	DBG_PRINTF("[HTTP] %d...\n",_loggingInfo->method);
 	DBG_PRINTF("Content-Type:\"%s\"\n", _loggingInfo->contentType);
 	if(_loggingInfo->method == mHTTP_POST
 		|| _loggingInfo->method== mHTTP_PUT ){
 		// post
-
-		_http.begin(wifiClient,_loggingInfo->url);
+		_http.begin(*pClient,_loggingInfo->url);
 
  		if(_loggingInfo->contentType){
   			_http.addHeader("Content-Type", _loggingInfo->contentType);
@@ -88,7 +113,7 @@ void DataLogger::sendData(void)
     // start connection and send HTTP header
     	code = _http.sendRequest((_loggingInfo->method == mHTTP_POST)? "POST":"PUT",(uint8_t*)data,len);
     }else{
- 			_http.begin(wifiClient,String(_loggingInfo->url) + String("?") + String(data));
+ 		_http.begin(*pClient,String(_loggingInfo->url) + String("?") + String(data));
     	code = _http.GET();
     }
 
@@ -110,4 +135,5 @@ void DataLogger::sendData(void)
     String output=_http.getString();
     DBG_PRINTF("output:\n%s\n",output.c_str());
 	_http.end();
+	delete pClient;
 }

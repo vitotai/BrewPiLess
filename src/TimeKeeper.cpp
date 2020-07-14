@@ -48,7 +48,7 @@ time_t TimeKeeperClass::_queryServer(void){
 	time_t secs=0;
 
 	int trial;
-	for(trial=0;trial< 50;trial++)
+	for(trial=0;trial< 25;trial++)
   	{
 		#ifdef ESP32
 		time(&secs);
@@ -110,6 +110,10 @@ time_t TimeKeeperClass::getTimeSeconds(void) // get Epoch time
 			updateTime();
 			if(_referenceSeconds> 1546265623){
 	  			diff=0;
+			}else{
+				_referenceSystemTime = millis();
+		  		_referenceSeconds = _referenceSeconds + diff/1000;
+		  		diff=0;
 			}
 		}else{
 			// just add up

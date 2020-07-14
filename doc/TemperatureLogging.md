@@ -10,5 +10,3 @@
 
 You can view, share, and crop the logs. Check http://vito.tw/?p=821
 
-***
-[Index](index.md)

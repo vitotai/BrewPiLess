@@ -36,6 +36,3 @@ It is usually set to 1/f. So, 1/60 for one minute reporting period, and 1/6 for 
 Note: enabling iSpindel setting only enables the initial display of iSpindel status. The gravity report will be processed even when the option is OFF.
 
 [calibrationSG.htm in /extra folder](extra/calibrationSG.htm) is an utility HTML file which can be used to derive the coefficients instead of using the excel from iSpindel.
-
-***
-[Index](index.md)

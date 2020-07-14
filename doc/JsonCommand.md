@@ -60,6 +60,3 @@ and send.
 
 ## A note about PID control
 The fridge temperature is controlled with PID. The fridge setting = beer setting + PID. The proportional part is linear with the temperature error. The integral part slowly increases when an error stays present, this prevents steady state errors. The derivative part is in the opposite direction to the proportional part. This prevents overshoot: it lowers the PID value when there's 'momentum' in the right direction.  
-
-***
-[Index](index.md)

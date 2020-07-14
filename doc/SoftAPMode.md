@@ -13,5 +13,3 @@ In SoftAP mode, the computer is connect to BPL without internet access. Therefor
 * "cache" the file. Simply copy the URL above and paste it in the address line of your browser and go. In most case, the browser will download and cache the js library. However, the browser might clear the cache for some reasons, so this might not always work.
 *  Go to http://dygraphs.com/download.html and download the v1.1.1 dygraph-combined.js. open http://brewpiless.local:8008/filemanager, and upload the downlowed libarry to ESP8266. The file shoule be named exact "/dygraph-combined.js".
 
-***
-[Index](index.md)

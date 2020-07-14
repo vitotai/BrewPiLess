@@ -73,4 +73,4 @@ Connecting to MQTT server takes up a TCP connection and some resource. The progr
 There is latency of network and update of data. Therefore, expect some delay after changing the setting.
 
 ***
-[Index](index.md) [Settings for ubidots.com](MQTT.ubidots.md)
+[Settings for ubidots.com](MQTT.ubidots.md)

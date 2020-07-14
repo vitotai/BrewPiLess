@@ -35,5 +35,3 @@ Due to the memory limitation, **HTTPS is not supported.** Therefore, if you want
 You can use Generic HTTP format for thingspeak.com and Brewfather to get exact the same result, but you should use ubidots.com specific settings to setup ubidots.com. It is because that ubidots.com will reject all values if one of them are "null"
 
 
-***
-[Index](index.md).

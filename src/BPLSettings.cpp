@@ -118,6 +118,7 @@ void BPLSettings::defaultLogFileIndexes(void){}
 #define KeyFlashAssignedSize "fsize"
 #define KeyFileSystemSize "fs"
 #define KeyMacAddress "mac"
+#define KeyBuildTime "date"
 
 extern IPAddress scanIP(const char *str);
 
@@ -229,7 +230,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 #endif
 
 	root[KeyFlashAssignedSize]=ESP.getFlashChipSize();
-
+	root[KeyBuildTime] = __DATE__ __TIME__;
 	uint8_t mac[WL_MAC_ADDR_LENGTH];
 	WiFi.macAddress(mac);
 	JsonArray data = root.createNestedArray(KeyMacAddress);

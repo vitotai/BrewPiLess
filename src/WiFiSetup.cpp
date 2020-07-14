@@ -16,7 +16,7 @@
 
 WiFiSetupClass WiFiSetup;
 
-#define TimeForRecoveringNetwork 5000
+#define TimeForRecoveringNetwork 8000
 #define TimeWaitToRecoverNetwork 60000
 
 #if SerialDebug == true
@@ -54,6 +54,7 @@ void WiFiSetupClass::enterBackupApMode(void)
 {
 	WiFi.mode(WIFI_AP_STA);
 	createNetwork();
+	setupApService();
 }
 
 void WiFiSetupClass::createNetwork(){
@@ -104,8 +105,6 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 	_apName=(ssid == NULL || *ssid=='\0')? DEFAULT_HOSTNAME:ssid;	
 	_apPassword=(passwd !=NULL && *passwd=='\0')? NULL:passwd;
 
-	// let the underlined library do the reconnection jobs.
-	//WiFi.setAutoReconnect(_autoReconnect);
 
 	WiFi.mode(mode2use);
 	// start AP
@@ -125,8 +124,7 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 		WiFi.setAutoReconnect(true);		
 		
 		wl_status_t status;
-		if(targetSSID)
-			status= WiFi.begin(targetSSID,targetPass);
+		if(targetSSID) status= WiFi.begin(targetSSID,targetPass);
 		else WiFi.begin();
 		DBG_PRINTF("WiFi.begin() return:%d\n",status);
 		_time=millis();
@@ -188,7 +186,7 @@ String WiFiSetupClass::status(void){
 
 bool WiFiSetupClass::stayConnected(void)
 {
-	if(_mode == WIFI_AP || _mode == WIFI_AP_STA){
+	if(WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA){
 		dnsServer->processNextRequest();
 //		if(_mode == WIFI_AP) return true;
 	}
@@ -210,7 +208,7 @@ bool WiFiSetupClass::stayConnected(void)
 			else
 				WiFi.begin();
 			_reconnect =0;
-			_wifiState = WiFiStateConnecting;
+			_wifiState = WiFiStateConnectionRecovering;
 
 			wifi_info("**try:");
 			_time=millis();
@@ -236,6 +234,7 @@ bool WiFiSetupClass::stayConnected(void)
 				if( _mode == WIFI_AP_STA){
 					WiFi.mode(_mode);
 					createNetwork();
+					setupApService();
 				}else if (_mode == WIFI_AP){
 					//WiFi.disconnect();
 					_wifiState =WiFiStateDisconnected;
@@ -260,26 +259,27 @@ bool WiFiSetupClass::stayConnected(void)
  			{
 				wifi_info("**disc:");
 				if(_mode != WIFI_AP){
-					_time=millis();
 					DBG_PRINTF("Lost Network.WiFi.status()= %d\n",WiFi.status());
 					_wifiState = WiFiStateConnectionRecovering;
-					WiFi.begin(_targetSSID,_targetPass);
+					if(_targetSSID) WiFi.begin(_targetSSID,_targetPass);
+					else WiFi.begin();
+					WiFi.setAutoReconnect(true);
+					_time=millis();
 				}
 			}else if (_wifiState==WiFiStateConnectionRecovering){
 				// if sta mode, turn on AP mode
 				if(millis() - _time > TimeForRecoveringNetwork){
 					DBG_PRINTF("Stop recovering\n");
-					WiFi.disconnect();
+					// WiFi.disconnect();
 					// enter AP mode, or the underlying WiFi stack would keep searching and block
 					//  connections to AP mode.
-					WiFiMode mode= WiFi.getMode();
 
 					WiFi.setAutoReconnect(false);
-					WiFi.mode(WIFI_AP);
+					// WiFi.mode(WIFI_AP);
 					
-					if(_mode == WIFI_STA && mode == WIFI_STA){
+					if(_mode == WIFI_STA && WiFi.getMode() == WIFI_STA){
 						// create a wifi
-						createNetwork();
+						enterBackupApMode();
 					} // _mode == WIFI_STA
 
 					_time = millis();
@@ -294,8 +294,11 @@ bool WiFiSetupClass::stayConnected(void)
 				// in AP_STA or STA mode
 					if( millis() -  _time  > TimeWaitToRecoverNetwork){
   						DBG_PRINTF("Start recovering\n");
+						// WiFi.mode(WIFI_AP_STA);
+						if(_targetSSID) WiFi.begin(_targetSSID,_targetPass);
+						else WiFi.begin();
+
 						WiFi.setAutoReconnect(true);
-						WiFi.mode(WIFI_AP_STA);
 
 						_wifiState = WiFiStateConnectionRecovering;
 						_time = millis();

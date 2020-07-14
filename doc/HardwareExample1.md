@@ -16,5 +16,3 @@ This the simplest setup which mixes 5v and 3.3v circuits. It might _**not**_ be 
 * Some relay modules might not work under 3.3v. All of mine work, though.
 * Some DS18B20 waterproof sensors, especiallly from Amazon, support only parasitic power mode. The sensors run in Parasitic mode are not stable, so BrewPi, hence BrewPiLess, **doesn’t support** parasitic power mode. The sensors can be detected by other sketches, but BrewPi(less) won't recognize them
 
-***
-[Index](index.md).

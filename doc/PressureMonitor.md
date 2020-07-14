@@ -87,5 +87,3 @@ BPL will then derive the parameters automatically.
 
 ** BPL checks the pressure **every second**, if the pressure is greater than specified value, the solenoid will be open. The less the gas/pressure is released in 1 second, the more precise the pressure control is. It might sound like difficult. The fact is that it is more difficult to make something air tight. A threaded pipe and cap without seal might do the job.
 
-***
-[Index](index.md)

@@ -7,5 +7,3 @@ SONOFF dual is not supported, because the Relays are controlled by Serial instea
 
 Please note that some older SONOFFs, maybe before 2018, use ESP8266 while new ones use ESP8285. Right configuration must be used.
 
-***
-[Index](index.md)

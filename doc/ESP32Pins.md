@@ -1,4 +1,16 @@
-# ESP32 Pin Allocation
+# ESP32
+
+ESP32 is future-proof, more powerful, and has more memory than ESP8266. However, it is "new" and hasn't been well tested. 
+Please take the risk into consideration.
+
+Although SSL and BT is possible on ESP32, There are some difficulties. Currently, rotary encoder support and running faster are the only advantages.
+
+BTLE library takes too much memory that BPL can't use it. Soon there will be an alternative, NIMBLE. We'll see what we can do then.
+
+HTTPS is more complicated. BPL relies on AsyncWebServer library, which doesn's support SSL right now. HTTPS client is possible and is under evaluated currently.
+
+# Default PIN allocation
+
 | GPIO   | IO | Functions       | Notes |  Preference | BPL |
 | ------ |:-----:| :--------- | ---------- | ---- | ---- |
 | 0 | IO | Touch, RTC, **boot** | Output PWM at boot | X | |
@@ -36,9 +48,10 @@ Preferences:
 | * | Avoid |
 | + | avoid if possible |
 
+
+
 ### References
 * [ESP32 Pinout Reference: Which GPIO pins should you use?](https://randomnerdtutorials.com/esp32-pinout-reference-gpios/)
 * [ESP32 Boot Mode Selection](https://github.com/espressif/esptool/wiki/ESP32-Boot-Mode-Selection)
+* [How to build image for ESP32](ESP32BuildInstructions.md)
 
-***
-[Index](index.md)

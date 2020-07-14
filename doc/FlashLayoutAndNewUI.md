@@ -7,5 +7,3 @@ Fortunately, framework 1.8.0 sports 4m2m(2m program space) by default. Therefore
 
 Because of the different flash layout, change one layout to another should be done over USB instead of OTA. Morover, the file system will be corrupted and all data will be gone.
 
-***
-[Index](index.md)

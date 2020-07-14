@@ -41,6 +41,3 @@ Add the language to be added, in the same name as the json file.
  * if everything goes well, there will be a 'wakanda' subdirectory in "dist" path.
 
 If you don't understand this page so far, but you can and are willing to do the translation, just translate the json file and send it to me. (Or, submit an issue with attached translated file, I guess.) 
-
-***
-[Index](index.md)
