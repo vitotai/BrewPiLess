@@ -3,7 +3,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
 #include <ESP8266HTTPClient.h>
-#include <WiFiClientSecureBearSSL.h>
+//#include <WiFiClientSecureBearSSL.h>
 #elif defined(ESP32)
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -41,7 +41,7 @@ void DataLogger::loop(time_t now)
 }
 
 
-#define BUFFERSIZE 512
+#define BUFFERSIZE 756
 
 void DataLogger::sendData(void)
 {
@@ -72,7 +72,7 @@ void DataLogger::sendData(void)
 
 	HTTPClient _http;
   	_http.setUserAgent(F("ESP8266"));
-	
+#if ESP32	
 	if( strncasecmp(_loggingInfo->url,"https",5) ==0){
 		//HTTPS
 		#if ESP32		
@@ -88,11 +88,15 @@ void DataLogger::sendData(void)
 	}else{
 		pClient = new WiFiClient;
 	}
+#else
+	pClient = new WiFiClient;
+#endif
 
 	if(!pClient){
 		DBG_PRINTF("Error create WiFiClientSecure\n");
 		return;
 	}
+
 
 	DBG_PRINTF("[HTTP] %d...\n",_loggingInfo->method);
 	DBG_PRINTF("Content-Type:\"%s\"\n", _loggingInfo->contentType);
