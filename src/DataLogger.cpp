@@ -41,7 +41,7 @@ void DataLogger::loop(time_t now)
 }
 
 
-#define BUFFERSIZE 756
+#define BUFFERSIZE 1024
 
 void DataLogger::sendData(void)
 {

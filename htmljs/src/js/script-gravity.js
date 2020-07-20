@@ -18,6 +18,17 @@ function fill(setting) {
             else ele.value = setting[name];
         }
     }
+    if(setting.dev == 1){
+        Q("#tilthydrometer").checked = false;
+        Q("#ispindel").checked = true;
+    }else if(setting.dev == 2){
+        Q("#tilthydrometer").checked = true;
+        Q("#ispindel").checked = false;
+    }else{
+        Q("#tilthydrometer").checked = false;
+        Q("#ispindel").checked = false;
+    }
+    Q("#tiltcolor").value = setting.color;
 }
 
 function save() {
@@ -25,9 +36,13 @@ function save() {
     var setting = {};
     for (var i = 0; i < inputs.length; i++) {
         var ele = inputs[i];
-        if (ele.type == "checkbox") setting[ele.name] = ele.checked;
-        else if (ele.type == "text") setting[ele.name] = ele.value;
+        if(ele.name != "ispindel" && ele.name!="tilthydrometer"){
+            if (ele.type == "checkbox") setting[ele.name] = ele.checked;
+            else if (ele.type == "text") setting[ele.name] = ele.value;
+        }
     }
+    setting.color =  Q("#tiltcolor").value;
+    setting.dev = Q("#tilthydrometer").checked? 2:(Q("#ispindel").checked? 1:0);
     //    console.log("result=" + setting);
     s_ajax({
         url: gdcurl,
@@ -46,6 +61,15 @@ function save() {
 function init(classic) {
     if (typeof classic == "undefined") classic = false;
 
+    Q("#tilthydrometer").onchange=function(){
+        if(this.checked) Q("#ispindel").checked = false;
+    };
+
+    Q("#ispindel").onchange=function(){
+        if(this.checked) Q("#tilthydrometer").checked = false;
+    };
+
+
     if (!classic) {
         getActiveNavItem();
         Q("#verinfo").innerHTML = "v" + JSVERSION;
@@ -58,7 +82,8 @@ function init(classic) {
             fill(JSON.parse(a));
         },
         fail: function(a) {
-            //alert("failed getting data:" + a)
+            alert("failed getting data:" + a)
         }
     });
+
 }

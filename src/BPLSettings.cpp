@@ -252,7 +252,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 //***************************************************************
 // gravity device configuration
 
-#define KeyEnableiSpindel "ispindel"
+#define KeyGravityDeviceType "dev"
 #define KeyTempCorrection "tc"
 #define KeyCorrectionTemp "ctemp"
 #define KeyCalculateGravity "cbpl"
@@ -264,6 +264,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 #define KeyStableGravityThreshold "stpt"
 #define KeyNumberCalPoints "npt"
 #define KeyUsePlato "plato"
+#define KeyTiltColor "color"
 
  bool BPLSettings::dejsonGravityConfig(char* json)
 {
@@ -284,7 +285,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 		}
         GravityDeviceConfiguration *gdc = &_data.gdc;
 
-		gdc->ispindelEnable=root[KeyEnableiSpindel];
+		gdc->gravityDeviceType=root[KeyGravityDeviceType];
 		gdc->ispindelTempCal = root[KeyTempCorrection];
 
 //		if(gdc->ispindelTempCal){
@@ -300,6 +301,7 @@ String BPLSettings::jsonSystemConfiguration(void){
         gdc->stableThreshold=root[KeyStableGravityThreshold];
 		gdc->numberCalPoints=root[KeyNumberCalPoints];
 		gdc->usePlato = root.containsKey(KeyUsePlato)? root[KeyUsePlato]:0;
+		gdc->tiltColor = root[KeyTiltColor];
 		// debug
 		#if SerialDebug
 		Serial.print("\nCoefficient:");
@@ -325,7 +327,7 @@ String BPLSettings::jsonGravityConfig(void){
 
         GravityDeviceConfiguration *gdc = &_data.gdc;
 
-		root[KeyEnableiSpindel] = gdc->ispindelEnable;
+		root[KeyGravityDeviceType] = gdc->gravityDeviceType;
 		root[KeyTempCorrection] = gdc->ispindelTempCal;
 
 		root[KeyCorrectionTemp] = gdc->ispindelCalibrationBaseTemp;
@@ -339,6 +341,8 @@ String BPLSettings::jsonGravityConfig(void){
 		root[KeyCoefficientA3]=gdc->ispindelCoefficients[3];
 		root[KeyNumberCalPoints] = gdc->numberCalPoints;
 		root[KeyUsePlato] = gdc->usePlato;
+		root[KeyTiltColor]	=	gdc->tiltColor ;
+
 	 String ret;
 
 	#if ARDUINOJSON_VERSION_MAJOR == 6
@@ -353,7 +357,7 @@ void BPLSettings::defaultGravityConfig(void)
 {
 	GravityDeviceConfiguration *gdc = &_data.gdc;
 
-	//gdc->ispindelEnable=0;
+	//gdc->gravityDeviceType=GravityDeviceNone;
 	//gdc->ispindelTempCal =0;
 
 	//gdc->calculateGravity= 0;

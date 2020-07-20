@@ -451,7 +451,26 @@ var  CHART_VERSION = 6;
                         } finally {
                             ctx.restore();
                         }
+                }
+                ,
+                interactionModel:{ 
+                    mousedown: Dygraph.defaultInteractionModel.mousedown, 
+                    mousemove: Dygraph.defaultInteractionModel.mousemove, 
+                    mouseup: Dygraph.defaultInteractionModel.mouseup, 
+//                    touchstart:Dygraph.defaultInteractionModel.touchstart,
+                    touchstart: function(event, g, context){
+                        event.stopPropagation();
+                        t.chart.setSelection(t.findNearestRow(g,t.chart.toDataXCoord(event.touches[0].clientX)));
+                    }, 
+//                    touchend: Dygraph.defaultInteractionModel.touchend, 
+                    touchend:function(event,g,context){
+                    },
+//                    touchmove: Dygraph.defaultInteractionModel.touchmove
+                    touchmove:function(event,g,context){
+                        event.stopPropagation();
+                        t.chart.setSelection(t.findNearestRow(g,t.chart.toDataXCoord(event.touches[0].clientX)));
                     }
+                }
                     /*                drawCallback: function(beerChart, is_initial) {
                                         if (is_initial) {
                                             if (t.anno.length > 0) {

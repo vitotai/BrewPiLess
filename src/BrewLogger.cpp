@@ -330,6 +330,7 @@ BrewLogger::BrewLogger(void){
 	void BrewLogger::endSession(void){
 		if(!_recording) return;
 		_recording=false;
+		_calibrating=false;
 		_logFile.close();
 		// copy the file name into last entry
 		int index=0;

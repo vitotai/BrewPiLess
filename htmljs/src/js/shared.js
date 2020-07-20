@@ -1,4 +1,4 @@
-var JSVERSION = "4.0";
+var JSVERSION = "4.1";
 
 function s_ajax(b) {
     var c = new XMLHttpRequest();
@@ -27,6 +27,10 @@ function s_ajax(b) {
 var Q = function(d) {
     return document.querySelector(d);
 };
+
+function doAll(c,act){
+    document.querySelectorAll(c).forEach(function(i){act(i)});
+}
 
 function C2F(c) {
     return Math.round((c * 1.8 + 32) * 10) / 10

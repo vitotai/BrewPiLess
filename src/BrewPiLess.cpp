@@ -87,7 +87,7 @@ extern "C" {
 #endif
 
 #if SupportTiltHydrometer
-#include "TiltReceiver.h"
+#include "TiltListener.h"
 #endif
 
 //WebSocket seems to be unstable, at least on iPhone.
@@ -210,6 +210,7 @@ AsyncEventSource sse(SSE_PATH);
 extern const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned int &size);
 
 void requestRestart(bool disc);
+void tiltScanResult(String& result);
 
 void initTime(bool apmode)
 {
@@ -859,10 +860,10 @@ void greeting(std::function<void(const char*)> sendFunc)
 {
 	char buf[512];
 	// gravity related info., starting from "G"
-	//if(externalData.iSpindelEnabled()){
+	if(externalData.gravityDeviceEnabled()){
 		externalData.sseNotify(buf);
 		sendFunc(buf);
-	//}
+	} 
 
 	// misc informatoin, including
 
@@ -1033,7 +1034,7 @@ void notifyLogStatus(void)
 
 void reportRssi(void)
 {
-	char buf[256];
+	char buf[512];
 
 	uint8_t mode, state;
 	char unit;
@@ -1052,7 +1053,8 @@ void reportRssi(void)
 		int psi = (int) PressureMonitor.currentPsi();
 		
 		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d,\
-			\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\",\"pm\":%d,\"psi\":%d}",
+			\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\",\"pm\":%d,\"psi\":%d,\
+			\"G\":{\"u\":%lu,\"t\":%d,\"r\":%d,\"g\":%d}}",
 				WiFi.RSSI(),ptcmode,parasiteTempController.getTimeElapsed(),
 				parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound(),
 			state,
@@ -1065,12 +1067,18 @@ void reportRssi(void)
 			statusLine,
 			unit,
 			pmmode,
-			psi
+			psi,
+			externalData.lastUpdate(),
+			(int)(externalData.auxTemp() * 100),
+			externalData.rssi(),
+			(int)(externalData.gravity() * 1000)
 			);
 
 	#else
 	sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d,\
-		\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\"}",
+		\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\",\
+		\"G\":{\"u\":%lu,\"t\":%d,\"r\":%d,\"g\":%d}}",
+
 			WiFi.RSSI(),ptcmode,parasiteTempController.getTimeElapsed(),
 			parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound(),
 		state,
@@ -1081,13 +1089,18 @@ void reportRssi(void)
 		(int)(fridgeSet*100),
 		(int)(roomTemp*100),
 		statusLine,
-		unit
+		unit,
+			externalData.lastUpdate(),
+			(int)(externalData.auxTemp() * 100),
+			externalData.rssi(),
+			(int)(externalData.gravity() * 1000)
 
 			);
 	#endif
 	stringAvailable(buf);
 #else
-	sprintf(buf,"A:{\"rssi\":%d,\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\"}",
+	sprintf(buf,"A:{\"rssi\":%d,\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\",\
+		\"G\":{\"u\":%lu,\"t\":%d,\"r\":%d,\"g\":%d}}",
 		WiFi.RSSI(),
 		state,
 		mode,
@@ -1097,7 +1110,12 @@ void reportRssi(void)
 		(int)(fridgeSet*100),
 		(int)(roomTemp*100),
 		statusLine,
-		unit
+		unit,
+			externalData.lastUpdate(),
+			(int)(externalData.auxTemp() * 100),
+			externalData.rssi(),
+			(int)(externalData.gravity() * 1000)
+
 		);
 	stringAvailable(buf);
 #endif
@@ -1333,7 +1351,20 @@ public:
 #if	SupportTiltHydrometer
 	 	if(request->url() == TiltCommandPath){
 			 if(request->hasParam("scan")){
-				 tiltReceiver.scan(NULL);
+				 DBG_PRINTF("scan BLE\n");
+				 tiltListener.scan([](int count,TiltHydrometerInfo *tilts){
+					String ret="{\"tilts\":[";
+						 for(int i=0;i<count;i++){
+							 ret += String("{\"c\":")+ String(tilts[i].color) +
+							 		String(",\"r\":")+ String(tilts[i].rssi) +
+									String(",\"g\":")+ String(tilts[i].gravity) +
+									String(",\"t\":")+ String(tilts[i].temperature) +
+									((i==count-1)? String("}"): String("},"));
+						 }
+					ret += "]}";
+					tiltScanResult(ret);
+				 });
+				 request->send(200);
 			 }
 			 return;
 		 }
@@ -1545,6 +1576,11 @@ void wiFiEvent(const char* msg){
 		DBG_PRINTF("channel:%d, BSSID:%s\n",WiFi.channel(),WiFi.BSSIDstr().c_str());
 		if(! TimeKeeper.isSynchronized())TimeKeeper.updateTime();
 	}
+}
+
+void tiltScanResult(String& result){
+	String report="T:" + result;
+	stringAvailable(report.c_str());
 }
 //{brewpi
 
@@ -1927,7 +1963,7 @@ void setup(void){
 	#endif
 
 #if SupportTiltHydrometer
-	tiltReceiver.begin();
+	tiltListener.begin();
 #endif
 
 #if EanbleParasiteTempControl
@@ -2009,6 +2045,10 @@ void loop(void){
 	
 	#if SupportPressureTransducer
 	PressureMonitor.loop();
+	#endif
+	
+	#if SupportTiltHydrometer
+	tiltListener.loop();
 	#endif
 
 	#if GreetingInMainLoop

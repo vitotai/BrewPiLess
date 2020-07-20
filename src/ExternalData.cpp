@@ -1,8 +1,12 @@
 #include <ArduinoJson.h>
 #include "ExternalData.h"
+#if SupportTiltHydrometer
+#include "TiltListener.h"
+#endif
 
 ExternalData externalData;
 
+#define TiltFilterParameter 0.15
 
 float Brix2SG(float brix){
  return (brix / (258.6-((brix / 258.2)*227.1))) + 1;
@@ -26,8 +30,13 @@ void ExternalData::waitFormula(){
 }
 
 bool ExternalData::iSpindelEnabled(void){
-    return _cfg->ispindelEnable;
+    return _cfg->gravityDeviceType == GravityDeviceIspindel;
 }
+
+bool ExternalData::gravityDeviceEnabled(void){
+    return _cfg->gravityDeviceType != GravityDeviceNone;
+}
+
 
 float ExternalData::hydrometerCalibration(void){ 
     return _cfg->ispindelCalibrationBaseTemp;
@@ -65,22 +74,49 @@ void ExternalData::sseNotify(char *buf){
 			strRssi[0]='\0';
 		} 
 		const char *spname=(_ispindelName)? _ispindelName:"Unknown";
-		sprintf(buf,"G:{\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s %s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d,\"ctemp\":%d,\"plato\":%d}",
+		sprintf(buf,"G:{\"dev\":%d,\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s %s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d,\"ctemp\":%d,\"plato\":%d}",
+					_cfg->gravityDeviceType,
 					spname, 
 					strbattery,
 					strgravity,
 					strtilt,
 					strRssi,
-					_lastUpdate,slowpassfilter,_cfg->stableThreshold,
+					_lastUpdate,
+					slowpassfilter,
+					_cfg->stableThreshold,
 					_cfg->numberCalPoints,
                     _cfg->ispindelCalibrationBaseTemp,
 					_cfg->usePlato);
 }
 
+void ExternalData::setTiltInfo(uint16_t gravity, uint16_t temperature, int rssi){
+	setAuxTemperatureCelsius( ((float)temperature  -32.0)* 5.0/9.0);
+	setDeviceRssi(rssi);
+	setGravity((float) gravity /1000.0, TimeKeeper.getTimeSeconds());
+}
+
+void ExternalData::reconfig(void){
+
+	#if SupportTiltHydrometer
+	if(_cfg->gravityDeviceType != GravityDeviceTilt) tiltListener.stop();
+	#endif
+
+	if(_cfg->gravityDeviceType == GravityDeviceIspindel){	    
+		filter.setBeta(_cfg->lpfBeta);		
+	}
+	#if SupportTiltHydrometer
+	else if(_cfg->gravityDeviceType == GravityDeviceTilt){
+	    filter.setBeta(TiltFilterParameter);
+		tiltListener.listen((TiltColor) _cfg->tiltColor,[&](TiltHydrometerInfo& info){
+			setTiltInfo(info.gravity,info.temperature,info.rssi);
+		});
+	}
+	#endif
+}
 
 void ExternalData::loadConfig(void){
     _cfg = theSettings.GravityConfig();
-    filter.setBeta(_cfg->lpfBeta);
+	reconfig();
 }
 
 
@@ -88,6 +124,7 @@ bool ExternalData::processconfig(char* configdata){
    bool ret= theSettings.dejsonGravityConfig(configdata);
    if(ret){
 	   theSettings.save();
+	   reconfig();
    }
    return ret;
 }

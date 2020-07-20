@@ -33,19 +33,24 @@ typedef struct _TimeInformation{
 //*****************************************************
 // gravity device
 //  36
+#define GravityDeviceNone 0
+#define GravityDeviceIspindel 1
+#define GravityDeviceTilt 2
+
 typedef struct _GravityDeviceConfiguration{
     float ispindelCoefficients[4];
     float   lpfBeta;
 	uint32_t  numberCalPoints;
     
-    uint8_t  ispindelEnable;
+    uint8_t  gravityDeviceType;
     uint8_t  ispindelTempCal;
     uint8_t  calculateGravity;
     uint8_t  ispindelCalibrationBaseTemp;
 
 	uint8_t  stableThreshold;
 	uint8_t  usePlato;
-    uint8_t _padding[6];
+    uint8_t  tiltColor;
+    uint8_t  _padding[5];
 }GravityDeviceConfiguration;
 
 //*****************************************************

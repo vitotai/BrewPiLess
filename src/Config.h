@@ -276,7 +276,7 @@
 #define FS_EEPROM true
 #endif
 
-#define BPL_VERSION "4.0"
+#define BPL_VERSION "4.1"
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -502,6 +502,9 @@
 
 #define EMIWorkaround 1
 
+#if ESP32
+#define SupportTiltHydrometer true
+#endif
 /**************************************************************************************/
 /*  Configuration: 																	  */
 /*  Only one setting: the serial used to connect to.                                  */
