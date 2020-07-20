@@ -454,9 +454,9 @@ var  CHART_VERSION = 6;
                 }
                 ,
                 interactionModel:{ 
-                    mousedown: Dygraph.defaultInteractionModel.mousedown, 
-                    mousemove: Dygraph.defaultInteractionModel.mousemove, 
-                    mouseup: Dygraph.defaultInteractionModel.mouseup, 
+//                    mousedown: Dygraph.defaultInteractionModel.mousedown, 
+//                    mousemove: Dygraph.defaultInteractionModel.mousemove, 
+//                    mouseup: Dygraph.defaultInteractionModel.mouseup, 
 //                    touchstart:Dygraph.defaultInteractionModel.touchstart,
                     touchstart: function(event, g, context){
                         event.stopPropagation();
