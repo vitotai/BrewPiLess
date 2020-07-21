@@ -2,6 +2,9 @@
 #define TiltListener_H
 #include <Arduino.h>
 #include <functional>
+
+#include "Config.h"
+#if SupportTiltHydrometer
 #if 0
 #include <BLEDevice.h>
 #include <BLEUtils.h>
@@ -14,7 +17,6 @@
 #include "NimBLEEddystoneURL.h"
 #include "NimBLEEddystoneTLM.h"
 #include "NimBLEBeacon.h"
-#include "Config.h"
 
 
 typedef enum _TiltColor{
@@ -74,5 +76,7 @@ protected:
 };
 
 extern TiltListener tiltListener;
+
+#endif
 
 #endif

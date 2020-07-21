@@ -75,13 +75,15 @@ protected:
 
 	float temperatureCorrection(float sg, float t, float c);
 
-	void setTilt(float tilt,float temp,time_t now);
+	void setIspindelAngle(float tilt,float temp,time_t now);
 	void setGravity(float sg, time_t now,bool log=true);
 	void setAuxTemperatureCelsius(float temp);
 	void setOriginalGravity(float og);	
 
 	void reconfig(void);
+	#if SupportTiltHydrometer
 	void setTiltInfo(uint16_t gravity, uint16_t temperature, int rssi);
+	#endif
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),
 	_lastUpdate(0),_deviceVoltage(INVALID_VOLTAGE)

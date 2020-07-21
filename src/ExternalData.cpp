@@ -89,11 +89,13 @@ void ExternalData::sseNotify(char *buf){
 					_cfg->usePlato);
 }
 
+#if SupportTiltHydrometer
 void ExternalData::setTiltInfo(uint16_t gravity, uint16_t temperature, int rssi){
 	setAuxTemperatureCelsius( ((float)temperature  -32.0)* 5.0/9.0);
 	setDeviceRssi(rssi);
 	setGravity((float) gravity /1000.0, TimeKeeper.getTimeSeconds());
 }
+#endif
 
 void ExternalData::reconfig(void){
 
@@ -123,6 +125,12 @@ void ExternalData::loadConfig(void){
 bool ExternalData::processconfig(char* configdata){
    bool ret= theSettings.dejsonGravityConfig(configdata);
    if(ret){
+	   #if !SupportTiltHydrometer
+	   if(_cfg->gravityDeviceType == GravityDeviceTilt){
+		   return false;
+	   }
+	   #endif
+
 	   theSettings.save();
 	   reconfig();
    }
@@ -150,7 +158,7 @@ void ExternalData::setOriginalGravity(float og){
 #endif
 }
 
-void ExternalData::setTilt(float tilt,float temp,time_t now){
+void ExternalData::setIspindelAngle(float tilt,float temp,time_t now){
 	_lastUpdate=now;
 	_ispindelTilt=tilt;
 
@@ -313,7 +321,7 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 			return false;
 		}
     	
-        setTilt(root["angle"],itemp,TimeKeeper.getTimeSeconds());
+        setIspindelAngle(root["angle"],itemp,TimeKeeper.getTimeSeconds());
 
         if(root.containsKey("battery"))
     	    setDeviceVoltage(root["battery"]);
