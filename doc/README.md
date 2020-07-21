@@ -23,6 +23,7 @@
 * [iSpindel Support](iSpindelSupport.md)
   * [Brew and Calibrate](BrewNCalibrate.md)
   * [iSpindel as Beer Sensor](iSpindelAsSensor.md)
+* [Tilt Hydrometer Support on ESP32](TiltHydrometerSupport.md)
 * [Manual Gravity Logging](ManualGravityInput.md)
 * [Use with Glycol](glycol.md)
   * [Parasite Temperature Control](ParasiteTemperatureControl.md)

@@ -3,11 +3,9 @@
 ESP32 is future-proof, more powerful, and has more memory than ESP8266. However, it is "new" and hasn't been well tested. 
 Please take the risk into consideration.
 
-Although SSL and BT is possible on ESP32, There are some difficulties. Currently, rotary encoder support and running faster are the only advantages.
+HTTPS is more complicated. BPL relies on AsyncWebServer library, which doesn's support SSL right now. 
 
-BTLE library takes too much memory that BPL can't use it. Soon there will be an alternative, NIMBLE. We'll see what we can do then.
-
-HTTPS is more complicated. BPL relies on AsyncWebServer library, which doesn's support SSL right now. HTTPS client is possible and is under evaluated currently.
+HTTPS client is possible for ESP32, but the finger print isn't checked for simplicity. 
 
 # Default PIN allocation
 

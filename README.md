@@ -44,6 +44,12 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * 4.1
+    * HTTPS remote logging for ESP32.
+    * "Real" generic HTTP logging.
+    * Touch on chart.
+    * TILT support for ESP32
+
  * 4.0r1(under testing)
     * Fix lost of WiFi connection after a few days.
  * 4.0

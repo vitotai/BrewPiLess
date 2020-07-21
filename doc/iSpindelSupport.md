@@ -1,4 +1,7 @@
 ### Connection setup for iSpindel
+
+After 4.1, **iSpindel Enabled** must be set to enable iSpindel support.
+
 BrewPiLess supports iSpindel by accepting data from iSpindel and acting an **AP** for iSpindel to connect to, BrewPiLess and iSpindel can connect to the same router. 
 To support **softAP**, set the correct settings in `System configuration`. Please note that the password(passphrase) should be at least **8** characters. The same password(pass phrase) is used for setting and for connection certification. Default value is `brewpiless`.
 
@@ -32,7 +35,5 @@ The coefficient defines the 'a' in this LPF:
 y = y[i-1] + a ( x - y[i-1] )
 It is usually set to 1/f. So, 1/60 for one minute reporting period, and 1/6 for 10 minute reporteing period.
 
-
-Note: enabling iSpindel setting only enables the initial display of iSpindel status. The gravity report will be processed even when the option is OFF.
 
 [calibrationSG.htm in /extra folder](extra/calibrationSG.htm) is an utility HTML file which can be used to derive the coefficients instead of using the excel from iSpindel.
