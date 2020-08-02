@@ -214,13 +214,16 @@ void tiltScanResult(String& result);
 
 void initTime(bool apmode)
 {
-	if(apmode){
+/*	if(apmode){
 		DBG_PRINTF("initTime in ap mode\n");
 		TimeKeeper.begin();
 	}else{
 		DBG_PRINTF("connect to Time server\n");
 		TimeKeeper.begin((char*)"time.google.com",(char*)"pool.ntp.org",(char*)"time.windows.com");
 	}
+*/
+	TimeKeeper.begin((char*)"time.google.com",(char*)"pool.ntp.org",(char*)"time.windows.com");
+
 }
 #if AUTO_CAP
 void capStatusReport(void);

@@ -55,7 +55,7 @@ time_t TimeKeeperClass::_queryServer(void){
 		#else
     	secs = sntp_get_current_timestamp();
 		#endif
-		DBG_PRINTF("Time from NTP :%ld\n",secs);
+		DBG_PRINTF("Time from NTP :%ld, %d\n",secs,trial);
     	if(secs > 1546265623){ 
 			_ntpSynced=true;
 			break;

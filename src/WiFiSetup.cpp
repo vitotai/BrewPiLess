@@ -295,6 +295,7 @@ bool WiFiSetupClass::stayConnected(void)
 					if( millis() -  _time  > TimeWaitToRecoverNetwork){
   						DBG_PRINTF("Start recovering\n");
 						// WiFi.mode(WIFI_AP_STA);
+						DBG_PRINTF("retry SSID:%s\n",_targetSSID? _targetSSID:"NULL");
 						if(_targetSSID) WiFi.begin(_targetSSID,_targetPass);
 						else WiFi.begin();
 
