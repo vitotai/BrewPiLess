@@ -254,7 +254,7 @@
             var format = EI("format").value.trim();
 
             if (window.selectedMethod == "GET") {
-                var myRe = new RegExp("\s", "g");
+                var myRe = new RegExp(/\s/, "g");
                 if (myRe.exec(format)) {
                     alert("space is not allowed");
                     return;

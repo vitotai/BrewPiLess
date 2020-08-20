@@ -248,7 +248,7 @@ function generichttp_get() {
     var format = Q("#format").value.trim();
 
     if (window.selectedMethod == "GET") {
-        var myRe = new RegExp("\s", "g");
+        var myRe = new RegExp(/\s/, "g");
         if (myRe.exec(format)) {
             alert("<%= script_logging_space_not_allowed %>");
             return null;
