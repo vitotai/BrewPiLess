@@ -47,7 +47,7 @@ BrewLogger::BrewLogger(void){
 			+"}";
 #else
 		FSInfo fs_info;
-		SPIFFS.info(fs_info);
+		FileSystem.info(fs_info);
 		String ret=String("{\"size\":") + String(fs_info.totalBytes)
 			+",\"used\":"  + String(fs_info.usedBytes)
 			+",\"block\":" + String(fs_info.blockSize)
@@ -98,7 +98,7 @@ BrewLogger::BrewLogger(void){
 		// multiple access issue
 		char buff[36];
 		sprintf(buff,"%s/%s",LOG_PATH,_pFileInfo->files[index].name);
-		SPIFFS.remove(buff);
+		FileSystem.remove(buff);
 		DBG_PRINTF("remove %d: %s\n",index,buff);
 		int i;
 		for(i=index+1;i<MAX_LOG_FILE_NUMBER;i++){
@@ -122,9 +122,9 @@ BrewLogger::BrewLogger(void){
 		sprintf(filename,"%s/%s",LOG_PATH,_pFileInfo->logname);
 #if ESP32
 		// weird behavior of ESP32
-		_logFile=SPIFFS.open(filename,"r");
+		_logFile=FileSystem.open(filename,"r");
 #else
-		_logFile=SPIFFS.open(filename,"a+");
+		_logFile=FileSystem.open(filename,"a+");
 #endif
 		if(! _logFile){
             DBG_PRINTF("resume failed\n");
@@ -274,7 +274,7 @@ BrewLogger::BrewLogger(void){
 		//DBG_PRINTF("resume done _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
 #if ESP32
 		_logFile.close();
-		_logFile=SPIFFS.open(filename,"a+");
+		_logFile=FileSystem.open(filename,"a+");
 		if(! _logFile){
             DBG_PRINTF("resume failed\n");
             return false;
@@ -293,7 +293,7 @@ BrewLogger::BrewLogger(void){
 		char buff[36];
 		sprintf(buff,"%s/%s",LOG_PATH,filename);
 
-		_logFile=SPIFFS.open(buff,"a+");
+		_logFile=FileSystem.open(buff,"a+");
 
 		if(!_logFile){
 			DBG_PRINTF("Error open temp file\n");
@@ -741,7 +741,7 @@ BrewLogger::BrewLogger(void){
 
 #else
 		FSInfo fs_info;
-		SPIFFS.info(fs_info);
+		FileSystem.info(fs_info);
 
 		_fsspace = fs_info.totalBytes - fs_info.usedBytes;
 		if(_fsspace > fs_info.blockSize * 2){
@@ -750,7 +750,7 @@ BrewLogger::BrewLogger(void){
 			_fsspace=0;
 		}
 #endif
-		DBG_PRINTF("SPIFFS space:%d\n",_fsspace);
+		DBG_PRINTF("FileSystem space:%d\n",_fsspace);
 	}
 
 	void BrewLogger::_volatileHeader(char *buf)
@@ -976,7 +976,7 @@ BrewLogger::BrewLogger(void){
 
 	void BrewLogger::_commitData(int idx,int len)
 	{
-		//WARNNING: we are relying on the write cache of SPIFFS
+		//WARNNING: we are relying on the write cache of FileSystem
 		 _logIndex += len;
 
 		if(!_recording){
@@ -1005,7 +1005,7 @@ BrewLogger::BrewLogger(void){
 			char buff[36];
 			sprintf(buff,"%s/%s",LOG_PATH,_pFileInfo->logname);
 
-			_logFile=SPIFFS.open(buff,"a+");
+			_logFile=FileSystem.open(buff,"a+");
 			_logFile.write((const uint8_t*)buf+wlen,len-wlen);
 		}*/
 

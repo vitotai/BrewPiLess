@@ -53,7 +53,7 @@ public:
     void scan(void (*scanCompleteHandler)(int,TiltHydrometerInfo*)); // callback result.
 
     void listen(TiltColor color,TiltDataHandler onData);
-    void stop(void);
+    void stopListen(void);
     
     TiltHydrometerInfo *getTiltBy(TiltColor color);
     // callbacks

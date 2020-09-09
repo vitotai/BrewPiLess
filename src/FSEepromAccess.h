@@ -21,8 +21,14 @@
 #ifndef FSEepromAccess_H
 #define FSEepromAccess_H
 #if defined(ESP32)
+#if UseLittleFS
+#include <LittleFS.h>
+#else
 #include <SPIFFS.h>
 #endif
+#endif
+
+extern FS& FileSystem;
 
 #define File_ControlSettings "/eeprom_control_setting"
 #define File_ControlConstant "/eeprom_control_constant"
@@ -31,15 +37,15 @@
 class FSEepromAccess
 {
     static bool exists(const char* file){
-        return SPIFFS.exists(file);
+        return FileSystem.exists(file);
     }
     static void remove(const char* file){
-        if(exists(file)) SPIFFS.remove(file);
+        if(exists(file)) FileSystem.remove(file);
     }
     static bool readFromFile(const char* filename,char* target,size_t size){
         if(!exists(filename)) return false;
 
-		File file = SPIFFS.open(filename, "r");
+		File file = FileSystem.open(filename, "r");
 		if (file) {
 			file.readBytes(target, size);
 			file.close();
@@ -49,7 +55,7 @@ class FSEepromAccess
         return false;
     }
     static bool writeToFile(const char* filename,const uint8_t* source,size_t size){
-		File file = SPIFFS.open(filename, "w");
+		File file = FileSystem.open(filename, "w");
 		if (file) {
 			file.write(source, size);
 			file.close();

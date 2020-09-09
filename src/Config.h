@@ -272,6 +272,16 @@
 #define SettableMinimumCoolTime true
 //#endif
 
+#ifndef UseLittleFS
+
+#if ESP32
+#define UseLittleFS false
+#else
+#define UseLittleFS true
+#endif
+
+#endif
+
 #if ESP32
 #define FS_EEPROM true
 #endif

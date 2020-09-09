@@ -8,7 +8,11 @@
 #include <ESP8266WiFi.h>
 #elif defined(ESP32)
 #include <WiFi.h>
+#if UseLittleFS
+#include <LittleFS.h>
+#else
 #include <SPIFFS.h>
+#endif
 #include <rom/spi_flash.h>
 #endif
 
@@ -16,9 +20,10 @@
 #include "BPLSettings.h"
 #include "BrewLogger.h"
 
-BPLSettings theSettings;
 
-FS& FileSystem=SPIFFS;
+extern FS& FileSystem;
+
+BPLSettings theSettings;
 
 #define BPLSettingFileName "/bpl.cfg"
 
@@ -46,7 +51,7 @@ void BPLSettings::load()
 		 offsetof(Settings,remoteLogginInfo),offsetof(Settings,autoCapSettings),
 		 offsetof(Settings,parasiteTempControlSettings));
 
-	fs::File f = SPIFFS.open(BPLSettingFileName, "r");
+	fs::File f = FileSystem.open(BPLSettingFileName, "r");
 	if(!f){
 		setDefault();
 		return;
@@ -65,7 +70,7 @@ void BPLSettings::load()
 
 void BPLSettings::save()
 {
-	fs::File f = SPIFFS.open(BPLSettingFileName, "w");
+	fs::File f = FileSystem.open(BPLSettingFileName, "w");
     if(!f){
 		DBG_PRINTF("error open configuratoin file\n");
 		return;
@@ -218,6 +223,9 @@ String BPLSettings::jsonSystemConfiguration(void){
 #if ESP32
 	root[KeyFlashChipId]=g_rom_flashchip.device_id;
 	root[KeyFlashRealSize]=g_rom_flashchip.chip_size;
+	#if UseLittleFS
+	#error "ESP32 doesn't support LittleFS by default"
+	#endif
 	root[KeyFileSystemSize]=SPIFFS.totalBytes();
 #else
 	root[KeyFlashChipId]=ESP.getFlashChipId();

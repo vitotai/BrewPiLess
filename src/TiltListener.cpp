@@ -134,7 +134,7 @@ void TiltListener::listen(TiltColor color,TiltDataHandler onData){
     _targetColor = color;
 }
 
-void TiltListener::stop(void) {
+void TiltListener::stopListen(void) {
     _targetColor=TiltColorInvalid;
     _dataAvailableHandler=NULL;
 }

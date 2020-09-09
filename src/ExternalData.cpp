@@ -100,7 +100,7 @@ void ExternalData::setTiltInfo(uint16_t gravity, uint16_t temperature, int rssi)
 void ExternalData::reconfig(void){
 
 	#if SupportTiltHydrometer
-	if(_cfg->gravityDeviceType != GravityDeviceTilt) tiltListener.stop();
+	if(_cfg->gravityDeviceType != GravityDeviceTilt) tiltListener.stopListen();
 	#endif
 
 	if(_cfg->gravityDeviceType == GravityDeviceIspindel){	    
