@@ -375,11 +375,15 @@
 #undef EanbleParasiteTempControl
 #define EanbleParasiteTempControl flase
 #undef SupportPressureTransducer
-#define SupportPressureTransducer false
-#undef SupportMqttRemoteControl
+//#define SupportPressureTransducer false
+//#undef SupportMqttRemoteControl
 #define SupportMqttRemoteControl false
 #undef AUTO_CAP
 #define  AUTO_CAP false
+
+#undef UseLittleFS 
+#define UseLittleFS false
+
 #ifdef NO_SPIFFS
     #undef DEVELOPMENT_OTA 
     #define DEVELOPMENT_OTA true

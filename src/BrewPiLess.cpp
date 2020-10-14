@@ -92,7 +92,9 @@ extern "C" {
 #if UseLittleFS
 #include <LittleFS.h>
 #else
+#if defined(ESP32)
 #include <SPIFFS.h>
+#endif
 #endif
 
 
