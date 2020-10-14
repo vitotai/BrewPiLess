@@ -60,11 +60,12 @@ void ExternalData::sseNotify(char *buf){
 		len=sprintFloat(strtilt,_ispindelTilt,2);
 		strtilt[len]='\0';
 
-		char coeff[4][20];
+/*		char coeff[4][20];
 		for(int i=0;i<4;i++){
 			len=sprintFloat(coeff[i],_cfg->ispindelCoefficients[i],9);
 			coeff[i][len]='\0';	
 		}
+		*/
 		char strRssi[32];
 		if(_rssiValid){
 			len=sprintf(strRssi,",\"rssi\":%d",_rssi);
@@ -73,8 +74,17 @@ void ExternalData::sseNotify(char *buf){
 			strRssi[1]=' ';
 			strRssi[0]='\0';
 		} 
+		
+		#if SupportTiltHydrometer
+		char strRawTilt[8];
+		len=sprintFloat(strRawTilt,_tiltRawGravity,3);
+		strRawTilt[len]='\0';
+		#else
+		char *strRawTilt ="0";
+		#endif
+
 		const char *spname=(_ispindelName)? _ispindelName:"Unknown";
-		sprintf(buf,"G:{\"dev\":%d,\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s %s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d,\"ctemp\":%d,\"plato\":%d}",
+		sprintf(buf,"G:{\"dev\":%d,\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s %s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d,\"ctemp\":%d,\"plato\":%d,\"tiltraw\":%s}",
 					_cfg->gravityDeviceType,
 					spname, 
 					strbattery,
@@ -86,14 +96,23 @@ void ExternalData::sseNotify(char *buf){
 					_cfg->stableThreshold,
 					_cfg->numberCalPoints,
                     _cfg->ispindelCalibrationBaseTemp,
-					_cfg->usePlato);
+					_cfg->usePlato,
+					strRawTilt);
 }
 
 #if SupportTiltHydrometer
 void ExternalData::setTiltInfo(uint16_t gravity, uint16_t temperature, int rssi){
+	_tiltRawGravity = gravity;
+	float sg =(float) gravity /1000.0;
+	float csg = _tcfg->coefficients[0] 
+			 +  _tcfg->coefficients[1] * sg 
+			 +  _tcfg->coefficients[2] * sg * sg
+			 +  _tcfg->coefficients[3] * sg * sg * sg; 
+
+
 	setAuxTemperatureCelsius( ((float)temperature  -32.0)* 5.0/9.0);
 	setDeviceRssi(rssi);
-	setGravity((float) gravity /1000.0, TimeKeeper.getTimeSeconds());
+	setGravity(csg, TimeKeeper.getTimeSeconds());
 }
 #endif
 
@@ -118,6 +137,9 @@ void ExternalData::reconfig(void){
 
 void ExternalData::loadConfig(void){
     _cfg = theSettings.GravityConfig();
+#if SupportTiltHydrometer	
+	_tcfg = theSettings.tiltConfiguration();
+#endif
 	reconfig();
 }
 

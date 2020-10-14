@@ -273,7 +273,8 @@ String BPLSettings::jsonSystemConfiguration(void){
 #define KeyNumberCalPoints "npt"
 #define KeyUsePlato "plato"
 #define KeyTiltColor "color"
-
+#define KeyTiltCalibrationPoints "tcpts"
+#define KeyTiltCoefficients "tiltcoe"
  bool BPLSettings::dejsonGravityConfig(char* json)
 {
 		#if ARDUINOJSON_VERSION_MAJOR == 6
@@ -309,7 +310,25 @@ String BPLSettings::jsonSystemConfiguration(void){
         gdc->stableThreshold=root[KeyStableGravityThreshold];
 		gdc->numberCalPoints=root[KeyNumberCalPoints];
 		gdc->usePlato = root.containsKey(KeyUsePlato)? root[KeyUsePlato]:0;
-		gdc->tiltColor = root[KeyTiltColor];
+		
+
+		#if SupportTiltHydrometer
+		TiltConfiguration *tcfg = & _data.tiltConfiguration;
+		tcfg->tiltColor = root[KeyTiltColor];
+		
+		JsonArray calpts = root[KeyTiltCalibrationPoints].as<JsonArray>();
+		int i=0;
+		for(JsonVariant v : calpts) {
+			JsonArray point=v.as<JsonArray>();
+			tcfg->calibrationPoints[i].rawsg= point[0].as<int>();
+			tcfg->calibrationPoints[i].calsg= point[1].as<int>();
+			i++;
+		}
+		tcfg->numCalPoints = calpts.size();
+		JsonArray tcoe= root[KeyTiltCoefficients].as<JsonArray>();
+		for(i=0;i<4;i++) tcfg->coefficients[i] = tcoe[i];
+		#endif
+
 		// debug
 		#if SerialDebug
 		Serial.print("\nCoefficient:");
@@ -349,7 +368,20 @@ String BPLSettings::jsonGravityConfig(void){
 		root[KeyCoefficientA3]=gdc->ispindelCoefficients[3];
 		root[KeyNumberCalPoints] = gdc->numberCalPoints;
 		root[KeyUsePlato] = gdc->usePlato;
-		root[KeyTiltColor]	=	gdc->tiltColor ;
+
+		#if SupportTiltHydrometer
+		TiltConfiguration *tcfg = & _data.tiltConfiguration;
+
+		root[KeyTiltColor]	=	tcfg->tiltColor;
+		if(tcfg->numCalPoints > 0){
+			JsonArray points = root.createNestedArray(KeyTiltCalibrationPoints);
+			for(int i=0;i< tcfg->numCalPoints;i++){
+				JsonArray point= points.createNestedArray();
+				point.add(tcfg->calibrationPoints[i].rawsg);
+				point.add(tcfg->calibrationPoints[i].calsg);
+			}
+		}
+		#endif
 
 	 String ret;
 
@@ -372,7 +404,15 @@ void BPLSettings::defaultGravityConfig(void)
     gdc->lpfBeta = 0.1;
     gdc->stableThreshold=1;
 	//gdc->numberCalPoints=0;
-	
+	#if SupportTiltHydrometer
+
+	TiltConfiguration *tc = & _data.tiltConfiguration;
+
+	tc->numCalPoints = 0;
+	tc->coefficients[0] = tc->coefficients[2] =  tc->coefficients[3] = 0.0; 
+	tc->coefficients[1] =  1.0;
+
+	#endif
 }
   
 //***************************************************************

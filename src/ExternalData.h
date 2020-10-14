@@ -70,6 +70,10 @@ protected:
 	int16_t _rssi;
 	bool _rssiValid;
 
+	#if SupportTiltHydrometer
+	uint16_t _tiltRawGravity;
+	TiltConfiguration * _tcfg;
+	#endif
 
 	GravityDeviceConfiguration *_cfg;
 

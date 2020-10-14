@@ -25,7 +25,13 @@
 #define ControlHtmFile EVALUATOR(WebPageLanguage,_control_htm.h)
 #define SetupHtmFile EVALUATOR(WebPageLanguage,_setup_htm.h)
 #define LogHtmFile EVALUATOR(WebPageLanguage,_log_htm.h)
+
+#if SupportTiltHydrometer
+#define GravityHtmFile EVALUATOR(WebPageLanguage,_gdc_e32_htm.h)
+#else
 #define GravityHtmFile EVALUATOR(WebPageLanguage,_gdc_htm.h)
+#endif
+
 #define ConfigHtmFile EVALUATOR(WebPageLanguage,_config_htm.h)
 #define PressureHtmFile EVALUATOR(WebPageLanguage,_pressure_htm.h)
 

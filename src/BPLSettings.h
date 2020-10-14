@@ -53,6 +53,22 @@ typedef struct _GravityDeviceConfiguration{
     uint8_t  _padding[5];
 }GravityDeviceConfiguration;
 
+
+#if SupportTiltHydrometer
+typedef  struct _TiltCalibrationPoint{
+        uint16_t rawsg;
+        uint16_t calsg;
+} TiltCalibrationPoint;
+
+typedef struct _TiltConfiguratoin{
+    float coefficients[4];
+    TiltCalibrationPoint  calibrationPoints[6];
+    uint8_t  numCalPoints;
+    uint8_t  tiltColor;
+    uint8_t  _padding[10];
+} TiltConfiguration;
+
+#endif
 //*****************************************************
 // Beer Profile
 
@@ -266,6 +282,9 @@ struct Settings{
 #ifdef SaveWiFiConfiguration
     WiFiConfiguration wifiConfiguration;
 #endif
+#if SupportTiltHydrometer
+    TiltConfiguration tiltConfiguration;
+#endif
 };
 
 
@@ -331,6 +350,10 @@ public:
         if(pass) strcpy(_data.wifiConfiguration.pass,pass);
         else _data.wifiConfiguration.pass[0]='\0';
     }
+#endif
+
+#if SupportTiltHydrometer
+    TiltConfiguration* tiltConfiguration(void){ return & _data.tiltConfiguration;}
 #endif
 
 protected:
