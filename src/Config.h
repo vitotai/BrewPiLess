@@ -418,7 +418,9 @@
 
 #if BREWPI_LCD
 // LCD configurations:
-#if OLED_LCD
+#if TTGO
+#define BREWPI_TTGO 1
+#elif OLED_LCD
 #define BREWPI_OLED128x64_LCD 1
 #else
 #define BREWPI_IIC_LCD 1
