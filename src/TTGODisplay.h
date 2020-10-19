@@ -7,10 +7,13 @@
 #include <Print.h>
 #include "Ticks.h"
 #include <Wire.h>
-#include <TFT_eSPI.h>
-#include <SPI.h>
+
+
 
 #if BREWPI_TTGO
+#include "FS.h"
+#include <SPI.h>
+#include <TFT_eSPI.h>
 
 class TTGODisplay : public Print {
 public:

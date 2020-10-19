@@ -38,32 +38,24 @@ void TTGODisplay::init(){
     _display.init();
     _display.setRotation(1);
     _backlightTime = 0;
-    _fontHeight=12;
-    _fontWidth=6;
+    _fontHeight=18;
+    _fontWidth=9;
 }
 void TTGODisplay::begin(uint8_t cols, uint8_t lines){
     _display.begin();
-    _display.fillScreen(TFT_BLACK);
-    _display.setTextColor(TFT_WHITE, TFT_BLACK);
-
+    
   	_cols = cols;
   	_rows = lines;
-    _currline = 0;
-    _currpos = 0;
+    clear();
 }
 
 /********** high level commands, for the user! */
 void TTGODisplay::clear(){
-	_display.begin();
+	_display.fillScreen(TFT_BLACK);
+    _display.setTextColor(TFT_WHITE, TFT_BLACK);
 
-    for(uint8_t i = 0; i < _rows; i++){
-        for(uint8_t j = 0; j < _cols; j++){
-            content[i][j]=' '; // initialize on all spaces
-        }
-        content[i][_cols]='\0'; // NULL terminate string
-    }
-
-	delayMicroseconds(2000);  // this command takes a long time!
+  	_currline = 0;
+    _currpos = 0;
 }
 
 void TTGODisplay::home(){
@@ -97,19 +89,15 @@ inline void TTGODisplay::internal_write(uint8_t value) {
     if (!_bufferOnly) {
     	int16_t x= xpos();
     	int16_t y= ypos();
-    	_display.setColor(BLACK);
-    	_display.fillRect(x,y,_fontWidth,_fontHeight);
-    	_display.setColor(WHITE);
 
 	    String chstr=(value == 0b11011111)? String("°"):String((char)value);
-       _display.drawString(x,y,chstr);
+       _display.drawString(chstr, x, y);
     }
     _currpos++;
 }
 
 inline size_t TTGODisplay::write(uint8_t value) {
 	internal_write(value);
-    _display.display();
     return 0;
 }
 
@@ -122,9 +110,9 @@ void TTGODisplay::updateBacklight(void) {
     // True = OFF, False = ON
     bool backLightOutput = (backlightAutoOffPeriod !=0) && (BREWPI_SIMULATE || ticks.timeSince(_backlightTime) > backlightAutoOffPeriod);
     if(backLightOutput) {
-        noBacklight();
+        ;
     } else {
-        backlight();
+        ;
     }
 }
 
@@ -142,7 +130,6 @@ void TTGODisplay::printSpacesToRestOfLine(void){
     while(_currpos < _cols){
         internal_write(' ');
     }
-    _display.display();
 }
 
 void TTGODisplay::print(char * str){
@@ -164,12 +151,10 @@ void TTGODisplay::print(char * str){
 
     if (!_bufferOnly) {
 
-    	_display.setColor(BLACK);
-    	_display.fillRect(x,y, width ,_fontHeight);
-		_display.setColor(WHITE);
+    	_display.fillRect(x,y, width ,_fontHeight, TFT_BLACK);
 	    String strstr=String(str);
-        _display.drawString(x, y,strstr);
-        _display.display();
+        _display.setTextColor(TFT_WHITE);
+        _display.drawString(strstr, x, y);
     }
 }
 
