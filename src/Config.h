@@ -420,8 +420,6 @@
 // LCD configurations:
 #if TFT
 #define BREWPI_TFT 1
-#elif TTGO
-#define BREWPI_TTGO 1
 #elif OLED_LCD
 #define BREWPI_OLED128x64_LCD 1
 #else
