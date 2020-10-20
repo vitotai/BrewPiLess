@@ -66,10 +66,10 @@ void TFTDisplay::init(void){
     _display->setRotation(1);
 	_background = TFT_DARKGREY;
     _display->setTextColor(TFT_GREEN, _background);
-    _font = 1;
+    _font = 2;
     _display->setTextFont(_font);
     _textSize = 2;
-    _display->setTextSize(2);
+    _display->setTextSize(_textSize);
 	_fontHeight = _display->fontHeight();
     _display->setTextWrap(true);
 	_display->fillScreen(_background);
@@ -115,21 +115,23 @@ uint8_t TFTDisplay::getDisplayFlags(){
 
 void TFTDisplay::printBeerTemp(void){
 	uint8_t xpos = _display->drawString(STR_Beer_, 0, _fontHeight);
-	xpos += printTemperatureAt(xpos, 1, tempControl.getBeerTemp());
-	xpos += printTemperatureAt(xpos, 1, tempControl.getBeerSetting());
+	xpos += _printTemperatureAt(xpos, 1, tempControl.getBeerTemp());
+	xpos += _printTemperatureAt(xpos, 1, tempControl.getBeerSetting());
+	_display->fillRect(xpos, 1 * _fontHeight, 300, _fontHeight, _background);
 }
 
 
 void TFTDisplay::printFridgeTemp(void){
 	int16_t xpos = _display->drawString((flags & LCD_FLAG_DISPLAY_ROOM) ?  PSTR("Room  ") : STR_Fridge_,  0, 2 * _fontHeight);
-	xpos += printTemperatureAt(xpos,2, flags & LCD_FLAG_DISPLAY_ROOM ?
+	xpos += _printTemperatureAt(xpos,2, flags & LCD_FLAG_DISPLAY_ROOM ?
 		tempControl.ambientSensor->read() :
 		tempControl.getFridgeTemp());
 	
 	temperature fridgeSet = tempControl.getFridgeSetting();
 	if(flags & LCD_FLAG_DISPLAY_ROOM) // beer setting is not active
 		fridgeSet = INVALID_TEMP;
-	printTemperatureAt(xpos, 2, fridgeSet);
+	xpos += _printTemperatureAt(xpos, 2, fridgeSet);
+	_display->fillRect(xpos, 2 * _fontHeight, 300, _fontHeight, _background);
 }
 
 // TODO: Not implemented
@@ -150,7 +152,11 @@ void TFTDisplay::setAutoOffPeriod(uint32_t period){
 	// TODO
 }
 
-uint8_t TFTDisplay::printTemperatureAt(uint8_t x, uint8_t line, temperature temp){
+void TFTDisplay::printTemperatureAt(uint8_t x, uint8_t line, temperature temp){
+	printAllTemperatures();
+}
+
+uint8_t TFTDisplay::_printTemperatureAt(uint8_t x, uint8_t line, temperature temp){
 
 	if (temp==INVALID_TEMP) {
 		return _display->drawString(PSTR(" --.-"), x, line*_fontHeight);
@@ -158,7 +164,7 @@ uint8_t TFTDisplay::printTemperatureAt(uint8_t x, uint8_t line, temperature temp
 	char tempString[9];
 	tempToString(tempString, temp, 1 , 9);
 	uint8_t xdiff = _display->drawString(tempString, x, line * _fontHeight);
-	xdiff += _display->drawChar(0x00B0, x+xdiff, line * _fontHeight);
+	xdiff += _display->drawChar(176, x+xdiff, line * _fontHeight);
 	xdiff += _display->drawChar(tempControl.cc.tempFormat, x+xdiff, line*_fontHeight);
 	return xdiff;
 }

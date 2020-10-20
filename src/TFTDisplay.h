@@ -65,8 +65,8 @@ class TFTDisplay DISPLAY_SUPERCLASS
 	// print the current state on the last line of the LCD
 	DISPLAY_METHOD void printState(void);
 
-	DISPLAY_METHOD uint8_t printTemperatureAt(uint8_t xpos, uint8_t line, temperature temp);
-
+	DISPLAY_METHOD void printTemperatureAt(uint8_t xpos, uint8_t line, temperature temp);
+	DISPLAY_METHOD uint8_t _printTemperatureAt(uint8_t xpos, uint8_t line, temperature temp);
 	
 	DISPLAY_METHOD void printAt_P(uint8_t x, uint8_t y, const char* text);
 
