@@ -39,7 +39,7 @@
 #if defined(BREWPI_IIC_LCD)
 typedef IIClcd	LcdDriver;
 #else
-if BREWPI_EMULATE || !BREWPI_LCD || !ARDUINO
+#if BREWPI_EMULATE || !BREWPI_LCD || !ARDUINO
 	typedef NullLcdDriver LcdDriver;
 #elif !BREWPI_SHIFT_LCD
 #include "OLEDFourBit.h"
