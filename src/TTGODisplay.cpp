@@ -11,17 +11,6 @@
 
 #include "font_cousine_10.h"
 
-#define TOP_MARGIN (2)
-#define LEFT_MARGIN 4
-
-#define STATUS_TOP  52
-#define STATUS_LEFT 4
-
-#define STATUS_BAR_TOP  52
-#define STATUS_BAR_LEFT 0
-#define STATUS_BAR_HEIGHT 12
-#define STATUS_BAR_WIDTH  128
-
 #if SerialDebug == true
 #define DebugPort Serial
 #define DBG_PRINTF(...) DebugPort.printf(__VA_ARGS__)
@@ -37,28 +26,38 @@ TTGODisplay::TTGODisplay()
 void TTGODisplay::init(){
     _display.init();
     _display.setRotation(1);
+    _display.setTextColor(TFT_WHITE, TFT_BLACK);
+    _font = 1;
+    _display.setTextFont(_font);
+    _textSize = 2;
+    _display.setTextSize(2);
+    _display.setTextWrap(true);
     _backlightTime = 0;
-    _fontHeight=18;
-    _fontWidth=9;
+    _fontHeight=_display.fontHeight(_font);
+    
 }
 void TTGODisplay::begin(uint8_t cols, uint8_t lines){
-    _display.begin();
-    
-  	_cols = cols;
+    _cols = cols;
   	_rows = lines;
     clear();
+    for(uint8_t r = 0; r < _rows; r++){
+        for(uint8_t c = 0; c < _cols; c++)
+            _content[r][c] = ' ';
+    }
 }
 
 /********** high level commands, for the user! */
 void TTGODisplay::clear(){
 	_display.fillScreen(TFT_BLACK);
-    _display.setTextColor(TFT_WHITE, TFT_BLACK);
+    
 
   	_currline = 0;
     _currpos = 0;
 }
 
 void TTGODisplay::home(){
+    _currline = 0;
+	_currpos = 0;
 }
 
 void TTGODisplay::setCursor(uint8_t col, uint8_t row){
@@ -73,26 +72,18 @@ void TTGODisplay::setCursor(uint8_t col, uint8_t row){
 
 /*********** mid level commands, for sending data/cmds */
 
-inline int16_t TTGODisplay::xpos(void)
-{
-	return LEFT_MARGIN + _fontWidth * _currpos;
-}
-
-inline int16_t  TTGODisplay::ypos(void)
-{
-	return TOP_MARGIN + _fontHeight * _currline;
+/**
+ * Resets screen and fills with "content" private variable
+ **/
+void TTGODisplay::printContent(){
+    
+    for(int r = 0; r < _rows; r++){
+        _display.drawString(content[r],0,r*_fontHeight);
+    }
 }
 
 inline void TTGODisplay::internal_write(uint8_t value) {
     content[_currline][_currpos] = value;
-
-    if (!_bufferOnly) {
-    	int16_t x= xpos();
-    	int16_t y= ypos();
-
-	    String chstr=(value == 0b11011111)? String("°"):String((char)value);
-       _display.drawString(chstr, x, y);
-    }
     _currpos++;
 }
 
@@ -130,31 +121,23 @@ void TTGODisplay::printSpacesToRestOfLine(void){
     while(_currpos < _cols){
         internal_write(' ');
     }
+    printContent();
 }
 
 void TTGODisplay::print(char * str){
-
-
     char *p=str;
-    int16_t x=xpos();
-    int16_t y=ypos();
-    int16_t width=0;
-
+ 
  //   DBG_PRINTF("%d,%d, %s\n",_currline,_currpos,str);
 
     while(*p !='\0' && _currpos < _cols){
 	    content[_currline][_currpos] = *p;
     	_currpos++;
     	p++;
-    	width += _fontWidth;
     }
 
     if (!_bufferOnly) {
 
-    	_display.fillRect(x,y, width ,_fontHeight, TFT_BLACK);
-	    String strstr=String(str);
-        _display.setTextColor(TFT_WHITE);
-        _display.drawString(strstr, x, y);
+    	printContent();
     }
 }
 
@@ -169,13 +152,8 @@ void TTGODisplay::print_P(const char * str){ // print a string stored in PROGMEM
 #ifdef STATUS_LINE
 void TTGODisplay::printStatus(char* str)
 {
-	//Serial.print("printStatus:");
-	//Serial.println(str);
-	_display.setColor(WHITE);
-    _display.fillRect(STATUS_BAR_LEFT,STATUS_BAR_TOP,STATUS_BAR_WIDTH,STATUS_BAR_HEIGHT);
-
-    _display.setColor(BLACK);
-    _display.drawString(STATUS_LEFT,STATUS_TOP,str);
+    strcpy(_content[0], str);
+    _printContent();
 }
 #endif
 

@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2012-2013 BrewPi/Elco Jacobs.
  *
@@ -17,33 +18,20 @@
  * along with BrewPi.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "Brewpi.h"
 #include "BrewpiStrings.h"
 #include <limits.h>
 #include <stdint.h>
 
-#ifndef BREWPI_TFT
+#ifdef BREWPI_TFT
 
 #include "Display.h"
-#include "DisplayLcd.h"
 #include "Menu.h"
 #include "TempControl.h"
 #include "TemperatureFormats.h"
 #include "Pins.h"
+#include "TFTDisplay.h"
 
-uint8_t LcdDisplay::stateOnDisplay;
-uint8_t LcdDisplay::flags;
-
-#if BREWPI_OLED128x64_LCD
-LcdDriver LcdDisplay::lcd(OLED128x64_LCD_ADDRESS,PIN_SDA,PIN_SCL);
-#else // #if BREWPI_OLED128x64_LCD
-#if BREWPI_IIC_LCD
-LcdDriver LcdDisplay::lcd(IIC_LCD_ADDRESS,20,4);
-#else
-LcdDriver LcdDisplay::lcd;
-#endif
-#endif // #if BREWPI_OLED128x64_LCD
 // Constant strings used multiple times
 static const char STR_Beer_[] PROGMEM = "Beer ";
 static const char STR_Fridge_[] PROGMEM = "Fridge ";
@@ -55,149 +43,179 @@ static const char STR_Wait_to_[] PROGMEM = "Wait to ";
 static const char STR__time_left[] PROGMEM = " time left";
 static const char STR_empty_string[] PROGMEM = "";
 
-void LcdDisplay::init(void){
-#ifdef BREWPI_IIC_LCD
-//	Wire.begin(PIN_SDA,PIN_SCL);
-#endif
-	stateOnDisplay = 0xFF; // set to unknown state to force update
-	flags = LCD_FLAG_ALTERNATE_ROOM;
-	lcd.init(); // initialize LCD
-	lcd.begin(20, 4);
-	lcd.clear();
+TFT_eSPI * TFTDisplay::_display;
+uint8_t TFTDisplay::_font;
+uint8_t TFTDisplay::_textSize;
+uint8_t TFTDisplay::_fontHeight;
+int16_t TFTDisplay::_background;
+uint8_t TFTDisplay::stateOnDisplay;
+uint8_t TFTDisplay::flags;
+
+TFTDisplay::TFTDisplay(void){
+	;
+}
+
+
+TFTDisplay::~TFTDisplay(void){
+	;
+}
+
+void TFTDisplay::init(void){
+	_display = new TFT_eSPI();
+	_display->init();
+    _display->setRotation(1);
+	_background = TFT_DARKGREY;
+    _display->setTextColor(TFT_GREEN, _background);
+    _font = 1;
+    _display->setTextFont(_font);
+    _textSize = 2;
+    _display->setTextSize(2);
+	_fontHeight = _display->fontHeight();
+    _display->setTextWrap(true);
+	_display->fillScreen(_background);
 }
 
 #ifndef UINT16_MAX
 #define UINT16_MAX 65535
 #endif
 
-//print all temperatures on the LCD
-void LcdDisplay::printAllTemperatures(void){
+void TFTDisplay::printAt_P(uint8_t x, uint8_t y, const char* text){
+	_display->drawString(text, x, y * _fontHeight);
+	printMode();
+	printState();
+}
+
+
+//print all temperatures on the screen
+void TFTDisplay::printAllTemperatures(void){
 	// alternate between beer and room temp
 	if (flags & LCD_FLAG_ALTERNATE_ROOM) {
 		bool displayRoom = ((ticks.seconds()&0x08)==0) && !BREWPI_SIMULATE && tempControl.ambientSensor->isConnected();
 		if (displayRoom ^ ((flags & LCD_FLAG_DISPLAY_ROOM)!=0)) {	// transition
 			flags = displayRoom ? flags | LCD_FLAG_DISPLAY_ROOM : flags & ~LCD_FLAG_DISPLAY_ROOM;
-			printStationaryText();
+			//;
 		}
 	}
 
 	printBeerTemp();
-	printBeerSet();
 	printFridgeTemp();
-	printFridgeSet();
+	printState();
+	printMode();
 }
 
-void LcdDisplay::setDisplayFlags(uint8_t newFlags) {
+void TFTDisplay::setDisplayFlags(uint8_t newFlags) {
 	flags = newFlags;
 	printStationaryText();
 	printAllTemperatures();
 }
 
+uint8_t TFTDisplay::getDisplayFlags(){ 
+	return flags; 
+};
 
-
-void LcdDisplay::printBeerTemp(void){
-	printTemperatureAt(6, 1, tempControl.getBeerTemp());
+void TFTDisplay::printBeerTemp(void){
+	uint8_t xpos = _display->drawString(STR_Beer_, 0, _fontHeight);
+	xpos += printTemperatureAt(xpos, 1, tempControl.getBeerTemp());
+	xpos += printTemperatureAt(xpos, 1, tempControl.getBeerSetting());
 }
 
-void LcdDisplay::printBeerSet(void){
-	temperature beerSet = tempControl.getBeerSetting();
-	printTemperatureAt(12, 1, beerSet);
-}
 
-void LcdDisplay::printFridgeTemp(void){
-	printTemperatureAt(6,2, flags & LCD_FLAG_DISPLAY_ROOM ?
+void TFTDisplay::printFridgeTemp(void){
+	int16_t xpos = _display->drawString((flags & LCD_FLAG_DISPLAY_ROOM) ?  PSTR("Room  ") : STR_Fridge_,  0, 2 * _fontHeight);
+	xpos += printTemperatureAt(xpos,2, flags & LCD_FLAG_DISPLAY_ROOM ?
 		tempControl.ambientSensor->read() :
 		tempControl.getFridgeTemp());
-}
-
-void LcdDisplay::printFridgeSet(void){
+	
 	temperature fridgeSet = tempControl.getFridgeSetting();
 	if(flags & LCD_FLAG_DISPLAY_ROOM) // beer setting is not active
 		fridgeSet = INVALID_TEMP;
-	printTemperatureAt(12, 2, fridgeSet);
+	printTemperatureAt(xpos, 2, fridgeSet);
 }
 
-void LcdDisplay::printTemperatureAt(uint8_t x, uint8_t y, temperature temp){
-	lcd.setCursor(x,y);
-	printTemperature(temp);
+// TODO: Not implemented
+void TFTDisplay::getLine(uint8_t lineNumber, char * buffer){
+    const char* src = PSTR("Not implemented");
+    for(uint8_t i = 0; i < strlen(src);i++){
+        char c = src[i];
+        buffer[i] = (c == 0b11011111) ? 0xB0 : c;
+    }
+    buffer[strlen(src)] = '\0'; // NULL terminate string
 }
 
+void TFTDisplay::updateBacklight(void) {
+    // TODO?
+}
 
-void LcdDisplay::printTemperature(temperature temp){
+void TFTDisplay::setAutoOffPeriod(uint32_t period){
+	// TODO
+}
+
+uint8_t TFTDisplay::printTemperatureAt(uint8_t x, uint8_t line, temperature temp){
+
 	if (temp==INVALID_TEMP) {
-		lcd.print_P(PSTR(" --.-"));
-		return;
+		return _display->drawString(PSTR(" --.-"), x, line*_fontHeight);
 	}
 	char tempString[9];
 	tempToString(tempString, temp, 1 , 9);
-	int8_t spacesToWrite = 5 - (int8_t) strlen(tempString);
-	for(int8_t i = 0; i < spacesToWrite ;i++){
-		lcd.write(' ');
-	}
-	lcd.print(tempString);
+	uint8_t xdiff = _display->drawString(tempString, x, line * _fontHeight);
+	xdiff += _display->drawChar(0x00B0, x+xdiff, line * _fontHeight);
+	xdiff += _display->drawChar(tempControl.cc.tempFormat, x+xdiff, line*_fontHeight);
+	return xdiff;
 }
 
-//print the stationary text on the lcd.
-void LcdDisplay::printStationaryText(void){
-	printAt_P(0, 0, PSTR("Mode"));
-	printAt_P(0, 1, STR_Beer_);
-	printAt_P(0, 2, (flags & LCD_FLAG_DISPLAY_ROOM) ?  PSTR("Room  ") : STR_Fridge_);
-	printDegreeUnit(18, 1);
-	printDegreeUnit(18, 2);
+void TFTDisplay::printStationaryText(void){
+	;
 }
-
+/**
 //print degree sign + temp unit
-void LcdDisplay::printDegreeUnit(uint8_t x, uint8_t y){
-	lcd.setCursor(x,y);
-	lcd.write(0b11011111);
-	lcd.write(tempControl.cc.tempFormat);
+uint8_t TFTDisplay::printDegreeUnit(uint8_t x, uint8_t y){
+	uint8_t x1 = _display->drawChar(0b11011111, x, y*_fontHeight);
+	return x1 + _display->drawChar(tempControl.cc.tempFormat, x+x1, y*_fontHeight);
 }
-
-void LcdDisplay::printAt_P(uint8_t x, uint8_t y, const char* text){
-	lcd.setCursor(x, y);
-	lcd.print_P(text);
-}
-
-
-void LcdDisplay::printAt(uint8_t x, uint8_t y, char* text){
-	lcd.setCursor(x, y);
-	lcd.print(text);
-}
+**/
 
 // print mode on the right location on the first line, after "Mode   "
-void LcdDisplay::printMode(void){
-	lcd.setCursor(7,0);
+void TFTDisplay::printMode(void){
+	uint8_t xpos = _display->drawString("Mode ", 0, 0);
 	// Factoring prints out of switch has negative effect on code size in this function
 	switch(tempControl.getMode()){
 		case MODE_FRIDGE_CONSTANT:
-			lcd.print_P(STR_Fridge_);
-			lcd.print_P(STR_Const_);
+			xpos += _display->drawString(STR_Fridge_, xpos, 0);
+			xpos += _display->drawString(STR_Const_, xpos, 0);
 			break;
 		case MODE_BEER_CONSTANT:
-			lcd.print_P(STR_Beer_);
-			lcd.print_P(STR_Const_);
+			xpos += _display->drawString(STR_Beer_, xpos, 0);
+			xpos += _display->drawString(STR_Const_, xpos, 0);
 			break;
 		case MODE_BEER_PROFILE:
-			lcd.print_P(STR_Beer_);
-			lcd.print_P(PSTR("Profile"));
+			xpos += _display->drawString(STR_Beer_, xpos, 0);
+			xpos += _display->drawString(PSTR("Profile"), xpos, 0);
 			break;
 		case MODE_OFF:
-			lcd.print_P(PSTR("Off"));
+			xpos += _display->drawString(PSTR("Off"), xpos, 0);
 			break;
 		case MODE_TEST:
-			lcd.print_P(PSTR("** Testing **"));
+			xpos += _display->drawString(PSTR("** Testing **"), xpos, 0);
 			break;
 		default:
-			lcd.print_P(PSTR("Invalid mode"));
+			xpos += _display->drawString(PSTR("Invalid mode"), xpos, 0);
 			break;
 	}
-	lcd.printSpacesToRestOfLine();
+	_display->fillRect(xpos, 0, 200, _fontHeight, _background);
 }
 
+
+#ifdef EARLY_DISPLAY
+void TFTDisplay::clear(void){
+	_display->fillScreen(_background);
+}
+#endif
+
 // print the current state on the last line of the lcd
-void LcdDisplay::printState(void){
+void TFTDisplay::printState(void){
 	uint16_t time = UINT16_MAX; // init to max
 	uint8_t state = tempControl.getDisplayState();
+	uint8_t xpos = 0;
 	if(state != stateOnDisplay){ //only print static text when state has changed
 		stateOnDisplay = state;
 		// Reprint state and clear rest of the line
@@ -245,9 +263,9 @@ void LcdDisplay::printState(void){
 				part1 = PSTR("Unknown status!");
 				break;
 		}
-		printAt_P(0, 3, part1);
-		lcd.print_P(part2);
-		lcd.printSpacesToRestOfLine();
+		xpos += _display->drawString(part1, xpos, 3*_fontHeight);
+		xpos += _display->drawString(part2, xpos, 3*_fontHeight);
+		
 	}
 	uint16_t sinceIdleTime = tempControl.timeSinceIdle();
 	if(state==IDLE){
@@ -285,11 +303,11 @@ void LcdDisplay::printState(void){
 			printString = &timeString[2];
 			stringLength = stringLength-2;
 		}
-		printAt(20-stringLength, 3, printString);
+		xpos += _display->drawString(printString, xpos, 3 * _fontHeight);
 #else
-		int stringLength = sprintf_P(timeString, STR_FMT_U, (unsigned int)time);
-		printAt(20-stringLength, 3, timeString);
+		xpos += _display->drawString(timeString, xpos, 3 * _fontHeight);
 #endif
+//_display->fillRect(xpos, 3*_fontHeight, 100, _fontHeight, _background);
 	}
 }
-#endif //!defined BREWPI_TFT
+#endif

@@ -25,26 +25,6 @@ public:
   void clear();
   void home();
 
-//  void noDisplay();
- // void display();
-//  void noBlink();
-//  void blink();
-//  void noCursor();
-//  void cursor();
-//  void scrollDisplayLeft();
-//  void scrollDisplayRight();
-  // void printLeft();
-  // void printRight();
-//  void leftToRight();
-//  void rightToLeft();
-  // void shiftIncrement();
-  // void shiftDecrement();
- // void noBacklight();
-//  void backlight();
-//  void autoscroll();
-//  void noAutoscroll();
-
-//  void createChar(uint8_t, uint8_t[]);
   void setCursor(uint8_t, uint8_t);
   void print(char* str);
 
@@ -105,8 +85,10 @@ private:
   uint8_t _cols;
   uint8_t _rows;
 
+  uint8_t _textSize;
   uint8_t _fontHeight;
-  uint8_t _fontWidth;
+  uint8_t _font;
+  
 
   uint8_t _backlightval;
   uint16_t _backlightTime;
@@ -118,6 +100,8 @@ private:
 
   inline int16_t xpos(void);
   inline int16_t ypos(void);
+
+  void printContent(void);
 };
 #endif
 #endif

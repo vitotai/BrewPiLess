@@ -26,9 +26,12 @@
  */
 
 #include "DisplayBase.h"
+#if BREWPI_TFT
+#include "TFTDisplay.h"
+typedef TFTDisplay DisplayType;
+#else 
 #include "DisplayLcd.h"
-
 typedef LcdDisplay DisplayType;
-
+#endif
 
 extern DisplayType DISPLAY_REF display;
