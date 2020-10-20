@@ -38,13 +38,15 @@
 #else // BREWPI_OLED128x64_LCD
 #if defined(BREWPI_IIC_LCD)
 typedef IIClcd	LcdDriver;
-#elif BREWPI_EMULATE || !BREWPI_LCD || !ARDUINO
+#else
+if BREWPI_EMULATE || !BREWPI_LCD || !ARDUINO
 	typedef NullLcdDriver LcdDriver;
 #elif !BREWPI_SHIFT_LCD
 #include "OLEDFourBit.h"
 typedef OLEDFourBit LcdDriver;
 #else
 	typedef SpiLcd		LcdDriver;
+#endif
 #endif
 #endif //BREWPI_OLED128x64_LCD
 
