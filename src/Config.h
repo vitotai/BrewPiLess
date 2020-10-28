@@ -301,6 +301,15 @@
 #define PIN_SDA 21
 #define PIN_SCL 22
 
+#ifdef TTGO //FOr the lilygo TTGO T-display module
+#define oneWirePin    17
+
+#define actuatorPin1  25
+#define actuatorPin2  26
+#define actuatorPin3  27
+#define actuatorPin4  13
+#define actuatorPin5  12
+#else //#ifdef TTGO
 
 #define oneWirePin    23
 
@@ -309,6 +318,8 @@
 #define actuatorPin3  19
 #define actuatorPin4  27
 #define actuatorPin5  26
+
+#endif
 
 #define BuzzPin       18
 
@@ -319,6 +330,8 @@
 
 // Only ADC1 (pin 32~39) is allowed 
 #define PressureAdcPin  36
+
+
 
 #else // #ifdef ESP32
 #define NODEMCU_PIN_A0 17	// Analog
