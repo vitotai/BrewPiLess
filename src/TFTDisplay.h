@@ -78,6 +78,7 @@ class TFTDisplay DISPLAY_SUPERCLASS
 
 	DISPLAY_METHOD void updateBacklight(void);
 
+	DISPLAY_METHOD uint8_t drawString_P(const char *, uint8_t, uint8_t);
 	
 #ifdef EARLY_DISPLAY
 	DISPLAY_METHOD void clear() ;
@@ -97,5 +98,7 @@ class TFTDisplay DISPLAY_SUPERCLASS
 	DISPLAY_FIELD int16_t _background;
 	DISPLAY_FIELD uint8_t stateOnDisplay;
 	DISPLAY_FIELD uint8_t flags;
+	DISPLAY_FIELD uint8_t _cols;
+	DISPLAY_FIELD uint8_t _rows;
 
 };

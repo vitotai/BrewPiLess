@@ -1,21 +1,21 @@
 
 /*
- * Copyright 2012-2013 BrewPi/Elco Jacobs.
+ * Copyright Dag Hovland
  *
- * This file is part of BrewPi.
+ * This file is part of BrewPiLess
  *
- * BrewPi is free software: you can redistribute it and/or modify
+ * BrewPiLess is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later v7ersion.
  *
- * BrewPi is distributed in the hope that it will be useful,
+ * BrewPiLess is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with BrewPi.  If not, see <http://www.gnu.org/licenses/>.
+ * along with BrewPiLess.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "Brewpi.h"
@@ -43,6 +43,9 @@ static const char STR_Wait_to_[] PROGMEM = "Wait to ";
 static const char STR__time_left[] PROGMEM = " time left";
 static const char STR_empty_string[] PROGMEM = "";
 
+static char content[4][21]; // always keep a copy of the display content in this variable
+
+
 TFT_eSPI * TFTDisplay::_display;
 uint8_t TFTDisplay::_font;
 uint8_t TFTDisplay::_textSize;
@@ -50,6 +53,8 @@ uint8_t TFTDisplay::_fontHeight;
 int16_t TFTDisplay::_background;
 uint8_t TFTDisplay::stateOnDisplay;
 uint8_t TFTDisplay::flags;
+uint8_t TFTDisplay::_rows;
+uint8_t TFTDisplay::_cols;
 
 TFTDisplay::TFTDisplay(void){
 	;
@@ -73,6 +78,8 @@ void TFTDisplay::init(void){
 	_fontHeight = _display->fontHeight();
     _display->setTextWrap(true);
 	_display->fillScreen(_background);
+	_cols = 30;
+	_rows = 4;
 }
 
 #ifndef UINT16_MAX
@@ -80,7 +87,7 @@ void TFTDisplay::init(void){
 #endif
 
 void TFTDisplay::printAt_P(uint8_t x, uint8_t y, const char* text){
-	_display->drawString(text, x, y * _fontHeight);
+	drawString_P(text, x, y * _fontHeight);
 	printMode();
 	printState();
 }
@@ -114,7 +121,7 @@ uint8_t TFTDisplay::getDisplayFlags(){
 };
 
 void TFTDisplay::printBeerTemp(void){
-	uint8_t xpos = _display->drawString(STR_Beer_, 0, _fontHeight);
+	uint8_t xpos = drawString_P(STR_Beer_, 0, _fontHeight);
 	xpos += _printTemperatureAt(xpos, 1, tempControl.getBeerTemp());
 	xpos += _printTemperatureAt(xpos, 1, tempControl.getBeerSetting());
 	_display->fillRect(xpos, 1 * _fontHeight, 300, _fontHeight, _background);
@@ -122,7 +129,7 @@ void TFTDisplay::printBeerTemp(void){
 
 
 void TFTDisplay::printFridgeTemp(void){
-	int16_t xpos = _display->drawString((flags & LCD_FLAG_DISPLAY_ROOM) ?  PSTR("Room  ") : STR_Fridge_,  0, 2 * _fontHeight);
+	int16_t xpos = drawString_P((flags & LCD_FLAG_DISPLAY_ROOM) ?  PSTR("Room  ") : STR_Fridge_,  0, 2 * _fontHeight);
 	xpos += _printTemperatureAt(xpos,2, flags & LCD_FLAG_DISPLAY_ROOM ?
 		tempControl.ambientSensor->read() :
 		tempControl.getFridgeTemp());
@@ -134,9 +141,9 @@ void TFTDisplay::printFridgeTemp(void){
 	_display->fillRect(xpos, 2 * _fontHeight, 300, _fontHeight, _background);
 }
 
-// TODO: Not implemented
+
 void TFTDisplay::getLine(uint8_t lineNumber, char * buffer){
-    const char* src = PSTR("Not implemented");
+    const char* src = content[lineNumber];
     for(uint8_t i = 0; i < strlen(src);i++){
         char c = src[i];
         buffer[i] = (c == 0b11011111) ? 0xB0 : c;
@@ -159,7 +166,7 @@ void TFTDisplay::printTemperatureAt(uint8_t x, uint8_t line, temperature temp){
 uint8_t TFTDisplay::_printTemperatureAt(uint8_t x, uint8_t line, temperature temp){
 
 	if (temp==INVALID_TEMP) {
-		return _display->drawString(PSTR(" --.-"), x, line*_fontHeight);
+		return drawString_P(PSTR(" --.-"), x, line*_fontHeight);
 	}
 	char tempString[9];
 	tempToString(tempString, temp, 1 , 9);
@@ -180,31 +187,49 @@ uint8_t TFTDisplay::printDegreeUnit(uint8_t x, uint8_t y){
 }
 **/
 
+/**
+ * Draw a string from progmem (flash)
+ **/
+uint8_t TFTDisplay::drawString_P(const char * str, uint8_t xpos, uint8_t ypos){
+	char buf[_cols];
+	assert(strlen_P(str) < _cols);
+	strcpy_P(buf, (char *)str);
+	strcpy_P(&(content[ypos][xpos]), (char *) str);
+	char * p = buf;
+	uint8_t _currpos = xpos;
+	while(*p !='\0' && _currpos < _cols){
+	    content[ypos][_currpos] = *p;
+		_currpos++;
+		p++;
+    }
+	return _display->drawString(buf, xpos, ypos);
+}
+
 // print mode on the right location on the first line, after "Mode   "
 void TFTDisplay::printMode(void){
-	uint8_t xpos = _display->drawString("Mode ", 0, 0);
+	uint8_t xpos = drawString_P("Mode ", 0, 0);
 	// Factoring prints out of switch has negative effect on code size in this function
 	switch(tempControl.getMode()){
 		case MODE_FRIDGE_CONSTANT:
-			xpos += _display->drawString(STR_Fridge_, xpos, 0);
-			xpos += _display->drawString(STR_Const_, xpos, 0);
+			xpos += drawString_P(STR_Fridge_, xpos, 0);
+			xpos += drawString_P(STR_Const_, xpos, 0);
 			break;
 		case MODE_BEER_CONSTANT:
-			xpos += _display->drawString(STR_Beer_, xpos, 0);
-			xpos += _display->drawString(STR_Const_, xpos, 0);
+			xpos += drawString_P(STR_Beer_, xpos, 0);
+			xpos += drawString_P(STR_Const_, xpos, 0);
 			break;
 		case MODE_BEER_PROFILE:
-			xpos += _display->drawString(STR_Beer_, xpos, 0);
-			xpos += _display->drawString(PSTR("Profile"), xpos, 0);
+			xpos += drawString_P(STR_Beer_, xpos, 0);
+			xpos += drawString_P(PSTR("Profile"), xpos, 0);
 			break;
 		case MODE_OFF:
-			xpos += _display->drawString(PSTR("Off"), xpos, 0);
+			xpos += drawString_P(PSTR("Off"), xpos, 0);
 			break;
 		case MODE_TEST:
-			xpos += _display->drawString(PSTR("** Testing **"), xpos, 0);
+			xpos += drawString_P(PSTR("** Testing **"), xpos, 0);
 			break;
 		default:
-			xpos += _display->drawString(PSTR("Invalid mode"), xpos, 0);
+			xpos += drawString_P(PSTR("Invalid mode"), xpos, 0);
 			break;
 	}
 	_display->fillRect(xpos, 0, 200, _fontHeight, _background);
@@ -214,6 +239,12 @@ void TFTDisplay::printMode(void){
 #ifdef EARLY_DISPLAY
 void TFTDisplay::clear(void){
 	_display->fillScreen(_background);
+	for(uint8_t i = 0; i < _rows; i++){
+        for(uint8_t j = 0; j < _cols; j++){
+            content[i][j]=' '; // initialize on all spaces
+        }
+        content[i][_cols]='\0'; // NULL terminate string
+    }
 }
 #endif
 
@@ -222,57 +253,54 @@ void TFTDisplay::printState(void){
 	uint16_t time = UINT16_MAX; // init to max
 	uint8_t state = tempControl.getDisplayState();
 	uint8_t xpos = 0;
-	if(state != stateOnDisplay){ //only print static text when state has changed
-		stateOnDisplay = state;
-		// Reprint state and clear rest of the line
-		const char * part1 = STR_empty_string;
-		const char * part2 = STR_empty_string;
-		switch (state){
-			case IDLE:
-				part1 = PSTR("Idl");
-				part2 = STR_ing_for;
-				break;
-			case WAITING_TO_COOL:
-				part1 = STR_Wait_to_;
-				part2 = STR_Cool;
-				break;
-			case WAITING_TO_HEAT:
-				part1 = STR_Wait_to_;
-				part2 = STR_Heat;
-				break;
-			case WAITING_FOR_PEAK_DETECT:
-				part1 = PSTR("Waiting for peak");
-				break;
-			case COOLING:
-				part1 = STR_Cool;
-				part2 = STR_ing_for;
-				break;
-			case HEATING:
-				part1 = STR_Heat;
-				part2 = STR_ing_for;
-				break;
-			case COOLING_MIN_TIME:
-				part1 = STR_Cool;
-				part2 = STR__time_left;
-				break;
-			case HEATING_MIN_TIME:
-				part1 = STR_Heat;
-				part2 = STR__time_left;
-				break;
-			case DOOR_OPEN:
-				part1 = PSTR("Door open");
-				break;
-			case STATE_OFF:
-				part1 = PSTR("Temp. control OFF");
-				break;
-			default:
-				part1 = PSTR("Unknown status!");
-				break;
-		}
-		xpos += _display->drawString(part1, xpos, 3*_fontHeight);
-		xpos += _display->drawString(part2, xpos, 3*_fontHeight);
-		
+	stateOnDisplay = state;
+	// Reprint state and clear rest of the line
+	const char * part1 = STR_empty_string;
+	const char * part2 = STR_empty_string;
+	switch (state){
+		case IDLE:
+			part1 = PSTR("Idl");
+			part2 = STR_ing_for;
+			break;
+		case WAITING_TO_COOL:
+			part1 = STR_Wait_to_;
+			part2 = STR_Cool;
+			break;
+		case WAITING_TO_HEAT:
+			part1 = STR_Wait_to_;
+			part2 = STR_Heat;
+			break;
+		case WAITING_FOR_PEAK_DETECT:
+			part1 = PSTR("Waiting for peak");
+			break;
+		case COOLING:
+			part1 = STR_Cool;
+			part2 = STR_ing_for;
+			break;
+		case HEATING:
+			part1 = STR_Heat;
+			part2 = STR_ing_for;
+			break;
+		case COOLING_MIN_TIME:
+			part1 = STR_Cool;
+			part2 = STR__time_left;
+			break;
+		case HEATING_MIN_TIME:
+			part1 = STR_Heat;
+			part2 = STR__time_left;
+			break;
+		case DOOR_OPEN:
+			part1 = PSTR("Door open");
+			break;
+		case STATE_OFF:
+			part1 = PSTR("Temp. control OFF");
+			break;
+		default:
+			part1 = PSTR("Unknown status!");
+			break;
 	}
+	xpos += drawString_P(part1, xpos, 3*_fontHeight);
+	xpos += drawString_P(part2, xpos, 3*_fontHeight);
 	uint16_t sinceIdleTime = tempControl.timeSinceIdle();
 	if(state==IDLE){
 		time = 	min(tempControl.timeSinceCooling(), tempControl.timeSinceHeating());
@@ -309,9 +337,9 @@ void TFTDisplay::printState(void){
 			printString = &timeString[2];
 			stringLength = stringLength-2;
 		}
-		xpos += _display->drawString(printString, xpos, 3 * _fontHeight);
+		xpos += drawString_P(printString, xpos, 3 * _fontHeight);
 #else
-		xpos += _display->drawString(timeString, xpos, 3 * _fontHeight);
+		xpos += drawString_P(timeString, xpos, 3 * _fontHeight);
 #endif
 //_display->fillRect(xpos, 3*_fontHeight, 100, _fontHeight, _background);
 	}
