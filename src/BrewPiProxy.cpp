@@ -103,6 +103,8 @@ void BrewPiProxy::getAllStatus(uint8_t *pState,uint8_t *pMode,float *pBeerTemp,f
 	*pFridgeSet = temperatureFloatValue(tempControl.getFridgeSetting());
 	*pRoomTemp =temperatureFloatValue(tempControl.getRoomTemp());
 	*pState = (uint8_t) tempControl.getState();
+	//Serial.print("State from BrewPIProxy: ");
+	//Serial.println(*pState); // DEBUG!
 	*pMode = (uint8_t) tempControl.getMode();
 }
 
