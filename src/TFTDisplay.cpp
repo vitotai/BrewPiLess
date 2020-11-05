@@ -301,6 +301,7 @@ void TFTDisplay::printState(void){
 	}
 	xpos += drawString_P(part1, xpos, 3*_fontHeight);
 	xpos += drawString_P(part2, xpos, 3*_fontHeight);
+	xpos += _display->drawChar(' ', xpos, 3*_fontHeight);
 	uint16_t sinceIdleTime = tempControl.timeSinceIdle();
 	if(state==IDLE){
 		time = 	min(tempControl.timeSinceCooling(), tempControl.timeSinceHeating());
