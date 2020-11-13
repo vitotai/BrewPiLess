@@ -85,7 +85,7 @@ extern WiFiClient serverClient;
 #define piStream serverClient
 #else
 // Not using ESP8266 WiFi
-//#define piStream Serial
+#define piStream Serial
 #endif
 
 bool PiLink::firstPair;
