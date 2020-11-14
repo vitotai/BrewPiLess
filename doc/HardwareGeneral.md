@@ -21,7 +21,7 @@ This is default configuration, you can change it in `config.h`.
 
 Note: The GPIOs of ESP8266 are not all **General Purpose**. Some of them has special functions, and might not be usable. For example, some PINs on my NodeMcu board don't work normally.
 **!!Important !!** It is hightly recommended to pull up GPIO0 and GPIO2 while pull down GPIO15 so that the system will start up normally instead of staying in bootrom mode in case the system crashes. Updating the system configuration and firmware also results in restart of system, and sometimes this issue happens if the circuit isn't implementated. Check this url for detail information:
-https://github.com/esp8266/Arduino/blob/master/doc/boards.md#minimal-hardware-setup-for-bootloading-and-usage
+https://github.com/esp8266/Arduino/blob/master/doc/boards.rst#minimal-hardware-setup-for-bootloading-and-usage
 
 **!! The rotary encoder is not supported by directly connecting it to ESP8266. That will prevents ESP8266 to boot up when the rotary encoder is at certain positions.!!** 
 
