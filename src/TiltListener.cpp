@@ -129,7 +129,6 @@ void TiltListener::_scan(void) {
 }
 
 void TiltListener::listen(TiltColor color,TiltDataHandler onData){
-
     _dataAvailableHandler=onData;
     _targetColor = color;
 }
