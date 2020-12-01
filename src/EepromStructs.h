@@ -66,7 +66,7 @@ enum DeviceFunction {
 	DEVICE_CHAMBER_TEMP = 5,
 	DEVICE_CHAMBER_ROOM_TEMP = 6,	// temp sensors
 	DEVICE_CHAMBER_FAN = 7,			// a fan in the chamber
-	DEVICE_CHAMBER_RESERVED1 = 8,	// reserved for future use
+	DEVICE_CHAMBER_HUMIDITY_SENSOR = 8,	// chamber humidity sensor reserved for future use
 	// carboy devices
 	DEVICE_BEER_FIRST = 9,
 	DEVICE_BEER_TEMP = DEVICE_BEER_FIRST,									// primary beer temp sensor
@@ -75,7 +75,12 @@ enum DeviceFunction {
 	DEVICE_BEER_SG = 13,									// SG sensor
 	DEVICE_BEER_CAPPER = 14, 
 	DEVICE_PTC_COOL = 15,	// reserved
-	DEVICE_MAX = 16
+	
+	DEVICE_CHAMBER_EXT=16,
+	DEVICE_CHAMBER_HUMIDIFIER = DEVICE_CHAMBER_EXT,
+	DEVICE_CHAMBER_DEHUMIDIFIER = 17,
+
+	DEVICE_MAX = 18
 };
 
 
@@ -88,11 +93,15 @@ enum DeviceHardware {
 	DEVICE_HARDWARE_PIN = 1,			// a digital pin, either input or output
 	DEVICE_HARDWARE_ONEWIRE_TEMP = 2,	// a onewire temperature sensor
 #if BREWPI_DS2413
-	DEVICE_HARDWARE_ONEWIRE_2413 = 3	// a onewire 2-channel PIO input or output.
+	DEVICE_HARDWARE_ONEWIRE_2413 = 3,	// a onewire 2-channel PIO input or output.
 #endif
 #if BREWPI_EXTERNAL_SENSOR
-	DEVICE_HARDWARE_EXTERNAL_SENSOR = 5
+	DEVICE_HARDWARE_EXTERNAL_SENSOR = 5,
 #endif
+#if EnableDHTSensorSupport
+	DEVICE_HARDWARE_DHT_TEMP = 6
+#endif
+
 };
 
 
@@ -122,7 +131,11 @@ struct DeviceConfig {
 			int8_t /* fixed4_4 */ calibration;	// for temp sensors (deviceHardware==2), calibration adjustment to add to sensor readings
 												// this is intentionally chosen to match the raw value precision returned by the ds18b20 sensors
 		};
+		#if  EnableDHTSensorSupport
+		uint8_t humiditySensorType;
+		#else
 		bool reserved;								// extra space so that additional fields can be added without breaking layout
+		#endif
 	} hw;
 	bool reserved2;
 };

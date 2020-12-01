@@ -97,6 +97,9 @@ extern "C" {
 #endif
 #endif
 
+#if EnableDHTSensorSupport
+#include "HumidityControl.h"
+#endif
 
 //WebSocket seems to be unstable, at least on iPhone.
 //Go back to ServerSide Event.
@@ -1060,7 +1063,7 @@ void notifyLogStatus(void)
 
 void reportRssi(void)
 {
-	char buf[512];
+//	char buf[512];
 
 	uint8_t mode, state;
 	char unit;
@@ -1071,80 +1074,50 @@ void reportRssi(void)
 	brewPi.getAllStatus(&state, &mode, &beerTemp, &beerSet, &fridgeTemp, &fridgeSet, &roomTemp);
 	display.getLine(3,statusLine);
 
+	DynamicJsonDocument doc(1024);
+	doc["rssi"]= WiFi.RSSI();
+	doc["st"] = state;
+	doc["md"] = String((char)mode);
+	doc["bt"] = (int)(beerTemp*100);
+	doc["bs"] = (int)(beerSet*100);
+	doc["ft"] = (int)(fridgeTemp*100);
+	doc["fs"] = (int)(fridgeSet*100);
+	doc["rt"] = (int)(roomTemp*100);
+	doc["sl"] = statusLine;
+	doc["tu"] = String(unit);
+
+
 #if EanbleParasiteTempControl
-	char ptcmode=parasiteTempController.getMode();
-	
-	#if SupportPressureTransducer
-		int pmmode=PressureMonitor.mode();
-		int psi = (int) PressureMonitor.currentPsi();
-		
-		sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d,\
-			\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\",\"pm\":%d,\"psi\":%d,\
-			\"G\":{\"u\":%lu,\"t\":%d,\"r\":%d,\"g\":%d}}",
-				WiFi.RSSI(),ptcmode,parasiteTempController.getTimeElapsed(),
-				parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound(),
-			state,
-			mode,
-			(int)(beerTemp*100),
-			(int)(beerSet*100),
-			(int)(fridgeTemp*100),
-			(int)(fridgeSet*100),
-			(int)(roomTemp*100),
-			statusLine,
-			unit,
-			pmmode,
-			psi,
-			externalData.lastUpdate(),
-			(int)(externalData.auxTemp() * 100),
-			externalData.rssi(),
-			(int)(externalData.gravity() * 1000)
-			);
-
-	#else
-	sprintf(buf,"A:{\"rssi\":%d,\"ptc\":\"%c\",\"pt\":%u,\"ptctp\":%d,\"ptclo\":%d,\"ptcup\":%d,\
-		\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\",\
-		\"G\":{\"u\":%lu,\"t\":%d,\"r\":%d,\"g\":%d}}",
-
-			WiFi.RSSI(),ptcmode,parasiteTempController.getTimeElapsed(),
-			parasiteTempController.getTemp(),parasiteTempController.getLowerBound(),parasiteTempController.getUpperBound(),
-		state,
-		mode,
-		(int)(beerTemp*100),
-		(int)(beerSet*100),
-		(int)(fridgeTemp*100),
-		(int)(fridgeSet*100),
-		(int)(roomTemp*100),
-		statusLine,
-		unit,
-			externalData.lastUpdate(),
-			(int)(externalData.auxTemp() * 100),
-			externalData.rssi(),
-			(int)(externalData.gravity() * 1000)
-
-			);
-	#endif
-	stringAvailable(buf);
-#else
-	sprintf(buf,"A:{\"rssi\":%d,\"st\":%d,\"md\":\"%c\",\"bt\":%d,\"bs\":%d,\"ft\":%d,\"fs\":%d,\"rt\":%d,\"sl\":\"%s\",\"tu\":\"%c\",\
-		\"G\":{\"u\":%lu,\"t\":%d,\"r\":%d,\"g\":%d}}",
-		WiFi.RSSI(),
-		state,
-		mode,
-		(int)(beerTemp*100),
-		(int)(beerSet*100),
-		(int)(fridgeTemp*100),
-		(int)(fridgeSet*100),
-		(int)(roomTemp*100),
-		statusLine,
-		unit,
-			externalData.lastUpdate(),
-			(int)(externalData.auxTemp() * 100),
-			externalData.rssi(),
-			(int)(externalData.gravity() * 1000)
-
-		);
-	stringAvailable(buf);
+	doc["ptc"] = String(parasiteTempController.getMode());
+	doc["pt"] = parasiteTempController.getTimeElapsed();
+	doc["ptctp"] = parasiteTempController.getTemp();
+	doc["ptclo"] = parasiteTempController.getLowerBound();
+	doc["ptcup"] = parasiteTempController.getUpperBound();
 #endif
+
+#if SupportPressureTransducer
+	doc["pm"] = PressureMonitor.mode();
+	doc["psi"] = (int) PressureMonitor.currentPsi();
+#endif
+
+#if EnableDHTSensorSupport
+	if (humidityControl.sensorInstalled()){
+		doc["h"]= humidityControl.humidity();
+	}
+#endif
+
+
+	JsonObject G = doc.createNestedObject("G");
+	G["u"] = externalData.lastUpdate();
+	G["t"] = (int)(externalData.auxTemp() * 100);
+	G["r"] = externalData.rssi();
+	G["g"] = (int)(externalData.gravity() * 1000);
+
+
+	String out="A:";
+	serializeJson(doc,out);
+
+	stringAvailable(out.c_str());
 }
 
 
@@ -2075,6 +2048,10 @@ void loop(void){
 	
 	#if SupportTiltHydrometer
 	tiltListener.loop();
+	#endif
+
+	#if EnableDHTSensorSupport
+	humidityControl.loop();
 	#endif
 
 	#if GreetingInMainLoop

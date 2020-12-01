@@ -54,6 +54,16 @@
 WirelessTempSensor* WirelessTempSensor::theWirelessTempSensor=NULL;
 #endif
 
+#if EnableDHTSensorSupport
+#include "HumidityControl.h"
+#include "TempSensorDHT.h"
+
+inline bool isDHTSensorInstalled(){
+	return HumidityControl::dhtSensor != NULL;
+}
+
+#endif
+
 /*
  * Defaults for sensors, actuators and temperature sensors when not defined in the eeprom.
  */
@@ -126,6 +136,18 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 			#else
 				return new DigitalPinSensor(config.hw.pinNr, config.hw.invert);
 			#endif
+
+#if EnableDHTSensorSupport 
+			else if(dt==DEVICETYPE_HUMIDITY_SENSOR)
+			{
+				Serial.printf("create sensorType:%d, cal:%d, %d\n",config.hw.humiditySensorType,config.hw.calibration, tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));
+				// calibration for temperature is in fixed_4_4 fromat
+				return new DHTSensor(config.hw.pinNr,config.hw.humiditySensorType,
+				tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));
+			}
+#endif
+
+
 			else
 #if BREWPI_SIMULATE
 				return new ValueActuator();
@@ -143,6 +165,13 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 		case DEVICE_HARDWARE_EXTERNAL_SENSOR:
 			return new WirelessTempSensor(false,config.hw.calibration);// initially disconnected, so init doesn't populate the filters with the default value of 0.0
 #endif
+
+#if EnableDHTSensorSupport 
+		case DEVICE_HARDWARE_DHT_TEMP:
+			return new DHTTempSensor(config.hw.calibration);
+#endif
+
+
 
 #if BREWPI_DS2413
 		case DEVICE_HARDWARE_ONEWIRE_2413:
@@ -207,6 +236,18 @@ inline void** deviceTarget(DeviceConfig& config)
 		break;
 #endif
 
+#if EnableDHTSensorSupport	
+	case DEVICE_CHAMBER_HUMIDITY_SENSOR:
+		ppv =(void**) & humidityControl.dhtSensor;
+		break;
+	
+	case DEVICE_CHAMBER_HUMIDIFIER:
+		ppv = (void**) & humidityControl.humidifier;
+		break;
+	case DEVICE_CHAMBER_DEHUMIDIFIER:
+		ppv = (void**) & humidityControl.dehumidifier;
+		break;
+#endif
 	case DEVICE_BEER_TEMP:
 		ppv = (void**)&tempControl.beerSensor;
 		break;
@@ -279,6 +320,14 @@ void DeviceManager::uninstallDevice(DeviceConfig& config)
 				*ppv = &defaultSensor;
 			}
 			break;
+		#if EnableDHTSensorSupport	 
+		case DEVICETYPE_HUMIDITY_SENSOR:
+			if (*ppv!=&defaultSensor) {
+				delete (DHTSensor*)*ppv;
+				*ppv = NULL;
+			}
+			break;
+		#endif
 	}
 }
 
@@ -320,6 +369,9 @@ void DeviceManager::installDevice(DeviceConfig& config)
 			((ExternalTempSensor*)s)->setConnected(true);	// now connect the sensor after init is called
 #endif
 			break;
+		#if EnableDHTSensorSupport
+		case DEVICETYPE_HUMIDITY_SENSOR:	
+		#endif
 		case DEVICETYPE_SWITCH_ACTUATOR:
 		case DEVICETYPE_SWITCH_SENSOR:
 			DEBUG_ONLY(logInfoInt(INFO_INSTALL_DEVICE, config.deviceFunction));
@@ -343,16 +395,17 @@ struct DeviceDefinition {
 	int8_t pio;
 	int8_t deactivate;
 	int8_t calibrationAdjust;
+	int8_t hsensorType;
 	DeviceAddress address;
 
 	/**
 	 * Lists the first letter of the key name for each attribute.
 	 */
-	static const char ORDER[12];
+	static const char ORDER[13];
 };
 
 // the special cases are placed at the end. All others should map directly to an int8_t via atoi().
-const char DeviceDefinition::ORDER[12] = "icbfhpxndja";
+const char DeviceDefinition::ORDER[13] = "icbfhpxndjsa";
 
 const char DEVICE_ATTRIB_INDEX = 'i';
 const char DEVICE_ATTRIB_CHAMBER = 'c';
@@ -365,6 +418,9 @@ const char DEVICE_ATTRIB_DEACTIVATED = 'd';
 const char DEVICE_ATTRIB_ADDRESS = 'a';
 #if BREWPI_DS2413
 const char DEVICE_ATTRIB_PIO = 'n';
+#endif
+#if EnableDHTSensorSupport
+const char DEVICE_ATTRIB_HUMIDITY_SENSOR_TYPE = 's';
 #endif
 const char DEVICE_ATTRIB_CALIBRATEADJUST = 'j';	// value to add to temp sensors to bring to correct temperature
 
@@ -435,6 +491,9 @@ void DeviceManager::parseDeviceDefinition()
 	assignIfSet(dev.deviceHardware, (uint8_t*)&target.deviceHardware);
 	assignIfSet(dev.pinNr, &target.hw.pinNr);
 
+#if EnableDHTSensorSupport
+	assignIfSet(dev.hsensorType, &target.hw.humiditySensorType);
+#endif
 
 #if BREWPI_DS2413
 	assignIfSet(dev.pio, &target.hw.pio);
@@ -474,6 +533,7 @@ void DeviceManager::parseDeviceDefinition()
 	}
 	else {
 		logError(ERROR_DEVICE_DEFINITION_UPDATE_SPEC_INVALID);
+
 	}
 	piLink.printResponse('U');
 	deviceManager.beginDeviceOutput();
@@ -618,6 +678,10 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 	appendAttrib(deviceString, DEVICE_ATTRIB_HARDWARE, config.deviceHardware);
 	appendAttrib(deviceString, DEVICE_ATTRIB_DEACTIVATED, config.hw.deactivate);
 	appendAttrib(deviceString, DEVICE_ATTRIB_PIN, config.hw.pinNr);
+#if EnableDHTSensorSupport
+	if(config.deviceFunction == DEVICE_CHAMBER_HUMIDITY_SENSOR)
+		appendAttrib(deviceString,DEVICE_ATTRIB_HUMIDITY_SENSOR_TYPE,config.hw.humiditySensorType);
+#endif
 	if (value && *value) {
 		deviceString += ",\"v\":";
 		deviceString += value;
@@ -640,6 +704,11 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 #if BREWPI_EXTERNAL_SENSOR
 		||  config.deviceHardware==DEVICE_HARDWARE_EXTERNAL_SENSOR
 #endif	
+#if EnableDHTSensorSupport
+
+		||  config.deviceFunction==DEVICE_CHAMBER_HUMIDITY_SENSOR
+		||  config.deviceHardware==DEVICE_HARDWARE_DHT_TEMP
+#endif
 	) {
 		tempDiffToString(buf, temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION), 3, 8);
 		deviceString += ",\"j\":";
@@ -744,6 +813,13 @@ device_slot_t findHardwareDevice(DeviceConfig& find)
 					// fall through
 				case DEVICE_HARDWARE_PIN:
 					match &= find.hw.pinNr==config.hw.pinNr;
+					//fall through
+			#if EnableDHTSensorSupport
+				case DEVICE_HARDWARE_DHT_TEMP:
+					match &= isDHTSensorInstalled();
+					//fall through
+			#endif
+
 			#if BREWPI_EXTERNAL_SENSOR
 				case DEVICE_HARDWARE_EXTERNAL_SENSOR:
 					match &= true;
@@ -904,6 +980,17 @@ void DeviceManager::enumerateExternalDevices(EnumerateHardware& h, EnumDevicesCa
 }
 #endif
 
+#if EnableDHTSensorSupport
+void DeviceManager::enumerateDHTTempDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output){
+	DeviceConfig config;
+	clear((uint8_t*)&config, sizeof(config));
+	config.deviceHardware = DEVICE_HARDWARE_DHT_TEMP;
+	config.chamber = 1; // chamber 1 is default
+	config.hw.pinNr = HumidityControl::dhtSensor->pin();
+	handleEnumeratedDevice(config, h, callback, output);
+}
+#endif
+
 void DeviceManager::enumerateHardware()
 {
 	EnumerateHardware spec;
@@ -931,6 +1018,13 @@ void DeviceManager::enumerateHardware()
 		enumerateExternalDevices(spec, OutputEnumeratedDevices, out);
 	}
 	#endif
+
+	#if EnableDHTSensorSupport //vito: enumerate device
+	if (spec.hardware==-1 || isDHTTempSensor(DeviceHardware(spec.hardware))) {
+		enumerateDHTTempDevices(spec, OutputEnumeratedDevices, out);
+	}
+	#endif
+
 //	logDebug("Enumerating Hardware Complete");
 }
 
@@ -970,6 +1064,12 @@ void UpdateDeviceState(DeviceDisplay& dd, DeviceConfig& dc, char* val)
 			temperature temp = s.read();
 			tempToString(val, temp, 3, 9);
 		}
+#if EnableDHTSensorSupport	
+		else if (dt == DEVICETYPE_HUMIDITY_SENSOR){
+			DHTSensor* sensor = (DHTSensor*) *ppv;
+			sprintf_P(val, STR_FMT_D,(int)sensor->humidity());
+		}
+#endif	
 		else if (dt==DEVICETYPE_SWITCH_ACTUATOR) {
 			sprintf_P(val, STR_FMT_U, (unsigned int) ((Actuator*)*ppv)->isActive()!=0);
 		}
@@ -1005,6 +1105,10 @@ void DeviceManager::listDevices() {
 
 DeviceType deviceType(DeviceFunction id) {
 	switch (id) {
+#if EnableDHTSensorSupport	
+	case DEVICE_CHAMBER_HUMIDITY_SENSOR:
+		return DEVICETYPE_HUMIDITY_SENSOR;
+#endif
 	case DEVICE_CHAMBER_DOOR:
 		return DEVICETYPE_SWITCH_SENSOR;
 

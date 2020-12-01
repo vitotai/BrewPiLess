@@ -69,6 +69,10 @@ enum DeviceType {
 	DEVICETYPE_TEMP_SENSOR = 1,		/* BasicTempSensor - OneWire */
 	DEVICETYPE_SWITCH_SENSOR = 2,		/* SwitchSensor - direct pin and onewire are supported */
 	DEVICETYPE_SWITCH_ACTUATOR = 3	/* Actuator - both direct pin and onewire are supported */
+#if EnableDHTSensorSupport	
+	,
+	DEVICETYPE_HUMIDITY_SENSOR = 4
+#endif
 };
 
 
@@ -83,6 +87,10 @@ inline bool isAssignable(DeviceType type, DeviceHardware hardware)
 #endif
 #if BREWPI_EXTERNAL_SENSOR
 	|| (hardware==DEVICE_HARDWARE_EXTERNAL_SENSOR && type==DEVICETYPE_TEMP_SENSOR)
+#endif
+#if EnableDHTSensorSupport	
+	|| (hardware==DEVICE_HARDWARE_PIN && type==DEVICETYPE_HUMIDITY_SENSOR)
+	|| (hardware==DEVICE_HARDWARE_DHT_TEMP && type==DEVICETYPE_TEMP_SENSOR)
 #endif
 	|| (hardware==DEVICE_HARDWARE_ONEWIRE_TEMP && type==DEVICETYPE_TEMP_SENSOR)
 	|| (hardware==DEVICE_HARDWARE_NONE && type==DEVICETYPE_NONE);
@@ -108,11 +116,22 @@ inline bool isExternalSensor(DeviceHardware hardware) {
 }
 #endif
 
+
+#if EnableDHTSensorSupport
+inline bool isDHTTempSensor(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_DHT_TEMP;
+}
+#endif
+
+
 /**
  * Determines where this devices belongs.
  */
 inline DeviceOwner deviceOwner(DeviceFunction id) {
-	return id==0 ? DEVICE_OWNER_NONE : id>=DEVICE_BEER_FIRST ? DEVICE_OWNER_BEER : DEVICE_OWNER_CHAMBER;
+//	return id==0 ? DEVICE_OWNER_NONE : id>=DEVICE_BEER_FIRST ? DEVICE_OWNER_BEER : DEVICE_OWNER_CHAMBER;
+
+	return id==0 ? DEVICE_OWNER_NONE : (id>=DEVICE_BEER_FIRST && id < DEVICE_CHAMBER_EXT)?  DEVICE_OWNER_BEER : DEVICE_OWNER_CHAMBER;
+
 }
 
 
@@ -273,6 +292,10 @@ public:
 	static void listDevices();
 
 private:
+	#if EnableDHTSensorSupport
+	static void enumerateDHTTempDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
+	#endif
+
 	#if BREWPI_EXTERNAL_SENSOR //vito: enumerate device
 	static void enumerateExternalDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
 	#endif

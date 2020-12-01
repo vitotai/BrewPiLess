@@ -65,7 +65,7 @@
 // Enable DS2413 Actuators.
 //
 // #ifndef BREWPI_DS2413
-// #define BREWPI_DS2413 0
+ #define BREWPI_DS2413 true
 // #endif
 //
 //////////////////////////////////////////////////////////////////////////
@@ -79,6 +79,18 @@
 #endif
 //
 //////////////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+// Enable humidity sensor
+//
+#ifndef EnableDHTSensorSupport
+#define EnableDHTSensorSupport true
+#endif
+//
+//////////////////////////////////////////////////////////////////////////
+
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -360,7 +372,7 @@
 #define heatingPin NODEMCU_PIN_D0
 #define doorPin    NODEMCU_PIN_D7
 #define BuzzPin NODEMCU_PIN_D3
-
+/*
 // NO LCD, NO BUTTONs
 #ifdef BREWPI_LCD
 #undef BREWPI_LCD 
@@ -376,7 +388,7 @@
 #define EanbleParasiteTempControl flase
 #undef SupportPressureTransducer
 //#define SupportPressureTransducer false
-//#undef SupportMqttRemoteControl
+#undef SupportMqttRemoteControl
 #define SupportMqttRemoteControl false
 #undef AUTO_CAP
 #define  AUTO_CAP false
@@ -396,6 +408,7 @@
     #define DEVELOPMENT_FILEMANAGER false
 #endif
 
+*/
 
 #elif BOARD == Thorrak_PCB
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored

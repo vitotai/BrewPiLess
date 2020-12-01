@@ -24,8 +24,6 @@ extern FS& FileSystem;
 
 #define LogBufferSize 1024
 // Log tags
-#define StartLogTag 0xFF
-#define ResumeBrewTag 0xFE
 
 #define PeriodTag 0xF0
 #define StateTag 0xF1
@@ -43,12 +41,21 @@ extern FS& FileSystem;
 
 #define SpecificGravityTag 0xFB
 
+#define HumidityTag 0xFC
+
+#define ResumeBrewTag 0xFE
+#define StartLogTag 0xFF
+
+
 #define INVALID_TEMP_INT 0x7FFF
 #define INVALID_GRAVITY_INT 0x7FFF
 
 #define VolatileDataHeaderSize 7
-
+#if EnableDHTSensorSupport
+#define VolatileHeaderSize ( VolatileDataHeaderSize*2 + 18)
+#else
 #define VolatileHeaderSize ( VolatileDataHeaderSize*2 + 16)
+#endif
 
 #define OrderBeerSet 0
 #define OrderBeerTemp 1
@@ -161,6 +168,11 @@ private:
 	FileIndexes *_pFileInfo;
 	uint8_t _targetPsi;
 
+#if EnableDHTSensorSupport	
+	uint8_t _lastHumidity;
+	uint8_t _savedHumidityValue;
+#endif
+
 	uint16_t  _headData[VolatileDataHeaderSize];
 
 	void _resetTempData(void);
@@ -179,6 +191,9 @@ private:
 	void _addOgRecord(uint16_t og);
 	void _addSgRecord(uint16_t sg);
 	void _addGravityRecord(bool isOg, uint16_t gravity);
+#if EnableDHTSensorSupport	
+	void _addHumidityRecord(uint8_t humidity);
+#endif
 
 	void _addModeRecord(char mode);
 	uint32_t _addResumeTag(void);
