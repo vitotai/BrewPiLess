@@ -13,12 +13,12 @@ public:
     }
     uint8_t humidity(){
         float h=dht.readHumidity(true);
-        DBG_PRINTF("DHxx H=%d, cal=%d/10\n",(int)(h *10),_cal);
+        DBG_PRINTF("DHxx H=%d/10, cal=%d\n",(int)(h *10),_cal);
         return (uint8_t) (h + _cal);
     }
     float temperature(bool isFarenheit){
         float temp=dht.readTemperature(isFarenheit);
-        DBG_PRINTF("DHxx TEMP=%d/10\n",(int)(temp *10));
+//        DBG_PRINTF("DHxx TEMP=%d/10\n",(int)(temp *10));
         return temp;
     }
     inline uint8_t pin(){ return _pin;}

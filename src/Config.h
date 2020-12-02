@@ -367,10 +367,18 @@
 // define this option to disable webserver.
 #define SONOFF true 
 
+#if SONOFF_USE_AM2301
+// free up pin 14, so that it can be assigned to AM2301
+#define oneWirePin NODEMCU_PIN_D7  
+#define doorPin    NODEMCU_PIN_D5
+
+#else
 #define oneWirePin NODEMCU_PIN_D5  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
+#define doorPin    NODEMCU_PIN_D7
+#endif
+
 #define coolingPin NODEMCU_PIN_D6
 #define heatingPin NODEMCU_PIN_D0
-#define doorPin    NODEMCU_PIN_D7
 #define BuzzPin NODEMCU_PIN_D3
 /*
 // NO LCD, NO BUTTONs
