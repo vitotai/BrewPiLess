@@ -9,16 +9,13 @@ if [ ! -d $OUTDIR ]; then
 fi
 rm $OUTDIR/*.h
 
-htmlfiles=(index_s.htm.gz control_s.htm.gz config.htm.gz setup.htm.gz logging.htm.gz gravity.htm.gz pressure.htm.gz \
-classic-index.htm.gz classic-config.htm.gz classic-setup.htm.gz classic-gdc.htm.gz classic-log.htm.gz)
+htmlfiles=(index_s.htm.gz control_s.htm.gz config.htm.gz setup.htm.gz logging.htm.gz gravity.htm.gz gravity_e32.htm.gz pressure.htm.gz )
 
-variables=(data_index_htm_gz control_htm_gz config_htm_gz setup_htm_gz logging_htm_gz gravity_htm_gz pressure_htm_gz \
- data_c_index_htm_gz data_c_config_htm_gz data_c_setup_htm_gz data_c_gdc_htm_gz data_c_log_htm_gz)
+variables=(data_index_htm_gz control_htm_gz config_htm_gz setup_htm_gz logging_htm_gz gravity_htm_gz gravity_htm_gz pressure_htm_gz)
 
-outfiles=(index_htm control_htm config_htm setup_htm log_htm gdc_htm pressure_htm \
- c_index_htm c_config_htm c_setup_htm c_gdc_htm c_log_htm)
+outfiles=(index_htm control_htm config_htm setup_htm log_htm gdc_htm gdc_e32_htm pressure_htm)
 
-languages=(english spanish portuguese-br slovak chinese italian)
+languages=(norwegian english spanish portuguese-br slovak chinese italian)
 
 
 gen_C_file()

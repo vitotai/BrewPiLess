@@ -20,6 +20,16 @@ var devices = {
         if (window.board == "e") return c[pin];
         return "Unknown";
     },
+    pinFuncChange:function(g){
+        if(g.querySelector("select.device-function").value ==8){
+            g.querySelectorAll(".device-humidity-sensor-container").forEach(function(div){div.style.display="";});
+            g.querySelectorAll(".device-pintype-container").forEach(function(div){div.style.display="none";});
+        }else{
+            g.querySelectorAll(".device-humidity-sensor-container").forEach(function(div){div.style.display="none";});
+
+            g.querySelectorAll(".device-pintype-container").forEach(function(div){div.style.display="";});
+        }
+    },
     add: function(a, f) {
         var g;
         if (f.h == 2) { // sensor
@@ -31,6 +41,10 @@ var devices = {
             g = window.extsensorContainer.cloneNode(true);
             g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : f.v;
             g.querySelector("input.device-calibration").value = f.j;
+        } else if (f.h == 6) { // temp sensor of DHT1x/DHT2x series
+            g = window.dhtsensorContainer.cloneNode(true);
+            g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : f.v;
+            g.querySelector("input.device-calibration").value = f.j;
         } else if (f.h == 3) { // owContainer
             g = window.owContainer.cloneNode(true);
             g.querySelector("span.device-address").innerHTML = f.a;
@@ -39,13 +53,24 @@ var devices = {
             g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : ((f.v) ? "active" : "inactive")
         } else {
             g = window.pinContainer.cloneNode(true);
-            g.querySelector("select.device-pintype").value = f.x;
-            g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : ((f.v) ? "active" : "inactive")
+            if(f.f == 8){ // humidity sensor
+                g.querySelector("select.device-humidity-sensor").value = f.s;
+                g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : (f.v + "%");
+                g.querySelector("input.device-calibration").value = f.j; 
+            }else {
+
+                g.querySelector("select.device-pintype").value = f.x;
+                g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : ((f.v) ? "active" : "inactive")
+            }
         }
         g.querySelector("select.slot-select").value = f.i;
 
         g.querySelector("span.device-pin").innerHTML = this.pinlabel(f.p);
         g.querySelector("select.device-function").value = f.f;
+        g.querySelector("select.device-function").onchange=function(){
+          devices.pinFuncChange(g);  
+        };
+        if(f.h ==1 ) devices.pinFuncChange(g); // pin
         g.querySelector("div.device-title").innerHTML = "Device " + a;
         g.querySelector("button").onclick = function() {
             device_apply(a)
@@ -80,17 +105,19 @@ function cmdfrom(b) {
     }
     c.h = a.h;
     c.p = a.p;
-    if (c.h == 2) {
+    if (c.h == 2) { // onewire temp sensor
         c.a = a.a
-    } else if (c.h == 3) {
+    } else if (c.h == 3) { //  onewire 2413
         c.a = a.a;
         c.n = a.n;
         c.x = d.querySelector("select.device-pintype").value
-    } else if (c.h == 1) {
-        c.x = d.querySelector("select.device-pintype").value
+    } else if (c.h == 1) { // hardware pin
+        if( c.f ==8) c.s = d.querySelector("select.device-humidity-sensor").value;
+        else c.x = d.querySelector("select.device-pintype").value
     }
-    if(c.h == 2 || c.h == 5){
-        c.j = d.querySelector("input.device-calibration").value
+    if(c.h == 2 || c.h == 5 ||  c.h == 6 || c.f ==8){ // onewire temp &  external sensor
+        c.j = d.querySelector("input.device-calibration").value;
+        if(isNaN(c.j)) c.j=0;
     }
     return c
 }
@@ -133,17 +160,57 @@ function backup() {
         } else {
             e.x = f.x
         }
+        if(f.h == 2 || f.h == 5) e.j=f.j;
         c.push(e)
     }
     var b = JSON.stringify(c);
-    console.log(b);
-    BWF.save(BackupFile, b, function() {
-        alert("<%= done %>")
-    }, function(d) {
-        alert("<%= script_setup_error_saving %>" + d)
-    })
+    //console.log(b);
+    // Browsers that support HTML5 download attribute
+    download(new Blob([b], {type: 'text/json;'}), "device.json");
 }
 
+function restoreJson(b){
+    blockscreen("<%= script_setup_restoring %>");
+    var a = 0;
+    BWF.on("U", function(d) {
+        if (++a >= b.length) {
+            BWF.on("U", null);
+            unblockscreen();
+            return
+        }
+        BWF.send("U" + JSON.stringify(b[a]))
+    });
+    BWF.send("U" + JSON.stringify(b[a]))
+}
+
+function restore() {
+    Q("#dlg_restore").style.display = "block";
+    Q("#dlg_restore .cancel").onclick=function(){
+        Q("#dlg_restore").style.display = "none";
+        return false;
+    };
+
+    Q('#restore-file').onchange = function(evt) {
+        //Retrieve the first (and only!) File from the FileList object
+        var f = evt.target.files[0];
+        if (f) {
+            var r = new FileReader();
+            r.onload = function(e) {
+                try{
+                  var json=JSON.parse(e.target.result);
+                  Q("#dlg_restore").style.display = "none";
+                  restoreJson(json);
+                }catch(e){
+                    alert("invalid format!");
+                }
+            };
+            r.readAsText(f);
+        }    
+    };
+
+
+}
+/*
 function restore() {
     blockscreen("<%= script_setup_restoring %>");
     BWF.load(BackupFile, function(c) {
@@ -163,7 +230,7 @@ function restore() {
         unblockscreen()
     })
 }
-
+*/
 function list() {
     blockscreen("<%= script_setup_retrieving %>");
     installed_list = [];
@@ -208,6 +275,7 @@ function init(classic) {
     window.pinContainer = detachNode(".device-container.pin-device");
     window.extsensorContainer = detachNode(".device-container.extsensor-device");
     window.owContainer = detachNode(".device-container.ow-device");
+    window.dhtsensorContainer =detachNode(".device-container.dht-temp-device");
     window.board= "e"; //default ESP8266
     BWF.init({
         error: function(a) {
@@ -239,3 +307,21 @@ function blockscreen(a) {
 function unblockscreen() {
     document.getElementById("blockscreen").style.display = "none"
 };
+
+function download(blob, file) {
+    var link = document.createElement("a");
+
+    if (link.download === undefined) { // feature detection
+        alert("<%= script_viewer_not_downloading_file %>");
+        return;
+    }
+
+    var url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", file);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+}

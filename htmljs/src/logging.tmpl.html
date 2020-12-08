@@ -157,9 +157,9 @@
                     <div id=brewersfriend class=service-options>
                         <div layout horizontal cross-center>
                             <h6 class="inline-header">
-                                <%= log_brewersfriend_stream_url %>
+                                <%= log_brewersfriend_stream_apikey %>
                             </h6>
-                            <input type="text" id="brewersfriend-url" size="42">
+                            <input type="text" id="brewersfriend-apikey" size="42">
                         </div>
                         <div layout horizontal cross-center>
                             <h6 class="inline-header">
@@ -690,6 +690,12 @@
                 <th>%P</th>
                 <td>
                     <%= log_pressure_reading %>
+                </td>
+            </tr>
+            <tr>
+                <th>%H</th>
+                <td>
+                   Hostname
                 </td>
             </tr>
 

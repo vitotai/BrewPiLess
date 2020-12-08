@@ -45,12 +45,13 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
 
 ## Version History
  * 4.1
-    * HTTPS remote logging for ESP32.
     * "Real" generic HTTP logging.
-    * Touch on chart.
-    * TILT support for ESP32
+    * DHT1x/DHT2x support, for humidity control 
+    * Pressure report for Brewfather.app
+    * [ESP32] HTTPS remote logging.
+    * [ESP32] TILT support
 
- * 4.0r1(under testing)
+ * 4.0r1
     * Fix lost of WiFi connection after a few days.
  * 4.0
     * Arduino Framework 2.2.0

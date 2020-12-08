@@ -28,16 +28,6 @@
 
                     <div layout horizontal main-justified cross-center>
                         <h5>
-                            <%= gravity_useplato %>
-                        </h5>
-                        <div>
-                            <input type="checkbox" id="plato" name="plato" class="switch-input" checked>
-                            <label for="plato" class="switch-label" style="min-width: 0;"></label>
-                        </div>
-                    </div>
-
-                    <div layout horizontal main-justified cross-center>
-                        <h5>
                             Tilt Hydrometer
                         </h5>
                         <div>
@@ -46,7 +36,7 @@
                         </div>
                     </div>
 
-                    <div layout horizontal cross-center>
+                    <div layout horizontal cross-center class="tiltsub">
                         <h6>
                             Tilt Hydrometer Color
                         </h6>
@@ -73,7 +63,7 @@
                         </div>
                     </div>
 
-                    <div layout horizontal main-justified cross-center>
+                    <div layout horizontal main-justified cross-center class="ispindelsub">
                         <h6 class="inline-header">
                             <%= gravity_calculated_bpl %>
                         </h6>
@@ -83,7 +73,7 @@
                         </div>
                     </div>
 
-                    <div layout horizontal cross-center>
+                    <div layout horizontal cross-center class="ispindelsub">
                         <h6 class="inline-header">
                             <%= gravity_temp_correction %>
                         </h6>
@@ -99,7 +89,7 @@
                         </div>
                     </div>
 
-                    <div layout horizontal cross-center>
+                    <div layout horizontal cross-center class="ispindelsub">
                         <h6 class="inline-header">
                             <%= gravity_coefficients %>
                         </h6>
@@ -113,11 +103,21 @@
                         <div class="coefficient" layout horizontal main-center></div>
                     </div>
 
-                    <div layout horizontal cross-center>
+                    <div layout horizontal cross-center class="ispindelsub">
                         <h6 class="inline-header">
                             <%= gravity_lpf_coefficient %>
                         </h6>
                         <input type="text" name="lpc" size=4>
+                    </div>
+
+                    <div layout horizontal main-justified cross-center>
+                        <h6>
+                            <%= gravity_useplato %>
+                        </h6>
+                        <div>
+                            <input type="checkbox" id="plato" name="plato" class="switch-input" checked>
+                            <label for="plato" class="switch-label" style="min-width: 0;"></label>
+                        </div>
                     </div>
 
                     <div layout horizontal cross-center>

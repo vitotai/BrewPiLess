@@ -42,14 +42,10 @@ module.exports = (grunt) ->
           'dist/control_s.tmpl.htm': 'dist/control_s.tmpl.htm',
           'dist/setup.tmpl.htm': 'dist/setup.tmpl.htm',
           'dist/gravity.tmpl.htm': 'dist/gravity.tmpl.htm',
+          'dist/gravity_e32.tmpl.htm': 'dist/gravity_e32.tmpl.htm',
           'dist/logging.tmpl.htm': 'dist/logging.tmpl.htm',
           'dist/config.tmpl.htm': 'dist/config.tmpl.htm',
           'dist/pressure.tmpl.htm': 'dist/pressure.tmpl.htm',
-          'dist/classic-index.tmpl.htm': 'dist/classic-index.tmpl.htm',
-          'dist/classic-setup.tmpl.htm': 'dist/classic-setup.tmpl.htm',
-          'dist/classic-gdc.tmpl.htm': 'dist/classic-gdc.tmpl.htm',
-          'dist/classic-log.tmpl.htm': 'dist/classic-log.tmpl.htm',
-          'dist/classic-config.tmpl.htm': 'dist/classic-config.tmpl.htm',
           'dist/BPLLogViewer.tmpl.htm': 'dist/BPLLogViewer.tmpl.htm',
           'dist/BPLogWebViewer.tmpl.htm': 'dist/BPLogWebViewer.tmpl.htm',
           'dist/lcd.htm': 'dist/lcd.htm',
@@ -72,14 +68,10 @@ module.exports = (grunt) ->
           'build/control_s.tmpl.html': 'build/control_s.tmpl.html',
           'build/setup.tmpl.html': 'build/setup.tmpl.html',
           'build/gravity.tmpl.html': 'build/gravity.tmpl.html',
+          'build/gravity_e32.tmpl.html': 'build/gravity_e32.tmpl.html',
           'build/logging.tmpl.html': 'build/logging.tmpl.html',
           'build/config.tmpl.html': 'build/config.tmpl.html',
           'build/pressure.tmpl.html': 'build/pressure.tmpl.html',
-          'build/classic-index.tmpl.html': 'build/classic-index.tmpl.html',
-          'build/classic-setup.tmpl.html': 'build/classic-setup.tmpl.html',
-          'build/classic-gdc.tmpl.html': 'build/classic-gdc.tmpl.html',
-          'build/classic-log.tmpl.html': 'build/classic-log.tmpl.html',
-          'build/classic-config.tmpl.html': 'build/classic-config.tmpl.html',
           'build/BPLLogViewer.tmpl.html': 'build/BPLLogViewer.tmpl.html',
           'build/BPLogWebViewer.tmpl.html': 'build/BPLogWebViewer.tmpl.html',
           'build/lcd.html': 'build/lcd.html',
@@ -95,14 +87,10 @@ module.exports = (grunt) ->
             { 'dist/control_s.tmpl.htm': ['build/control_s.tmpl.html'] },
             { 'dist/setup.tmpl.htm': ['build/setup.tmpl.html'] },
             { 'dist/gravity.tmpl.htm': ['build/gravity.tmpl.html'] },
+            { 'dist/gravity_e32.tmpl.htm': ['build/gravity_e32.tmpl.html'] },
             { 'dist/logging.tmpl.htm': ['build/logging.tmpl.html'] },
             { 'dist/config.tmpl.htm': ['build/config.tmpl.html'] },
             { 'dist/pressure.tmpl.htm': ['build/pressure.tmpl.html'] },
-            { 'dist/classic-index.tmpl.htm': ['build/classic-index.tmpl.html'] },
-            { 'dist/classic-setup.tmpl.htm': ['build/classic-setup.tmpl.html'] },
-            { 'dist/classic-gdc.tmpl.htm': ['build/classic-gdc.tmpl.html'] },
-            { 'dist/classic-log.tmpl.htm': ['build/classic-log.tmpl.html'] },
-            { 'dist/classic-config.tmpl.htm': ['build/classic-config.tmpl.html'] },
             { 'dist/BPLLogViewer.tmpl.htm': ['build/BPLLogViewer.tmpl.html'] },
             { 'dist/BPLogWebViewer.tmpl.htm': ['build/BPLogWebViewer.tmpl.html'] },
             { 'dist/lcd.htm': ['build/lcd.html']},
@@ -156,7 +144,7 @@ module.exports = (grunt) ->
         expand: true
         files: [{
           expand: true
-          src: ['dist/english/*.htm','dist/chinese/*.htm','dist/spanish/*.htm','dist/portuguese-br/*.htm','dist/slovak/*.htm','dist/italian/*.htm','dist/lcd.htm','dist/classic-lcd.htm']
+          src: ['dist/norwegian/*.htm','dist/english/*.htm','dist/chinese/*.htm','dist/spanish/*.htm','dist/portuguese-br/*.htm','dist/slovak/*.htm','dist/italian/*.htm','dist/lcd.htm','dist/classic-lcd.htm',]
           dest: '.'
           ext: '.htm.gz'
         }]
@@ -170,14 +158,10 @@ module.exports = (grunt) ->
           'build/control_s.tmpl.html': ['src/control_s.tmpl.html']
           'build/setup.tmpl.html': ['src/setup.tmpl.html']
           'build/gravity.tmpl.html': ['src/gravity.tmpl.html']
+          'build/gravity_e32.tmpl.html': ['src/gravity_e32.tmpl.html']
           'build/logging.tmpl.html': ['src/logging.tmpl.html']
           'build/config.tmpl.html': ['src/config.tmpl.html'],          
           'build/pressure.tmpl.html': ['src/pressure.tmpl.html'],          
-          'build/classic-index.tmpl.html': ['src/classic-index.tmpl.html']
-          'build/classic-setup.tmpl.html': ['src/classic-setup.tmpl.html']
-          'build/classic-gdc.tmpl.html': ['src/classic-gdc.tmpl.html']
-          'build/classic-log.tmpl.html': ['src/classic-log.tmpl.html']
-          'build/classic-config.tmpl.html': ['src/classic-config.tmpl.html']
           'build/BPLLogViewer.tmpl.html': ['src/BPLLogViewer.tmpl.html']
           'build/BPLogWebViewer.tmpl.html': ['src/BPLogWebViewer.tmpl.html']
           'build/lcd.html' : ['src/lcd.html']
@@ -187,7 +171,7 @@ module.exports = (grunt) ->
     multi_lang_site_generator:
       default:
           options:
-            vocabs:           ['english','chinese','spanish','portuguese-br', 'slovak', 'italian']
+            vocabs:           ['english','chinese','spanish','portuguese-br', 'slovak', 'italian', 'norwegian']
             vocab_directory:  'src/locales'
             output_directory: 'dist'
             template_directory: 'dist'
@@ -198,14 +182,10 @@ module.exports = (grunt) ->
             'control_s.htm': ['control_s.tmpl.htm']
             'setup.htm': ['setup.tmpl.htm']
             'gravity.htm': ['gravity.tmpl.htm']
+            'gravity_e32.htm': ['gravity_e32.tmpl.htm']
             'logging.htm': ['logging.tmpl.htm']
             'config.htm': ['config.tmpl.htm']
             'pressure.htm': ['pressure.tmpl.htm']
-            'classic-index.htm': ['classic-index.tmpl.htm']
-            'classic-setup.htm': ['classic-setup.tmpl.htm']
-            'classic-gdc.htm': ['classic-gdc.tmpl.htm']
-            'classic-log.htm': ['classic-log.tmpl.htm']
-            'classic-config.htm': ['classic-config.tmpl.htm']
             'BPLogWebViewer.htm': ['BPLogWebViewer.tmpl.htm']
             'BPLLogViewer.htm': ['BPLLogViewer.tmpl.htm']
           ]

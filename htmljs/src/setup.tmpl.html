@@ -104,7 +104,87 @@
                     <td>
                         <div class='device-setting-container'>
                             <span class='setting-name'><%= setup_calibration %></span>
-                            <input class='setting-value device-calibration'>
+                            <input size="6" class='setting-value device-calibration'>
+                        </div>
+                    </td>    
+                    <td>
+                        <div class='device-setting-container'>
+                            <span class='setting-name'><%= setup_function %></span>
+                            <select class='setting-value device-function'>
+                                <option value=0><%= setup_none %></option>
+                                <option value=5><%= setup_chamber_temp %></option>
+                                <option value=6><%= setup_room_temp %></option>
+                                <option value=9><%= setup_beer_temp %></option>
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class='device-container dht-temp-device'>
+            <table>
+                <tr>
+                    <td ROWSPAN=2>
+                        <div class='device-title'></div>
+                        <br>
+                        <button><%= setup_apply %></button>
+                    </td>
+                    <td>
+                        <div class='device-setting-container'>
+                            <span class='setting-name'><%= setup_device_slot %></span>
+                            <select class='slot-select'>
+                                <option value='-1'><%= setup_unassigned %></option>
+                                <option value='0'>0</option>
+                                <option value='1'>1</option>
+                                <option value='2'>2</option>
+                                <option value='3'>3</option>
+                                <option value='4'>4</option>
+                                <option value='5'>5</option>
+                                <option value='6'>6</option>
+                                <option value='7'>7</option>
+                                <option value='8'>8</option>
+                                <option value='9'>9</option>
+                                <option value='10'>10</option>
+                                <option value='11'>11</option>
+                                <option value='12'>12</option>
+                                <option value='13'>13</option>
+                                <option value='14'>14</option>
+                                <option value='15'>15</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        <div class='device-setting-container'>
+                            <span class='setting-name'><%= setup_hardware_type %></span>
+                            <span class='setting-value device-type'><%= dht_temp_sensor %></span>
+                        </div>
+                    </td>
+                    <td></td>
+                    <td>
+                        <div class='device-setting-container device-address-container'>
+                            <span class='setting-name'></span>
+                            <span class='setting-value device-address'></span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class='device-setting-container'>
+                            <span class='setting-name'><%= setup_controller_pin %></span>
+                            <span class='setting-value device-pin'></span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class='device-setting-container'>
+                            <span class='setting-name'><%= setup_value %></span>
+                            <span class='setting-value device-value'>--</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class='device-setting-container'>
+                            <span class='setting-name'><%= setup_calibration %></span>
+                            <input size="6" class='setting-value device-calibration'>
                         </div>
                     </td>    
                     <td>
@@ -184,7 +264,7 @@
                     <td>
                         <div class='device-setting-container'>
                             <span class='setting-name'><%= setup_calibration %></span>
-                            <input class='setting-value device-calibration'>
+                            <input size="6" class='setting-value device-calibration'>
                         </div>
                     </td>    
                     <td>
@@ -249,6 +329,16 @@
                                 <option value=1><%= setup_inverted %></option>
                             </select>
                         </div>
+                        <div class='device-setting-container device-humidity-sensor-container'  style="display:none;">
+                            <span class='setting-name'><%= setup_sensor_type %></span>
+                            <select class='setting-value device-humidity-sensor'>
+                                <option value=11>DHT11</option>
+                                <option value=12>DHT12</option>
+                                <option value=22>DHT22</option>
+                                <option value=21>DHT21/AM2301</option>
+
+                            </select>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -265,7 +355,9 @@
                         </div>
                     </td>
                     <td>
-                        <div class='device-setting-container'>
+                        <div class='device-setting-container  device-humidity-sensor-container device-calibration'>
+                            <span class='setting-name'><%= setup_calibration %></span>
+                            <input size="6" class='setting-value device-calibration'>
                         </div>
                     </td>    
                     <td>
@@ -278,8 +370,11 @@
                                 <option value=3><%= setup_chamber_cooler %></option>
                                 <option value=4><%= setup_chamber_light %></option>
                                 <option value=7><%= setup_chamber_fan %></option>
+                                <option value=8><%= dht_sensor_family %></option>
                                 <option value=14><%= setup_capper %></option>
                                 <option value=15><%= setup_ptc_cooler %></option>
+                                <option value=16><%= setup_humidifier %></option>
+                                <option value=17><%= setup_dehumidifier %></option>
 
                             </select>
                         </div>
@@ -389,6 +484,21 @@
         <div id="blockscreencontent" class="modal-content">
         </div>
     </div>
+
+    <div id="dlg_restore" class="modal">
+        <div class="modal-content"  style="padding:4em">
+            <div class="modal-body">
+                <p style="margin:1em">
+                    <input type="file" id="restore-file"></input>
+                    <span class="dialog-msg"></span>
+                </p>    
+            </div>
+            <div class="modal-footer" style="float:right">
+              <button type="button" class="btn btn--raised cancel"><%= dlg_cancel %></button>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>

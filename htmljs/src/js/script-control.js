@@ -856,12 +856,40 @@ function rcvBeerProfile(p) {
     ControlChart.init("tc_chart", profileEditor.chartdata(), p.u);
 }
 
+function HC_init(){
+    Q("#humidity-control").style.display="none";
+}
+function HC_show(config){
+    Q("#humidity-control").style.display="";
+    Q("#hc-mode").value = config.m;
+    Q("#hc-target").value = config.t;
+}
+
+function HC_apply(){
+    var target = Q("#hc-target").value;
+    var mode =  Q("#hc-mode").value;
+
+    s_ajax({
+        url:"/rh",
+        m: "POST",
+        data: "m=" + mode +"&t=" + target,
+        success: function(a) {
+            alert("<%= done %>")
+        },
+        fail: function(a) {
+            alert("<%= failed %>:" + a);
+        }
+    })
+
+}
+/* deprecated
 function initctrl_C(next) {
 //    modekeeper.init();
     Capper.init();
     modekeeper.init();
     openDlgLoading();
 }
+*/
 
 function communicationError() {
     var div = Q('.error');
@@ -900,6 +928,9 @@ function initctrl() {
                     Capper.status(c["cap"]);
                 if (typeof c["ptcs"] != "undefined")
                     PTC.config(c.ptcs);
+                if (typeof c["rh"] != "undefined")
+                    HC_show(c.rh);
+                
             },
             C: function(c) { ccparameter(c); },
             B: rcvBeerProfile

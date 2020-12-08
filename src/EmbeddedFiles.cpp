@@ -98,7 +98,7 @@ EmbeddedFileMapEntry fileMaps[]={
 };
 
 #else
-
+#error "classic frontend is deprecated!"
 #include "data/c_lcd_htm.h"
 
 #include ClassicIndexHtmFile

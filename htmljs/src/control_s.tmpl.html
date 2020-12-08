@@ -226,6 +226,32 @@
             </div>
         </div>
 
+
+        <!-- Humidity Control-->
+        <div id="humidity-control" class="card" horizontal layout main-justified cross-center>
+            <h6>Humidity Control</h6>
+            <div layout horizontal cross-center>
+                <h6 class="inline-header">
+                    Mode
+                </h6>
+                <select id="hc-mode">
+                    <option value="0">Off</option>
+                    <option value="1">Control</option>
+                </select>
+            </div>
+
+            <div layout horizontal cross-center>
+                <h6 class="inline-header">
+                    Target Relative Humidity
+                </h6>
+                <input type="text" id="hc-target" name="target-humidity" size=4> %
+            </div>
+        
+            <div class="card-footer">
+                <button class="btn btn--raised" style="max-width: 200px;" onclick="HC_apply();"><%= control_apply %></button>
+            </div>
+        </div>
+
     </div>
 
     <!-- build:include partials/footer.html -->

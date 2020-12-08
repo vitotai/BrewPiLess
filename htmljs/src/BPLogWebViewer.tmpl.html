@@ -31,6 +31,7 @@
         <span id="y2label"><%= chart_gravity %></span>
         <span id="psilabel"><%= chart_pressure %></span>
         <span id="vollabel"><%= chart_co2vol %></span>
+        <span id="rhlabel"><%= chart_rh %></span>
 </div>
 
     <div viewport layout horizontal>
@@ -40,6 +41,7 @@
                 <div class=chart>
                     <div id=div_g class=chart-main></div>
                     <div id=div_p class="chart-p pressure-group"></div>
+                    <div id=div_h class="chart-p humidity-group forced-hidden"></div>
                 </div>
                 <ul flex class=chart-legend>
                     <li layout horizontal main-justified class="chart-legend-row time"><span class=beer-chart-legend-time><%= legend_date %></span> <span class=beer-chart-state><%= legend_state %></span></li>
@@ -89,6 +91,12 @@
                     <li layout horizontal main-justified class="chart-legend-row carbonation pressure-group">
                         <input type="checkbox" id="carbonation" name="set-name" class="switch-input" checked>
                         <label onclick="BChart.toggle(CarbonationLine,1)" for="carbonation" class="switch-label"><%= legend_carbonation %></label>
+                        <div class="legend-value">--</div>
+                    </li>
+
+                    <li layout horizontal main-justified class="chart-legend-row humidity humidity-group forced-hidden">
+                        <input type="checkbox" id="humidity" name="set-name" class="switch-input" checked>
+                        <label onclick="" for="humidity" class="switch-label"> <%= label_humidity %>  </label>
                         <div class="legend-value">--</div>
                     </li>
 

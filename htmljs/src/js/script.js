@@ -167,10 +167,11 @@
                 t.reqdata();
             }, t.chart.interval * 1000);
         },
-        init: function(id, y1, y2,id2,pl,carbonation) {
+        init: function(id, y1, y2,id2,pl,carbonation,id3,rhLabel) {
             this.chart = new BrewChart(id);
             this.chart.setLabels(y1, y2);
             if(typeof id2 != "undefined") this.chart.setPChart(id2,pl,carbonation)
+            if(typeof id3 != "undefined") this.chart.setHChart(id3,rhLabel);
         },
     timer: null,
         start: function() {
@@ -749,6 +750,10 @@
         if(typeof c["G"] != "undefined") gravityInfo(c.G);
 
         ptcshow(c);
+        if(typeof c["h"] != "undefined") {
+            Q("#humidity-info").style.display="";
+            Q("#humidity").innerHTML= (c.h <=100)?  (c.h + "%"):"--";
+        }
     }
 
     function connBWF() {
@@ -829,7 +834,7 @@
         Q("#pressure-info-pane").style.display = "none";
         Q(".gravity-device-pane").style.display = "none";
         window.plato = false;
-        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML);
+        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML,"div_h",Q("#rhlabel").innerHTML);
         initRssi();
         Capper.init();
         BWF.gotMsg = true;

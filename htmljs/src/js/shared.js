@@ -101,7 +101,7 @@ function getActiveNavItem() {
     var path = window.location.pathname.split("/").pop();
     if (path == "") path = "index.htm";
     var element = Q('.options>li>a[href="/' + path + '"]');
-    element.className += 'active';
+    if(element) element.className += 'active';
 }
 
 function formatDate(dt) {

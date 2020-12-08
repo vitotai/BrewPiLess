@@ -255,6 +255,11 @@ var  CHART_VERSION = 6;
                 var carbo=this.pchart.getValue(row, 3 );
                 Q(".chart-legend-row.carbonation .legend-value").innerHTML = (carbo == null || isNaN(carbo))? "--":carbo.toFixed(1);
             }
+            if(this.rhValid){
+                var rh = this.hchart.getValue(row, 1);
+                Q(".chart-legend-row.humidity .legend-value").innerHTML = (isNaN(rh) || rh == null || rh==255)? "--":(rh+"%");
+            }
+
         };
 
         BrewChart.prototype.hideLegend = function() {
@@ -452,25 +457,26 @@ var  CHART_VERSION = 6;
                             ctx.restore();
                         }
                 }
-                ,
+/*                ,
                 interactionModel:{ 
-//                    mousedown: Dygraph.defaultInteractionModel.mousedown, 
-//                    mousemove: Dygraph.defaultInteractionModel.mousemove, 
-//                    mouseup: Dygraph.defaultInteractionModel.mouseup, 
+                    mousedown: Dygraph.defaultInteractionModel.mousedown, 
+                    mousemove: Dygraph.defaultInteractionModel.mousemove, 
+                    mouseup: Dygraph.defaultInteractionModel.mouseup, 
 //                    touchstart:Dygraph.defaultInteractionModel.touchstart,
                     touchstart: function(event, g, context){
                         event.stopPropagation();
                         t.chart.setSelection(t.findNearestRow(g,t.chart.toDataXCoord(event.touches[0].clientX)));
                     }, 
-//                    touchend: Dygraph.defaultInteractionModel.touchend, 
-                    touchend:function(event,g,context){
-                    },
+                    touchend: Dygraph.defaultInteractionModel.mouseup, 
+//                    touchend:function(event,g,context){
+//                    },
 //                    touchmove: Dygraph.defaultInteractionModel.touchmove
                     touchmove:function(event,g,context){
                         event.stopPropagation();
                         t.chart.setSelection(t.findNearestRow(g,t.chart.toDataXCoord(event.touches[0].clientX)));
                     }
                 }
+*/
                     /*                drawCallback: function(beerChart, is_initial) {
                                         if (is_initial) {
                                             if (t.anno.length > 0) {
@@ -727,6 +733,10 @@ var  CHART_VERSION = 6;
                     t.coTemp = 20;
                     t.cal_igmask = 0;
                     t.specificGravity = null;
+                    t.rh=[];
+                    t.lastRh=255;
+                    t.lastSetRh=255;
+                    t.rhValid=false;
 
                     t.targetPsi = NaN; // to denote "no line/point"
 
@@ -779,7 +789,15 @@ var  CHART_VERSION = 6;
                         t.angles.push(null);
                         t.rawSG.push[null];
                     }*/
-
+                } else if (d0 == 0xFC) { //Humidity
+                    if(d1 <=100){
+                        t.lastRh = d1;
+                        t.rhValid=true;
+                    }else if(t.rhValid){
+                        t.lastRh = d1;
+                    }
+                } else if (d0 == 0xFD) { //Humidity target
+                    t.lastSetRh = d1;
                 } else if (d0 == 0xF8) { //OG
                     var hh = data[i++];
                     var ll = data[i++];
@@ -862,7 +880,11 @@ var  CHART_VERSION = 6;
             if(typeof this.sync != "undefined") this.sync.detach();
         };
         BrewChart.prototype.synchronize=function(){
-            this.sync = Dygraph.synchronize([this.chart,this.pchart],{selection: true,zoom:true,range:false});
+            var t=this;
+            var charts=[t.chart];
+            if(t.psiAvail) charts.push(t.pchart);
+            if(t.rhValid) charts.push(t.hchart);
+            if(charts.length >1) t.sync = Dygraph.synchronize(charts,{selection: true,zoom:true,range:false});
         };
         BrewChart.prototype.updateChart = function() {
             var t = this;
@@ -871,21 +893,39 @@ var  CHART_VERSION = 6;
                 'file': t.data
             });
             t.chart.setAnnotations(t.anno);
-
+            var sync=false;
             if(t.psiAvail){
                 if(typeof t.pchart == "undefined"){
                     document.querySelectorAll(".pressure-group").forEach(function(ele){
-                        ele.style.visibility = "visible";
+                        ele.classList.remove("forced-hidden");
                     });
+
                     t.createPSIChart();
-                    
-                    t.synchronize();
+                    sync=true;  
                 }
                 else t.pchart.updateOptions({
                     'file': t.psi,
                     'dateWindow':[t.psi[0][0],t.psi[t.psi.length-1][0]]
                 });
             }
+
+            if(t.rhValid){
+                if(typeof t.hchart == "undefined"){
+                    document.querySelectorAll(".humidity-group").forEach(function(ele){
+                        ele.classList.remove("forced-hidden");
+                    });
+
+                    t.createHumidityChart();
+                    sync=true;  
+                }
+                else t.hchart.updateOptions({
+                    'file': t.rh,
+                    'dateWindow':[t.psi[0][0],t.psi[t.psi.length-1][0]]                    
+                });
+            }
+
+            if(sync) t.synchronize();
+
         };
         BrewChart.prototype.processRecord = function() {
             var t = this;
@@ -959,8 +999,48 @@ var  CHART_VERSION = 6;
                     t.rawSG.push(t.specificGravity);
                     t.specificGravity = null;
                 }
+                // humidity
+                t.rh.push([t.dataset[0],(t.lastRh <=100)? t.lastRh:NaN,(t.lastSetRh<=100)? t.lastSetRh:NaN]);
+                
 
                 t.incTime(); // add one time interval
             }
+        };
+
+
+        BrewChart.prototype.setHChart = function(id,label) {
+            this.hcid=id;
+            this.hlabel=label;
+        };
+        BrewChart.prototype.createHumidityChart = function() {
+            var t=this;
+            var ldiv = document.createElement("div");
+            ldiv.className = "hide";
+            document.body.appendChild(ldiv);
+
+            t.hchart = new Dygraph(document.getElementById(t.hcid), t.rh, {
+                labels: ["Time","rh","set"],
+                colors: ["#2222DD","#EE1111"],
+                connectSeparatedPoints: true,
+                ylabel: t.hlabel,
+                y2label: "%",
+                axisLabelFontSize: 12,
+                gridLineColor: '#ccc',
+                gridLineWidth: '0.1px',
+                labelsDiv: ldiv,
+                labelsDivStyles: {
+                    'display': 'none'
+                },
+                //displayAnnotations: true,
+                //showRangeSelector: true,
+                strokeWidth: 1,
+                highlightCallback: function(e, x, pts, row) {
+                    t.showLegend(x, row);
+                },
+                unhighlightCallback: function(e) {
+                    t.hideLegend();
+                }
+            });
+            t.hchart.setVisibility(0,true);
         };
         /* end of chart.js */

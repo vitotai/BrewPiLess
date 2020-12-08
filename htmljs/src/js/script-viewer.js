@@ -4,10 +4,11 @@
                 else this.chart.toggleLine(line);
             },
     
-            init: function(id, y1, y2,id2,pl,carbonation) {
+            init: function(id, y1, y2,id2,pl,carbonation,id3,rhLabel) {
                 this.chart = new UniBrewChart(id);
                 this.chart.setLabels(y1, y2);
                 this.chart.setPChart(id2,pl,carbonation)
+                this.chart.setHChart(id3,rhLabel);    
             },
             setIgnoredMask: function(m) {
                 var t = this;
@@ -64,7 +65,8 @@
                 }
             }
 
-            BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML);
+//            BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML);
+              BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML,"div_h",Q("#rhlabel").innerHTML);
 
             if (Q('#dropfile')) {
                 Q('#dropfile').ondragover = function(e) {
