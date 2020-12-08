@@ -50,6 +50,7 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
     * Pressure report for Brewfather.app
     * [ESP32] HTTPS remote logging.
     * [ESP32] TILT support
+    *  Classic frontend is no longer maintained.
 
  * 4.0r1
     * Fix lost of WiFi connection after a few days.

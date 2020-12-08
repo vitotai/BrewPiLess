@@ -49,8 +49,7 @@ typedef struct _GravityDeviceConfiguration{
 
 	uint8_t  stableThreshold;
 	uint8_t  usePlato;
-    uint8_t  tiltColor;
-    uint8_t  _padding[5];
+    uint8_t  _padding[6];
 }GravityDeviceConfiguration;
 
 

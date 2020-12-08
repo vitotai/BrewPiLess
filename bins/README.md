@@ -20,33 +20,27 @@ Those images are prebuilt:
  * framework 2.2.0
  * flash layout 4m2m(2M program/2M file space)
 
-## spainish, Portuguese-br, slovak
+## spainish, Portuguese-br, slovak, italian, norwegian
  * Default configuration in languages other than English
 
 ## classic
- * Default configuration
- * Classic web interface
- * flash layout 4m1m(1M program/3M file space)
+ * Deprecated.
 
 
 ## sonoff
  * For SONOFF.
  * Sensor on D5, Coolling on D6 
- * No rotary encoder. No LCD
  * OTA update **NOT** supported.
- * 512K SPIFFS for logging.
- * classic ui
+ * 64K SPIFFS for logging.
 
-## sonoffota
- * Same as sonsoff, but
- * 64K SPIFFS for configurations
- * OTA update supported
- * classic ui
- * NO longger supported after v3.6
 
 ## Newer SONOFF/esp8285
  * flash mode is set to DOUT
- * classic ui
+
+## sonoff-am2301
+ * same as esp8285, but D5 is released to be used with AM2301. Manual setup is required, though. 
+
+
 
 ## oled
  * Standard options
