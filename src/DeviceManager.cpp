@@ -140,7 +140,7 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 #if EnableDHTSensorSupport 
 			else if(dt==DEVICETYPE_HUMIDITY_SENSOR)
 			{
-				Serial.printf("create sensorType:%d, cal:%d, %d\n",config.hw.humiditySensorType,config.hw.calibration, tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));
+//				Serial.printf("create sensorType:%d, pinNr:%d\n",config.hw.humiditySensorType,config.hw.pinNr);
 				// calibration for temperature is in fixed_4_4 fromat
 				return new DHTSensor(config.hw.pinNr,config.hw.humiditySensorType,
 				tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));
@@ -1020,7 +1020,7 @@ void DeviceManager::enumerateHardware()
 	#endif
 
 	#if EnableDHTSensorSupport //vito: enumerate device
-	if (spec.hardware==-1 || isDHTTempSensor(DeviceHardware(spec.hardware))) {
+	if (isDHTSensorInstalled() &&( spec.hardware==-1 || isDHTTempSensor(DeviceHardware(spec.hardware))) ) {
 		enumerateDHTTempDevices(spec, OutputEnumeratedDevices, out);
 	}
 	#endif
@@ -1123,6 +1123,10 @@ DeviceType deviceType(DeviceFunction id) {
 #endif
 #if EanbleParasiteTempControl
 	case DEVICE_PTC_COOL:
+#endif
+#if EnableDHTSensorSupport
+	case DEVICE_CHAMBER_HUMIDIFIER:
+	case DEVICE_CHAMBER_DEHUMIDIFIER:
 #endif
 		return DEVICETYPE_SWITCH_ACTUATOR;
 

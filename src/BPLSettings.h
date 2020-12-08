@@ -261,6 +261,32 @@ typedef struct _WiFiConfiguration{
 #endif
 
 //####################################################
+/* HumidityControl */
+// 28 bytes
+
+typedef struct _HumidityControlSettings{
+    uint8_t  mode;
+    uint8_t  target;
+    uint8_t  idleLow;
+    uint8_t  idleHigh;
+    uint8_t  humidifyingTargetHigh;
+    uint8_t  dehumidifyingTargetLow;
+    uint8_t  _reserved0;
+    uint8_t  _reserved1;
+
+    uint16_t minHumidifyingIdleTime;
+    uint16_t minHumidifyingRunningTime;
+    uint16_t minDehumidifyingIdleTime;
+    uint16_t minDehumidifyingRunningTime;
+    uint16_t minDeadTime;
+    uint8_t  _reserved2;
+    uint8_t  _reserved3;
+
+    uint8_t  _reserved4[8];
+} HumidityControlSettings;
+
+
+//####################################################
 // whole structure
 struct Settings{
     SystemConfiguration syscfg; //0:156
@@ -284,6 +310,9 @@ struct Settings{
 #endif
 #if SupportTiltHydrometer
     TiltConfiguration tiltConfiguration;
+#endif
+#if EnableDHTSensorSupport
+    HumidityControlSettings humidityControl;
 #endif
 };
 
@@ -356,6 +385,11 @@ public:
     TiltConfiguration* tiltConfiguration(void){ return & _data.tiltConfiguration;}
 #endif
 
+
+#if EnableDHTSensorSupport
+    HumidityControlSettings* humidityControlSettings(void){ return & _data.humidityControl;}
+#endif
+
 protected:
     Settings _data;
 
@@ -370,6 +404,9 @@ protected:
     void defaultAutoCapSettings(void);
 #if EanbleParasiteTempControl   
     void defaultParasiteTempControlSettings(void);
+#endif
+#if EnableDHTSensorSupport
+    void defaultHumidityControlSettings(void);
 #endif
 };
 

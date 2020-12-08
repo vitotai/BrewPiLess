@@ -3,6 +3,8 @@
 
 #include "DHT.h"
 
+#define INVALID_HUMIDITY_VALUE 0xFF
+
 
 class DHTSensor{
 public:
@@ -13,7 +15,11 @@ public:
     }
     uint8_t humidity(){
         float h=dht.readHumidity(true);
-        DBG_PRINTF("DHxx H=%d/10, cal=%d\n",(int)(h *10),_cal);
+        if(h == NAN){
+            DBG_PRINTF("Invalid value from sensor!\n");
+            DBG_PRINTF("DHxx H=%d/10, cal=%d\n",(int)(h *10),_cal);
+            return INVALID_HUMIDITY_VALUE;
+        }
         return (uint8_t) (h + _cal);
     }
     float temperature(bool isFarenheit){

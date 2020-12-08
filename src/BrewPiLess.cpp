@@ -175,6 +175,8 @@ extern "C" {
 #define PRESSURE_PATH "/psi"
 #endif
 
+#define HUMIDITY_CONTROL_PATH "/rh"
+
 const char *public_list[]={
 "/bwf.js",
 "/brewing.json"
@@ -710,6 +712,21 @@ public:
 			}
 		}
 		#endif
+		#if EnableDHTSensorSupport
+		else if(request->url() == HUMIDITY_CONTROL_PATH){
+			if(request->hasParam("m",true) &&  request->hasParam("t",true) ){
+				uint8_t mode=(uint8_t) request->getParam("m",true)->value().toInt();
+				uint8_t target=(uint8_t) request->getParam("t",true)->value().toInt();
+				humidityControl.setMode(mode);
+				humidityControl.setTarget(target);
+				theSettings.save();
+				request->send(200,"application/json","{}");
+			}else{
+				request->send(404);
+				DBG_PRINTF("missing parameter:m =%d, t=%d\n",request->hasParam("m",true), request->hasParam("t",true) );
+			}
+		}
+		#endif
 		else if(request->url() == BEER_PROFILE_PATH){
 			if(request->method() == HTTP_GET){
 				request->send(200,"application/json",theSettings.jsonBeerProfile());
@@ -811,6 +828,9 @@ public:
 				#if SupportPressureTransducer
 				|| request->url() == PRESSURE_PATH
 				#endif
+				#if EnableDHTSensorSupport
+				|| request->url() == HUMIDITY_CONTROL_PATH
+				#endif
 	 			)
 	 			return true;
 		}
@@ -853,35 +873,40 @@ AppleCNAHandler appleCNAHandler;
 
 
 #if AUTO_CAP
-String capControlStatus(void)
-{
+
+void capControlStatusJson(JsonObject& obj){
+	
 	uint8_t mode=autoCapControl.mode();
-	bool capped = autoCapControl.isCapOn();
-	String 	capstate=String("\"m\":") + String((int)mode) + String(",\"c\":") + String(capped);
+	obj["m"] = mode;
+	obj["c"] = autoCapControl.isCapOn()? 1:0;
 
 	if(mode == AutoCapModeGravity){
-		capstate += String(",\"g\":") + String(autoCapControl.targetGravity(),3);
+		obj["g"]=autoCapControl.targetGravity();
 	}else if (mode ==AutoCapModeTime){
-		capstate += String(",\"t\":") + String(autoCapControl.targetTime());
+		obj["t"]=autoCapControl.targetTime();
 	}
 
 #if SupportPressureTransducer
 	PressureMonitorSettings* ps=theSettings.pressureMonitorSettings();
 	if(ps->mode == PMModeControl){
-		capstate += String(",\"pm\":2,\"psi\":") + String(ps->psi);
+		obj["pm"]=2;
+		obj["psi"]= ps->psi;
 	}
 #endif
 
-	return capstate;
-} 
+}
+
 void stringAvailable(const char*);
 void capStatusReport(void)
 {
-	char buf[128];
-	String capstate= capControlStatus();
 
-	sprintf(buf,"A:{\"cap\":{%s}}", capstate.c_str());
-	stringAvailable(buf);
+	DynamicJsonDocument doc(1024);
+	JsonObject cap = doc.createNestedObject("cap");
+	capControlStatusJson(cap);
+
+	String out="A:";
+	serializeJson(doc,out);
+	stringAvailable(out.c_str());
 }
 #endif
 
@@ -900,36 +925,36 @@ void greeting(std::function<void(const char*)> sendFunc)
 	const char *logname= brewLogger.currentLog();
 	if(logname == NULL) logname="";
 	SystemConfiguration *syscfg= theSettings.systemConfiguration();
-#if AUTO_CAP
-	String capstate= capControlStatus();
 
+	DynamicJsonDocument doc(1024);
+
+	doc["nn"] = String(syscfg->titlelabel);
+	doc["ver"] =  String(BPL_VERSION);
+	doc["rssi"]= WiFi.RSSI();
+	doc["tm"] = TimeKeeper.getTimeSeconds();
+	doc["off"]= TimeKeeper.getTimezoneOffset();
+	doc["log"] = String(logname);
+
+#if AUTO_CAP
+	JsonObject cap = doc.createNestedObject("cap");
+	capControlStatusJson(cap);
+
+#endif		 
 #if EanbleParasiteTempControl
 	
-	String ptcstate= parasiteTempController.getSettings();
-
-	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
-				\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s},\"ptcs\":%s}"
-		,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
-		TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
-		logname, capstate.c_str(),ptcstate.c_str());
-
-
-#else
-	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\
-				\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s}}"
-		,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
-		TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
-		logname, capstate.c_str());
-#endif
-	
-#else
-	sprintf(buf,"A:{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld, \"log\":\"%s\"}"
-		,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
-		TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset(),
-		logname);
+	doc["ptc"]= serialized(parasiteTempController.getSettings());
 #endif
 
-	sendFunc(buf);
+#if EnableDHTSensorSupport
+	JsonObject hum = doc.createNestedObject("rh");
+	hum["m"] = humidityControl.mode();
+	hum["t"] = humidityControl.targetRH();
+#endif
+
+	String out="A:";
+	serializeJson(doc,out);
+
+	sendFunc(out.c_str());
 
 	// beer profile:
 	String profile=String("B:") + theSettings.jsonBeerProfile();
@@ -1981,6 +2006,12 @@ void setup(void){
 	//mqtt
 	mqttRemoteControl.begin();
 #endif
+
+	#if EnableDHTSensorSupport
+	humidityControl.begin();
+	#endif
+
+
 }
 
 uint32_t _rssiReportTime;

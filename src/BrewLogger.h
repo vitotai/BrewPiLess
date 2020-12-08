@@ -42,6 +42,7 @@ extern FS& FileSystem;
 #define SpecificGravityTag 0xFB
 
 #define HumidityTag 0xFC
+#define HumiditySetTag 0xFD
 
 #define ResumeBrewTag 0xFE
 #define StartLogTag 0xFF
@@ -171,6 +172,8 @@ private:
 #if EnableDHTSensorSupport	
 	uint8_t _lastHumidity;
 	uint8_t _savedHumidityValue;
+	uint8_t _lastHumidityTarget;
+	uint8_t _savedHumidityTarget;
 #endif
 
 	uint16_t  _headData[VolatileDataHeaderSize];
@@ -193,6 +196,7 @@ private:
 	void _addGravityRecord(bool isOg, uint16_t gravity);
 #if EnableDHTSensorSupport	
 	void _addHumidityRecord(uint8_t humidity);
+	void _addHumidityTargetRecord(uint8_t target);
 #endif
 
 	void _addModeRecord(char mode);

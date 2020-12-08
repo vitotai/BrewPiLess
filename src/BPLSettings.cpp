@@ -96,6 +96,9 @@ void BPLSettings::setDefault(void)
 #if EanbleParasiteTempControl
     defaultParasiteTempControlSettings();
 #endif
+#if EnableDHTSensorSupport
+	defaultHumidityControlSettings();
+#endif
 }
 
 void BPLSettings::defaultTimeInformation(void){}
@@ -1192,6 +1195,16 @@ bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 	#endif
 
 	return true;
+}
+
+#endif
+
+
+
+#if EnableDHTSensorSupport
+
+void BPLSettings::defaultHumidityControlSettings(void){
+
 }
 
 #endif

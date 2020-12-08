@@ -4,34 +4,31 @@
 #include "Brewpi.h"
 #include "Actuator.h"
 #include "DHTSensor.h"
+#include "BPLSettings.h"
 
-#define INVALID_HUMIDITY_VALUE 0xFF
 #define MINIMUM_HUMIDITY_SENSOR_READ_PERIOD 10000
 #define IsValidHumidityValue(a) ((a) <=100)
 
 extern ValueActuator defaultActuator;
+#define HC_ModeOff 0
+#define HC_ModeControl 1
 
-typedef struct _HumidityControlSettings{
-    uint8_t  target;
-    uint8_t  idleLow;
-    uint8_t  idleHigh;
+// hard coding. It's so tedious to implement the interface.
+#define MinimumHumidifyingRunningTime 60
+#define MinimumHumidifyingIdleTime 60
+#define MinimumDehumidifyingRunningTime 300
+#define MinimumDehumidifyingIdleTime 300
+#define MinimumDeadTime 600
 
-    uint8_t  humidifyingTargetHigh;
-    uint8_t  dehumidifyingTargetLow;
-
-    uint16_t minHumidifyingIdleTime;
-    uint16_t minHumidifyingRunningTime;
-    uint16_t minDehumidifyingIdleTime;
-    uint16_t minDehumidifyingRunningTime;
-    uint16_t minDeadTime;
-} HumidityControlSettings;
+#define DefaultIdleHigh 3
+#define DefaultIdleLow 3
+#define HumidifyingTargetHigh 5
+#define DehumidifyingTargetLow 5
 
 typedef enum _HumidityControlState{
     HC_Idle,
     HC_Dehumidifying,
-    HC_Humidifying,
-    HC_WaitDehumidifying,
-    HC_WaitHumidifying
+    HC_Humidifying
 }HumidityControlState;
 
 #define ToSystemTick(a) (a)*1000
@@ -43,57 +40,45 @@ public:
 	static Actuator* dehumidifier;
 
 
-    HumidityControl():_humidity(INVALID_HUMIDITY_VALUE),_state(HC_Idle),_prevState(HC_Idle){}    
+    HumidityControl():_mode(HC_ModeOff),_humidity(INVALID_HUMIDITY_VALUE),_state(HC_Idle),_prevState(HC_Idle){}    
     
     void updateState(){
         switch(_state){
             case HC_Idle:
-                if(_humidity > _cfg.target +_cfg.idleHigh){
+                if(_humidity > _cfg->target +_cfg->idleHigh){
                     // start dehumidifying, if possible
                     if( dehumidifier != &defaultActuator){
-                        if( (_prevState == HC_Dehumidifying && (_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg.minDehumidifyingIdleTime)))
-                         || ( (_prevState == HC_Humidifying || _prevState == HC_Idle )&& (_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg.minDeadTime) )) ){
-
-                             _prevState = _state;
-                             _state = HC_Dehumidifying;
-                             _lastStateChangeTime=_lastreadtime;
-                             dehumidifier->setActive(true);
+                        if( (_prevState == HC_Dehumidifying && (_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg->minDehumidifyingIdleTime)))
+                         || ( (_prevState == HC_Humidifying || _prevState == HC_Idle )&& (_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg->minDeadTime) )) ){
+                            _startDehumidifying();
                         }
                     }
-                }else  if(_humidity < _cfg.target - _cfg.idleLow){
+                }else  if(_humidity < _cfg->target - _cfg->idleLow){
                     // start humidifying
                     if( humidifier != &defaultActuator){
-                        if( (_prevState == HC_Humidifying && (_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg.minHumidifyingIdleTime)))
-                         || ( (_prevState == HC_Dehumidifying || _prevState == HC_Idle )&& (_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg.minDeadTime) )) ){
+                        if( (_prevState == HC_Humidifying && (_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg->minHumidifyingIdleTime)))
+                         || ( (_prevState == HC_Dehumidifying || _prevState == HC_Idle )&& (_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg->minDeadTime) )) ){
+                             _startHumidifying();
 
-                             _prevState = _state;
-                             _state = HC_Humidifying;
-                             _lastStateChangeTime=_lastreadtime;
-                             humidifier->setActive(true);
                         }
                     }
                 }
                 break;
 
             case HC_Dehumidifying:
-                if(_humidity < _cfg.target - _cfg.dehumidifyingTargetLow){
-                    if(_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg.minDehumidifyingRunningTime)){
-                        _prevState = _state;
-                        _state = HC_Idle;
-                        _lastStateChangeTime=_lastreadtime;
-                        dehumidifier->setActive(false);
-                    }
+                if( (_humidity < _cfg->target - _cfg->dehumidifyingTargetLow  || _cfg->mode == HC_ModeOff) && 
+                    _lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg->minDehumidifyingRunningTime)){
+                        _stopDehumidifying();
+                        if(_cfg->mode == HC_ModeOff) _mode =HC_ModeOff;
                 }
+
                 break;
 
             case HC_Humidifying:
-                if(_humidity > _cfg.target + _cfg.humidifyingTargetHigh){
-                    if(_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg.minHumidifyingRunningTime)){
-                        _prevState = _state;
-                        _state = HC_Idle;
-                        _lastStateChangeTime=_lastreadtime;
-                        humidifier->setActive(false);
-                    }
+                if( (_humidity > _cfg->target + _cfg->humidifyingTargetHigh || _cfg->mode == HC_ModeOff)
+                    && _lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg->minHumidifyingRunningTime)){
+                        _stopHumidifying();                    
+                        if(_cfg->mode == HC_ModeOff) _mode =HC_ModeOff;
                 }
                 break;
         }
@@ -105,9 +90,9 @@ public:
             if ((currenttime - _lastreadtime) > MINIMUM_HUMIDITY_SENSOR_READ_PERIOD){                
                 _lastreadtime = currenttime;
                 _humidity= dhtSensor->humidity();
-                DBG_PRINTF("Humidity:%d\n",_humidity);
-
-                if(IsValidHumidityValue(_humidity)){
+                //DBG_PRINTF("Humidity:%d\n",_humidity);
+                
+                if( _mode != HC_ModeOff && IsValidHumidityValue(_humidity)){
                     updateState();
                 }
             }
@@ -122,7 +107,101 @@ public:
     bool sensorInstalled(){
         return dhtSensor != NULL;
     }
+    
+    
+    uint8_t mode(){
+        return _cfg->mode;
+        modeChanged();
+    }
+
+    void setMode(uint8_t mode){
+        _cfg->mode = mode;
+    }    
+    
+    uint8_t targetRH(){
+        if(_cfg->mode == HC_ModeOff)  return INVALID_HUMIDITY_VALUE;
+        return _cfg->target;
+    }
+
+    void setTarget(uint8_t target){
+        _cfg->target = target;
+    }
+
+    void begin(){
+        _cfg =  theSettings.humidityControlSettings();
+        _mode = _cfg->mode;
+        _state = HC_Idle;
+        // someday, the interface will be implmented. BUt now, let's use default
+        _cfg->idleLow = DefaultIdleLow;
+        _cfg->idleHigh = DefaultIdleHigh;
+        _cfg->humidifyingTargetHigh = HumidifyingTargetHigh;
+        _cfg->dehumidifyingTargetLow = DehumidifyingTargetLow;
+        _cfg->minHumidifyingIdleTime  = MinimumHumidifyingIdleTime;
+        _cfg->minHumidifyingRunningTime = MinimumHumidifyingRunningTime;
+        _cfg->minDehumidifyingIdleTime = MinimumDehumidifyingIdleTime;
+        _cfg->minDehumidifyingRunningTime = MinimumDehumidifyingRunningTime;
+    }
+
+    void modeChanged(){
+        if(_mode == _cfg->mode) return;
+
+        if(_cfg->mode == HC_ModeOff){
+            // mode changed to OFF, but the minimum running time might not meet.
+            if(_state == HC_Idle){
+                 _mode = HC_ModeOff;
+            } else if (_state == HC_Humidifying){
+                if(_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg->minHumidifyingRunningTime)){
+                    _stopHumidifying();
+                    _mode=HC_ModeOff;
+                }else{
+                    // waiting for minMumidifyingRunningTime
+                }
+            }else if (_state == HC_Dehumidifying){
+                if(_lastreadtime - _lastStateChangeTime > ToSystemTick(_cfg->minDehumidifyingRunningTime)){
+                    _stopDehumidifying();
+                    _mode=HC_ModeOff;
+                }else{
+                    // waiting for minDehumidifyingRunningTime
+                }
+            }
+        }else {
+            _mode = _cfg->mode;
+        }
+    }
 private:
+    void _startHumidifying(){
+        _prevState = _state;
+        _state = HC_Humidifying;
+        _lastStateChangeTime=_lastreadtime;
+        humidifier->setActive(true);
+        DBG_PRINTF("start humidifier\n");
+    }
+
+    void _stopHumidifying(){
+        _prevState = _state;
+        _state = HC_Idle;
+        _lastStateChangeTime=_lastreadtime;
+        humidifier->setActive(false);
+        DBG_PRINTF("stop humidifier\n");
+    }
+
+    void _startDehumidifying(){
+        _prevState = _state;
+        _state = HC_Dehumidifying;
+        _lastStateChangeTime=_lastreadtime;
+        dehumidifier->setActive(true);
+        DBG_PRINTF("start dehumidifier\n");        
+    }
+
+    void _stopDehumidifying(){
+        _prevState = _state;
+        _state = HC_Idle;
+        _lastStateChangeTime=_lastreadtime;
+        dehumidifier->setActive(false);
+        DBG_PRINTF("stop dehumidifier\n");
+    }
+
+    uint8_t _mode;
     uint8_t _humidity;
 
     HumidityControlState _state;
@@ -131,7 +210,7 @@ private:
     uint32_t _lastreadtime;
     uint32_t _lastStateChangeTime;
 
-    HumidityControlSettings _cfg;
+    HumidityControlSettings *_cfg;
 };
 
 extern HumidityControl humidityControl;

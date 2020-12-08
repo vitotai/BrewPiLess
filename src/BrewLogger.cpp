@@ -22,6 +22,11 @@ BrewLogger::BrewLogger(void){
 	_calibrating=false;
 	_lastPressureReading = INVALID_PRESSURE_INT;
 	_targetPsi =0;
+
+#if EnableDHTSensorSupport
+	_lastHumidity = INVALID_HUMIDITY_VALUE;
+	_lastHumidityTarget = INVALID_HUMIDITY_VALUE;
+#endif
 }
 
 	
@@ -522,12 +527,15 @@ BrewLogger::BrewLogger(void){
 		#if EnableDHTSensorSupport
 		if(humidityControl.sensorInstalled()){
 			// To save memory, only log when data changes.
-
-
 			uint8_t humidity = humidityControl.humidity();
 			if(_lastHumidity !=humidity){
 				_lastHumidity=humidity;
 				_addHumidityRecord(humidity);
+			}
+			uint8_t target = humidityControl.targetRH();
+			if(_lastHumidityTarget !=target){
+				_lastHumidityTarget =target;
+				_addHumidityTargetRecord(target);
 			}
 		}
 		#endif
@@ -1104,6 +1112,14 @@ BrewLogger::BrewLogger(void){
 		if(idx < 0) return;
 		_writeBuffer(idx,HumidityTag); //*ptr = TargetPsiTag;
 		_writeBuffer(idx+1,humidity); //*(ptr+1) = mode;
+		_commitData(idx,2);
+	}
+
+	void BrewLogger::_addHumidityTargetRecord(uint8_t target){
+		int idx = _allocByte(2);
+		if(idx < 0) return;
+		_writeBuffer(idx,HumiditySetTag); //*ptr = TargetPsiTag;
+		_writeBuffer(idx+1,target); //*(ptr+1) = mode;
 		_commitData(idx,2);
 	}
 
