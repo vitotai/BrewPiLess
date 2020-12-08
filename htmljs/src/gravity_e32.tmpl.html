@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html lang="<%= page_lang %>">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= gravity_title %>
+    </title>
+    <meta name="apple-mobile-web-app-title" content="BrewPiLess">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script type="text/javascript" src="js/vendor/bwf.js"></script>
+    <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/vendor/regression.js"></script>
+    <script type="text/javascript" src="js/script-gravity-e32.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="style-gravity.css">
+<style>
+.caltable td,
+th {
+  padding: 6px 4px;
+  text-align: center;
+}
+
+.caltable td:not(:last-child),
+th:not(:last-child) {
+  border-right: 1px solid rgba(0, 0, 0, 0.87);
+}
+
+.caltable tbody:empty:before {
+  content: "No data.";
+  padding: 16px;
+  display: block;
+}
+
+.caltable tbody tr.odd {
+  background: #EEE;
+}
+
+.caltable tbody tr.even {
+  background: #FFF;
+}
+
+table.caltable {
+  width: 100%;
+  border-collapse: collapse;
+  margin:2em;
+}
+table.caltable thead {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.87);
+}    
+</style>
+</head>
+
+<body onload=init()>
+
+    <!-- build:include partials/header.html -->
+    <!-- /build -->
+
+    <div viewport layout vertical>
+        <div main>
+            <div class="card">
+                <form action="" method="post">
+
+                    <div layout horizontal main-justified cross-center>
+                        <h5>
+                            Tilt Hydrometer
+                        </h5>
+                        <div>
+                            <input type="checkbox" id="tilthydrometer" name="tilthydrometer" class="switch-input" checked>
+                            <label for="tilthydrometer" class="switch-label" style="min-width: 0;"></label>
+                        </div>
+                    </div>
+
+                    <div layout horizontal cross-center class="tiltsub">
+                        <h6>
+                            Tilt Hydrometer Color
+                        </h6>
+                        <div>
+                            <select id="tiltcolor" name="color" class="slot-select" style="margin-left: 2em;">
+                                <option value="0"> Red</option>
+                                <option value="1"> Green</option>
+                                <option value="2"> Black</option>
+                                <option value="3"> Purple</option>
+                                <option value="4"> Orange</option>
+                                <option value="5"> Blue</option>
+                                <option value="6"> Yellow</option>
+                                <option value="7"> Pink</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div layout horizontal cross-center class="tiltsub">
+                            <button id="addbutton" onclick="tiltcal(); return false;" class="btn btn--raised">Calibration</button>
+                    </div>
+
+                    <div layout horizontal main-justified cross-center>
+                        <h5>iSpindel</h5>
+                        <div>
+                            <input type="checkbox" id="ispindel" name="ispindel" class="switch-input" checked>
+                            <label for="ispindel" class="switch-label" style="min-width: 0;"></label>
+                        </div>
+                    </div>
+
+                    <div layout horizontal main-justified cross-center class="ispindelsub">
+                        <h6 class="inline-header">
+                            <%= gravity_calculated_bpl %>
+                        </h6>
+                        <div>
+                            <input type="checkbox" id="cbpl" name="cbpl" class="switch-input" checked>
+                            <label for="cbpl" class="switch-label" style="min-width: 0;"></label>
+                        </div>
+                    </div>
+
+                    <div layout horizontal cross-center class="ispindelsub">
+                        <h6 class="inline-header">
+                            <%= gravity_temp_correction %>
+                        </h6>
+                        <div layout horizontal main-justified cross-center flex>
+                            <div layout horizontal cross-center>
+                                <input type="text" name="ctemp" size=4>
+                                <span>&deg;C</span>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="tc" name="tc" class="switch-input" checked>
+                                <label for="tc" class="switch-label" style="min-width: 0;"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div layout horizontal cross-center class="ispindelsub">
+                        <h6 class="inline-header">
+                            <%= gravity_coefficients %>
+                        </h6>
+                        <input type="text" name="a3" size=15>
+                        <div class="coefficient" layout horizontal main-center>x³ +</div>
+                        <input type="text" name="a2" size=15>
+                        <div class="coefficient" layout horizontal main-center>x² +</div>
+                        <input type="text" name="a1" size=15>
+                        <div class="coefficient" layout horizontal main-center>x +</div>
+                        <input type="text" name="a0" size=15>
+                        <div class="coefficient" layout horizontal main-center></div>
+                    </div>
+
+                    <div layout horizontal cross-center class="ispindelsub">
+                        <h6 class="inline-header">
+                            <%= gravity_lpf_coefficient %>
+                        </h6>
+                        <input type="text" name="lpc" size=4>
+                    </div>
+
+                    <div layout horizontal main-justified cross-center>
+                        <h6>
+                            <%= gravity_useplato %>
+                        </h6>
+                        <div>
+                            <input type="checkbox" id="plato" name="plato" class="switch-input" checked>
+                            <label for="plato" class="switch-label" style="min-width: 0;"></label>
+                        </div>
+                    </div>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= gravity_stable_threshold %>
+                        </h6>
+                        <input type="text" name="stpt" size=4>
+                        <%= gravity_point %>
+                    </div>
+
+                    <div class="card-footer">
+                        <input type="submit" name="submit" class="btn btn--raised" onclick="save();return false;"></input>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="dlg_addcalpoint" class="modal">
+        <div class="modal-content">
+            <h5><span class="modal-title">
+                Tilt Calibration
+            </span>
+            </h5>
+             <div layout horizontal cross-center>
+                    <label for="uncalvalue"> uncalibrated reading </label>
+                    <input id=uncalvalue type="number" style="max-width: 6em;">
+                    <label for="calvalue"> real value </label>
+                    <input id="calvalue" type="number" style="max-width: 6em;">
+                    <button class="btn btn--raised" onclick="TCEditor.add();"><%= control_add %></button>
+             </div>
+
+             <div layout horizontal main-justified cross-center>
+                <span id="scanreading"></span>
+             </div>
+             <hr style="margin:1.5em">
+
+             <div layout horizontal cross-center class="tiltsub" style="max-width:320px">
+                <table class="caltable" id="tiltcalpoints">
+                    <thead>
+                        <tr>
+                            <th>
+                            </th>
+                        <th>
+                            uncalibrated
+                        </th>
+                        <th>
+                            calibrated
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="calpoint">
+                        <td ><button class="delbutton btn" style="color: red;">X</button></td>
+                        <td class="uncaldata"></td>
+                        <td class="caldata"></td>
+                    </tr>
+                    </tbody>
+                    </table>
+            </div>
+
+            <div class="dialog-buttons" style="float:right">
+                <button class="btn btn--raised" onclick="return closeTiltCal();"><%= dlg_ok %></button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- build:include partials/footer.html -->
+    <!-- /build -->
+
+</body>
+
+</html>
