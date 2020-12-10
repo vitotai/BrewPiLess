@@ -920,7 +920,7 @@ var  CHART_VERSION = 6;
                 }
                 else t.hchart.updateOptions({
                     'file': t.rh,
-                    'dateWindow':[t.psi[0][0],t.psi[t.psi.length-1][0]]                    
+                    'dateWindow':[t.rh[0][0],t.rh[t.rh.length-1][0]]                    
                 });
             }
 
