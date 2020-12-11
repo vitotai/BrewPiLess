@@ -86,7 +86,7 @@
 // Enable humidity sensor
 //
 #ifndef EnableDHTSensorSupport
-#define EnableDHTSensorSupport true
+#define EnableDHTSensorSupport false
 #endif
 //
 //////////////////////////////////////////////////////////////////////////
@@ -248,7 +248,7 @@
 
 
 #ifndef EanbleParasiteTempControl
-#define EanbleParasiteTempControl true
+#define EanbleParasiteTempControl false
 #endif
 
 #ifndef SupportPressureTransducer

@@ -759,8 +759,9 @@ BrewLogger::BrewLogger(void){
 		_extGravity=INVALID_GRAVITY_INT;
 		_extOriginGravity=INVALID_GRAVITY_INT;
 		_extTileAngle = INVALID_TILT_ANGLE;
-
+		#if EnableDHTSensorSupport
 		_savedHumidityValue = 0xFF;
+		#endif
 	}
 
 #define RESERVED_SIZE 8196*2

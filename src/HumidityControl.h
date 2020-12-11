@@ -6,6 +6,8 @@
 #include "DHTSensor.h"
 #include "BPLSettings.h"
 
+#if EnableDHTSensorSupport
+
 #define MINIMUM_HUMIDITY_SENSOR_READ_PERIOD 10000
 #define IsValidHumidityValue(a) ((a) <=100)
 
@@ -215,4 +217,5 @@ private:
 
 extern HumidityControl humidityControl;
 
+#endif
 #endif

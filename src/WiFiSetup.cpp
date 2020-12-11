@@ -30,7 +30,7 @@ WiFiSetupClass WiFiSetup;
 #endif
 
 #if SerialDebug
-#define wifi_info(a)	DBG_PRINTF("%s,SSID:%s pass:%s IP:%s, gw:%s, dns:%s\n",(a),WiFi.SSID().c_str(),WiFi.psk().c_str(),WiFi.localIP().toString().c_str(),WiFi.gatewayIP().toString().c_str(),WiFi.dnsIP().toString().c_str())
+#define wifi_info(a)	DBG_PRINTF("%s,SSID:\"%s\" pass:\"%s\" IP:%s, gw:%s, dns:%s\n",(a),WiFi.SSID().c_str(),WiFi.psk().c_str(),WiFi.localIP().toString().c_str(),WiFi.gatewayIP().toString().c_str(),WiFi.dnsIP().toString().c_str())
 #else
 #define wifi_info(a)
 #endif
@@ -114,12 +114,14 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 	}
 
 	if( mode2use == WIFI_STA || mode2use == WIFI_AP_STA){
-		if(_ip !=INADDR_NONE){
+		if(_ip !=INADDR_NONE && _ip != INADDR_ANY){
+				DBG_PRINTF("Config IP:%d, _gw:%d, _nm:%d\n",(u32_t)_ip,(u32_t)_gw,(u32_t)_nm);
 				WiFi.config(_ip,_gw,_nm,_dns);
 		}else{
 			// the weird printout of "[NO IP]" implies that explicitly specification of DHCP 
 			// might be necessary.
-			WiFi.config(INADDR_NONE,INADDR_NONE,INADDR_NONE);
+			DBG_PRINTF("Unset IP:%d\n",(u32_t)_ip);
+			WiFi.config(0,0,0);
 		}
 		WiFi.setAutoReconnect(true);		
 		
