@@ -86,7 +86,7 @@
 // Enable humidity sensor
 //
 #ifndef EnableDHTSensorSupport
-#define EnableDHTSensorSupport false
+#define EnableDHTSensorSupport true
 #endif
 //
 //////////////////////////////////////////////////////////////////////////
@@ -248,7 +248,7 @@
 
 
 #ifndef EanbleParasiteTempControl
-#define EanbleParasiteTempControl false
+#define EanbleParasiteTempControl true
 #endif
 
 #ifndef SupportPressureTransducer
@@ -289,7 +289,7 @@
 #if ESP32
 #define UseLittleFS false
 #else
-#define UseLittleFS true
+#define UseLittleFS false
 #endif
 
 #endif

@@ -73,16 +73,16 @@ void DataLogger::sendData(void)
 	HTTPClient _http;
   	_http.setUserAgent(F("ESP8266"));
 #if ESP32	
-	BearSSL::WiFiClientSecure sClient;
+	WiFiClient wClient;
+	WiFiClientSecure sClient;
 	bool https=false;
 
 	if( strncasecmp(_loggingInfo->url,"https",5) ==0){
-		sClient.setBufferSizes(1024, 1024);
-		sClient.setInsecure();
+//		sClient.setBufferSizes(1024, 1024);
+//		sClient.setInsecure();
 		https=true;
 	}	
 #else
-//	pClient = new WiFiClient;
 	WiFiClient wClient;
 #endif
 

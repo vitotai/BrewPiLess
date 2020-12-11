@@ -114,14 +114,14 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 	}
 
 	if( mode2use == WIFI_STA || mode2use == WIFI_AP_STA){
-		if(_ip !=INADDR_NONE && _ip != INADDR_ANY){
+		if(_ip !=INADDR_NONE && _ip !=0){
 				DBG_PRINTF("Config IP:%d, _gw:%d, _nm:%d\n",(u32_t)_ip,(u32_t)_gw,(u32_t)_nm);
 				WiFi.config(_ip,_gw,_nm,_dns);
 		}else{
 			// the weird printout of "[NO IP]" implies that explicitly specification of DHCP 
 			// might be necessary.
 			DBG_PRINTF("Unset IP:%d\n",(u32_t)_ip);
-			WiFi.config(0,0,0);
+			WiFi.config( IPAddress(0,0,0,0),IPAddress(0,0,0,0), IPAddress(0,0,0,0));
 		}
 		WiFi.setAutoReconnect(true);		
 		
