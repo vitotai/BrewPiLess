@@ -844,7 +844,7 @@ BrewLogger::BrewLogger(void){
 		// a record full of all data = 2 + 7 * 2= 16
 		*ptr++ = (char) PeriodTag; //9
 		*ptr++ = (char) 0x7F; //10
-		for(int i=0;i<VolatileDataHeaderSetNumber;i++){ // 10 + VolatileDataHeaderSetNumber *2
+		for(int i=0;i<VolatileDataHeaderSize;i++){ // 10 + VolatileDataHeaderSetNumber *2
 			*ptr++ = _headData[i] >> 8;
 			*ptr++ = _headData[i] & 0xFF;
 		}

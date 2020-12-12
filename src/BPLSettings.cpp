@@ -278,7 +278,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 #define KeyTiltColor "color"
 #define KeyTiltCalibrationPoints "tcpts"
 #define KeyTiltCoefficients "tiltcoe"
- bool BPLSettings::dejsonGravityConfig(char* json)
+ bool BPLSettings::dejsonGravityConfig(const char* json)
 {
 		#if ARDUINOJSON_VERSION_MAJOR == 6
 		StaticJsonDocument<JSON_OBJECT_SIZE(16) + 256> root;

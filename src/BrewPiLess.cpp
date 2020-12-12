@@ -219,6 +219,8 @@ BrewKeeper brewKeeper([](const char* str){ brewPi.putLine(str);});
 DataLogger dataLogger;
 #endif
 
+void stringAvailable(const char*);
+
 
 
 extern const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned int &size);
@@ -755,12 +757,25 @@ public:
 		/** tilt **/
 
 #if	SupportTiltHydrometer
-	 	else if(request->url() == TiltCommandPath){
-			if(request->hasParam("scan")){
-				tiltReceiver.scan(NULL);
-			}
-			return;
-		}
+	 	if(request->url() == TiltCommandPath){
+			 if(request->hasParam("scan")){
+				 DBG_PRINTF("scan BLE\n");
+				 tiltListener.scan([](int count,TiltHydrometerInfo *tilts){
+					String ret="{\"tilts\":[";
+						 for(int i=0;i<count;i++){
+							 ret += String("{\"c\":")+ String(tilts[i].color) +
+							 		String(",\"r\":")+ String(tilts[i].rssi) +
+									String(",\"g\":")+ String(tilts[i].gravity) +
+									String(",\"t\":")+ String(tilts[i].temperature) +
+									((i==count-1)? String("}"): String("},"));
+						 }
+					ret += "]}";
+					tiltScanResult(ret);
+				 });
+				 request->send(200);
+			 }
+			 return;
+		 }
 #endif
 		/*** iSpindel ***/
 		else if (request->method() == HTTP_POST && request->url() == GRAVITY_PATH){
@@ -945,6 +960,7 @@ public:
   			}
 		}
 		/** SupportPressureTransducer **/
+		#if SupportPressureTransducer
 		else if(request->url() == PRESSURE_PATH){
 			if(request->method() == HTTP_GET){
 				if(request->hasParam("r")){
@@ -1066,7 +1082,6 @@ void capControlStatusJson(JsonObject& obj){
 
 }
 
-void stringAvailable(const char*);
 void capStatusReport(void)
 {
 
@@ -1795,6 +1810,7 @@ void setup(void){
 	DBG_PRINTF("HTTP server started\n");
 
 	externalData.begin();
+#if SupportPressureTransducer	
 	PressureMonitor.begin();
 #endif
 	// 5. try to connnect Arduino
