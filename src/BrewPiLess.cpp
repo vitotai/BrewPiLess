@@ -219,9 +219,8 @@ BrewKeeper brewKeeper([](const char* str){ brewPi.putLine(str);});
 DataLogger dataLogger;
 #endif
 
-void stringAvailable(const char*);
-
-
+void broadcastString(const char*);
+void capControlStatusJson(JsonObject& obj);
 
 extern const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned int &size);
 
@@ -471,48 +470,56 @@ void localLogStatus(String &status)
 	status=String("A:{\"reload\":\"chart\", \"log\":\"") +  logstr + String("\"}");
 }
 
-#if AUTO_CAP
-String capControlStatus(void);
-#endif
 
 class BrewPiWebSocketHandler: public HttpOverAsyncWebSocketHandler
 {
 protected:
 	String _greeting(void)
 	{
-		char buf[512];
+/*		char buf[512];
 		// gravity related info., starting from "G"
 		// TODO: remove this!!
 		if(externalData.iSpindelEnabled()){
 			externalData.sseNotify(buf);
-			stringAvailable(buf);
-		}
+			broadcastString(buf);
+		} */
 
-		// misc informatoin, including
 
-		// RSSI && 
-		const char *logname= brewLogger.currentLog();
-		if(logname == NULL) logname="";
-		SystemConfiguration *syscfg= theSettings.systemConfiguration();
+	// misc informatoin, including
 
-	#if AUTO_CAP
-		String capstate= capControlStatus();
-	#else
-		String capstate= String();
-	#endif
+	// RSSI && 
+	const char *logname= brewLogger.currentLog();
+	if(logname == NULL) logname="";
+	SystemConfiguration *syscfg= theSettings.systemConfiguration();
 
-	#if EanbleParasiteTempControl
+	DynamicJsonDocument doc(1024);
+
+	doc["nn"] = String(syscfg->titlelabel);
+	doc["ver"] =  String(BPL_VERSION);
+	doc["rssi"]= WiFi.RSSI();
+	doc["tm"] = TimeKeeper.getTimeSeconds();
+	doc["off"]= TimeKeeper.getTimezoneOffset();
+	doc["log"] = String(logname);
+
+#if AUTO_CAP
+	JsonObject cap = doc.createNestedObject("cap");
+	capControlStatusJson(cap);
+
+#endif		 
+#if EanbleParasiteTempControl
 	
-		String ptcstate= parasiteTempController.getSettings();
-	#else
-		String ptcstate=String("{\"enabled\":false}");
-	#endif
-		sprintf(buf,"{\"nn\":\"%s\",\"ver\":\"%s\",\"rssi\":%d,\"tm\":%lu,\"off\":%ld, \"log\":\"%s\",\"cap\":{%s},\"ptcs\":%s}"
-			,syscfg->titlelabel,BPL_VERSION,WiFi.RSSI(),
-			TimeKeeper.getTimeSeconds(),(long int)TimeKeeper.getTimezoneOffset(),
-			logname, capstate.c_str(),ptcstate.c_str());
+	doc["ptc"]= serialized(parasiteTempController.getSettings());
+#endif
 
-		return String(buf);
+#if EnableDHTSensorSupport
+	JsonObject hum = doc.createNestedObject("rh");
+	hum["m"] = humidityControl.mode();
+	hum["t"] = humidityControl.targetRH();
+#endif
+
+	String out;
+	serializeJson(doc,out);
+		return out;
 	}
 
 	void _handleFileList(HttpOverAsyncWebSocketClient *request) {
@@ -1091,7 +1098,7 @@ void capStatusReport(void)
 
 	String out="A:";
 	serializeJson(doc,out);
-	stringAvailable(out.c_str());
+	broadcastString(out.c_str());
 }
 #endif
 
@@ -1158,7 +1165,7 @@ void reportRssi(void)
 	String out="A:";
 	serializeJson(doc,out);
 
-	stringAvailable(out.c_str());
+	broadcastString(out.c_str());
 }
 
 
@@ -1204,11 +1211,11 @@ public:
 				request->send(400);
 				return;
 			}
-			stringAvailable(_buffer);
+			broadcastString(_buffer);
 			processGravity(request,_data,_dataLength);
 			// Process the name
 			externalData.sseNotify(_data);
-			stringAvailable(_data);
+			broadcastString(_data);
 	}
 
 	virtual void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)override final{
@@ -1421,7 +1428,7 @@ public:
 void wiFiEvent(const char* msg){
 	char *buff=(char*)malloc(strlen(msg) +3);
 	sprintf(buff,"W:%s",msg);
-	stringAvailable(buff);
+	broadcastString(buff);
 	free(buff);
 
 	if(WiFi.status() == WL_CONNECTED){
@@ -1432,7 +1439,7 @@ void wiFiEvent(const char* msg){
 
 void tiltScanResult(String& result){
 	String report="T:" + result;
-	stringAvailable(report.c_str());
+	broadcastString(report.c_str());
 }
 //{brewpi
 
@@ -1668,7 +1675,7 @@ ChartDataHandler chartDataHandler;
 HttpOverAsyncWebSocketServer wsServer;
 
 
-void stringAvailable(const char *str)
+void broadcastString(const char *str)
 {
 	//DBG_PRINTF("BroadCast:%s\n",str);
 
@@ -1815,7 +1822,7 @@ void setup(void){
 #endif
 	// 5. try to connnect Arduino
 	brewpi_setup();
-  	brewPi.begin(stringAvailable);
+  	brewPi.begin(broadcastString);
 	//make sure externalData  is initialized.
 	if(brewLogger.begin()){
 		// resume, update calibrating information to external data
