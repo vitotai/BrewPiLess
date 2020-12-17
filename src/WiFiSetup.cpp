@@ -114,8 +114,8 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 	}
 
 	if( mode2use == WIFI_STA || mode2use == WIFI_AP_STA){
-		if(_ip !=INADDR_NONE && _ip !=0){
-				DBG_PRINTF("Config IP:%d, _gw:%d, _nm:%d\n",(u32_t)_ip,(u32_t)_gw,(u32_t)_nm);
+		if(_ip !=INADDR_NONE && _ip !=IPAddress(0,0,0,0)){
+				DBG_PRINTF("Config IP:%s, _gw:%s, _nm:%s\n",_ip.toString().c_str(),_gw.toString().c_str(),_nm.toString().c_str());
 				WiFi.config(_ip,_gw,_nm,_dns);
 		}else{
 			// the weird printout of "[NO IP]" implies that explicitly specification of DHCP 

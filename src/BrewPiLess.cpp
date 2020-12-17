@@ -1879,7 +1879,9 @@ void setup(void){
 	WiFiConfiguration *wifiCon=theSettings.getWifiConfiguration();
 
 	if(strlen(syscfg->hostnetworkname)>0)
-		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password,wifiCon->ssid,wifiCon->pass);
+		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password,
+					wifiCon->ssid[0]? wifiCon->ssid:NULL,
+					wifiCon->pass[0]? wifiCon->pass:NULL);
 	else // something wrong with the file
 		WiFiSetup.begin(wifiMode,DEFAULT_HOSTNAME,DEFAULT_PASSWORD);
 #else
