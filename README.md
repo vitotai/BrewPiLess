@@ -1,8 +1,6 @@
 # BrewPiLess
  **Note: ALL BPL settings will be gone after upgrading to v3.0**
 
- **Note: re-SETUP is necessary after upgrading to v2.4**
-
 ## Features
  * I2C LCD support.
  * Rotary encoder support (* not supported by default).
@@ -44,6 +42,7 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+** Framework 2.2.0 can't but, but with framworks other than that, sometimes my controller can't connect to my AP. It's still under investigation.**
  * 4.1
     * "Real" generic HTTP logging.
     * DHT1x/DHT2x support, for humidity control 
