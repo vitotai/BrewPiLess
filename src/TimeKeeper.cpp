@@ -28,20 +28,20 @@ TimeKeeperClass TimeKeeper;
 
 void TimeKeeperClass::setCurrentTime(time_t now)
 {
-	_referenceSeconds=now;
+	_referenceEpoc=now;
   	_referenceSystemTime = millis();
-	_lastSaved=_referenceSeconds;
+	_lastSaved=_referenceEpoc;
 	saveTime(now);
 }
 
 void TimeKeeperClass::begin(void)
 {
 
-	_referenceSeconds=loadTime();
-	_referenceSeconds += 300; // add 5 minutes.
+	_referenceEpoc=loadTime();
+	_referenceEpoc += 300; // add 5 minutes.
   	_referenceSystemTime = millis();
-	_lastSaved=_referenceSeconds;
-	DBG_PRINTF("Load saved time:%ld\n",_referenceSeconds);
+	_lastSaved=_referenceEpoc;
+	DBG_PRINTF("Load saved time:%ld\n",_referenceEpoc);
 }
 
 time_t TimeKeeperClass::_queryServer(void){
@@ -69,7 +69,7 @@ void TimeKeeperClass::updateTime(void){
 	time_t secs=_queryServer();
 	if(secs > 1546265623){
   		_referenceSystemTime = millis();
-  		_referenceSeconds = secs;
+  		_referenceEpoc = secs;
 	}
 }
 
@@ -96,9 +96,9 @@ void TimeKeeperClass::begin(char* server1,char* server2,char* server3)
 		DBG_PRINTF("failed to connect NTP, load time:%ld\n",secs);
 	}
 	_referenceSystemTime = millis();
-  	_referenceSeconds = secs;
+  	_referenceEpoc = secs;
 
-  	_lastSaved=_referenceSeconds;
+  	_lastSaved=_referenceEpoc;
 }
 
 time_t TimeKeeperClass::getTimeSeconds(void) // get Epoch time
@@ -107,22 +107,25 @@ time_t TimeKeeperClass::getTimeSeconds(void) // get Epoch time
 
 	if(diff > RESYNC_TIME){
 		if( WiFi.status() == WL_CONNECTED){
-			updateTime();
-			if(_referenceSeconds> 1546265623){
+			//updateTime();
+			time_t secs=_queryServer();
+			if(secs > 1546265623){
+  				_referenceSystemTime = millis();
+  				_referenceEpoc = secs;
 	  			diff=0;
 			}else{
 				_referenceSystemTime = millis();
-		  		_referenceSeconds = _referenceSeconds + diff/1000;
+		  		_referenceEpoc = _referenceEpoc + diff/1000;
 		  		diff=0;
 			}
 		}else{
 			// just add up
   			_referenceSystemTime = millis();
-	  		_referenceSeconds = _referenceSeconds + diff/1000;
+	  		_referenceEpoc = _referenceEpoc + diff/1000;
 	  		diff=0;
 		}
 	}
-	time_t now= _referenceSeconds + diff/1000;
+	time_t now= _referenceEpoc + diff/1000;
 
 	if(	(now - _lastSaved) > TIME_SAVING_PERIOD){
 		saveTime(now);

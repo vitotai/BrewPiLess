@@ -4,7 +4,7 @@
 class TimeKeeperClass
 {
 public:
-	TimeKeeperClass(void):_referenceSeconds(0),_referenceSystemTime(0),_ntpSynced(false){}
+	TimeKeeperClass(void):_referenceEpoc(0),_referenceSystemTime(0),_ntpSynced(false){}
 	void begin(char* server1,char* server2,char* server3);
 	void begin(void);
 	
@@ -20,7 +20,7 @@ public:
 	int32_t getTimezoneOffset(void);
 	bool isSynchronized(void){ return _ntpSynced; }
 private:
-	time_t _referenceSeconds;
+	time_t _referenceEpoc;
 	time_t _referenceSystemTime;
 	bool _ntpSynced;
 
