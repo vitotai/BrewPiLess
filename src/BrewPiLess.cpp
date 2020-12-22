@@ -1560,8 +1560,14 @@ public:
 				syscfg->netmask = nm;
 				syscfg->dns = dns;
 			}else{
+				WiFiSetup.staConfig();
+				
 				WiFiSetup.connect(ssid.c_str(),pass);
 				DBG_PRINTF("dynamic IP\n");
+				syscfg->ip = IPAddress(0,0,0,0);
+				syscfg->gw = IPAddress(0,0,0,0);
+				syscfg->netmask = IPAddress(0,0,0,0);
+				syscfg->dns = IPAddress(0,0,0,0);
 			}
 			theSettings.save();
 
