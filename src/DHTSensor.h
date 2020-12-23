@@ -22,7 +22,7 @@ public:
         }
         return (uint8_t) (h + _cal);
     }
-    float temperature(bool isFarenheit){
+    float readTemperature(bool isFarenheit){
         float temp=dht.readTemperature(isFarenheit);
 //        DBG_PRINTF("DHxx TEMP=%d/10\n",(int)(temp *10));
         return temp;

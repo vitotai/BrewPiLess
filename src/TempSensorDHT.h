@@ -26,7 +26,7 @@ public:
 
 	temperature read() {
 		if (!isConnected()) return TEMP_SENSOR_DISCONNECTED;
-		float t=HumidityControl::dhtSensor->temperature(false);
+		float t=HumidityControl::dhtSensor->readTemperature(false);
 		if(isnan(t) || t == NAN || t > 120.0 || t<-30.0) {
 //			DBG_PRINTF("**\nDHTxx temp read fail!\n**\n");
 			return TEMP_SENSOR_DISCONNECTED;
