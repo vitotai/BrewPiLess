@@ -46,7 +46,7 @@ extern "C" {
 
 #if LCD_AUTO_ADDRESSING == true
 
-void IIClcd::scanForAddress(void)
+void IIClcd::scanForAddress(void) //VTODO
 {
 	byte error, address;
     //Serial.println("Scan LCD Address...\n");

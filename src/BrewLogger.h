@@ -172,6 +172,9 @@ private:
 #if EnableDHTSensorSupport	
 	uint8_t _lastHumidity;
 	uint8_t _savedHumidityValue;
+	uint8_t _lastRoomHumidity;
+	uint8_t _savedRoomHumidityValue;
+
 	uint8_t _lastHumidityTarget;
 	uint8_t _savedHumidityTarget;
 #endif
@@ -196,6 +199,8 @@ private:
 	void _addGravityRecord(bool isOg, uint16_t gravity);
 #if EnableDHTSensorSupport	
 	void _addHumidityRecord(uint8_t humidity);
+	void _addRoomHumidityRecord(uint8_t humidity);
+
 	void _addHumidityTargetRecord(uint8_t target);
 #endif
 

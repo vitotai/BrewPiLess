@@ -66,7 +66,7 @@ enum DeviceFunction {
 	DEVICE_CHAMBER_TEMP = 5,
 	DEVICE_CHAMBER_ROOM_TEMP = 6,	// temp sensors
 	DEVICE_CHAMBER_FAN = 7,			// a fan in the chamber
-	DEVICE_CHAMBER_HUMIDITY_SENSOR = 8,	// chamber humidity sensor reserved for future use
+	DEVICE_CHAMBER_HUMIDITY_SENSOR = 8,	//  (reserved for future use)
 	// carboy devices
 	DEVICE_BEER_FIRST = 9,
 	DEVICE_BEER_TEMP = DEVICE_BEER_FIRST,									// primary beer temp sensor
@@ -79,8 +79,9 @@ enum DeviceFunction {
 	DEVICE_CHAMBER_EXT=16,
 	DEVICE_CHAMBER_HUMIDIFIER = DEVICE_CHAMBER_EXT,
 	DEVICE_CHAMBER_DEHUMIDIFIER = 17,
-
-	DEVICE_MAX = 18
+	DEVICE_CHAMBER_ROOM_HUMIDITY_SENSOR = 18,
+	
+	DEVICE_MAX = 19
 };
 
 
@@ -99,9 +100,11 @@ enum DeviceHardware {
 	DEVICE_HARDWARE_EXTERNAL_SENSOR = 5,
 #endif
 #if EnableDHTSensorSupport
-	DEVICE_HARDWARE_DHT_TEMP = 6
+	DEVICE_HARDWARE_ENVIRONMENT_TEMP = 6, 
 #endif
-
+#if EnableBME280Support
+	DEVICE_HARDWARE_BME280 = 7
+#endif
 };
 
 

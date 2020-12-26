@@ -71,7 +71,7 @@ enum DeviceType {
 	DEVICETYPE_SWITCH_ACTUATOR = 3	/* Actuator - both direct pin and onewire are supported */
 #if EnableDHTSensorSupport	
 	,
-	DEVICETYPE_HUMIDITY_SENSOR = 4
+	DEVICETYPE_ENVIRONMENT_SENSOR = 4
 #endif
 };
 
@@ -81,6 +81,7 @@ enum DeviceType {
 
 inline bool isAssignable(DeviceType type, DeviceHardware hardware)
 {
+	//VTODO
 	return (hardware==DEVICE_HARDWARE_PIN && (type==DEVICETYPE_SWITCH_ACTUATOR || type==DEVICETYPE_SWITCH_SENSOR))
 #if BREWPI_DS2413
 	|| (hardware==DEVICE_HARDWARE_ONEWIRE_2413 && (type==DEVICETYPE_SWITCH_ACTUATOR || (DS2413_SUPPORT_SENSE && type==DEVICETYPE_SWITCH_SENSOR)))
@@ -89,8 +90,8 @@ inline bool isAssignable(DeviceType type, DeviceHardware hardware)
 	|| (hardware==DEVICE_HARDWARE_EXTERNAL_SENSOR && type==DEVICETYPE_TEMP_SENSOR)
 #endif
 #if EnableDHTSensorSupport	
-	|| (hardware==DEVICE_HARDWARE_PIN && type==DEVICETYPE_HUMIDITY_SENSOR)
-	|| (hardware==DEVICE_HARDWARE_DHT_TEMP && type==DEVICETYPE_TEMP_SENSOR)
+	|| (hardware==DEVICE_HARDWARE_PIN && type==DEVICETYPE_ENVIRONMENT_SENSOR)
+	|| (hardware==DEVICE_HARDWARE_ENVIRONMENT_TEMP && type==DEVICETYPE_TEMP_SENSOR)
 #endif
 	|| (hardware==DEVICE_HARDWARE_ONEWIRE_TEMP && type==DEVICETYPE_TEMP_SENSOR)
 	|| (hardware==DEVICE_HARDWARE_NONE && type==DEVICETYPE_NONE);
@@ -118,11 +119,18 @@ inline bool isExternalSensor(DeviceHardware hardware) {
 
 
 #if EnableDHTSensorSupport
-inline bool isDHTTempSensor(DeviceHardware hardware) {
-	return hardware == DEVICE_HARDWARE_DHT_TEMP;
+inline bool isEnvTempSensor(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_ENVIRONMENT_TEMP;
 }
 #endif
 
+#if EnableBME280Support
+
+inline bool isBME280(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_BME280;
+}
+
+#endif
 
 /**
  * Determines where this devices belongs.
@@ -293,9 +301,11 @@ public:
 
 private:
 	#if EnableDHTSensorSupport
-	static void enumerateDHTTempDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
+	static void enumerateEnvTempDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
 	#endif
-
+	#if EnableBME280Support
+	static void enumerateBME280(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
+	#endif
 	#if BREWPI_EXTERNAL_SENSOR //vito: enumerate device
 	static void enumerateExternalDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
 	#endif

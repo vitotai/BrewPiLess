@@ -1,7 +1,12 @@
 #include "HumidityControl.h"
 
 #if EnableDHTSensorSupport
-DHTSensor* HumidityControl::dhtSensor=NULL;
+EnvironmentSensor nullEnvironmentSensor;
+
+
+EnvironmentSensor* HumidityControl::chamberSensor= &nullEnvironmentSensor;
+EnvironmentSensor* HumidityControl::roomSensor= &nullEnvironmentSensor;
+
 extern ValueActuator defaultActuator;
 Actuator* HumidityControl::humidifier= &defaultActuator;;
 Actuator* HumidityControl::dehumidifier= &defaultActuator;;

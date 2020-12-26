@@ -25,6 +25,7 @@ BrewLogger::BrewLogger(void){
 
 #if EnableDHTSensorSupport
 	_lastHumidity = INVALID_HUMIDITY_VALUE;
+	_lastRoomHumidity = INVALID_HUMIDITY_VALUE;
 	_lastHumidityTarget = INVALID_HUMIDITY_VALUE;
 #endif
 }
@@ -332,10 +333,15 @@ BrewLogger::BrewLogger(void){
 		_addStateRecord(_state);
 
 		#if EnableDHTSensorSupport
-		if(humidityControl.sensorInstalled()){
+		if(humidityControl.isChamberSensorInstalled()){
 			uint8_t humidity = humidityControl.humidity();
 			_lastHumidity=humidity;
 			_addHumidityRecord(humidity);
+		}
+		if(humidityControl.isRoomSensorInstalled()){
+			uint8_t humidity = humidityControl.roomHumidity();
+			_lastRoomHumidity=humidity;
+			_addRoomHumidityRecord(humidity);
 		}
 		#endif
 
@@ -525,13 +531,24 @@ BrewLogger::BrewLogger(void){
 		#endif
 
 		#if EnableDHTSensorSupport
-		if(humidityControl.sensorInstalled()){
+		if(humidityControl.isChamberSensorInstalled() || 
+			humidityControl.isRoomSensorInstalled() ){
 			// To save memory, only log when data changes.
-			uint8_t humidity = humidityControl.humidity();
-			if(_lastHumidity !=humidity){
-				_lastHumidity=humidity;
-				_addHumidityRecord(humidity);
+			if(humidityControl.isChamberSensorInstalled()){
+					uint8_t humidity = humidityControl.humidity();
+				if(_lastHumidity !=humidity){
+					_lastHumidity=humidity;
+					_addHumidityRecord(humidity);
+				}
 			}
+			if(humidityControl.isRoomSensorInstalled()){
+					uint8_t humidity = humidityControl.roomHumidity();
+				if(_lastRoomHumidity !=humidity){
+					_lastRoomHumidity=humidity;
+					_addRoomHumidityRecord(humidity);
+				}
+			}
+
 			uint8_t target = humidityControl.targetRH();
 			if(_lastHumidityTarget !=target){
 				_lastHumidityTarget =target;
@@ -1113,6 +1130,14 @@ BrewLogger::BrewLogger(void){
 		if(idx < 0) return;
 		_writeBuffer(idx,HumidityTag); //*ptr = TargetPsiTag;
 		_writeBuffer(idx+1,humidity); //*(ptr+1) = mode;
+		_commitData(idx,2);
+	}
+
+	void BrewLogger::_addRoomHumidityRecord(uint8_t humidity){
+		int idx = _allocByte(2);
+		if(idx < 0) return;
+		_writeBuffer(idx,HumidityTag); //*ptr = TargetPsiTag;
+		_writeBuffer(idx+1,humidity | 0x80); //*(ptr+1) = mode;
 		_commitData(idx,2);
 	}
 

@@ -120,15 +120,16 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 		}else{
 			// the weird printout of "[NO IP]" implies that explicitly specification of DHCP 
 			// might be necessary.
-			DBG_PRINTF("Unset IP:%d\n",(u32_t)_ip);
+			DBG_PRINTF("Dynamic IP\n");
 			WiFi.config( IPAddress(0,0,0,0),IPAddress(0,0,0,0), IPAddress(0,0,0,0));
 		}
 		WiFi.setAutoReconnect(true);		
 		
 		wl_status_t status;
 		if(targetSSID) status= WiFi.begin(targetSSID,targetPass);
-		else WiFi.begin();
+		else status=WiFi.begin();
 		DBG_PRINTF("WiFi.begin() return:%d\n",status);
+		(void) status;
 		_time=millis();
 	}
 	_wifiState=(mode2use == WIFI_AP)? WiFiStateDisconnected:WiFiStateConnectionRecovering;

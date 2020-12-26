@@ -1126,9 +1126,13 @@ void reportRssi(void)
 #endif
 
 #if EnableDHTSensorSupport
-	if (humidityControl.sensorInstalled()){
+	if (humidityControl.isChamberSensorInstalled()){
 		doc["h"]= humidityControl.humidity();
 	}
+	if (humidityControl.isRoomSensorInstalled()){
+		doc["hr"]= humidityControl.roomHumidity();
+	}
+
 #endif
 
 
