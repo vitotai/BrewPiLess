@@ -449,7 +449,6 @@ void handleDeviceDefinition(const char* key, const char* val, void* pv)
 {
 	DeviceDefinition* def = (DeviceDefinition*) pv;
 //	logDebug("deviceDef %s:%s", key, val);
-
 	// the characters are listed in the same order as the DeviceDefinition struct.
 	int8_t idx = indexOf(DeviceDefinition::ORDER, key[0]);
 	if (key[0]==DEVICE_ATTRIB_ADDRESS)
@@ -473,6 +472,7 @@ void assignIfSet(int8_t value, uint8_t* target) {
 	if (value>=0)
 		*target = (uint8_t)value;
 }
+#define assignIfSetMacro(value,target,type)  if ((value)>=0) target =(type) value;
 
 /**
  * Updates the device definition. Only changes that result in a valid device, with no conflicts with other devices
@@ -500,11 +500,17 @@ void DeviceManager::parseDeviceDefinition()
 	piLink.print("target Chamber: %d, target Beer: %d, target Function: %d, target Hardware: %d, target PinNr: %d\r\n", target.chamber,
 		target.beer, target.deviceFunction, target.deviceHardware, target.hw.pinNr);
 #endif
+
 	assignIfSet(dev.chamber, &target.chamber);
 	assignIfSet(dev.beer, &target.beer);
-	assignIfSet(dev.deviceFunction, (uint8_t*)&target.deviceFunction);
-	assignIfSet(dev.deviceHardware, (uint8_t*)&target.deviceHardware);
+//	assignIfSet(dev.deviceFunction, (uint8_t*)&target.deviceFunction);
+//	assignIfSet(dev.deviceHardware, (uint8_t*)&target.deviceHardware);
+//  above code woudl break when the size of enum is 4. 
+	assignIfSetMacro(dev.deviceFunction, target.deviceFunction, DeviceFunction);
+	assignIfSetMacro(dev.deviceHardware, target.deviceHardware, DeviceHardware);
+
 	assignIfSet(dev.pinNr, &target.hw.pinNr);
+//	Serial.printf("sizeof(target.deviceFunction) =%d, sizeof(uint8_t)=%d\n",sizeof(target.deviceFunction), sizeof(uint8_t));
 
 #if EnableDHTSensorSupport
 	assignIfSet(dev.hsensorType, &target.hw.humiditySensorType);
@@ -517,15 +523,17 @@ void DeviceManager::parseDeviceDefinition()
 	if (dev.calibrationAdjust!=-1)		// since this is a union, it also handles pio for 2413 sensors
 		target.hw.calibration = dev.calibrationAdjust;
 
-	assignIfSet(dev.invert, (uint8_t*)&target.hw.invert);
-
+	//assignIfSet(dev.invert, (uint8_t*)&target.hw.invert);
+	assignIfSetMacro(dev.invert, target.hw.invert,bool);
+	
 	if (dev.address[0] != 0xFF) {// first byte is family identifier. I don't have a complete list, but so far 0xFF is not used.
 #ifndef ESP8266_ONE
 		piLink.print("Dev Address: %s, Target Address: %s\r\n", dev.address, target.hw.address);
 #endif
 		memcpy(target.hw.address, dev.address, 8);
 	}
-	assignIfSet(dev.deactivate, (uint8_t*)&target.hw.deactivate);
+	//assignIfSet(dev.deactivate, (uint8_t*)&target.hw.deactivate);
+	assignIfSetMacro(dev.deactivate, target.hw.deactivate,bool);
 
 	// setting function to none clears all other fields.
 	if (target.deviceFunction==DEVICE_NONE) {

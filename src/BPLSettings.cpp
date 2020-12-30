@@ -292,7 +292,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 		if (!root.success())
 		#endif
 		{
-  			DBG_PRINTF("Invalid JSON config\n");
+  			DBG_PRINTF("Invalid JSON config:%d data:%s\n",error,json);
   			return false;
 		}
         GravityDeviceConfiguration *gdc = &_data.gdc;
@@ -801,8 +801,9 @@ bool BPLSettings::dejsonRemoteLogging(String json)
 	bool enabled= root["enabled"];
 	uint32_t period = root["period"];
 		
-	if(url == NULL || method==NULL || format==NULL 
-		|| strcmp(url,"") ==0 || strcmp(method,"") ==0 || strcmp(format,"") ==0){	
+	if( enabled &&( url == NULL || method==NULL || format==NULL 
+		|| strcmp(url,"") ==0 || strcmp(method,"") ==0 || strcmp(format,"") ==0)){
+		DBG_PRINTF("Enable null service\n");
 		return false;
 	}
 

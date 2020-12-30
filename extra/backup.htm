@@ -1,0 +1,289 @@
+<html>
+<head>
+    <Title>Setting Backup/Restore</Title>
+    <style>
+        table,th,td {border:1px solid;}
+        th,td { padding:10px;}
+        .modal {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	z-index: 1000;
+	transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+	transition-delay: 0s;
+	background: rgba(0,0,0,0.3);
+}
+.modal-content {
+	position: relative;
+	padding: 2rem;
+	background: #FFF;
+	background-clip: padding-box;
+	box-shadow: 0 12px 15px 0 rgba(0,0,0,0.25);
+	transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+	max-width: 600px;
+    padding: 2rem;
+    margin:auto;
+}
+</style>
+</head>
+<body onload="init()">
+
+<button onclick="getAll();return false">Retrive from Controller</button>  <a href="#"  id="savetofile">Save..</a>
+<br />
+Username: <input type="text" size="16" id="username"> Password: <input type="text" size="16" id="password"> 
+<br />
+Load from:<input type="file" id="fileinput"></input><button onclick="restore();return false"> Restore..</button>
+
+<div>
+Date: <span id="backuptime"></span>
+</div>
+<table>
+    <tbody>
+    <tr class="gdc"><th>Gravity Device</th><td class="status"></td></tr>
+    <tr class="rlog"><th>Remote Logging</th><td class="status"></td></tr>
+    <tr class="pressure"><th>Pressure Transducer</th><td class="status"></td></tr>
+    <tr class="mqtt"><th>MQTT</th><td class="status"></td></tr>
+    <tr class="syscfg"><th>System Config</th><td class="status"></td></tr>
+</tbody>
+</table>
+<div class="modal" id="processing">
+    <div class="modal-content" id="hint"></div>
+</div>
+<script>
+
+function s_ajax(b) {
+    var c = new XMLHttpRequest();
+    c.onreadystatechange = function() {
+        if (c.readyState == 4) {
+            if (c.status == 200) {
+                b.success(c.responseText)
+            } else {
+                c.onerror(c.status)
+            }
+        }
+    };
+    c.ontimeout = function() {
+        if (typeof b["timeout"] != "undefined") b.timeout();
+        else c.onerror(-1)
+    }, c.onerror = function(a) {
+        if (typeof b["fail"] != "undefined" && typeof b["_failed"] == "undefined"){
+            b.fail(a)
+            b._failed=true;
+        }
+        
+    };
+    c.open( (typeof b.m=="undefined")? "GET":b.m, b.url, true);
+    if(typeof b.h != "undefined"){
+        Object.keys(b.h).forEach(function(key){
+            c.setRequestHeader(key,b.h[key]);
+        });
+    }
+    if (typeof b["data"] != "undefined") {
+        c.setRequestHeader("Content-Type", (typeof b["mime"] != "undefined") ? b["mime"] : "application/x-www-form-urlencoded");
+        c.send(b.data)
+    } else c.send()
+}
+
+var Q = function(d) {
+    return document.querySelector(d);
+};
+
+
+function prompt(hint){
+    Q("#hint").innerHTML = hint;
+    Q("#processing").style.display="block";
+}
+
+function unprompt(){
+    Q("#processing").style.display="none";
+}
+
+var Settings=
+[{lb:"gdc",url:"/gdc?data",wurl:"/gdc",f:"json"},  
+{lb:"rlog",url:"/log?data=1",wurl:"/log",f:"x-www-form-urlencoded"},
+{lb:"pressure",url:"psi",wurl:"/psi",f:"x-www-form-urlencoded"}, 
+{lb:"mqtt", url:"/mqtt",wurl:"/mqtt",f:"x-www-form-urlencoded"},
+{lb:"syscfg",url:"config?cfg=1",wurl:"/config?nb=1",f:"x-www-form-urlencoded"}];
+
+function clearMark(){
+    Settings.forEach(function(cfg){
+        Q("."+cfg.lb).querySelector(".status").innerHTML = "";
+    });
+}
+
+function mark(sec,status){
+    var Symbols={
+        loaded:"loaded",
+        notavailable:"Not Available",
+        loadfailed:"failed to load",
+        uploaded:"restored",
+        uploadfailed:"restore failed",
+        download:"downloaded"
+    };
+    Q("."+sec).querySelector(".status").innerHTML =  (typeof Symbols[status] == "undefined")? "Unknown": Symbols[status];
+}
+
+function getSetting(idx,final){
+    s_ajax({
+        url:Settings[idx].url,
+        success:function(d){
+            final(d);
+        },
+        fail:function(){
+            final(false);
+        }
+    });
+}
+
+function saveSetting(idx,final){
+    var json= JSON.stringify(window.data[Settings[idx].lb]);
+    var data=(Settings[idx].f == "json")? json:"data="+encodeURIComponent(json);
+    var headers={"Authorization": "Basic " + btoa(window.username +":" + window.password)};
+
+    s_ajax({
+        url:Settings[idx].wurl,
+        m:"POST",
+        data:data,
+        mime:"application/" + Settings[idx].f ,
+        h:headers,
+        success:function(d){
+            final(d);
+        },
+        fail:function(){
+            final(false);
+        }
+    });
+}
+
+
+function processCfg(idx,nethdlr,dhdlr,done){
+    console.log("Processing "  + idx + " tag:"+ Settings[idx].lb);
+    nethdlr(idx,function(result){
+        console.log("  Result:" + (result? "Success!":"failed!"))
+        dhdlr(Settings[idx].lb,result);
+        if((idx +1)< Settings.length) processCfg(idx+1,nethdlr,dhdlr,done);
+        else done();
+    });
+
+}
+
+function getAll(){
+    window.data={};
+    clearMark();
+    prompt("Getting data...");
+    processCfg(0,getSetting,
+        function(lb,cfg){
+            if(cfg !== false){
+                window.data[lb] = JSON.parse(cfg);
+                mark(lb,"download");
+            }else mark(lb,"loadfailed");
+        },
+        function(){
+        window.data.date=Date.now();
+        prepareSave();
+        //alert("done");
+        unprompt();
+    });
+}
+
+
+function restore(){
+    clearMark();
+    window.username = Q("#username").value.trim();
+    window.password = Q("#password").value.trim();
+    if(window.username == "" || window.password == ""){
+        alert("Enter user/pass!");
+        return;
+    }
+    prompt("Sending data to controller...");
+    processCfg(0,saveSetting,
+        function(lb,cfg){
+            if(cfg !== false){
+                mark(lb,"uploaded");
+            }else  mark(lb,"uploadfailed");
+        },
+        function(){
+        //alert("done");
+        unprompt();
+    });
+}
+
+
+function dataLoaded(){
+    Settings.forEach(function(cfg){
+        mark(cfg.lb, (typeof window.data[cfg.lb] != "undefined")? "loaded":"notavailable");
+    });
+    var dt=new Date(window.data.date);
+    Q("#backuptime").innerHTML = dt.toLocaleDateString() +" " + dt.toLocaleTimeString();
+}
+function prepareSave() {
+        var json = JSON.stringify(window.data);
+        var blob = new Blob([json], { type: 'application/json;' });
+        var link = Q.createElement("a");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "bpl.settings.json");
+        } else{
+            alert("saving to local is not unsupported");
+        } 
+    }
+
+    function prepareSave() {
+        // special process of syscfg
+        if(typeof window.data["syscfg"] != "undefined"){
+            var remover=["fid","frsize","fs","fsize","date","mac"];
+            remover.forEach(function(item){
+                if(typeof window.data.syscfg[item] != "undefined") delete window.data.syscfg[item];
+            });
+        }
+        var json = JSON.stringify(window.data);
+        var blob = new Blob([json], { type: 'application/json;' });
+        var link = Q("#savetofile");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "bpl.settings.json");
+        } else{
+            alert("saving to local is not unsupported");
+        } 
+    };
+
+
+
+function init(){
+    Q("#fileinput").onchange=function(evt) {
+        //Retrieve the first (and only!) File from the FileList object
+        var f = evt.target.files[0];
+        var r = new FileReader();
+        r.onload = function(e) {
+        //console.log(e.target.result);
+            try {
+                var json = JSON.parse(e.target.result);
+                window.data=json;
+                dataLoaded();
+            } catch (e) {
+                    alert("error file format:" + e);
+            }
+        };
+        f.onerror = function(e) {
+            alert("error open file:" + e);
+        };
+        r.readAsText(f);
+    };
+
+}
+
+
+</script>
+</body>
+</html>
