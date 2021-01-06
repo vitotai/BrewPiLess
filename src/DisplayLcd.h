@@ -125,6 +125,11 @@ class LcdDisplay DISPLAY_SUPERCLASS
 #ifdef STATUS_LINE
 	DISPLAY_METHOD void printStatus(char* text){ lcd.printStatus(text);}
 #endif
+
+#if BREWPI_IIC_LCD
+	DISPLAY_FIELD uint8_t i2cLcdAddr;
+#endif
+
 	private:
 	DISPLAY_FIELD LcdDriver lcd;
 	DISPLAY_FIELD uint8_t stateOnDisplay;

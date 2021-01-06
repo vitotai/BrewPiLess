@@ -1837,6 +1837,49 @@ uint32_t _lcdReinitTime;
 #endif
 
 
+
+
+
+#if BREWPI_IIC_LCD
+
+void scanI2C(void) //VTODO
+{
+	DBG_PRINTF("Scanning I2C\n");
+	Wire.begin(PIN_SDA,PIN_SCL);
+	byte error, address;
+    //Serial.println("Scan LCD Address...\n");
+
+ 	for(address = 127; address > 0; address-- )
+  	{
+    	// The i2c_scanner uses the return value of
+    	// the Write.endTransmisstion to see if
+    	// a device did acknowledge to the address.
+    	#if RotaryViaPCF8574 || ButtonViaPCF8574
+    	if(address == PCF8574_ADDRESS) continue;
+    	#endif
+
+		Wire.beginTransmission(address);
+    	error = Wire.endTransmission();
+
+		#if PressureViaADS1115
+    	if(error == 0 && address == ADS1115_ADDRESS){
+			DBG_PRINTF("Found ADS11115\n");
+			continue;
+		}
+    	#endif
+
+
+    	if (error == 0)
+    	{			
+      		DBG_PRINTF("I2C device found at address %x\n",address);
+      		LcdDisplay::i2cLcdAddr = address;
+    	}
+    }
+}
+
+#endif
+
+
 void setup(void){
 
 	#if SerialDebug == true
@@ -1846,6 +1889,7 @@ void setup(void){
   	#endif
 
 	//0.Initialize file system
+
 	//start SPI Filesystem
 #if defined(ESP32)
   	if(!SPIFFS.begin(true)){
@@ -1857,7 +1901,9 @@ void setup(void){
   	}else{
   		DBG_PRINTF("FileSystem.begin() Success.\n");
   	}
-
+#if BREWPI_IIC_LCD
+	scanI2C();
+#endif
 
 #ifdef EARLY_DISPLAY
 	DBG_PRINTF("Init LCD...\n");

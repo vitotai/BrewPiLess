@@ -44,56 +44,15 @@ extern "C" {
 // LiquidCrystal constructor is called).
 
 
-#if LCD_AUTO_ADDRESSING == true
-
-void IIClcd::scanForAddress(void) //VTODO
+IIClcd::IIClcd(uint8_t lcd_cols,uint8_t lcd_rows)
 {
-	byte error, address;
-    //Serial.println("Scan LCD Address...\n");
-
- 	for(address = 127; address > 0; address-- )
-  	{
-    	// The i2c_scanner uses the return value of
-    	// the Write.endTransmisstion to see if
-    	// a device did acknowledge to the address.
-    	#if RotaryViaPCF8574 || ButtonViaPCF8574
-    	if(address == PCF8574_ADDRESS) continue;
-    	#endif
-
-		#if PressureViaADS1115
-    	if(address == ADS1115_ADDRESS){
-			Serial.print("Found ADS11115\n");
-			continue;
-		}
-    	#endif
-		Wire.beginTransmission(address);
-    	error = Wire.endTransmission();
-
-    	if (error == 0)
-    	{
-			#if SerialDebug
-      		Serial.print("I2C device found at address 0x");
-      		Serial.print(address,HEX);
-      		Serial.println("  !");
-			#endif
-      		_Addr= address;
-      		break;
-    	}
-    }
-}
-
-#endif
-
-
-IIClcd::IIClcd(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows)
-{
-  _Addr = lcd_Addr;
   _cols = lcd_cols;
   _rows = lcd_rows;
   _backlightval = LCD_NOBACKLIGHT;
 }
 
-void IIClcd::init(){
+void IIClcd::init(uint8_t lcd_Addr){
+	_Addr=lcd_Addr;
 	init_priv();
     _backlightTime = 0;
 }
@@ -103,9 +62,6 @@ void IIClcd::init_priv()
 	#if defined(ESP8266) || defined(ESP32)
 
 	Wire.begin(PIN_SDA,PIN_SCL);
-	#if LCD_AUTO_ADDRESSING == true
-	scanForAddress();
-	#endif
 #else
 	twi_init();
 #endif
