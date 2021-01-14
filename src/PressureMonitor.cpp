@@ -12,6 +12,10 @@
 
 #include "PressureMonitor.h"
 
+#if TWOFACED_LCD
+#include "SharedLcd.h"
+#endif
+
 #if SupportPressureTransducer
 #define MinimumMonitorTime 10000
 #define MinimumControlCheckTime 1000
@@ -91,6 +95,10 @@ void PressureMonitorClass::_readPressure(void){
     #else
     _currentPsi = psi;
     DBG_PRINTF("ADC:%d  PSIx10:%d\n",(int)reading,(int)(psi*10));
+    #endif
+
+    #if TWOFACED_LCD
+    smartDisplay.pressureData(psi);
     #endif
 }
 

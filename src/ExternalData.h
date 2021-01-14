@@ -79,7 +79,7 @@ protected:
 
 	float temperatureCorrection(float sg, float t, float c);
 
-	void setIspindelAngle(float tilt,float temp,time_t now);
+	float calculateGravitybyAngle(float tilt,float temp);
 	void setGravity(float sg, time_t now,bool log=true);
 	void setAuxTemperatureCelsius(float temp);
 	void setOriginalGravity(float og);	

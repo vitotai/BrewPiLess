@@ -9,7 +9,8 @@ class Bme280Sensor:public EnvironmentSensor{
 
 public:
     Bme280Sensor(uint8_t address){
-       _connected=_bme.begin(address);
+       _connected=_bme.begin(address,&Wire);
+       DBG_PRINTF("BME280 begin(0x%x):%d sensor ID:0x%x\n",address,_connected,_bme.sensorID());
        _addr = address;
     }
     

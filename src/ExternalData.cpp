@@ -4,6 +4,12 @@
 #include "TiltListener.h"
 #endif
 
+#if TWOFACED_LCD
+
+#include "SharedLcd.h"
+
+#endif
+
 ExternalData externalData;
 
 #define TiltFilterParameter 0.15
@@ -112,7 +118,19 @@ void ExternalData::setTiltInfo(uint16_t gravity, uint16_t temperature, int rssi)
 
 	setAuxTemperatureCelsius( ((float)temperature  -32.0)* 5.0/9.0);
 	setDeviceRssi(rssi);
-	setGravity(csg, TimeKeeper.getTimeSeconds());
+	float fgravity =(_cfg->usePlato)? SG2Brix(csg):csg;
+	setGravity(fgravity, TimeKeeper.getTimeSeconds());
+	// display
+
+	#if TWOFACED_LCD
+	// duplicated code, I know...
+	char unit;
+	float max,min;
+
+	brewPi.getTemperatureSetting(&unit,&min,&max);
+	smartDisplay.gravityDeviceData(fgravity,(unit =='C')? ((float)temperature  -32.0)* 5.0/9.0:temperature,_lastUpdate,unit,_cfg->usePlato);
+	#endif
+
 }
 #endif
 
@@ -180,16 +198,11 @@ void ExternalData::setOriginalGravity(float og){
 #endif
 }
 
-void ExternalData::setIspindelAngle(float tilt,float temp,time_t now){
-	_lastUpdate=now;
-	_ispindelTilt=tilt;
-
-	// add tilt anyway
-	brewLogger.addTiltAngle(tilt);
+float ExternalData::calculateGravitybyAngle(float tilt,float temp){
 
 	if(_calibrating && _cfg->numberCalPoints ==0){
 		DBG_PRINTF("No valid formula!\n");
-		return; // don't calculate if formula is not available.
+		return 0; // don't calculate if formula is not available.
 	}
 		// calculate plato
 	float sg = _cfg->ispindelCoefficients[0]
@@ -204,8 +217,7 @@ void ExternalData::setIspindelAngle(float tilt,float temp,time_t now){
 		}else
 	    	sg = temperatureCorrection(sg,C2F(temp),C2F((float)_cfg->ispindelCalibrationBaseTemp));
 	}
-	// update, gravity data calculated
-	setGravity(sg,now,!_calibrating); // save only when not calibrating.
+	return sg;
 }
 
 void ExternalData::setGravity(float sg, time_t now,bool log){
@@ -324,6 +336,7 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 		    DBG_PRINTF("iSpindel report no temperature!\n");
 		    return false;
 		}
+		_lastUpdate=TimeKeeper.getTimeSeconds();
 
         float itemp=root["temperature"];
 		float tempC=itemp;
@@ -335,29 +348,44 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 
 		setAuxTemperatureCelsius(tempC);
 
-		//Serial.print("temperature:");
-		//Serial.println(itemp);
-
-		if(!root.containsKey("angle")){
-        	DBG_PRINTF("iSpindel report no angle!\n");
-			return false;
-		}
-    	
-        setIspindelAngle(root["angle"],itemp,TimeKeeper.getTimeSeconds());
-
         if(root.containsKey("battery"))
     	    setDeviceVoltage(root["battery"]);
 
         if(root.containsKey("RSSI"))
     	    setDeviceRssi(root["RSSI"]);
 
-		//setPlato(root["gravityP"],TimeKeeper.getTimeSeconds());
-		if(root.containsKey("gravity") &&
-                ! _cfg->calculateGravity 
-				&& ! _calibrating ){
+		//Serial.print("temperature:");
+		//Serial.println(itemp);
+
+		if(root.containsKey("angle")){
+			_ispindelTilt=root["angle"];
+			// add tilt anyway
+			brewLogger.addTiltAngle(_ispindelTilt);
+		}
+
+		if(root.containsKey("angle") && (_cfg->calculateGravity ||  _calibrating ) ){
+	        float calculatedSg=calculateGravitybyAngle(_ispindelTilt,itemp);
+
+			// update, gravity data calculated
+			// in "brew N cal" mode, only tilt is logged.
+			setGravity(calculatedSg,_lastUpdate,!_calibrating); // save only when not calibrating.
+			#if TWOFACED_LCD
+			char unit;
+			float max,min;
+
+		    brewPi.getTemperatureSetting(&unit,&min,&max);
+			smartDisplay.gravityDeviceData(calculatedSg,(unit =='C')? tempC:C2F(tempC),_lastUpdate,unit,_cfg->usePlato);
+			#endif
+		}else if(root.containsKey("gravity")){
 			// gravity information directly from iSpindel
 			float sgreading=root["gravity"];
             setGravity(sgreading, TimeKeeper.getTimeSeconds());
+			#if TWOFACED_LCD
+			char unit;
+			float max,min;
+    		brewPi.getTemperatureSetting(&unit,&min,&max);			
+			smartDisplay.gravityDeviceData(sgreading,(unit =='C')? tempC:C2F(tempC),_lastUpdate,unit,_cfg->usePlato);
+			#endif
         }
 	}else{
 		    error = ErrorUnknownSource;

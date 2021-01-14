@@ -3,7 +3,7 @@
 #include "NullLcdDriver.h"
 #include <inttypes.h>
 #include <Print.h>
-
+#pragma once
 #if BREWPI_IIC_LCD
 #include <Wire.h>
 #include "IicLcd.h"
@@ -14,13 +14,13 @@
 #endif
 
 #if BREWPI_OLED128x64_LCD
-	typedef IICOledLcd	LcdDriver;
+	typedef IICOledLcd	PhysicalLcdDriver;
 #else // BREWPI_OLED128x64_LCD
     #if defined(BREWPI_IIC_LCD)
-    typedef IIClcd	LcdDriver;
+    typedef IIClcd	PhysicalLcdDriver;
     #else
         #if BREWPI_EMULATE || !BREWPI_LCD || !ARDUINO
-	    typedef NullLcdDriver LcdDriver;
+	    typedef NullLcdDriver PhysicalLcdDriver;
         #endif
     #endif
 #endif //BREWPI_OLED128x64_LCD
@@ -50,7 +50,7 @@ protected:
     SharedLcdDisplay* _next;
     SharedLcdDisplay* _previous;
     SharedDisplayManager *_manager;
-    LcdDriver *getLcd();
+    PhysicalLcdDriver *getLcd();
 };
 
 class SharedDisplayManager{
@@ -58,26 +58,30 @@ public:
     SharedDisplayManager();
 
     void add(SharedLcdDisplay* display);
+    void setPrimary(SharedLcdDisplay* display);
     void loop();
     void init();
     void next();
     void previous();
-    void forceHead();
-    void endForceHead();
+    void forcePrimary(bool primary);
+    void setRotateMode(bool rotate){ _isRotateMode = rotate;}
 
-    LcdDriver *getLcd(){ return & _lcd;}
-    
+    PhysicalLcdDriver *getLcd(){ return & _lcd;}
+    static uint8_t i2cLcdAddr;
+
 protected:
       SharedLcdDisplay* _head;
       SharedLcdDisplay* _current;      
     
-      LcdDriver _lcd;
+      PhysicalLcdDriver _lcd;
       uint32_t _switchTime;
       bool _isForcedPrimary;
       bool _isRotateMode;
 
       void _switch(SharedLcdDisplay* newDisplay);
 };
+
+extern SharedDisplayManager sharedDisplayManager;
 
 class BrewPiLcd: public SharedLcdDisplay, public Print {
 public:
@@ -98,7 +102,6 @@ public:
     void resetBacklightTimer(void);
     void updateBacklight(void);
     void setAutoOffPeriod(uint32_t period);
-
     void print_P(const char * str) {
         #if ESP32
         print((char*)str);
@@ -118,3 +121,54 @@ protected:
 
     void _clearBuffer();
 };
+
+
+#define GravityMask 1
+#define PressureMask 2
+#define HumidityMask 4
+
+class SmartDisplay: public SharedLcdDisplay{
+public:
+    SmartDisplay();
+    void onShow();
+    void onHide();
+    void redraw();
+
+    
+    void gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlate);
+    void pressureData(float pressure);
+    void humidityData(bool chamberValid,uint8_t chamber,bool roomValid, uint8_t room);
+    void setIp(IPAddress ip);
+protected:
+    bool _shown;
+    uint8_t _layout;
+    IPAddress _ip;
+
+    char   _tempUnit;
+    bool    _plato;
+    float   _gravity;
+    float   _temperature;
+    uint32_t _updateTime;
+
+    bool _chamberHumidityAvailable;
+    bool _roomHumidityAvailable;
+
+    uint8_t _chamberHumidity;
+    uint8_t _roomHumidity;
+
+    float _pressure;
+
+    void _drawFixedPart();
+    void _drawGravity();
+    void _drawPressure();
+    void _drawHumidity();
+    void _drawIp();
+
+    void _printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t precision,float value);
+    void _printGravityTimeAt(uint8_t col,uint8_t row);
+    void _printHumidityValueAt(uint8_t col,uint8_t row,uint8_t value);
+
+    bool _updatePartial(uint8_t mask);
+};
+
+extern SmartDisplay smartDisplay;

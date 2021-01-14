@@ -84,7 +84,7 @@ private:
 
 	void setupApService(void);
 	void enterBackupApMode();
-	void onConnected();
+	void onStatus();
 	void createNetwork();
 };
 

@@ -166,7 +166,7 @@ bool WiFiSetupClass::isConnected(void){
 	return WiFi.status() == WL_CONNECTED;
 }
 
-void WiFiSetupClass::onConnected(){
+void WiFiSetupClass::onStatus(){
 	if(_eventHandler){
 		_eventHandler(status().c_str());
 	}
@@ -262,6 +262,7 @@ bool WiFiSetupClass::stayConnected(void)
  			{
 				wifi_info("**disc:");
 				if(_mode != WIFI_AP){
+					onStatus();
 					DBG_PRINTF("Lost Network.WiFi.status()= %d\n",WiFi.status());
 					_wifiState = WiFiStateConnectionRecovering;
 					if(_targetSSID) WiFi.begin(_targetSSID,_targetPass);
@@ -326,7 +327,7 @@ bool WiFiSetupClass::stayConnected(void)
 				}
 				
 				wifi_info("WiFi Connected:");
-				onConnected();
+				onStatus();
 			}
 		 }
   } // end of connected

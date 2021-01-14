@@ -92,6 +92,7 @@ inline bool isAssignable(DeviceType type, DeviceHardware hardware)
 #if EnableDHTSensorSupport	
 	|| (hardware==DEVICE_HARDWARE_PIN && type==DEVICETYPE_ENVIRONMENT_SENSOR)
 	|| (hardware==DEVICE_HARDWARE_ENVIRONMENT_TEMP && type==DEVICETYPE_TEMP_SENSOR)
+	|| (hardware==DEVICE_HARDWARE_BME280 && type == DEVICETYPE_ENVIRONMENT_SENSOR)
 #endif
 	|| (hardware==DEVICE_HARDWARE_ONEWIRE_TEMP && type==DEVICETYPE_TEMP_SENSOR)
 	|| (hardware==DEVICE_HARDWARE_NONE && type==DEVICETYPE_NONE);

@@ -6,10 +6,13 @@
 #include "DHTSensor.h"
 #include "BPLSettings.h"
 #include "EnvironmentSensor.h"
+#if TWOFACED_LCD
+#include "SharedLcd.h"
+#endif
 
 #if EnableDHTSensorSupport
 
-#define MINIMUM_HUMIDITY_SENSOR_READ_PERIOD 10000
+#define MINIMUM_HUMIDITY_SENSOR_READ_PERIOD 5000
 #define IsValidHumidityValue(a) ((a) <=100)
 
 extern ValueActuator defaultActuator;
@@ -94,11 +97,16 @@ public:
     }
 
     void loop(){
-            if(!chamberSensor->isConnected()) return;
+            if(!isChamberSensorInstalled() && !isRoomSensorInstalled()) return;
             uint32_t currenttime = millis();
             if ((currenttime - _lastreadtime) > MINIMUM_HUMIDITY_SENSOR_READ_PERIOD){                
                 _lastreadtime = currenttime;
                 _humidity= chamberSensor->humidity();
+
+                #if TWOFACED_LCD
+                smartDisplay.humidityData(isChamberSensorInstalled(),_humidity,isRoomSensorInstalled(),roomSensor->humidity());
+                #endif
+
                 //DBG_PRINTF("Humidity:%d\n",_humidity);
                 
                 if( _mode != HC_ModeOff && IsValidHumidityValue(_humidity)){

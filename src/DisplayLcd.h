@@ -33,6 +33,14 @@
 #include "IicOledLcd.h"
 #endif
 
+#if TWOFACED_LCD
+#include "SharedLcd.h"
+#endif
+
+#if TWOFACED_LCD
+typedef BrewPiLcd LcdDriver;
+#else //#if TWOFACED_LCD
+
 #if BREWPI_OLED128x64_LCD
 	typedef IICOledLcd	LcdDriver;
 #else // BREWPI_OLED128x64_LCD
@@ -49,6 +57,9 @@ typedef OLEDFourBit LcdDriver;
 #endif
 #endif
 #endif //BREWPI_OLED128x64_LCD
+
+#endif //#if TWOFACED_LCD
+
 
 class LcdDisplay DISPLAY_SUPERCLASS
 {

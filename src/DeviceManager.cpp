@@ -1030,6 +1030,7 @@ void DeviceManager::enumerateEnvTempDevices(EnumerateHardware& h, EnumDevicesCal
 
 void DeviceManager::enumerateBME280(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output){
 	// scan I2C
+	Wire.begin(PIN_SDA,PIN_SCL);
 	const uint8_t addresses[]={BME280_ADDRESS,BME280_ADDRESS_ALTERNATE};
 
 	DeviceConfig config;
@@ -1037,13 +1038,19 @@ void DeviceManager::enumerateBME280(EnumerateHardware& h, EnumDevicesCallback ca
 	config.deviceHardware = DEVICE_HARDWARE_BME280;
 	config.chamber = 1; // chamber 1 is default
 
-
+	uint8_t error,address;
  	for(uint32_t ai = 0; ai < sizeof(addresses); ai++ ){
-		Wire.beginTransmission(addresses[ai]);
-    	uint8_t error = Wire.endTransmission();
+		address = addresses[ai];
+		
+		Wire.beginTransmission(address);
+    	error = Wire.endTransmission();
+		
+//		Serial.printf("search %x result:%d\n",address,error);
+
 		if(error ==0){
 			// found
-			config.hw.pinNr= addresses[ai];
+//			Serial.printf("search %x found\n",address);
+			config.hw.pinNr= address;
 			handleEnumeratedDevice(config, h, callback, output);
 		}
 	}

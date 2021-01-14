@@ -31,6 +31,13 @@
 
 uint8_t LcdDisplay::stateOnDisplay;
 uint8_t LcdDisplay::flags;
+
+
+#if TWOFACED_LCD
+LcdDriver LcdDisplay::lcd;
+
+#else // #if TWOFACED_LCD
+
 #if BREWPI_OLED128x64_LCD
 LcdDriver LcdDisplay::lcd(OLED128x64_LCD_ADDRESS,PIN_SDA,PIN_SCL);
 #else // #if BREWPI_OLED128x64_LCD
@@ -43,6 +50,9 @@ LcdDriver LcdDisplay::lcd(20,4);
 LcdDriver LcdDisplay::lcd;
 #endif
 #endif // #if BREWPI_OLED128x64_LCD
+#endif //#if TWOFACED_LCD
+
+
 // Constant strings used multiple times
 static const char STR_Beer_[] PROGMEM = "Beer ";
 static const char STR_Fridge_[] PROGMEM = "Fridge ";
@@ -61,11 +71,18 @@ void LcdDisplay::init(void){
 	stateOnDisplay = 0xFF; // set to unknown state to force update
 	flags = LCD_FLAG_ALTERNATE_ROOM;
 
+#if TWOFACED_LCD
+	lcd.init();
+	sharedDisplayManager.add(&lcd);
+	sharedDisplayManager.setPrimary(&lcd);
+#else
 #if BREWPI_IIC_LCD
 	lcd.init(i2cLcdAddr); // initialize LCD
 #else
 	lcd.init();
 #endif	
+#endif
+
 	lcd.begin(20, 4);
 	lcd.clear();
 }

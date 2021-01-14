@@ -470,6 +470,10 @@
 #endif
 #endif
 
+#ifndef TWOFACED_LCD
+#define TWOFACED_LCD true
+#endif
+
 #define IIC_LCD_ADDRESS 0x27
 #define LCD_AUTO_ADDRESSING true
 

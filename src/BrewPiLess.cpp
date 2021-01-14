@@ -1610,6 +1610,9 @@ void wiFiEvent(const char* msg){
 		DBG_PRINTF("channel:%d, BSSID:%s\n",WiFi.channel(),WiFi.BSSIDstr().c_str());
 		if(! TimeKeeper.isSynchronized())TimeKeeper.updateTime();
 	}
+	#if TWOFACED_LCD
+	smartDisplay.setIp(WiFi.localIP());
+	#endif
 }
 
 void tiltScanResult(String& result){
@@ -1720,10 +1723,28 @@ void brewpiLoop(void)
 
 #if BREWPI_MENU
 		if (rotaryEncoder.pushed()) {
+			#if TWOFACED_LCD
+			// might not be necessary, pickSettingToChange() will go into a loop until
+			// end of menu
+			sharedDisplayManager.forcePrimary(true);
+			#endif
 			rotaryEncoder.resetPushed();
 			display.updateBacklight();
 			menu.pickSettingToChange();
+			#if TWOFACED_LCD
+			sharedDisplayManager.forcePrimary(false);
+			rotaryEncoder.setRange(1,0,2);
+			#endif
 		}
+		#if TWOFACED_LCD
+		int16_t s=rotaryEncoder.read();
+		if(s !=1){
+			DBG_PRINTF("rotaryEncoder.read()=%d\n",s);
+			if(s==0) sharedDisplayManager.previous();
+			else sharedDisplayManager.next();
+			rotaryEncoder.setRange(1,0,2);
+		}
+		#endif
 #endif
 
 		// update the lcd for the chamber being displayed
@@ -1872,7 +1893,11 @@ void scanI2C(void) //VTODO
     	if (error == 0)
     	{			
       		DBG_PRINTF("I2C device found at address %x\n",address);
-      		LcdDisplay::i2cLcdAddr = address;
+			#if TWOFACED_LCD
+	      	SharedDisplayManager::i2cLcdAddr = address;
+			#else
+	      	LcdDisplay::i2cLcdAddr = address;
+			#endif
     	}
     }
 }
@@ -1905,6 +1930,10 @@ void setup(void){
 	scanI2C();
 #endif
 
+#if TWOFACED_LCD
+	sharedDisplayManager.init();
+#endif
+
 #ifdef EARLY_DISPLAY
 	DBG_PRINTF("Init LCD...\n");
 	display.init();
@@ -1912,7 +1941,6 @@ void setup(void){
 	display.updateBacklight();
 	DBG_PRINTF("LCD Initialized..\n");
 #endif
-
 
 	// try open configuration
 	theSettings.load();
@@ -2069,6 +2097,11 @@ void setup(void){
 	humidityControl.begin();
 	#endif
 
+#if TWOFACED_LCD
+	sharedDisplayManager.add(&smartDisplay);
+	rotaryEncoder.setRange(1,0,2);
+#endif
+
 
 }
 
@@ -2101,6 +2134,13 @@ void loop(void){
 		display.fresh();
 	}
 #endif
+
+
+#if TWOFACED_LCD
+	sharedDisplayManager.loop();
+	sharedDisplayManager.setRotateMode(true);
+#endif
+
 
 #ifdef STATUS_LINE
 	statusLine.loop(now);
