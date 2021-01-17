@@ -97,7 +97,7 @@ extern "C" {
 #endif
 #endif
 
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 #include "HumidityControl.h"
 #endif
 
@@ -532,6 +532,10 @@ public:
 					request->send(200,"application/json","{}");
 					display.setAutoOffPeriod(theSettings.systemConfiguration()->backlite);
 
+					#if TWOFACED_LCD
+					sharedDisplayManager.setDisplayMode(theSettings.systemConfiguration()->displayMode);
+					#endif
+
 					if(oldMode !=  theSettings.systemConfiguration()->wifiMode){
 						DBG_PRINTF("change from %d to %d\n",oldMode,theSettings.systemConfiguration()->wifiMode);
 						WiFiSetup.setMode((WiFiMode) (theSettings.systemConfiguration()->wifiMode));
@@ -712,7 +716,7 @@ public:
 			}
 		}
 		#endif
-		#if EnableDHTSensorSupport
+		#if EnableHumidityControlSupport
 		else if(request->url() == HUMIDITY_CONTROL_PATH){
 			if(request->hasParam("m",true) &&  request->hasParam("t",true) ){
 				uint8_t mode=(uint8_t) request->getParam("m",true)->value().toInt();
@@ -828,7 +832,7 @@ public:
 				#if SupportPressureTransducer
 				|| request->url() == PRESSURE_PATH
 				#endif
-				#if EnableDHTSensorSupport
+				#if EnableHumidityControlSupport
 				|| request->url() == HUMIDITY_CONTROL_PATH
 				#endif
 	 			)
@@ -945,7 +949,7 @@ void greeting(std::function<void(const char*)> sendFunc)
 	doc["ptc"]= serialized(parasiteTempController.getSettings());
 #endif
 
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 	JsonObject hum = doc.createNestedObject("rh");
 	hum["m"] = humidityControl.mode();
 	hum["t"] = humidityControl.targetRH();
@@ -1125,7 +1129,7 @@ void reportRssi(void)
 	doc["psi"] = (int) PressureMonitor.currentPsi();
 #endif
 
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 	if (humidityControl.isChamberSensorInstalled()){
 		doc["h"]= humidityControl.humidity();
 	}
@@ -1875,6 +1879,10 @@ void scanI2C(void) //VTODO
     	// The i2c_scanner uses the return value of
     	// the Write.endTransmisstion to see if
     	// a device did acknowledge to the address.
+		#if EnableBME280Support
+		if(address == 0x76 || address==0x77) continue;
+		#endif
+
     	#if RotaryViaPCF8574 || ButtonViaPCF8574
     	if(address == PCF8574_ADDRESS) continue;
     	#endif
@@ -2093,13 +2101,15 @@ void setup(void){
 	mqttRemoteControl.begin();
 #endif
 
-	#if EnableDHTSensorSupport
+	#if EnableHumidityControlSupport
 	humidityControl.begin();
 	#endif
 
 #if TWOFACED_LCD
 	sharedDisplayManager.add(&smartDisplay);
 	rotaryEncoder.setRange(1,0,2);
+
+	sharedDisplayManager.setDisplayMode(theSettings.systemConfiguration()->displayMode);
 #endif
 
 
@@ -2138,7 +2148,6 @@ void loop(void){
 
 #if TWOFACED_LCD
 	sharedDisplayManager.loop();
-	sharedDisplayManager.setRotateMode(true);
 #endif
 
 
@@ -2179,7 +2188,7 @@ void loop(void){
 	tiltListener.loop();
 	#endif
 
-	#if EnableDHTSensorSupport
+	#if EnableHumidityControlSupport
 	humidityControl.loop();
 	#endif
 

@@ -75,6 +75,18 @@ void SharedDisplayManager::setPrimary(SharedLcdDisplay* display){
 
 }
 
+void SharedDisplayManager::setDisplayMode(uint8_t mode){
+    if(mode == 0 ){
+        _isRotateMode = true;
+    }else{
+        _isRotateMode = false;
+        uint8_t count= mode -1;
+        SharedLcdDisplay* display= _head;
+        while( count-- > 0) display = display->_next;
+        _switch(display);
+    }
+}
+
 void SharedDisplayManager::next(){
     if(_current != NULL){
         _switch(_current->_next);
@@ -449,7 +461,7 @@ Pressure    13.5 psi
 }
 
 void SmartDisplay::_drawGravity(){
-    PhysicalLcdDriver *lcd=getLcd();
+//    PhysicalLcdDriver *lcd=getLcd();
 
     switch(_layout){
 /*
@@ -572,7 +584,7 @@ void SmartDisplay::_drawIp(){
 }
 
 void SmartDisplay::_drawHumidity(){
-    PhysicalLcdDriver *lcd=getLcd();
+//    PhysicalLcdDriver *lcd=getLcd();
     int singleLinedHumidity = -1;
 
     switch(_layout){

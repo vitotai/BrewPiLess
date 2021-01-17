@@ -108,7 +108,15 @@ var  CHART_VERSION = 6;
         var colorHeatingMinTime = "rgba(255, 0, 0, 0.6)";
         var colorCoolingMinTime = "rgba(0, 0, 255, 0.6)";
         var colorWaitingPeakDetect = "rgba(0, 0, 0, 0.2)";
+
         var colorPressure="#0000EE";
+        var colorPressureSet="rgb(240, 100, 100)";
+        var colorCarbonation="gray";
+
+        var colorHumidity="#2222DD";
+        var colorHumiditySet="#EE1111";
+        var colorRoomHumidity="#AAAAAA";
+
         var STATE_LINE_WIDTH = 15;
         var STATES = [{
             name: "IDLE",
@@ -167,11 +175,16 @@ var  CHART_VERSION = 6;
             o: "Off",
             p: "Profile"
         };
-        BrewChart.Colors = ["rgb(240, 100, 100)", "rgb(41,170,41)", "rgb(89, 184, 255)", "rgb(255, 161, 76)", "#AAAAAA", "#f5e127", "rgb(153,0,153)", "#000abb",colorPressure];
+        BrewChart.Colors = ["rgb(240, 100, 100)", "rgb(41,170,41)", "rgb(89, 184, 255)", "rgb(255, 161, 76)", "#AAAAAA", "#f5e127", "rgb(153,0,153)", "#000abb",
+                        colorPressure,colorPressureSet,colorCarbonation,
+                        colorHumidity,colorHumiditySet,colorRoomHumidity];
         BrewChart.Labels = ['Time', 'beerSet', 'beerTemp', 'fridgeTemp', 'fridgeSet', 'roomTemp', 'auxTemp', 'gravity', 'filtersg'];
-        BrewChart.ClassLabels = ['', 'beer-set', 'beer-temp', 'fridge-temp', 'fridge-set', 'room-temp', 'aux-temp', 'gravity', 'filtersg'];
-        var BeerTempLine = 2;
+        BrewChart.ClassLabels = ['', 'beer-set', 'beer-temp', 'fridge-temp', 'fridge-set', 'room-temp', 'aux-temp', 'gravity', 'filtersg',
+                            'pressure','pressure-set','carbonation',
+                            'humidity','humidity-set','room-humidity'];
+
         var BeerSetLine = 1;
+        var BeerTempLine = 2;
         var FridgeTempLine = 3;
         var FridgeSetLine = 4;
         var RoomTempLine = 5;
@@ -182,6 +195,13 @@ var  CHART_VERSION = 6;
         var PressureLine = 9;
         var PressureSetLine = 10;
         var CarbonationLine = 11;
+
+
+        var ChamberHumidityLine = 12;
+        var SetHumidityLine = 13;
+        var RoomHumidityLine = 14;
+
+        var NumberOfLines =14;
 
         var PSIDataIndex = 8;
 
@@ -258,6 +278,10 @@ var  CHART_VERSION = 6;
             if(this.rhValid){
                 var rh = this.hchart.getValue(row, 1);
                 Q(".chart-legend-row.humidity .legend-value").innerHTML = (isNaN(rh) || rh == null || rh==255)? "--":(rh+"%");
+                var sh = this.hchart.getValue(row, 2);
+                Q(".chart-legend-row.set-humidity .legend-value").innerHTML = (isNaN(sh) || sh == null || sh==255)? "--":(sh+"%");
+                var room = this.hchart.getValue(row, 3);
+                Q(".chart-legend-row.room-humidity .legend-value").innerHTML = (isNaN(room) || room == null || room==255)? "--":(room+"%");
             }
 
         };
@@ -289,28 +313,17 @@ var  CHART_VERSION = 6;
             }
             this.dateLabel = Q(".beer-chart-legend-time").innerHTML;
         };
-        BrewChart.prototype.togglePsiLine = function(line) {
-            var me=this;
-            if(!me.psiAvail) return;
-            me.showPsi = ! me.showPsi;
-            if(me.showPsi){
-                this.pchart.setVisibility(line-PressureLine, true);
-
-            }else{
-                this.pchart.setVisibility(line-PressureLine, false);
-            }
-        };
         BrewChart.prototype.toggleLine = function(line) {
             var me=this;
             me.shownlist[line] = !me.shownlist[line];
             var divclass = BrewChart.ClassLabels[line];
-            if (me.shownlist[line]) {
-                if (Q("." + divclass + " .toggle")) Q("." + divclass + " .toggle").style.backgroundColor = Q(".chart-legend-row." + divclass).style.color;
-                me.chart.setVisibility(line - 1, true);
-            } else {
-                if (Q("." + divclass + " .toggle")) Q("." + divclass + " .toggle").style.backgroundColor = "transparent";
-                me.chart.setVisibility(line - 1, false);
-            }
+            
+            var chart = (line >= ChamberHumidityLine)? me.hchart:(line >= PressureLine)? me.pchart:me.chart;
+            var base=(line >= ChamberHumidityLine)? ChamberHumidityLine:(line >= PressureLine)? PressureLine:1;
+            chart.setVisibility(line - base, me.shownlist[line]);
+
+            if (Q("." + divclass + " .toggle")) Q("." + divclass + " .toggle").style.backgroundColor =
+                (me.shownlist[line])? Q(".chart-legend-row." + divclass).style.color:"transparent";
         };
         BrewChart.prototype.setLabels = function(y1, y2) {
             this.ylabel = y1;
@@ -328,7 +341,7 @@ var  CHART_VERSION = 6;
             document.body.appendChild(ldiv);
             var opt = {
                 labels: ["Time","psi","psiset","co2"],
-                colors: [colorPressure,"rgb(240, 100, 100)","gray"],
+                colors: BrewChart.Colors.slice(PressureLine-1,CarbonationLine-1),
                 connectSeparatedPoints: true,
                 ylabel: t.plabel,
                 y2label: t.clabel,
@@ -381,7 +394,8 @@ var  CHART_VERSION = 6;
         BrewChart.prototype.createChart = function() {
             var t = this;
             t.initLegend();
-            t.shownlist = [true, true, true, true, true, true, true, true, true];
+            t.shownlist =[];
+            for(var i=0;i<=NumberOfLines;i++) t.shownlist.push(true);
             t.showPsi = true;
             var ldiv = document.createElement("div");
             ldiv.className = "hide";
@@ -390,7 +404,7 @@ var  CHART_VERSION = 6;
             document.body.appendChild(ldiv);
             var opt = {
                 labels: BrewChart.Labels,
-                colors: BrewChart.Colors,
+                colors: BrewChart.Colors.slice(0,FilteredSgLine-1),
                 connectSeparatedPoints: true,
                 ylabel: ylabel,
                 y2label: y2label,
@@ -735,6 +749,7 @@ var  CHART_VERSION = 6;
                     t.specificGravity = null;
                     t.rh=[];
                     t.lastRh=255;
+                    t.lastRoomRh=255;
                     t.lastSetRh=255;
                     t.rhValid=false;
 
@@ -790,9 +805,15 @@ var  CHART_VERSION = 6;
                         t.rawSG.push[null];
                     }*/
                 } else if (d0 == 0xFC) { //Humidity
-                    if(d1 <=100){
-                        t.lastRh = d1;
-                        t.rhValid=true;
+                    
+                    if(d1 != 0xFF){
+                        if(d1 & 0x80){ // room
+                            t.lastRoomRh = d1 & 0x7F;
+                            t.rhValid=true;
+                        }else{
+                            t.lastRh = d1;
+                            t.rhValid=true;
+                        }
                     }else if(t.rhValid){
                         t.lastRh = d1;
                     }
@@ -1000,7 +1021,10 @@ var  CHART_VERSION = 6;
                     t.specificGravity = null;
                 }
                 // humidity
-                t.rh.push([t.dataset[0],(t.lastRh <=100)? t.lastRh:NaN,(t.lastSetRh<=100)? t.lastSetRh:NaN]);
+                t.rh.push([t.dataset[0],
+                        (t.lastRh <=100)? t.lastRh:NaN,
+                        (t.lastSetRh<=100)? t.lastSetRh:NaN,
+                        (t.lastRoomRh <=100)? t.lastRoomRh:NaN]);
                 
 
                 t.incTime(); // add one time interval
@@ -1019,8 +1043,8 @@ var  CHART_VERSION = 6;
             document.body.appendChild(ldiv);
 
             t.hchart = new Dygraph(document.getElementById(t.hcid), t.rh, {
-                labels: ["Time","rh","set"],
-                colors: ["#2222DD","#EE1111"],
+                labels: ["Time","rh","set","Room"],
+                colors: BrewChart.Colors.slice(ChamberHumidityLine-1,RoomHumidityLine-1),
                 connectSeparatedPoints: true,
                 ylabel: t.hlabel,
                 y2label: "%",

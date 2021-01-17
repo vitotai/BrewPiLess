@@ -1,6 +1,6 @@
 #include "HumidityControl.h"
 
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 EnvironmentSensor nullEnvironmentSensor;
 
 

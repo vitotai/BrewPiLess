@@ -10,7 +10,7 @@
 #include "SharedLcd.h"
 #endif
 
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 
 #define MINIMUM_HUMIDITY_SENSOR_READ_PERIOD 5000
 #define IsValidHumidityValue(a) ((a) <=100)

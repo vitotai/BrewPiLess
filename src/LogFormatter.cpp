@@ -10,7 +10,7 @@
 #if SupportPressureTransducer
 #include "PressureMonitor.h"
 #endif
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 #include "HumidityControl.h"
 #endif
 extern BrewPiProxy brewPi;
@@ -109,7 +109,7 @@ size_t dataSprintf(char *buffer,const char *format,const char* invalid)
 				strcpy(buffer+d,theSettings.systemConfiguration()->hostnetworkname);
 				d += strlen(theSettings.systemConfiguration()->hostnetworkname);
 			}else if(ch == 'h'){
-				#if EnableDHTSensorSupport
+				#if EnableHumidityControlSupport
 				 d += printFloat(buffer+d,(float)humidityControl.humidity(),0,humidityControl.isHumidityValid(),invalid);
 				#else
 		        strcpy(buffer+d,invalid);
@@ -192,7 +192,7 @@ size_t nonNullJson(char* buffer,size_t size)
 	if(PressureMonitor.isCurrentPsiValid()) root[KeyPressure]= PressureMonitor.currentPsi();
 	#endif
 
-	#if EnableDHTSensorSupport
+	#if EnableHumidityControlSupport
 	if(humidityControl.isHumidityValid()) root[KeyHumidity] = humidityControl.humidity();
 	#endif
 

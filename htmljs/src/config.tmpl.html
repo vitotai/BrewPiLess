@@ -39,6 +39,17 @@
                     </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
+                            <%= config_lcd_display %>
+                        </h6>
+                        <select id="display" name="dis" class="nb">
+                            <option value=0><%= config_lcd_rotate %></option>
+                            <option value=1><%= config_lcd_brewpi %></option>
+                            <option value=2><%= config_lcd_additional %></option>
+                        </select>
+                    </div>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
                             <%= config_title %>
                         </h6>
                         <input name="title" type="text" size="12" maxlength="24">

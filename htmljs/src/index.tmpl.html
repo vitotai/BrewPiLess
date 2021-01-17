@@ -52,7 +52,9 @@
                     <li layout horizontal main-justified><span class="descriptor"><%= status_fridgetemp %></span><span id="lcdFridgeTemp"></span></li>
                     <li layout horizontal main-justified><span class="descriptor"><%= status_fridgeset %></span><span id="lcdFridgeSet"></span></li>
                     <li layout horizontal main-justified><span class="descriptor"><%= status_roomtemp %></span><span id="lcdRoomTemp"></span></li>
-                    <li layout horizontal main-justified style="display:none" id="humidity-info"><span class="descriptor"><%= status_humidity %></span><span id="humidity"></span></li>
+                    <li layout horizontal main-justified class="no-display" id="humidity-info"><span class="descriptor"><%= status_humidity %></span><span id="humidity"></span></li>
+                    <li layout horizontal main-justified class="no-display" id="room-humidity-info"><span class="descriptor"><%= room_humidity %></span><span id="room-humidity"></span></li>
+
                 </ul>
             </div>
 
@@ -195,19 +197,29 @@
 
                     <li layout horizontal main-justified class="chart-legend-row pressure-set pressure-group forced-hidden">
                         <input type="checkbox" id="pressure-set" name="set-name" class="switch-input" checked>
-                        <label onclick="BChart.toggle(PressureSetLine,1)" for="pressure-set" class="switch-label"><%= legend_pressure_set %></label>
+                        <label onclick="BChart.toggle(PressureSetLine)" for="pressure-set" class="switch-label"><%= legend_pressure_set %></label>
                         <div class="legend-value">--</div>
                     </li>
 
                     <li layout horizontal main-justified class="chart-legend-row carbonation pressure-group forced-hidden">
                         <input type="checkbox" id="carbonation" name="set-name" class="switch-input" checked>
-                        <label onclick="BChart.toggle(CarbonationLine,1)" for="carbonation" class="switch-label"><%= legend_carbonation %></label>
+                        <label onclick="BChart.toggle(CarbonationLine)" for="carbonation" class="switch-label"><%= legend_carbonation %></label>
                         <div class="legend-value">--</div>
                     </li>
 
                     <li layout horizontal main-justified class="chart-legend-row humidity humidity-group forced-hidden">
                         <input type="checkbox" id="humidity" name="set-name" class="switch-input" checked>
-                        <label onclick="" for="humidity" class="switch-label"> <%= label_humidity %> </label>
+                        <label onclick="BChart.toggle(ChamberHumidityLine)" for="humidity" class="switch-label"> <%= label_humidity %> </label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row set-humidity humidity-group forced-hidden">
+                        <input type="checkbox" id="humidity-set" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(SetHumidityLine)" for="humidity-set" class="switch-label"> <%= label_humidity_set %> </label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row room-humidity humidity-group forced-hidden">
+                        <input type="checkbox" id="room-humidity" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(RoomHumidityLine)" for="room-humidity" class="switch-label"> <%= label_room_humidity %> </label>
                         <div class="legend-value">--</div>
                     </li>
 

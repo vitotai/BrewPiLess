@@ -89,7 +89,7 @@ inline bool isAssignable(DeviceType type, DeviceHardware hardware)
 #if BREWPI_EXTERNAL_SENSOR
 	|| (hardware==DEVICE_HARDWARE_EXTERNAL_SENSOR && type==DEVICETYPE_TEMP_SENSOR)
 #endif
-#if EnableDHTSensorSupport	
+#if EnableHumidityControlSupport	
 	|| (hardware==DEVICE_HARDWARE_PIN && type==DEVICETYPE_ENVIRONMENT_SENSOR)
 	|| (hardware==DEVICE_HARDWARE_ENVIRONMENT_TEMP && type==DEVICETYPE_TEMP_SENSOR)
 	|| (hardware==DEVICE_HARDWARE_BME280 && type == DEVICETYPE_ENVIRONMENT_SENSOR)
@@ -119,7 +119,7 @@ inline bool isExternalSensor(DeviceHardware hardware) {
 #endif
 
 
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 inline bool isEnvTempSensor(DeviceHardware hardware) {
 	return hardware == DEVICE_HARDWARE_ENVIRONMENT_TEMP;
 }
@@ -209,6 +209,10 @@ public:
 			case 2: return actuatorPin3;
 			case 3: return actuatorPin4;
 			case 4: return actuatorPin5;
+#if MORE_PINS_CONFIGURATION
+			case 5: return actuatorPin6;
+			case 6: return fanPin;
+#endif
 			default: return -1;
 		}
 #else
@@ -235,7 +239,10 @@ public:
 	}
 
 	int8_t enumerateSensorPins(uint8_t offset) {
-#ifndef ESP32
+#ifdef ESP32
+		if (offset==0)
+			return doorPin;
+#else
 #if BREWPI_SENSOR_PINS && defined(ARDUINO)
 		if (offset==0)
 			return doorPin;

@@ -1,3 +1,13 @@
+var ErrMsg={
+    2: "Out of Memory",
+	3: "Device definition update specification is invalid",
+	4: "Invalid chamber id %0",
+	5: "Invalid beer id %0",
+	6: "Invalid device function id %0",
+	7: "Invalid config for device owner type %0 beer=%1 chamber=%2",
+	8: "Cannot assign device type %0 to hardware %1",
+	9: "Device is onewire but pin %0 is not configured as a onewire bus"
+};
 var BackupFile = "/device.cfg";
 var devices = {
     pinlabel:function(pin){
@@ -41,19 +51,29 @@ var devices = {
             g = window.extsensorContainer.cloneNode(true);
             g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : f.v;
             g.querySelector("input.device-calibration").value = f.j;
-        } else if (f.h == 6) { // temp sensor of DHT1x/DHT2x series
+        } else if (f.h == 6) { // temp sensor of humidity sensor/DHT1x/DHT2x series
             g = window.dhtsensorContainer.cloneNode(true);
             g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : f.v;
             g.querySelector("input.device-calibration").value = f.j;
-        } else if (f.h == 3) { // owContainer
+            if(f.p){ // 0 is chamber
+                g.querySelector(".chamber-sensor").style.display="none";
+            }else{
+                g.querySelector(".room-sensor").style.display="none";
+            }
+        } else if (f.h == 3) { // onewire switch/2413
             g = window.owContainer.cloneNode(true);
             g.querySelector("span.device-address").innerHTML = f.a;
             g.querySelector("span.device-channel").innerHTML = f.n;
             g.querySelector("select.device-pintype").value = f.x;
             g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : ((f.v) ? "active" : "inactive")
+
+        } else if (f.h == 7) { // BME280
+            g = window.bme280Container.cloneNode(true);
+            g.querySelector("span.device-address").innerHTML = "0x" + parseInt(f.p).toString(16);
         } else {
+            // pin devices
             g = window.pinContainer.cloneNode(true);
-            if(f.f == 8){ // humidity sensor
+            if(f.f == 8 || f.f == 18){ // humidity sensor
                 g.querySelector("select.device-humidity-sensor").value = f.s;
                 g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : (f.v + "%");
                 g.querySelector("input.device-calibration").value = f.j; 
@@ -64,8 +84,7 @@ var devices = {
             }
         }
         g.querySelector("select.slot-select").value = f.i;
-
-        g.querySelector("span.device-pin").innerHTML = this.pinlabel(f.p);
+        if(f.h != 7 && f.h != 6) g.querySelector("span.device-pin").innerHTML = this.pinlabel(f.p);
         g.querySelector("select.device-function").value = f.f;
         g.querySelector("select.device-function").onchange=function(){
           devices.pinFuncChange(g);  
@@ -93,11 +112,11 @@ function cmdfrom(b) {
     } else {
         a = available_list[b - installed_list.length]
     }
-    var d = document.querySelectorAll("div.device-container")[b];
+    var div = document.querySelectorAll("div.device-container")[b];
     var c = {};
-    c.i = d.querySelector("select.slot-select").value;
+    c.i = parseInt(div.querySelector("select.slot-select").value);
     c.c = 1;
-    c.f = d.querySelector("select.device-function").value;
+    c.f = parseInt(div.querySelector("select.device-function").value);
     if (c.f >= 9 && c.f <= 15) {
         c.b = 1
     } else {
@@ -110,13 +129,13 @@ function cmdfrom(b) {
     } else if (c.h == 3) { //  onewire 2413
         c.a = a.a;
         c.n = a.n;
-        c.x = d.querySelector("select.device-pintype").value
+        c.x = parseInt(div.querySelector("select.device-pintype").value);
     } else if (c.h == 1) { // hardware pin
-        if( c.f ==8) c.s = d.querySelector("select.device-humidity-sensor").value;
-        else c.x = d.querySelector("select.device-pintype").value
+        if( c.f ==8) c.s = parseInt(div.querySelector("select.device-humidity-sensor").value);
+        else c.x = parseInt(div.querySelector("select.device-pintype").value);
     }
     if(c.h == 2 || c.h == 5 ||  c.h == 6 || c.f ==8){ // onewire temp &  external sensor
-        c.j = d.querySelector("input.device-calibration").value;
+        c.j = parseInt(div.querySelector("input.device-calibration").value);
         if(isNaN(c.j)) c.j=0;
     }
     return c
@@ -136,6 +155,22 @@ function device_apply(a) {
         if (tout) clearTimeout(tout);
         unblockscreen();
     });
+    BWF.on("D", function(d) {
+        if (tout) clearTimeout(tout);
+        unblockscreen();
+        if(typeof d["logID"] != "undefined"){
+            var msg = ErrMsg[d.logID];
+            if(typeof d["V"] == "array"){
+                d.V.forEach(function(value,index){
+                    msg = msg + "," + value;
+                    re = new RegExp("%" +index,"g");
+                    msg = msg.replace(re, value);
+                });
+                alert(msg);
+            }
+        }else alert("Unknown Error!");
+    });
+
     BWF.send(c)
 }
 
@@ -275,7 +310,8 @@ function init(classic) {
     window.pinContainer = detachNode(".device-container.pin-device");
     window.extsensorContainer = detachNode(".device-container.extsensor-device");
     window.owContainer = detachNode(".device-container.ow-device");
-    window.dhtsensorContainer =detachNode(".device-container.dht-temp-device");
+    window.dhtsensorContainer =detachNode(".device-container.env-temp-device");
+    window.bme280Container=detachNode(".device-container.bme280-device");
     window.board= "e"; //default ESP8266
     BWF.init({
         error: function(a) {

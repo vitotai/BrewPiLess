@@ -134,7 +134,7 @@ struct DeviceConfig {
 			int8_t /* fixed4_4 */ calibration;	// for temp sensors (deviceHardware==2), calibration adjustment to add to sensor readings
 												// this is intentionally chosen to match the raw value precision returned by the ds18b20 sensors
 		};
-		#if  EnableDHTSensorSupport
+		#if  EnableHumidityControlSupport
 		uint8_t humiditySensorType;
 		#else
 		bool reserved;								// extra space so that additional fields can be added without breaking layout

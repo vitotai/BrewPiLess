@@ -9,6 +9,13 @@
     "chart_gravity": "Densità",
     "chart_pressure": "Pressione(psi)",
     "chart_co2vol":"CO2 Vol",
+    "chart_rh":"Relative Humidity",
+    "status_humidity":"Chamber Humidity",
+    "room_humidity":"Room Humidity",
+
+    "label_humidity":"Humidity",
+    "label_humidity_set":"Target RH",
+    "label_room_humidity":"Room RH",
 
     "menu_logging": "Log dati",
     "menu_setup": "Setup dispositivo",
@@ -181,6 +188,10 @@
     "config_ip": "IP",
     "config_network_selection": "Selezione rete",
     "config_scan": "Scan",
+    "config_lcd_display":"LCD Display",
+    "config_lcd_rotate":"Rotate",
+    "config_lcd_brewpi":"BrewPi",
+    "config_lcd_additional":"Additional",
 
     "__gdc_html": "gdc.html",
     "gravity_title": "Dispositivo densità",
@@ -254,7 +265,7 @@
     "log_ubidots_educational": "Educational",
     "log_ubidots_industrial": "Industrial",
 
-    "log_brewersfriend_stream_url": "Stream URL:",
+    "log_brewersfriend_stream_apikey": "API Key:",
     "log_brewersfriend_beer": "Birra:",
     "log_brewersfriend_gravity_unit": "Unità densità",
 
@@ -295,6 +306,15 @@
     "setup_1wire_actuator": "attuatore 1-wire",
     "setup_channel": "Canale",
     "setup_calibration":"Calibrazione",
+    "env_temp_sensor":"Humidity Temp sensor",
+    "setup_sensor_type":"Sensor Type",
+    "setup_chamber_humidity":"Chamber Humidity Sensor",
+    "setup_room_humidity":"Room Humidity Sensor",
+    "hum_sensor_location":"Sensor Location",
+    "chamber_humidity_temp":"Chamber",
+    "room_humidity_temp":"Room",
+    "setup_humidifier":"Humidifier",
+    "setup_dehumidifier":"Dehumidifier",
 
     "__capper_js": "capper.js",
     "capper_invalid_gravity": "Densità invalida",
@@ -333,7 +353,7 @@
     "script_logging_tilt_value_and_hydrometer_necessary": "Lettura valori angolo e idrometro sono necessari!",
     "script_logging_failed_start_for": "Avvio fallito per:",
     "script_logging_failed_delete_for": "Cancellazione fallita per:",
-    "script_logging_https_not_supported": "HTTPS non è supportato",
+    "script_logging_https_not_supported": "HTTPS non è supportato on ESP8266",
     "script_logging_select_method": "seleziona metodo!",
     "script_logging_space_not_allowed": "spazi non consentiti",
     "script_logging_delete_the_log": "Cancella il log",

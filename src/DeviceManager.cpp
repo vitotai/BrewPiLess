@@ -100,11 +100,12 @@ bool DeviceManager::firstDeviceOutput;
 bool DeviceManager::isDefaultTempSensor(BasicTempSensor* sensor) {
 	return sensor==&defaultTempSensor;
 }
-
+#if EnableHumidityControlSupport
 bool isEnvironmentSensorAvailable(){
 	return humidityControl.roomSensor != &nullEnvironmentSensor
 			|| humidityControl.chamberSensor != &nullEnvironmentSensor;
 }
+#endif
 
 /**
  * Sets devices to their unconfigured states. Each device is initialized to a static no-op instance.

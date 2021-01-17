@@ -18,7 +18,8 @@ typedef struct _SystemConfiguration{
     uint8_t passwordLcd;
     uint8_t wifiMode;
     uint32_t dns;
-    uint8_t _padding[4];
+    uint8_t  displayMode;
+    uint8_t _padding[3];
 }SystemConfiguration;
 
 //*****************************************************
@@ -310,7 +311,7 @@ struct Settings{
 #if SupportTiltHydrometer
     TiltConfiguration tiltConfiguration;
 #endif
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
     HumidityControlSettings humidityControl;
 #endif
 };
@@ -385,7 +386,7 @@ public:
 #endif
 
 
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
     HumidityControlSettings* humidityControlSettings(void){ return & _data.humidityControl;}
 #endif
 
@@ -404,7 +405,7 @@ protected:
 #if EanbleParasiteTempControl   
     void defaultParasiteTempControlSettings(void);
 #endif
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
     void defaultHumidityControlSettings(void);
 #endif
 };

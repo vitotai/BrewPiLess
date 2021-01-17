@@ -77,6 +77,7 @@ function save() {
     });
     var div = Q("select[name=wifi]");
     json["wifi"] = div.value;
+    json["dis"] = Q("select[name=dis]").value;
     console.log(JSON.stringify(json));
     var url = "config" + (reboot ? "" : "?nb");
     s_ajax({

@@ -77,3 +77,14 @@
 .switch-input:checked + label[for=carbonation].switch-label:after {
 	background-color: $carbonation-color;
 }
+
+.switch-input:checked + label[for=humidity].switch-label:after {
+	background-color: $humidity-color;
+}
+
+.switch-input:checked + label[for=humidity-set].switch-label:after {
+	background-color: $humidity-set-color;
+}
+.switch-input:checked + label[for=room-humidity].switch-label:after {
+	background-color: $room-humidity-color;
+}

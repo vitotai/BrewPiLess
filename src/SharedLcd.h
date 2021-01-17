@@ -65,6 +65,8 @@ public:
     void previous();
     void forcePrimary(bool primary);
     void setRotateMode(bool rotate){ _isRotateMode = rotate;}
+    
+    void setDisplayMode(uint8_t mode);
 
     PhysicalLcdDriver *getLcd(){ return & _lcd;}
     static uint8_t i2cLcdAddr;

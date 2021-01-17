@@ -86,8 +86,8 @@
     }
 }
 
-.pressure-group {
-    visibility: hidden;
+.forced-hidden {
+    display:none !important;
 }
 
 #gravity-sg,
@@ -152,7 +152,7 @@
     display: inline-block;
 }
 .no-display {
-    display:none;
+    display:none !important;
 }
 
 #wifisignal {

@@ -52,7 +52,7 @@ extern FS& FileSystem;
 #define INVALID_GRAVITY_INT 0x7FFF
 
 #define VolatileDataHeaderSize 7
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 #define VolatileHeaderSize ( VolatileDataHeaderSize*2 + 18)
 #else
 #define VolatileHeaderSize ( VolatileDataHeaderSize*2 + 16)
@@ -169,7 +169,7 @@ private:
 	FileIndexes *_pFileInfo;
 	uint8_t _targetPsi;
 
-#if EnableDHTSensorSupport	
+#if EnableHumidityControlSupport	
 	uint8_t _lastHumidity;
 	uint8_t _savedHumidityValue;
 	uint8_t _lastRoomHumidity;
@@ -197,7 +197,7 @@ private:
 	void _addOgRecord(uint16_t og);
 	void _addSgRecord(uint16_t sg);
 	void _addGravityRecord(bool isOg, uint16_t gravity);
-#if EnableDHTSensorSupport	
+#if EnableHumidityControlSupport	
 	void _addHumidityRecord(uint8_t humidity);
 	void _addRoomHumidityRecord(uint8_t humidity);
 

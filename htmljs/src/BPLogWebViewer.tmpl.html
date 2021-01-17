@@ -96,7 +96,17 @@
 
                     <li layout horizontal main-justified class="chart-legend-row humidity humidity-group forced-hidden">
                         <input type="checkbox" id="humidity" name="set-name" class="switch-input" checked>
-                        <label onclick="" for="humidity" class="switch-label"> <%= label_humidity %>  </label>
+                        <label onclick="BChart.toggle(ChamberHumidityLine,2)" for="humidity" class="switch-label"> <%= label_humidity %> </label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row set-humidity humidity-group forced-hidden">
+                        <input type="checkbox" id="humidity-set" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(SetHumidityLine,2)" for="humidity-set" class="switch-label"> <%= label_humidity_set %> </label>
+                        <div class="legend-value">--</div>
+                    </li>
+                    <li layout horizontal main-justified class="chart-legend-row room-humidity humidity-group forced-hidden">
+                        <input type="checkbox" id="room-humidity" name="set-name" class="switch-input" checked>
+                        <label onclick="BChart.toggle(RoomHumidityLine,2)" for="room-humidity" class="switch-label"> <%= label_room_humidity %> </label>
                         <div class="legend-value">--</div>
                     </li>
 

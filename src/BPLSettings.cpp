@@ -96,7 +96,7 @@ void BPLSettings::setDefault(void)
 #if EanbleParasiteTempControl
     defaultParasiteTempControlSettings();
 #endif
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 	defaultHumidityControlSettings();
 #endif
 }
@@ -127,6 +127,8 @@ void BPLSettings::defaultLogFileIndexes(void){}
 #define KeyFileSystemSize "fs"
 #define KeyMacAddress "mac"
 #define KeyBuildTime "date"
+
+#define KeyDisplayMode "dis"
 
 extern IPAddress scanIP(const char *str);
 
@@ -160,6 +162,10 @@ void BPLSettings::defaultSystemConfiguration(void){
     syscfg->gw = (uint32_t) IPAddress(0,0,0,0);
     syscfg->netmask = (uint32_t) IPAddress(0,0,0,0);
     syscfg->dns = (uint32_t) IPAddress(0,0,0,0);
+
+	#if TWOFACED_LCD
+	syscfg->displayMode = 0;
+	#endif
 }
 
 bool BPLSettings::dejsonSystemConfiguration(String json){
@@ -192,6 +198,10 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
         syscfg->passwordLcd = root[KeyProtect];
         syscfg->wifiMode = root[KeyWifi];
         syscfg->backlite = root[KeyLcdBackLight];
+		#if TWOFACED_LCD		
+		syscfg->displayMode = root[KeyDisplayMode];
+		#endif
+
 		return true;
     }
 	return false;
@@ -221,6 +231,10 @@ String BPLSettings::jsonSystemConfiguration(void){
     root[KeyGateway]= IPAddress(syscfg->gw).toString();
     root[KeyNetmask]= IPAddress(syscfg->netmask).toString();
 	root[KeyDNS] = IPAddress(syscfg->dns).toString();
+
+	#if TWOFACED_LCD		
+	root[KeyDisplayMode] = syscfg->displayMode;
+	#endif
 
 // system info
 #if ESP32
@@ -292,7 +306,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 		if (!root.success())
 		#endif
 		{
-  			DBG_PRINTF("Invalid JSON config:%d data:%s\n",error,json);
+  			DBG_PRINTF("Invalid JSON  data:%s\n",json);
   			return false;
 		}
         GravityDeviceConfiguration *gdc = &_data.gdc;
@@ -1202,7 +1216,7 @@ bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 
 
 
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 
 void BPLSettings::defaultHumidityControlSettings(void){
 

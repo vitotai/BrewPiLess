@@ -9,9 +9,8 @@
     var BChart = {
         offset: 0,
         url: 'chart.php',
-        toggle: function(line,p) {
-            if(typeof p !="undefined" && p)  this.chart.togglePsiLine(line);
-            else this.chart.toggleLine(line);
+        toggle: function(line) {
+            this.chart.toggleLine(line);
         },
         updateFormula: function() {
             var coeff = this.chart.coefficients;
@@ -402,20 +401,27 @@
             if(msg.dev ==1){ //ispindel
                 Q(".gravity-device-pane").style.display="block";
                 doAll(".ispindel-info",function(d){
-                    d.style.display="block";
+                    //d.style.display="block";
+                    d.classList.remove("no-display");
                 });
 
                 doAll(".tilt-info",function(d){
-                    d.style.display="none";
+                    //d.style.display="none";
+                    d.classList.add("no-display");
+
                 });
 
             }else if(msg.dev ==2){
                 Q(".gravity-device-pane").style.display="block";
                 doAll(".ispindel-info",function(d){
-                    d.style.display="none";
+                    //d.style.display="none";
+                    d.classList.add("no-display");
+
                 });
                 doAll(".tilt-info",function(d){
-                    d.style.display="block";
+                    //d.style.display="block";
+                    d.classList.remove("no-display");
+
                 });
 
             }else{
@@ -751,9 +757,14 @@
 
         ptcshow(c);
         if(typeof c["h"] != "undefined") {
-            Q("#humidity-info").style.display="";
+            Q("#humidity-info").classList.remove("no-display");
             Q("#humidity").innerHTML= (c.h <=100)?  (c.h + "%"):"--";
         }
+        if(typeof c["hr"] != "undefined") {
+            Q("#room-humidity-info").classList.remove("no-display");
+            Q("#room-humidity").innerHTML= (c.hr <=100)?  (c.hr + "%"):"--";
+        }
+
     }
 
     function connBWF() {

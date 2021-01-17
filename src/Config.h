@@ -100,7 +100,17 @@
 #endif
 //
 //////////////////////////////////////////////////////////////////////////
+#if EnableHumidityControlSupport
+#if !EnableBME280Support && !EnableDHTSensorSupport
+#error "Humidity Sesonr is needed to support Humidity Control"
+#endif
+#else
+#undef EnableDHTSensorSupport 
+#define EnableDHTSensorSupport false
+#undef EnableBME280Support 
+#define EnableBME280Support false
 
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -308,7 +318,12 @@
 #define FS_EEPROM true
 #endif
 
-#define BPL_VERSION "4.1"
+#define BPL_VERSION "4.2"
+
+
+#ifndef MORE_PINS_CONFIGURATION
+#define MORE_PINS_CONFIGURATION true
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -342,8 +357,18 @@
 #define actuatorPin4  27
 #define actuatorPin5  26
 
-#define BuzzPin       18
+#if MORE_PINS_CONFIGURATION
 
+#define actuatorPin6  18
+
+#define fanPin 14
+#define doorPin 34
+
+#define BuzzPin 4
+
+#else
+#define BuzzPin       18
+#endif
 // 34,35,66,39 input only
 #define rotaryAPin      32
 #define rotaryBPin      33

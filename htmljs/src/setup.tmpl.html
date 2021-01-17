@@ -122,7 +122,7 @@
             </table>
         </div>
 
-        <div class='device-container dht-temp-device'>
+        <div class='device-container env-temp-device'>
             <table>
                 <tr>
                     <td ROWSPAN=2>
@@ -157,7 +157,7 @@
                     <td>
                         <div class='device-setting-container'>
                             <span class='setting-name'><%= setup_hardware_type %></span>
-                            <span class='setting-value device-type'><%= dht_temp_sensor %></span>
+                            <span class='setting-value device-type'><%= env_temp_sensor %></span>
                         </div>
                     </td>
                     <td></td>
@@ -171,8 +171,8 @@
                 <tr>
                     <td>
                         <div class='device-setting-container'>
-                            <span class='setting-name'><%= setup_controller_pin %></span>
-                            <span class='setting-value device-pin'></span>
+                            <span class='setting-name'><%= hum_sensor_location %></span>
+                            <span class='setting-value'><span class="chamber-sensor"><%= chamber_humidity_temp %>  </span> <span class="room-sensor"> <%= room_humidity_temp %> </span> </span>
                         </div>
                     </td>
                     <td>
@@ -370,7 +370,8 @@
                                 <option value=3><%= setup_chamber_cooler %></option>
                                 <option value=4><%= setup_chamber_light %></option>
                                 <option value=7><%= setup_chamber_fan %></option>
-                                <option value=8><%= dht_sensor_family %></option>
+                                <option value=8><%= setup_chamber_humidity %></option>
+                                <option value=18><%= setup_room_humidity %></option>
                                 <option value=14><%= setup_capper %></option>
                                 <option value=15><%= setup_ptc_cooler %></option>
                                 <option value=16><%= setup_humidifier %></option>
@@ -475,6 +476,81 @@
                 </tr>
             </table>
         </div>
+        <div class='device-container bme280-device'>
+            <table>
+                <tr>
+                    <td ROWSPAN=2>
+                        <div class='device-title'></div>
+                        <br>
+                        <button><%= setup_apply %></button>
+                    </td>
+                    <td>
+                        <div class='device-setting-container'>
+                            <span class='setting-name'><%= setup_device_slot %></span>
+                            <select class='slot-select'>
+                                <option value='-1'><%= setup_unassigned %></option>
+                                <option value='0'>0</option>
+                                <option value='1'>1</option>
+                                <option value='2'>2</option>
+                                <option value='3'>3</option>
+                                <option value='4'>4</option>
+                                <option value='5'>5</option>
+                                <option value='6'>6</option>
+                                <option value='7'>7</option>
+                                <option value='8'>8</option>
+                                <option value='9'>9</option>
+                                <option value='10'>10</option>
+                                <option value='11'>11</option>
+                                <option value='12'>12</option>
+                                <option value='13'>13</option>
+                                <option value='14'>14</option>
+                                <option value='15'>15</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        <div class='device-setting-container'>
+                            <span class='setting-name'><%= setup_hardware_type %></span>
+                            <span class='setting-value device-type'> BME280 </span>
+                        </div>
+                    </td>
+                    <td></td>
+                    <td>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class='device-setting-container'>
+                            <span class='setting-name'><%= setup_address %></span>
+                            <span class='setting-value device-address'></span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class='device-setting-container'>
+                            <span class='setting-name'><%= setup_value %></span>
+                            <span class='setting-value device-value'></span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class='device-setting-container  device-humidity-sensor-container device-calibration'>
+                            <span class='setting-name'><%= setup_calibration %></span>
+                            <input size="6" class='setting-value device-calibration'>
+                        </div>
+                    </td>    
+                    <td>
+                        <div class='device-setting-container'>
+                            <span class='setting-name'><%= setup_function %></span>
+                            <select class='setting-value device-function'>
+                                <option value=0><%= setup_none %></option>
+                                <option value=8><%= setup_chamber_humidity %></option>
+                                <option value=18><%= setup_room_humidity %></option>
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
     </div>
 
     <!-- build:include partials/footer.html -->

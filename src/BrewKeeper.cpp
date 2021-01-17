@@ -247,7 +247,7 @@ float BrewProfile::tempByTimeGravity(time_t time,Gravity gravity)
 	}
 	if(_status->currentStep >= _schedule->numberOfSteps) return INVALID_CONTROL_TEMP;
 
-	DBG_PRINTF("*tempByTimeGravity:now:%ld, step:%d, type=%c, last elapsed:%ld, step duration:%lu\n",time,
+	DBG_PRINTF("*tempByTimeGravity:now:%ld, step:%d, type=%c, last elapsed:%ld, step duration:%u\n",time,
 		_status->currentStep,_schedule->steps[_status->currentStep].condition,time - _status->timeEnterCurrentStep,
 		ScheduleDayToTime(_schedule->steps[_status->currentStep].days));
 

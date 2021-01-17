@@ -5,7 +5,7 @@
 #include "PressureMonitor.h"
 #endif
 
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 #include "HumidityControl.h"
 #endif
 
@@ -23,7 +23,7 @@ BrewLogger::BrewLogger(void){
 	_lastPressureReading = INVALID_PRESSURE_INT;
 	_targetPsi =0;
 
-#if EnableDHTSensorSupport
+#if EnableHumidityControlSupport
 	_lastHumidity = INVALID_HUMIDITY_VALUE;
 	_lastRoomHumidity = INVALID_HUMIDITY_VALUE;
 	_lastHumidityTarget = INVALID_HUMIDITY_VALUE;
@@ -332,7 +332,7 @@ BrewLogger::BrewLogger(void){
 		_addModeRecord(_mode);
 		_addStateRecord(_state);
 
-		#if EnableDHTSensorSupport
+		#if EnableHumidityControlSupport
 		if(humidityControl.isChamberSensorInstalled()){
 			uint8_t humidity = humidityControl.humidity();
 			_lastHumidity=humidity;
@@ -530,7 +530,7 @@ BrewLogger::BrewLogger(void){
 		}
 		#endif
 
-		#if EnableDHTSensorSupport
+		#if EnableHumidityControlSupport
 		if(humidityControl.isChamberSensorInstalled() || 
 			humidityControl.isRoomSensorInstalled() ){
 			// To save memory, only log when data changes.
@@ -776,7 +776,7 @@ BrewLogger::BrewLogger(void){
 		_extGravity=INVALID_GRAVITY_INT;
 		_extOriginGravity=INVALID_GRAVITY_INT;
 		_extTileAngle = INVALID_TILT_ANGLE;
-		#if EnableDHTSensorSupport
+		#if EnableHumidityControlSupport
 		_savedHumidityValue = 0xFF;
 		#endif
 	}
@@ -848,7 +848,7 @@ BrewLogger::BrewLogger(void){
 		*ptr++ = TargetPsiTag; //15		
 		*ptr++ = _targetPsi;  // 16
 
-		#if EnableDHTSensorSupport
+		#if EnableHumidityControlSupport
 
 		// to simplify, just let deocoder ignore invalid dataset
 		// 
@@ -982,7 +982,7 @@ BrewLogger::BrewLogger(void){
 				dataDrop +=4;
 			}else{
 
-				#if EnableDHTSensorSupport
+				#if EnableHumidityControlSupport
 				if(HumidityTag ==  _logBuffer[idx]){
 					_savedHumidityValue = _logBuffer[idx+1];
 				}
@@ -1124,7 +1124,7 @@ BrewLogger::BrewLogger(void){
 		_commitData(idx,2);
 	}
 
-#if EnableDHTSensorSupport	
+#if EnableHumidityControlSupport	
 	void BrewLogger::_addHumidityRecord(uint8_t humidity){
 		int idx = _allocByte(2);
 		if(idx < 0) return;
