@@ -35,6 +35,7 @@
 #define ConfigHtmFile EVALUATOR(WebPageLanguage,_config_htm.h)
 #define PressureHtmFile EVALUATOR(WebPageLanguage,_pressure_htm.h)
 
+#define BackupHtmFile EVALUATOR(WebPageLanguage,_backup_htm.h)
 
 
 #if NoEmbeddedFile == true
@@ -73,6 +74,7 @@ const char file_lcd_htm [] PROGMEM="/lcd";
 #include GravityHtmFile
 #include ConfigHtmFile
 #include PressureHtmFile
+#include BackupHtmFile
 
 const char file_index_htm [] PROGMEM="/index.htm";
 const char file_dygraph_js [] PROGMEM="/dygraph.min.js";
@@ -82,6 +84,7 @@ const char file_logconfig [] PROGMEM="/logging.htm";
 const char file_gravitydevice [] PROGMEM="/gravity.htm";
 const char file_config [] PROGMEM="/config.htm";
 const char file_pressure [] PROGMEM="/pressure.htm";
+const char file_backup [] PROGMEM="/backup.htm";
 
 EmbeddedFileMapEntry fileMaps[]={
 {file_bwf_js,data_bwf_min_js_gz,sizeof(data_bwf_min_js_gz),true},
@@ -94,7 +97,8 @@ EmbeddedFileMapEntry fileMaps[]={
 {file_config,config_htm_gz,sizeof(config_htm_gz),true},
 {file_pressure,pressure_htm_gz,sizeof(pressure_htm_gz),true},
 {file_testcmd_htm,(const uint8_t *)data_testcmd_htm,0,false},
-{file_lcd_htm,lcd_htm_gz,sizeof(lcd_htm_gz),true}
+{file_lcd_htm,lcd_htm_gz,sizeof(lcd_htm_gz),true},
+{file_backup,backup_htm_gz,sizeof(backup_htm_gz),true}
 };
 
 #else
