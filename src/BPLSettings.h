@@ -74,7 +74,7 @@ typedef struct _TiltConfiguratoin{
 
 // 
 #define InvalidStableThreshold 0xFF
-#define MaximumSteps 7
+#define MaximumSteps 10
 // datys are encoded by *100
 #define ScheduleDayFromJson(d)  ((uint16_t) ((d) * 100.0))
 #define ScheduleDayToJson(d)  ((float)(d)/100.0)
