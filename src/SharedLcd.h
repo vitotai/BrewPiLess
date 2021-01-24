@@ -1,9 +1,13 @@
+#pragma once
+
 #include "Brewpi.h"
 #include "DisplayBase.h"
 #include "NullLcdDriver.h"
 #include <inttypes.h>
 #include <Print.h>
-#pragma once
+#if ESP8266
+#include <ESP8266WiFi.h>
+#endif
 #if BREWPI_IIC_LCD
 #include <Wire.h>
 #include "IicLcd.h"
@@ -104,6 +108,8 @@ public:
     void resetBacklightTimer(void);
     void updateBacklight(void);
     void setAutoOffPeriod(uint32_t period);
+    void setBufferOnly(bool bufferOnly) { _bufferOnly = bufferOnly; }
+
     void print_P(const char * str) {
         #if ESP32
         print((char*)str);
@@ -113,9 +119,14 @@ public:
         print(buf); // print from RAM
         #endif
         }
+ #ifdef STATUS_LINE
+	void printStatus(char* str);
+ #endif
+
 protected:
     char content[4][21]; // always keep a copy of the display content in this variable
     bool _hiding;
+    bool _bufferOnly;
     uint8_t _currline;
     uint8_t _currpos;
     uint8_t _cols;

@@ -1,5 +1,5 @@
 var BPURL = "/tschedule";
-var MAX_STEP = 7;
+var MAX_STEP = 10;
 
 function formatDate(dt) {
     //	var y = dt.getFullYear();

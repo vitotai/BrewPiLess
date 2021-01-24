@@ -32,7 +32,11 @@ SharedDisplayManager::SharedDisplayManager():
 #if BREWPI_IIC_LCD
 _lcd(20,4)
 #else
+#if BREWPI_OLED128x64_LCD
+_lcd(OLED128x64_LCD_ADDRESS,PIN_SDA,PIN_SCL)
+#else
 _lcd()
+#endif
 #endif
 {
     _head=_current=NULL;
@@ -62,7 +66,7 @@ void SharedDisplayManager::init(){
 #if BREWPI_IIC_LCD
 	_lcd.init(i2cLcdAddr); // initialize LCD
 #else
-	lcd.init();
+	_lcd.init();
 #endif	
 	_lcd.begin(20, 4);
 	_lcd.clear();
@@ -136,6 +140,7 @@ void SharedDisplayManager::loop(){
 
 BrewPiLcd::BrewPiLcd():SharedLcdDisplay(){
     _hiding=true;
+    _bufferOnly = false;
 }
 
 void BrewPiLcd::onShow(){
@@ -193,7 +198,7 @@ void BrewPiLcd::setCursor(uint8_t col, uint8_t row){
 size_t BrewPiLcd::write(uint8_t value){
     content[_currline][_currpos] = value;
     _currpos++;
-    if(!_hiding) getLcd()->write(value);
+    if(!_bufferOnly && !_hiding) getLcd()->write(value);
     return 1;
 }
 //    void print(char* str);
@@ -212,6 +217,12 @@ void BrewPiLcd::getLine(uint8_t lineNumber, char * buffer){
     }
     buffer[_cols] = '\0'; // NULL terminate string
 }
+
+#ifdef STATUS_LINE
+void BrewPiLcd::printStatus(char* str){
+    getLcd()->printStatus(str);
+}
+#endif
 
 // pass through. 
 void BrewPiLcd::resetBacklightTimer(void){

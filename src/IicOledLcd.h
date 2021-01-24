@@ -46,7 +46,7 @@ public:
 
 //  void createChar(uint8_t, uint8_t[]);
   void setCursor(uint8_t, uint8_t);
-  void print(char* str);
+  void print(const char* str);
 
 #ifdef STATUS_LINE
 	void printStatus(char* str);
