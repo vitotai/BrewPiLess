@@ -50,6 +50,28 @@ float ExternalData::hydrometerCalibration(void){
 
 void ExternalData::sseNotify(char *buf){
 
+	DynamicJsonDocument doc(1024);
+
+	doc["dev"] = _cfg->gravityDeviceType;
+	doc["name"] = (_ispindelName)? _ispindelName:"Unknown";
+	doc["battery"] =_deviceVoltage;
+	doc["sg"] =_gravity;
+	doc["angle"] = _ispindelTilt;
+	doc["lu"] = _lastUpdate;
+	doc["lpf"] = filter.beta();
+	doc["stpt"] = _cfg->stableThreshold;
+	doc["fpt"] = _cfg->numberCalPoints;
+	doc["ctemp"] = _cfg->ispindelCalibrationBaseTemp;
+	doc["plato"] = _cfg->usePlato;
+
+	#if SupportTiltHydrometer
+	doc["tiltraw"] = _tiltRawGravity;
+	#endif
+
+	buf[0]='G';
+	buf[1]=':';
+	serializeJson(doc, buf+2,256);
+#if 0
 		char strbattery[8];
 		int len=sprintFloat(strbattery,_deviceVoltage,2);
 		strbattery[len]='\0';
@@ -104,6 +126,7 @@ void ExternalData::sseNotify(char *buf){
                     _cfg->ispindelCalibrationBaseTemp,
 					_cfg->usePlato,
 					strRawTilt);
+#endif
 }
 
 #if SupportTiltHydrometer
@@ -326,6 +349,8 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 	}else if(name.startsWith("iSpindel")){
 		//{"name": "iSpindel01", "id": "XXXXX-XXXXXX", "temperature": 20.5, "angle": 89.5, "gravityP": 13.6, "battery": 3.87}
 		DBG_PRINTF("%s\n",name.c_str());
+		// force to set to iSpindel.
+		_cfg->gravityDeviceType = GravityDeviceIspindel;
 
 		if(!_ispindelName){
 			_ispindelName=(char*) malloc(name.length()+1);

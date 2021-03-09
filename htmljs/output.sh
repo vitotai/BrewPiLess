@@ -9,11 +9,11 @@ if [ ! -d $OUTDIR ]; then
 fi
 rm $OUTDIR/*.h
 
-htmlfiles=(index_s.htm.gz control_s.htm.gz config.htm.gz setup.htm.gz logging.htm.gz gravity.htm.gz gravity_e32.htm.gz pressure.htm.gz )
+htmlfiles=(index_s.htm.gz control_s.htm.gz config.htm.gz setup.htm.gz logging.htm.gz gravity.htm.gz gravity_e32.htm.gz pressure.htm.gz backup.htm.gz)
 
-variables=(data_index_htm_gz control_htm_gz config_htm_gz setup_htm_gz logging_htm_gz gravity_htm_gz gravity_htm_gz pressure_htm_gz)
+variables=(data_index_htm_gz control_htm_gz config_htm_gz setup_htm_gz logging_htm_gz gravity_htm_gz gravity_htm_gz pressure_htm_gz backup_htm_gz)
 
-outfiles=(index_htm control_htm config_htm setup_htm log_htm gdc_htm gdc_e32_htm pressure_htm)
+outfiles=(index_htm control_htm config_htm setup_htm log_htm gdc_htm gdc_e32_htm pressure_htm backup_htm)
 
 languages=(norwegian english spanish portuguese-br slovak chinese italian)
 

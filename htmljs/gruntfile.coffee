@@ -49,7 +49,7 @@ module.exports = (grunt) ->
           'dist/BPLLogViewer.tmpl.htm': 'dist/BPLLogViewer.tmpl.htm',
           'dist/BPLogWebViewer.tmpl.htm': 'dist/BPLogWebViewer.tmpl.htm',
           'dist/lcd.htm': 'dist/lcd.htm',
-          'dist/classic-lcd.htm': 'dist/classic-lcd.htm'
+          'dist/backup.htm': 'dist/backup.htm'
         }]
       dev:
         options:
@@ -75,7 +75,7 @@ module.exports = (grunt) ->
           'build/BPLLogViewer.tmpl.html': 'build/BPLLogViewer.tmpl.html',
           'build/BPLogWebViewer.tmpl.html': 'build/BPLogWebViewer.tmpl.html',
           'build/lcd.html': 'build/lcd.html',
-          'build/classic-lcd.html': 'build/classic-lcd.html'
+          'build/backup.html': 'build/backup.html'
         }]
 
     comboall:
@@ -94,7 +94,7 @@ module.exports = (grunt) ->
             { 'dist/BPLLogViewer.tmpl.htm': ['build/BPLLogViewer.tmpl.html'] },
             { 'dist/BPLogWebViewer.tmpl.htm': ['build/BPLogWebViewer.tmpl.html'] },
             { 'dist/lcd.htm': ['build/lcd.html']},
-            { 'dist/classic-lcd.htm': ['build/classic-lcd.html']}
+            { 'dist/backup.htm': ['build/backup.html']}
         ]
 
     jshint:
@@ -165,7 +165,7 @@ module.exports = (grunt) ->
           'build/BPLLogViewer.tmpl.html': ['src/BPLLogViewer.tmpl.html']
           'build/BPLogWebViewer.tmpl.html': ['src/BPLogWebViewer.tmpl.html']
           'build/lcd.html' : ['src/lcd.html']
-          'build/classic-lcd.html' : ['src/classic-lcd.html']
+          'build/backup.html' : ['src/backup.html']
         ]
   
     multi_lang_site_generator:
@@ -188,6 +188,7 @@ module.exports = (grunt) ->
             'pressure.htm': ['pressure.tmpl.htm']
             'BPLogWebViewer.htm': ['BPLogWebViewer.tmpl.htm']
             'BPLLogViewer.htm': ['BPLLogViewer.tmpl.htm']
+            'backup.htm': ['backup.htm']
           ]
 
 

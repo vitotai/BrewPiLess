@@ -18,6 +18,7 @@ function fill(setting) {
             else ele.value = setting[name];
         }
     }
+    Q("#ispindel").checked =(setting.dev == 1);
 }
 
 function save() {
@@ -28,6 +29,7 @@ function save() {
         if (ele.type == "checkbox") setting[ele.name] = ele.checked;
         else if (ele.type == "text") setting[ele.name] = ele.value;
     }
+    setting.dev = Q("#ispindel").checked? 1:0;
     //    console.log("result=" + setting);
     s_ajax({
         url: gdcurl,

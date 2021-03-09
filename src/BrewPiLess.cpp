@@ -1407,7 +1407,7 @@ public:
 				request->send(400);
 				return;
 			}
-			stringAvailable(_buffer);
+			stringAvailable(_buffer); // send to brower to log on Javascript Console
 			processGravity(request,_data,_dataLength);
 			// Process the name
 			externalData.sseNotify(_data);
@@ -2138,10 +2138,10 @@ void loop(void){
 #endif
 	time_t now=TimeKeeper.getTimeSeconds();
 
-#ifdef EMIWorkAround
+#ifdef EMIWorkaround
 	if( (millis() - _lcdReinitTime) > LCDReInitPeriod){
 		_lcdReinitTime=millis();
-		display.fresh();
+		display.refresh();
 	}
 #endif
 
