@@ -27,6 +27,7 @@
     "gravity_att": "發酵度:",
     "gravity_abv": "酒精:",
 
+    "ispindel_temperature": "溫度:",
     "ispindel_battery": "電池:",
     "ispindel_tilt": "傾斜角度:",
 
@@ -87,6 +88,12 @@
     "control_gravity": "比重",
     "control_capgravity": "如果比重更小開始蓄壓",
     "control_capafter": "在此時間後開始蓄壓",
+
+    "humidity_control": "Humidity Control",
+    "humidity_mode": "Mode",
+    "humidity_off": "Off",
+    "humidity_mcontrol": "Control",   
+    "humidity_target": "Target Relative Humidity",   
 
     "dlg_connecting": "連線BrewPiLess控制器中..",
 

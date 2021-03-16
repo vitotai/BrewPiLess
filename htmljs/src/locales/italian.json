@@ -27,6 +27,7 @@
     "gravity_att": "ATT:",
     "gravity_abv": "ABV:",
 
+    "ispindel_temperature": "Temperatura:",
     "ispindel_battery": "Batteria:",
     "ispindel_tilt": "Angolo:",
 
@@ -87,6 +88,12 @@
     "control_gravity": "Densità",
     "control_capgravity": "Tappa quando densità e inferiore a",
     "control_capafter": "Tappa dopo",
+
+    "humidity_control": "Humidity Control",
+    "humidity_mode": "Mode",
+    "humidity_off": "Off",
+    "humidity_mcontrol": "Control",   
+    "humidity_target": "Target Relative Humidity",   
 
     "dlg_connecting": "Connessione al controller BrewPiLess ...",
 
