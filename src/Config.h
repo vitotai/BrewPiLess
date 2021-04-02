@@ -297,7 +297,6 @@
 #define EnableGravitySchedule true
 #define ENABLE_LOGGING 1
 #define EARLY_DISPLAY 1
-#define EMIWorkaround 1
 
 //#ifdef EnableGlycolSupport
 #define FridgeSensorFallBack true
@@ -488,6 +487,8 @@
 
 #if BREWPI_LCD
 // LCD configurations:
+#define EMIWorkaround 1
+
 #if OLED_LCD
 #define BREWPI_OLED128x64_LCD 1
 #else
@@ -574,7 +575,6 @@
 #define SettableMinimumCoolTime true
 //#endif
 
-#define EMIWorkaround 1
 
 #if ESP32
 #define SupportTiltHydrometer true

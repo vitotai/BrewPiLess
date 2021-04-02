@@ -70,7 +70,9 @@ void SharedDisplayManager::init(){
 #endif	
 	_lcd.begin(20, 4);
 	_lcd.clear();
+#if BREWPI_IIC_LCD    
     _lcd.noCursor();
+#endif
 }
 void SharedDisplayManager::setPrimary(SharedLcdDisplay* display){
     _head= display;
