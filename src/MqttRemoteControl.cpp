@@ -178,9 +178,12 @@ bool MqttRemoteControl::loop(){
             || (now - _connectTime > ReconnectTimerLong)
             ){
             DBG_PRINTF("MQTT:reconnect..\n");
-
+            
             _connectTime = now;
-            _client.connect();
+            if(WiFi.status() == WL_CONNECTED) _client.connect();
+            else{
+                DBG_PRINTF("MQTT:no WiFi\n");                
+            }
         }
     }else{
         // connected
