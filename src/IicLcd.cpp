@@ -130,7 +130,17 @@ void IIClcd::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 	home();
 
 }
+#if EMIWorkaround
+  void IIClcd::refresh(){
+    begin(20,4);
+    command(LCD_CLEARDISPLAY);
 
+    for(int i=0;i< 4;i++){
+        setCursor(0,i);
+        print(content[i]);
+    }
+  }
+#endif
 /********** high level commands, for the user! */
 void IIClcd::clear(){
 	command(LCD_CLEARDISPLAY);// clear display, set cursor position to zero

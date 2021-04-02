@@ -96,6 +96,11 @@ public:
   using Print::write;
   void setAutoOffPeriod(uint32 period){ backlightAutoOffPeriod = period; }
 
+#ifdef EMIWorkaround
+  void refresh(){}
+#endif
+
+
 private:
   uint32_t backlightAutoOffPeriod;
 #if BREWPI_OLED_SH1106

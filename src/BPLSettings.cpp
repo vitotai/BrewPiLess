@@ -59,13 +59,24 @@ void BPLSettings::load()
 	f.read((uint8_t*)&_data,sizeof(_data));
 	f.close();
 	// check invalid value, and correct
-	SystemConfiguration *cfg=  systemConfiguration();
-	if( *( cfg->hostnetworkname) == '\0'
-		|| cfg->wifiMode ==0){
+	// sanity check
+
+     if(!systemConfigurationSanity()){
 			setDefault();
-			DBG_PRINTF("invalid system configuration!\n");
-	}
-		
+	 }
+     //timeInformationSanity();
+     gravityConfigSantiy();
+     beerProfileSanity();
+     logFileIndexesSanity();
+     remoteLoggingSanity();
+     //autoCapSettingsSanity();
+#if EanbleParasiteTempControl   
+    // parasiteTempControlSettingsSanity();
+#endif
+#if EnableHumidityControlSupport
+     //humidityControlSettingsSanity();
+#endif
+	mqttSettingSanity();
 }
 
 void BPLSettings::save()
@@ -92,6 +103,7 @@ void BPLSettings::setDefault(void)
     defaultLogFileIndexes();
     defaultRemoteLogging();
     defaultAutoCapSettings();
+	defaultMqttSetting();
 
 #if EanbleParasiteTempControl
     defaultParasiteTempControlSettings();
@@ -104,7 +116,17 @@ void BPLSettings::setDefault(void)
 void BPLSettings::defaultTimeInformation(void){}
 void BPLSettings::defaultAutoCapSettings(void){}
 
-void BPLSettings::defaultLogFileIndexes(void){}
+void BPLSettings::defaultLogFileIndexes(void){
+	FileIndexes* info= & _data.logFileIndexes;
+	info->logname[0] = '\0';
+	
+	for(int i=0;i<MAX_LOG_FILE_NUMBER;i++){
+		info->files[i].name[0]='\0';
+	}
+
+}
+
+bool BPLSettings::autoCapSettingsSanity(void){}
 
 //***************************************************************
 // system configuration
@@ -129,6 +151,20 @@ void BPLSettings::defaultLogFileIndexes(void){}
 #define KeyBuildTime "date"
 
 #define KeyDisplayMode "dis"
+
+
+bool BPLSettings::systemConfigurationSanity(void){
+	SystemConfiguration *cfg=  systemConfiguration();
+	if( *( cfg->hostnetworkname) == '\0'
+		|| strlen(cfg->hostnetworkname)>32
+		|| strlen(cfg->titlelabel) > 32
+		|| cfg->wifiMode ==0){
+			return false;
+			DBG_PRINTF("invalid system configuration!\n");
+	}
+
+	return true;
+}
 
 extern IPAddress scanIP(const char *str);
 
@@ -292,7 +328,20 @@ String BPLSettings::jsonSystemConfiguration(void){
 #define KeyTiltColor "color"
 #define KeyTiltCalibrationPoints "tcpts"
 #define KeyTiltCoefficients "tiltcoe"
- bool BPLSettings::dejsonGravityConfig(char* json)
+
+
+bool BPLSettings::gravityConfigSantiy(){
+	GravityDeviceConfiguration *gdc = &_data.gdc;
+
+	if(gdc->gravityDeviceType > 2){
+		defaultGravityConfig();
+		return false;
+	}
+
+	return true;
+}
+
+bool BPLSettings::dejsonGravityConfig(char* json)
 {
 		#if ARDUINOJSON_VERSION_MAJOR == 6
 		StaticJsonDocument<JSON_OBJECT_SIZE(16) + 256> root;
@@ -418,6 +467,7 @@ void BPLSettings::defaultGravityConfig(void)
 	//gdc->ispindelTempCal =0;
 
 	//gdc->calculateGravity= 0;
+	gdc->gravityDeviceType  =0;
     gdc->lpfBeta = 0.1;
     gdc->stableThreshold=1;
 	//gdc->numberCalPoints=0;
@@ -525,6 +575,25 @@ void makeTime(time_t timeInput, struct tm &tm){
   }
   tm.tm_mon = month + 1;  // jan is month 1
   tm.tm_mday = time + 1;     // day of month
+}
+
+
+bool BPLSettings::beerProfileSanity(void){
+	BeerTempSchedule *schedule = & _data.tempSchedule;
+	if(schedule->numberOfSteps > MaximumSteps 
+		|| (schedule->unit != 'C' && schedule->unit != 'F')){
+		defaultBeerProfile();
+		return false;
+	}
+	char conditions[]="tgsaouvbxwe";
+	for(int i=0;i< schedule->numberOfSteps ;i++){
+		ScheduleStep *step = &schedule->steps[i];
+		if(strchr(conditions,step->condition) == NULL){
+			defaultBeerProfile();
+			return false;
+		}
+	}
+	return true;
 }
 
  void BPLSettings::defaultBeerProfile(void)
@@ -771,11 +840,51 @@ String BPLSettings::jsonBeerProfile(void)
     return ret;
 }
 
+
+bool BPLSettings::logFileIndexesSanity(void){
+	FileIndexes* info= & _data.logFileIndexes;
+	if(strlen(info->logname) > MaximumLogFileName){
+		defaultLogFileIndexes();
+		return false;
+	}
+	
+	for(int i=0;i<MAX_LOG_FILE_NUMBER;i++){
+		if(info->files[i].name[0] == 0) break;
+		if(strlen(info->files[i].name) > MaximumLogFileName){
+			defaultLogFileIndexes();
+			return false;
+		}
+	}
+	return true;
+}
+
 //***************************************************************
 // Remote data logging
+
+bool BPLSettings::remoteLoggingSanity(void){
+	RemoteLoggingInformation* info = & _data.remoteLogginInfo;
+	if(info->service > 3){
+		defaultRemoteLogging();
+		return false;
+	}
+	if(strlen(info->url) > MaximumUrlLength
+		|| strlen(info->format) > MaximumFormatLength
+		|| strlen(info->contentType)> MaximumContentTypeLength){
+
+		defaultRemoteLogging();
+		return false;
+	}
+	return true;
+}
+
 void BPLSettings::defaultRemoteLogging(void)
 {
-	// OK for all zero
+	RemoteLoggingInformation* info = & _data.remoteLogginInfo;
+	info->enabled=0;
+	info->url[0]='\0';
+	info->format[0]='\0';
+	info->contentType[0]='\0';
+	info->service =0;
 }
 
 bool BPLSettings::dejsonRemoteLogging(String json)
@@ -1040,6 +1149,44 @@ String BPLSettings::jsonPressureMonitorSettings(void){
 #define MqttLogPeriodKey "period"
 #define ReportBasePathKey "base"
 #define MqttReportFormatKey "format"
+
+void BPLSettings::defaultMqttSetting(void){
+	MqttRemoteControlSettings *settings=mqttRemoteControlSettings();
+	settings->mode = MqttModeOff;
+	settings->reportFormat=MqttReportIndividual;
+	settings->serverOffset =0;
+	settings->usernameOffset =0;
+	settings->passwordOffset=0;
+	settings->modePathOffset=0;
+	settings->beerSetPathOffset=0;
+	settings->capControlPathOffset=0;
+	settings->ptcPathOffset=0;
+	settings->fridgeSetPathOffset=0;
+	settings->reportBasePathOffset=0;
+}
+
+bool BPLSettings::mqttSettingSanity(void){
+	MqttRemoteControlSettings *settings=mqttRemoteControlSettings();
+	if(settings->mode > 3
+		|| settings->reportFormat > 1){
+		defaultMqttSetting();
+		return false;
+	}
+	if(settings->serverOffset > MqttSettingStringSpace
+		|| settings->usernameOffset > MqttSettingStringSpace
+		|| settings->passwordOffset > MqttSettingStringSpace
+		|| settings->modePathOffset > MqttSettingStringSpace
+		|| settings->beerSetPathOffset > MqttSettingStringSpace
+		|| settings->capControlPathOffset > MqttSettingStringSpace
+		|| settings->ptcPathOffset > MqttSettingStringSpace
+		|| settings->fridgeSetPathOffset > MqttSettingStringSpace
+		|| settings->reportBasePathOffset > MqttSettingStringSpace){
+			defaultMqttSetting();
+			return false;
+		}
+
+	return true;
+}
 
 String BPLSettings::jsonMqttRemoteControlSettings(void){
 

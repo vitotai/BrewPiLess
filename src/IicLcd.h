@@ -131,6 +131,9 @@ public:
   using Print::write;
 
   void setAutoOffPeriod(uint32 period){ backlightAutoOffPeriod = period; }
+#ifdef EMIWorkaround
+  void refresh();
+#endif
 
 private:
   void init_priv();

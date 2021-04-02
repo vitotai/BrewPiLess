@@ -68,9 +68,7 @@ class LcdDisplay DISPLAY_SUPERCLASS
 	DISPLAY_METHOD void init(void);
 #ifdef EMIWorkaround
 	DISPLAY_METHOD void refresh(void){
-		lcd.begin(20, 4);
-		lcd.clear();
-		printAll();
+		lcd.refresh();
 	}
 #endif
 	DISPLAY_METHOD void printAll() {

@@ -408,6 +408,24 @@ protected:
 #if EnableHumidityControlSupport
     void defaultHumidityControlSettings(void);
 #endif
+    void defaultMqttSetting(void);
+
+    bool systemConfigurationSanity(void);
+    bool timeInformationSanity(void);
+    bool gravityConfigSantiy(void);
+    bool beerProfileSanity(void);
+    bool logFileIndexesSanity(void);
+    bool remoteLoggingSanity(void);
+    bool autoCapSettingsSanity(void);
+#if EanbleParasiteTempControl   
+    bool parasiteTempControlSettingsSanity(void);
+#endif
+#if EnableHumidityControlSupport
+    bool humidityControlSettingsSanity(void);
+#endif
+
+    bool mqttSettingSanity(void);
+
 };
 
 extern BPLSettings theSettings;

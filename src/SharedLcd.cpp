@@ -70,7 +70,7 @@ void SharedDisplayManager::init(){
 #endif	
 	_lcd.begin(20, 4);
 	_lcd.clear();
-
+    _lcd.noCursor();
 }
 void SharedDisplayManager::setPrimary(SharedLcdDisplay* display){
     _head= display;
@@ -245,7 +245,11 @@ void BrewPiLcd::print(char * str){
         ptr++;
     }
 }
-
+#if EMIWorkaround
+void BrewPiLcd::refresh(){
+    getLcd()->refresh();
+}
+#endif
 //*****************************************************************
 //SmartDisplay
 

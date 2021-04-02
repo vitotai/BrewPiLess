@@ -122,7 +122,9 @@ public:
  #ifdef STATUS_LINE
 	void printStatus(char* str);
  #endif
-
+#if EMIWorkaround
+    void refresh();
+#endif
 protected:
     char content[4][21]; // always keep a copy of the display content in this variable
     bool _hiding;
