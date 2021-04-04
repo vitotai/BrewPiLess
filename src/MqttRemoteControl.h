@@ -59,7 +59,7 @@ protected:
     
     char* _reportBasePath;
     
-    #if EanbleParasiteTempControl
+    #if EnableParasiteTempControl
     char* _ptcPath;
     #endif
 
@@ -77,7 +77,7 @@ protected:
 
     void _runModeCommand(void);
 
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
     void _onPtcChange(char* payload,size_t len);
 #endif
 

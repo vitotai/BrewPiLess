@@ -93,7 +93,7 @@ void BPLSettings::setDefault(void)
     defaultRemoteLogging();
     defaultAutoCapSettings();
 
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
     defaultParasiteTempControlSettings();
 #endif
 #if EnableDHTSensorSupport
@@ -859,7 +859,7 @@ String BPLSettings::jsonRemoteLogging(void)
 
 //***************************************************************
 // parasite control
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 #define EnableKey "enabled"
 #define SetTempKey "temp"
 #define TrigerTempKey "stemp"
@@ -1070,7 +1070,7 @@ String BPLSettings::jsonMqttRemoteControlSettings(void){
 	}
 
 
-#if	EanbleParasiteTempControl
+#if	EnableParasiteTempControl
 	if(settings->ptcPathOffset){
 		root[PtcPathKey] = settings->_strings + settings->ptcPathOffset;
 	}
@@ -1186,7 +1186,7 @@ bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 
 	if(!(ptr=copyIfExist(root,ReportBasePathKey,settings->reportBasePathOffset,ptr,base))) return false;
 
-	#if	EanbleParasiteTempControl
+	#if	EnableParasiteTempControl
 	if(!(ptr=copyIfExist(root,PtcPathKey,settings->ptcPathOffset,ptr,base))) return false;
 	#endif
 

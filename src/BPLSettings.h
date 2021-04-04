@@ -401,7 +401,7 @@ protected:
     void defaultLogFileIndexes(void);
     void defaultRemoteLogging(void);
     void defaultAutoCapSettings(void);
-#if EanbleParasiteTempControl   
+#if EnableParasiteTempControl   
     void defaultParasiteTempControlSettings(void);
 #endif
 #if EnableDHTSensorSupport

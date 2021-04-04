@@ -76,7 +76,7 @@ extern "C" {
 #include "MqttRemoteControl.h"
 #endif
 
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 #include "ParasiteTempController.h"
 #endif
 
@@ -149,7 +149,7 @@ extern "C" {
 #define GETSTATUS_PATH "/getstatus"
 #define DEFAULT_INDEX_FILE     "index.htm"
 
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 #define ParasiteTempControlPath "/ptc"
 #endif
 
@@ -631,7 +631,7 @@ public:
 	 		}
 		 }
 	 	#endif
-		#if EanbleParasiteTempControl
+		#if EnableParasiteTempControl
 		else if(request->url() == ParasiteTempControlPath){
 			if(request->method() == HTTP_POST){
 				if(request->hasParam("c", true)){
@@ -788,7 +788,7 @@ public:
 	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
 	 		#endif
-			 #if EanbleParasiteTempControl
+			 #if EnableParasiteTempControl
 			 || request->url() == ParasiteTempControlPath
 			 #endif
 			#if AUTO_CAP
@@ -822,7 +822,7 @@ public:
 	 			#ifdef ENABLE_LOGGING
 	 			|| request->url() == LOGGING_PATH
 	 			#endif
-				#if EanbleParasiteTempControl
+				#if EnableParasiteTempControl
 			 	|| request->url() == ParasiteTempControlPath
 			 	#endif
 				#if SupportPressureTransducer
@@ -940,7 +940,7 @@ void greeting(std::function<void(const char*)> sendFunc)
 	capControlStatusJson(cap);
 
 #endif		 
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 	
 	doc["ptc"]= serialized(parasiteTempController.getSettings());
 #endif
@@ -1112,7 +1112,7 @@ void reportRssi(void)
 	doc["tu"] = String(unit);
 
 
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 	doc["ptc"] = String(parasiteTempController.getMode());
 	doc["pt"] = parasiteTempController.getTimeElapsed();
 	doc["ptctp"] = parasiteTempController.getTemp();
@@ -1998,7 +1998,7 @@ void setup(void){
 	tiltListener.begin();
 #endif
 
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 	parasiteTempController.init();
 #endif
 
@@ -2036,7 +2036,7 @@ void loop(void){
 #ifdef ESP8266
 	MDNS.update();
 #endif
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 	parasiteTempController.run();
 #endif
 

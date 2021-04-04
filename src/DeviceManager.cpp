@@ -33,7 +33,7 @@
 #include "AutoCapControl.h"
 #endif
 
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 #include "ParasiteTempController.h"
 #endif
 
@@ -230,7 +230,7 @@ inline void** deviceTarget(DeviceConfig& config)
 	break;
 #endif
 
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 	case DEVICE_PTC_COOL:
 		ppv = (void**)& parasiteTempController.cooler;
 		break;
@@ -1121,7 +1121,7 @@ DeviceType deviceType(DeviceFunction id) {
 #if AUTO_CAP
 	case DEVICE_BEER_CAPPER:
 #endif
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 	case DEVICE_PTC_COOL:
 #endif
 #if EnableDHTSensorSupport
