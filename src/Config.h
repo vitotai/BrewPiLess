@@ -116,7 +116,7 @@
 //////////////////////////////////////////////////////////////////////////
 //
 // Flag to control implementation of TempControl as a static class.
-// Should normally be left alone unles you are experimenting with multi-instancing.
+// Should normally be left alone unless you are experimenting with multi-instancing.
 //
 // #ifndef TEMP_CONTROL_STATIC
 // #define TEMP_CONTROL_STATIC 1
@@ -247,8 +247,8 @@
 #endif
 
 
-#ifndef EanbleParasiteTempControl
-#define EanbleParasiteTempControl true
+#ifndef EnableParasiteTempControl
+#define EnableParasiteTempControl true
 #endif
 
 #ifndef SupportPressureTransducer
@@ -392,8 +392,8 @@
 #define  BREWPI_BUTTONS 0
 
 //overwrite feature set
-#undef EanbleParasiteTempControl
-#define EanbleParasiteTempControl flase
+#undef EnableParasiteTempControl
+#define EnableParasiteTempControl false
 #undef SupportPressureTransducer
 //#define SupportPressureTransducer false
 #undef SupportMqttRemoteControl

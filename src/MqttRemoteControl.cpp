@@ -16,7 +16,7 @@ extern BrewPiProxy brewpi;
 
 #if SupportMqttRemoteControl
 
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 #include "ParasiteTempController.h"
 #endif
 
@@ -244,7 +244,7 @@ void MqttRemoteControl::_loadConfig()
         _beerSetPath = settings->beerSetPathOffset? (char*)settings->_strings + settings->beerSetPathOffset:NULL;
         _fridgeSetPath = settings->fridgeSetPathOffset? (char*)settings->_strings + settings->fridgeSetPathOffset:NULL;
         
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
         _ptcPath = settings->ptcPathOffset? (char*)settings->_strings + settings->ptcPathOffset:NULL;
 #endif
 
@@ -258,7 +258,7 @@ void MqttRemoteControl::_loadConfig()
         if(_beerSetPath) DBG_PRINTF("_setTempPath:%s\n",_beerSetPath);
         if(_fridgeSetPath) DBG_PRINTF("_setTempPath:%s\n",_fridgeSetPath);
 
-        #if EanbleParasiteTempControl
+        #if EnableParasiteTempControl
 
         if(_ptcPath) DBG_PRINTF("_ptcPath:%s\n",_ptcPath);
         #endif
@@ -322,7 +322,7 @@ void MqttRemoteControl::_onConnect(void){
     }
 
 
-    #if EanbleParasiteTempControl
+    #if EnableParasiteTempControl
     if(_ptcPath){
         if(_client.subscribe(_ptcPath, 1)){
             DBG_PRINTF("MQTT:Subscribing %s\n",_ptcPath);
@@ -360,7 +360,7 @@ void MqttRemoteControl::_onMessage(char* topic, uint8_t* payload, size_t len) {
     }else if(strcmp(topic, _fridgeSetPath) ==0){
         this->_onSettingTempChange(false,(char*)payload,len);
     }
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
     else if(strcmp(topic, _ptcPath) ==0){
         this->_onPtcChange((char*)payload,len);
     }
@@ -431,7 +431,7 @@ void MqttRemoteControl::_onSettingTempChange(bool isBeerSet,char* payload, size_
     }
 }
 
-#if EanbleParasiteTempControl
+#if EnableParasiteTempControl
 void MqttRemoteControl::_onPtcChange(char* payload, size_t len){
     char buffer[32];
     size_t toCopy=len;
