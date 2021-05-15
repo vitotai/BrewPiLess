@@ -677,6 +677,8 @@ void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t p
     if(space > digitNum){
         uint8_t i=space - (uint8_t)digitNum;
         while( i-- > 0) lcd->write(' ');
+    }else{
+        digitNum = space;
     }
     for( uint8_t i=0;i< digitNum;i++)
         lcd->write(buffer[i]);
@@ -688,7 +690,7 @@ void SmartDisplay::_printGravityTimeAt(uint8_t col,uint8_t row){
     lcd->setCursor(col,row);
 
     uint32_t diff =TimeKeeper.getTimeSeconds() - _updateTime;
- 
+//    DBG_PRINTF("gravity Time: diff=%d",diff);
     if(diff > 30* 86400){ // greater than 10 days
         lcd->print("???");
     }else if(diff >  99*60*60){  // greater than 99 hours, in days
@@ -696,7 +698,7 @@ void SmartDisplay::_printGravityTimeAt(uint8_t col,uint8_t row){
         lcd->write( days < 10? ' ':'0' + days/10);
         lcd->write('0' + days%10);
         lcd->write('D');
-    }else if(diff >  2* 60*60){  // greater than 1 hours, in hours
+    }else if(diff >  100*60){  // greater than 100 minutes, in hours
         uint32_t hours = diff/3600;
         lcd->write( hours < 10? ' ':'0' + hours/10);
         lcd->write('0' + hours%10);
