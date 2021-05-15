@@ -671,14 +671,15 @@ void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t p
 
     char buffer[32];
     int digitNum=sprintFloat((char*)buffer,value,precision);
-    if(digitNum > space){
-        lcd->print("???");
-    }
-
     buffer[digitNum]='\0';
-    uint8_t i=space - (uint8_t)digitNum;
-    while( i-- > 0) lcd->write(' ');
-    lcd->print(buffer);
+//    DBG_PRINTF("_printFloatAt %d,%d,%s\n",space,digitNum,buffer);
+
+    if(space > digitNum){
+        uint8_t i=space - (uint8_t)digitNum;
+        while( i-- > 0) lcd->write(' ');
+    }
+    for( uint8_t i=0;i< digitNum;i++)
+        lcd->write(buffer[i]);
 }
 
 void SmartDisplay::_printGravityTimeAt(uint8_t col,uint8_t row){

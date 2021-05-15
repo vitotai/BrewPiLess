@@ -404,7 +404,8 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 		}else if(root.containsKey("gravity")){
 			// gravity information directly from iSpindel
 			float sgreading=root["gravity"];
-            setGravity(sgreading, TimeKeeper.getTimeSeconds());
+			if(IsGravityInValidRange(sgreading)) setGravity(sgreading, TimeKeeper.getTimeSeconds());
+
 			#if TWOFACED_LCD
 			char unit;
 			float max,min;
