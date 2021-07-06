@@ -73,8 +73,7 @@ void LcdDisplay::init(void){
 
 #if TWOFACED_LCD
 	lcd.init();
-	sharedDisplayManager.add(&lcd);
-	sharedDisplayManager.setPrimary(&lcd);
+	sharedDisplayManager.add(&lcd,true);
 #else
 #if BREWPI_IIC_LCD
 	lcd.init(i2cLcdAddr); // initialize LCD

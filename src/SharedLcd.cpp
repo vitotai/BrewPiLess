@@ -10,11 +10,32 @@
 #include <WiFi.h>
 #endif
 
-
 #include "SharedLcd.h"
 
+#define GravityInfoUpdatePeriod 60000
 #define SWITCH_TIME 8000
 #define DegreeSymbolChar 0b11011111
+
+
+static const char STR_Gravity[] PROGMEM = "Gravity ";
+static const char STR_Temperature[] PROGMEM = "Temperature";
+static const char STR_Updated[] PROGMEM = "Updated";
+static const char STR_ago[] PROGMEM = "ago";
+static const char STR_HumidityChamber[] PROGMEM= "Humidity Chamber";
+static const char STR_Room[] PROGMEM = "Room";
+
+static const char STR_Pressure[] PROGMEM = "Pressure";
+static const char STR_psi[] PROGMEM = "psi";
+
+static const char STR_IP_[] PROGMEM = "IP ";
+
+static const char STR_RH_C_R[] PROGMEM = "RH C   %      R   %";
+static const char STR_Humidity_Chamber[] PROGMEM = "Humidity Chamber   % ";
+static const char STR_Humidity_Room[] PROGMEM = "Humidity Room      %";
+static const char STR_Unknown[] PROGMEM = "NA";
+static const char STR_Less_1m[] PROGMEM = "<1m";
+static const char STR___[] PROGMEM = "--";
+
 
 SharedDisplayManager sharedDisplayManager;
 
@@ -23,6 +44,7 @@ uint8_t SharedDisplayManager::i2cLcdAddr = IIC_LCD_ADDRESS;
 // SharedLcdDisplay
  SharedLcdDisplay::SharedLcdDisplay(){
     _next = _previous = NULL;
+    _hidden = true;
 }
 inline  PhysicalLcdDriver * SharedLcdDisplay::getLcd(){return _manager->getLcd(); }
 
@@ -43,22 +65,36 @@ _lcd()
     _isForcedPrimary = false;
     _isRotateMode =false;
 }
-void SharedDisplayManager::add(SharedLcdDisplay* display){
+void SharedDisplayManager::add(SharedLcdDisplay* display,bool isPrimary){
     display->setManager(this);
     if(_head == NULL){
         _head  = display;
+        display->_next = display;
+        display->_previous = display;
+        display->setHidden(false);
+        display->onShow();
+        _current = _head;
+    }else{
+        // find tail
+        SharedLcdDisplay *tail= _head;
+        while(tail->_next != _head) tail= tail->_next;
+
+        tail->_next = display;
+        display->_previous = tail;
         display->_next = _head;
-        display->_previous = _head;
-        return;
+
+        if(isPrimary){
+            _head= display;
+            if(_current){
+                _current->setHidden(true);
+                _current->onHide();
+            }
+            _current = _head;
+            _head->setHidden(false);
+            _head->onShow();
+            _current = _head;
+        }
     }
-    // find tail
-    SharedLcdDisplay *tail= _head;
-
-    while(tail->_next != _head) tail= tail->_next;
-
-    tail->_next = display;
-    display->_previous = tail;
-    display->_next = _head;
 }
 
 void SharedDisplayManager::init(){
@@ -76,9 +112,13 @@ void SharedDisplayManager::init(){
 }
 void SharedDisplayManager::setPrimary(SharedLcdDisplay* display){
     _head= display;
+    if(_current){
+        _current->setHidden(true);
+        _current->onHide();
+    }
     _current = _head;
+    _current->setHidden(false);
     _current->onShow();
-
 }
 
 void SharedDisplayManager::setDisplayMode(uint8_t mode){
@@ -119,11 +159,15 @@ void SharedDisplayManager::SharedDisplayManager::forcePrimary(bool primary){
 void SharedDisplayManager::_switch(SharedLcdDisplay* newDisplay){
     if(_current != newDisplay){
 //        DBG_PRINTF("Switching display\n");
-        if(_current) _current->onHide();
+        if(_current){
+            _current->setHidden(true);
+            _current->onHide();
+        }
 
         _lcd.clear();
 
         _current = newDisplay;
+        _current->setHidden(false);
         _current->onShow();
         _current->redraw();
         _switchTime= millis();
@@ -132,26 +176,26 @@ void SharedDisplayManager::_switch(SharedLcdDisplay* newDisplay){
 
 void SharedDisplayManager::loop(){
     if(_isForcedPrimary || !_isRotateMode ) return;
-
     if(millis() -_switchTime > SWITCH_TIME) next();
 }
 
+#if DebugSharedDisplay
+void SharedDisplayManager::debug(String& info){
+    info = String("Pm:") + String(_isForcedPrimary) 
+    + String(", RM:") +String(_isRotateMode)
+    + String(", ST:") + String(_switchTime)
+    + String(", H:") + String(_head->_hidden)
+    + String(", S:") + String(_head->_next->_hidden);
+}
+#endif
 //*****************************************************************
 //BrewPiLcd
 
 
 BrewPiLcd::BrewPiLcd():SharedLcdDisplay(){
-    _hiding=true;
     _bufferOnly = false;
 }
 
-void BrewPiLcd::onShow(){
-    _hiding = false;
-}
-
-void BrewPiLcd::onHide(){
-    _hiding = true;
-}
 void BrewPiLcd::redraw(){
     //redraw all
     PhysicalLcdDriver *lcd = getLcd();
@@ -185,7 +229,7 @@ void BrewPiLcd::_clearBuffer(){
 
 void BrewPiLcd::clear(){
     _clearBuffer();
-    if(!_hiding) getLcd()->clear();
+    if(!_hidden) getLcd()->clear();
 }
 
 void BrewPiLcd::setCursor(uint8_t col, uint8_t row){
@@ -194,16 +238,15 @@ void BrewPiLcd::setCursor(uint8_t col, uint8_t row){
 	}
     _currline = row;
     _currpos = col;
-    if(! _hiding) getLcd()->setCursor(col,row);
+    if(! _hidden) getLcd()->setCursor(col,row);
 }
 
 size_t BrewPiLcd::write(uint8_t value){
     content[_currline][_currpos] = value;
     _currpos++;
-    if(!_bufferOnly && !_hiding) getLcd()->write(value);
+    if(!_bufferOnly && !_hidden) getLcd()->write(value);
     return 1;
 }
-//    void print(char* str);
 
 void BrewPiLcd::printSpacesToRestOfLine(void){
     while(_currpos < _cols){
@@ -250,6 +293,7 @@ void BrewPiLcd::print(char * str){
 #if EMIWorkaround
 void BrewPiLcd::refresh(){
     getLcd()->refresh();
+    redraw();
 }
 #endif
 //*****************************************************************
@@ -260,18 +304,10 @@ void BrewPiLcd::refresh(){
 SmartDisplay smartDisplay;
 
 SmartDisplay::SmartDisplay(){
-    _shown = false;
+    _gravityInfoValid=false;
 }
 
 
-
-void SmartDisplay::onShow(){
-    _shown = true;
-}
-
-void SmartDisplay::onHide(){
-    _shown = false;
-}
 
 void SmartDisplay::redraw(){
     //redraw all
@@ -344,21 +380,21 @@ Update       99m ago
 */
         case 1:
             lcd->setCursor(0,0);
-            lcd->print("Gravity");
+            lcd->print_P(STR_Gravity);
             if(_plato){
                 lcd->setCursor(18,0);
                 lcd->write(DegreeSymbolChar);
                 lcd->write('P');
             }
             lcd->setCursor(0,1);
-            lcd->print("Temperature");
+            lcd->print_P(STR_Temperature);
             lcd->setCursor(18,1);
             lcd->write(DegreeSymbolChar);
             lcd->write(_tempUnit);
             lcd->setCursor(0,2);
-            lcd->print("Updated");
+            lcd->print_P(STR_Updated);
             lcd->setCursor(17,2);
-            lcd->print("ago");
+            lcd->print_P(STR_ago);
             break;
 /*
 01234567890123456789
@@ -387,7 +423,7 @@ RH C 56%      R  75%
             else singleLinedHumidity = 3;
 
             lcd->setCursor(0,0);
-            lcd->print("G");
+            lcd->write('G');
             lcd->setCursor(18,0);
             lcd->write(DegreeSymbolChar);
             lcd->write(_tempUnit);
@@ -399,9 +435,9 @@ RH C 56%      R  75%
 
 
             lcd->setCursor(2,1);
-            lcd->print("update");
+            lcd->print_P(STR_Updated);
             lcd->setCursor(17,1);
-            lcd->print("ago");
+            lcd->print_P(STR_ago);
             break;
 /*
 layout 4: Humidity
@@ -420,11 +456,11 @@ Pressure     13.5psi
         case 6:
             if(_layout == 6) pressureLine = 3;
             lcd->setCursor(0,0);
-            lcd->print("Humidity Chamber");
+            lcd->print_P(STR_HumidityChamber);
             lcd->setCursor(19,0);
             lcd->write('%');
             lcd->setCursor(12,1);
-            lcd->print("Room");
+            lcd->print_P(STR_Room);
             lcd->setCursor(19,1);
             lcd->write('%');
             break;
@@ -437,7 +473,7 @@ Pressure    13.5 psi
 */
         case 7:
             lcd->setCursor(0,0);
-            lcd->print("G");
+            lcd->write('G');
             pressureLine = 3;
             singleLinedHumidity = 2;
             if(_plato){
@@ -454,32 +490,32 @@ Pressure    13.5 psi
 
     if(pressureLine >=0){
         lcd->setCursor(0,(uint8_t)pressureLine);
-        lcd->print("Pressure");
+        lcd->print_P(STR_Pressure);
         lcd->setCursor(17,(uint8_t)pressureLine);
-        lcd->print("psi");
+        lcd->print_P(STR_psi);
     }
     if(singleLinedHumidity>=0){
     //RH C 56%      R  75%  => Humidity Chamber 56% => Humidity Room 99%
         if(_chamberHumidityAvailable  && _roomHumidityAvailable){
             lcd->setCursor(0,(uint8_t)singleLinedHumidity);
-            lcd->print("RH C   %      R   %");
+            lcd->print_P(STR_RH_C_R);
         }else if (_chamberHumidityAvailable){
             lcd->setCursor(0,(uint8_t)singleLinedHumidity);
-            lcd->print("Humidity Chamber   %");
+            lcd->print_P(STR_Humidity_Chamber);
         }else if (_roomHumidityAvailable){
             lcd->setCursor(0,(uint8_t)singleLinedHumidity);
-            lcd->print("Humidity Room      %");
+            lcd->print_P(STR_Humidity_Room);
         }
 
     }
     lcd->setCursor(0,3);
-    lcd->print("IP "); 
-//    lcd->print(WiFi.localIP().toString().c_str());
+    lcd->print_P(STR_IP_); 
 }
 
 void SmartDisplay::_drawGravity(){
 //    PhysicalLcdDriver *lcd=getLcd();
 
+    _gravityInfoLastPrinted = millis();
     switch(_layout){
 /*
 01234567890123456789
@@ -692,7 +728,7 @@ void SmartDisplay::_printGravityTimeAt(uint8_t col,uint8_t row){
     uint32_t diff =TimeKeeper.getTimeSeconds() - _updateTime;
 //    DBG_PRINTF("gravity Time: diff=%d",diff);
     if(diff > 30* 86400){ // greater than 10 days
-        lcd->print("???");
+        lcd->print_P(STR_Unknown);
     }else if(diff >  99*60*60){  // greater than 99 hours, in days
         uint32_t days = diff/86400;
         lcd->write( days < 10? ' ':'0' + days/10);
@@ -705,7 +741,7 @@ void SmartDisplay::_printGravityTimeAt(uint8_t col,uint8_t row){
         lcd->write('H');
     }else if(diff <  60){
         // less than one minutes
-        lcd->print("<1m");
+        lcd->print_P(STR_Less_1m);
     }else{
         // in minute
         uint32_t minutes = diff/60;
@@ -719,7 +755,7 @@ void SmartDisplay::_printHumidityValueAt(uint8_t col,uint8_t row,uint8_t value){
     PhysicalLcdDriver *lcd=getLcd();
     lcd->setCursor(col,row);
 
-    if(value >=100) lcd->print("--");
+    if(value >=100) lcd->print_P(STR___);
     else{
         lcd->write( value < 10? ' ':'0' + value/10);
         lcd->write('0' + value%10);
@@ -728,7 +764,7 @@ void SmartDisplay::_printHumidityValueAt(uint8_t col,uint8_t row,uint8_t value){
 
 bool SmartDisplay::_updatePartial(uint8_t mask){
     uint8_t newLayout = _layout | mask;
-    if(!_shown){
+    if(_hidden){
         _layout = newLayout;
         return false;
     }
@@ -750,7 +786,9 @@ void SmartDisplay::gravityDeviceData(float gravity,float temperature, uint32_t u
     _updateTime = update;
     _tempUnit = tunit;
     _plato = usePlato;
-    if(_updatePartial(GravityMask)) _drawGravity();
+    _gravityInfoValid = true;
+    _gravityInfoLastPrinted =0; // forced to update
+   // if(_updatePartial(GravityMask)) _drawGravity();
 }
 
 void SmartDisplay::pressureData(float pressure){
@@ -767,5 +805,13 @@ void SmartDisplay::humidityData(bool chamberValid, uint8_t chamber,bool roomVali
 
 void SmartDisplay::setIp(IPAddress ip){
     _ip = ip;
-    if(_shown) _drawIp();
+    if(!_hidden) _drawIp();
+}
+
+void SmartDisplay::update(){
+   if(_gravityInfoValid){
+       if(millis() - _gravityInfoLastPrinted > GravityInfoUpdatePeriod){
+           if(_updatePartial(GravityMask)) _drawGravity();
+       }
+   }
 }

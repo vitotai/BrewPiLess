@@ -21,10 +21,10 @@
 #define MinimumControlCheckTime 1000
 
 #if FilterPressureReading
-#define LowPassFilterParameter 0.15
+#define LowPassFilterParameter 0.3
 #endif
 #define DEFAULT_VREF    1100        //Use adc2_vref_to_gpio() to obtain a better estimate
-#define NO_OF_SAMPLES   8          //Multisampling
+#define NO_OF_SAMPLES   4          //Multisampling
 
 PressureMonitorClass PressureMonitor;
 
@@ -44,6 +44,14 @@ int PressureMonitorClass::_readInternalAdc(void){
  
 #ifdef ESP8266
     return system_adc_read();
+
+/*    uint32_t adc_reading = 0;
+    for (int i = 0; i < NO_OF_SAMPLES; i++) {
+        adc_reading += system_adc_read();
+        delay(10);
+    }
+    return (int) (adc_reading /NO_OF_SAMPLES);
+*/
 #endif
 
 #if ESP32

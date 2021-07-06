@@ -71,62 +71,6 @@ void ExternalData::sseNotify(char *buf){
 	buf[0]='G';
 	buf[1]=':';
 	serializeJson(doc, buf+2,256);
-#if 0
-		char strbattery[8];
-		int len=sprintFloat(strbattery,_deviceVoltage,2);
-		strbattery[len]='\0';
-
-		char strgravity[8];
-		len=sprintFloat(strgravity,_gravity,3);
-		strgravity[len]='\0';
-
-		char slowpassfilter[8];
-		len=sprintFloat(slowpassfilter,filter.beta(),2);
-		slowpassfilter[len]='\0';
-
-		char strtilt[8];
-		len=sprintFloat(strtilt,_ispindelTilt,2);
-		strtilt[len]='\0';
-
-/*		char coeff[4][20];
-		for(int i=0;i<4;i++){
-			len=sprintFloat(coeff[i],_cfg->ispindelCoefficients[i],9);
-			coeff[i][len]='\0';	
-		}
-		*/
-		char strRssi[32];
-		if(_rssiValid){
-			len=sprintf(strRssi,",\"rssi\":%d",_rssi);
-			strRssi[len]='\0';
-		}else{
-			strRssi[1]=' ';
-			strRssi[0]='\0';
-		} 
-		
-		#if SupportTiltHydrometer
-		char strRawTilt[8];
-		len=sprintFloat(strRawTilt,_tiltRawGravity,3);
-		strRawTilt[len]='\0';
-		#else
-		char *strRawTilt ="0";
-		#endif
-
-		const char *spname=(_ispindelName)? _ispindelName:"Unknown";
-		sprintf(buf,"G:{\"dev\":%d,\"name\":\"%s\",\"battery\":%s,\"sg\":%s,\"angle\":%s %s,\"lu\":%ld,\"lpf\":%s,\"stpt\":%d,\"fpt\":%d,\"ctemp\":%d,\"plato\":%d,\"tiltraw\":%s}",
-					_cfg->gravityDeviceType,
-					spname, 
-					strbattery,
-					strgravity,
-					strtilt,
-					strRssi,
-					_lastUpdate,
-					slowpassfilter,
-					_cfg->stableThreshold,
-					_cfg->numberCalPoints,
-                    _cfg->ispindelCalibrationBaseTemp,
-					_cfg->usePlato,
-					strRawTilt);
-#endif
 }
 
 #if SupportTiltHydrometer

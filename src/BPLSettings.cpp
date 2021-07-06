@@ -126,7 +126,7 @@ void BPLSettings::defaultLogFileIndexes(void){
 
 }
 
-bool BPLSettings::autoCapSettingsSanity(void){}
+bool BPLSettings::autoCapSettingsSanity(void){ return true;}
 
 //***************************************************************
 // system configuration

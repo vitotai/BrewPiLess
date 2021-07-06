@@ -1613,6 +1613,14 @@ void wiFiEvent(const char* msg){
 	if(WiFi.status() == WL_CONNECTED){
 		DBG_PRINTF("channel:%d, BSSID:%s\n",WiFi.channel(),WiFi.BSSIDstr().c_str());
 		if(! TimeKeeper.isSynchronized())TimeKeeper.updateTime();
+
+/*		if (!MDNS.begin(theSettings.systemConfiguration()->hostnetworkname,WiFi.localIP())) {
+			DBG_PRINTF("Error setting mDNS responder\n");
+		}else{
+			MDNS.addService("http", "tcp", 80);
+		}
+		MDNS.notifyAPChange(); */
+
 	}
 	#if TWOFACED_LCD
 	smartDisplay.setIp(WiFi.localIP());
@@ -1741,8 +1749,8 @@ void brewpiLoop(void)
 			#endif
 		}
 		#if TWOFACED_LCD
-		int16_t s=rotaryEncoder.read();
-		if(s !=1){
+		if(rotaryEncoder.changed()){
+			int16_t s=rotaryEncoder.read();
 			DBG_PRINTF("rotaryEncoder.read()=%d\n",s);
 			if(s==0) sharedDisplayManager.previous();
 			else sharedDisplayManager.next();
@@ -1984,7 +1992,11 @@ void setup(void){
 #endif
 
   	DBG_PRINTF("WiFi Done!\n");
-
+	int wait=5;
+	while(wait>0 && WiFi.status() != WL_CONNECTED){
+		delay(1000);
+		wait--;
+	}
 	// get time
 	initTime(WiFiSetup.isApMode());
 
@@ -2051,6 +2063,15 @@ void setup(void){
 		//testSPIFFS();
 	});
 #endif
+
+    #if DebugSharedDisplay
+	webServer->on("/dbdisplay",[](AsyncWebServerRequest *request){
+		String info;
+		sharedDisplayManager.debug(info);
+		request->send(200,"",info);
+	});
+    #endif
+
 	// 404 NOT found.
   	//called when the url is not defined here
 	webServer->onNotFound([](AsyncWebServerRequest *request){
@@ -2112,7 +2133,9 @@ void setup(void){
 	sharedDisplayManager.setDisplayMode(theSettings.systemConfiguration()->displayMode);
 #endif
 
-
+	#if ESP8266 
+	wifi_set_sleep_type(NONE_SLEEP_T);
+	#endif
 }
 
 uint32_t _rssiReportTime;
@@ -2148,6 +2171,7 @@ void loop(void){
 
 #if TWOFACED_LCD
 	sharedDisplayManager.loop();
+	smartDisplay.update();
 #endif
 
 

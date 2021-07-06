@@ -50,18 +50,20 @@ public:
 
     // linked list 
 protected:
+    void setHidden(bool hidden){ _hidden=hidden;}
     void setManager(SharedDisplayManager *manager){ _manager=manager; }
     SharedLcdDisplay* _next;
     SharedLcdDisplay* _previous;
     SharedDisplayManager *_manager;
     PhysicalLcdDriver *getLcd();
+    bool _hidden;
 };
 
 class SharedDisplayManager{
 public:
     SharedDisplayManager();
 
-    void add(SharedLcdDisplay* display);
+    void add(SharedLcdDisplay* display,bool isPrimary=false);
     void setPrimary(SharedLcdDisplay* display);
     void loop();
     void init();
@@ -74,6 +76,10 @@ public:
 
     PhysicalLcdDriver *getLcd(){ return & _lcd;}
     static uint8_t i2cLcdAddr;
+
+    #if DebugSharedDisplay
+    void debug(String& info);
+    #endif
 
 protected:
       SharedLcdDisplay* _head;
@@ -92,8 +98,8 @@ extern SharedDisplayManager sharedDisplayManager;
 class BrewPiLcd: public SharedLcdDisplay, public Print {
 public:
     BrewPiLcd();
-    void onShow();
-    void onHide();
+    void onShow(){}
+    void onHide(){}
     void redraw();
 
     void init();
@@ -127,7 +133,6 @@ public:
 #endif
 protected:
     char content[4][21]; // always keep a copy of the display content in this variable
-    bool _hiding;
     bool _bufferOnly;
     uint8_t _currline;
     uint8_t _currpos;
@@ -145,8 +150,8 @@ protected:
 class SmartDisplay: public SharedLcdDisplay{
 public:
     SmartDisplay();
-    void onShow();
-    void onHide();
+    void onShow(){}
+    void onHide(){}
     void redraw();
 
     
@@ -154,8 +159,8 @@ public:
     void pressureData(float pressure);
     void humidityData(bool chamberValid,uint8_t chamber,bool roomValid, uint8_t room);
     void setIp(IPAddress ip);
+    void update();
 protected:
-    bool _shown;
     uint8_t _layout;
     IPAddress _ip;
 
@@ -172,6 +177,8 @@ protected:
     uint8_t _roomHumidity;
 
     float _pressure;
+    bool _gravityInfoValid;
+    uint32_t _gravityInfoLastPrinted;
 
     void _drawFixedPart();
     void _drawGravity();
