@@ -99,7 +99,7 @@ void PressureMonitorClass::_readPressure(void){
     float psi = (reading - _settings->fb) * _settings->fa;
     #if FilterPressureReading
     _currentPsi = _currentPsi + LowPassFilterParameter *(psi - _currentPsi);
-    DBG_PRINTF("ADC:%d  PSIx10:%d currentx10:%d\n",(int)reading,(int)(psi*10),(int)_currentPsi*10);
+    DBG_PRINTF("ADC:%d  PSIx10:%d currentx10:%d\n",(int)reading,(int)(psi*10),(int)(_currentPsi*10));
     #else
     _currentPsi = psi;
     DBG_PRINTF("ADC:%d  PSIx10:%d\n",(int)reading,(int)(psi*10));

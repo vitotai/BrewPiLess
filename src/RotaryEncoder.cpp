@@ -42,6 +42,10 @@ int16_t RotaryEncoder::minimum;
 volatile int16_t RotaryEncoder::steps;
 volatile bool RotaryEncoder::pushFlag;
 
+#if ESP32
+static volatile bool resetBackLite;
+#endif
+
 
 #if !defined(ESP8266) && !defined(ESP32)
 #if BREWPI_STATIC_CONFIG!=BREWPI_SHIELD_DIY
@@ -475,6 +479,12 @@ void RotaryEncoder::process(void){
 }
 bool RotaryEncoder::pushed(void){
 	process();
+	#if ESP32
+	if(resetBackLite){
+		resetBackLite = false;
+		display.resetBacklightTimer();
+	}
+	#endif
 	return pushFlag;
 }
 bool RotaryEncoder::changed(void){
@@ -749,6 +759,9 @@ void IRAM_ATTR RotaryEncoder::process(void){
 			s = maximum;
 		steps = s;
 		// this goes too deep, and needed to put in ICACHE display.resetBacklightTimer();
+		#if ESP32
+		resetBackLite = true;
+		#endif
 	}
 }
 #endif  // BREWPI_ROTARY_ENCODER
@@ -762,6 +775,9 @@ void IRAM_ATTR RotaryEncoder::setPushed(void){
 	
 	// this goes too deep, and needed to put in ICACHE, also it is processed in outer loop 
 	//display.resetBacklightTimer();
+		#if ESP32
+		resetBackLite = true;
+		#endif
 }
 
 #define BREWPI_INPUT_PULLUP (USE_INTERNAL_PULL_UP_RESISTORS ? INPUT_PULLUP : INPUT)

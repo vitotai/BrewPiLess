@@ -185,7 +185,9 @@ void SharedDisplayManager::debug(String& info){
     + String(", RM:") +String(_isRotateMode)
     + String(", ST:") + String(_switchTime)
     + String(", H:") + String(_head->_hidden)
-    + String(", S:") + String(_head->_next->_hidden);
+    + String(", S:") + String(_head->_next->_hidden)
+    + String(", c:") + String((unsigned long)_current)
+    + String(", c->next:") + String( (unsigned long)( _current? _current->_next:0) );
 }
 #endif
 //*****************************************************************
@@ -305,6 +307,7 @@ SmartDisplay smartDisplay;
 
 SmartDisplay::SmartDisplay(){
     _gravityInfoValid=false;
+    _layout=0;
 }
 
 
@@ -378,7 +381,7 @@ Gravity        1.045
 Temp.        012.5°C
 Update       99m ago
 */
-        case 1:
+        case GravityMask: //1:
             lcd->setCursor(0,0);
             lcd->print_P(STR_Gravity);
             if(_plato){
@@ -402,7 +405,7 @@ Update       99m ago
 Pressure    13.5 psi
 */
 
-        case 2:
+        case PressureMask: //2:
             pressureLine = 1;
             break;
 /*
@@ -417,8 +420,8 @@ G 1.012      012.5°C
 RH C 56%      R  75%  
 */
 
-        case 3:
-        case 5:
+        case (PressureMask | GravityMask): //3:
+        case (HumidityMask | GravityMask)://5:
             if(_layout == 3) pressureLine = 3;
             else singleLinedHumidity = 3;
 
@@ -452,8 +455,8 @@ Humidity Chamber 12%
 Pressure     13.5psi
 
 */
-        case 4:
-        case 6:
+        case HumidityMask: //4:
+        case (HumidityMask | PressureMask)://6:
             if(_layout == 6) pressureLine = 3;
             lcd->setCursor(0,0);
             lcd->print_P(STR_HumidityChamber);
@@ -471,7 +474,7 @@ G 1.012  012.5°C 10m
 RH  C 56%     R  75%  => Humidity Chamber 56% => Humidity Room 99%
 Pressure    13.5 psi
 */
-        case 7:
+        case (HumidityMask | PressureMask | GravityMask)://7:
             lcd->setCursor(0,0);
             lcd->write('G');
             pressureLine = 3;
@@ -524,7 +527,7 @@ Gravity        1.045
 Temperature  012.5°C
 Updated      99m ago
 */
-        case 1:
+        case GravityMask: //1:
             if(_plato) _printFloatAt(14,0,4,1,_gravity);
             else _printFloatAt(15,0,5,3,_gravity);
             _printFloatAt(13,1,5,1,_temperature);
@@ -543,8 +546,8 @@ G 1.012      012.5°C
 RH C 56%      R  75%  
 */
 
-        case 3:
-        case 5:
+        case (PressureMask | GravityMask): //3:
+        case (HumidityMask | GravityMask)://5:
             if(_plato) _printFloatAt(2,0,4,1,_gravity);
             else _printFloatAt(2,0,5,3,_gravity);
             _printFloatAt(13,0,5,1,_temperature);
@@ -557,7 +560,7 @@ G 1.012  012.5°C 10m
 RH C 56%      R  75%  => Humidity Chamber 56% => Humidity Room 99%
 Pressure    13.5 psi
 */
-        case 7:
+        case (HumidityMask | PressureMask | GravityMask)://7:
             if(_plato) _printFloatAt(2,0,4,1,_gravity);
             else _printFloatAt(2,0,5,3,_gravity);
             _printFloatAt(9,0,5,1,_temperature);
@@ -579,7 +582,7 @@ void SmartDisplay::_drawPressure(){
 Pressure    13.5 psi
 */
 
-        case 2:
+        case PressureMask: //2:
             pressureLine = 1;
             break;
 /*
@@ -594,9 +597,9 @@ G 1.012      012.5°C
 RH C 56%      R  75%  
 */
 
-        case 3:
-        case 6:
-        case 7:
+        case (PressureMask | GravityMask): //3:
+        case (HumidityMask | PressureMask)://6:
+        case (HumidityMask | PressureMask | GravityMask)://7:
             pressureLine = 3;
             break;
 /*
@@ -648,7 +651,7 @@ G 1.012      012.5°C
 RH C 56%      R  75%  
 */
 
-        case 5:
+        case (HumidityMask | GravityMask)://5:
             singleLinedHumidity = 3;
             break;
 /*
@@ -664,8 +667,8 @@ Humidity Chamber 12%
 Pressure     13.5psi
 
 */
-        case 4:
-        case 6:
+        case  HumidityMask: //4:
+        case (HumidityMask | PressureMask)://6:
             _printHumidityValueAt(17,0,_chamberHumidity);
             _printHumidityValueAt(17,1,_roomHumidity);
             break;
@@ -676,7 +679,7 @@ G 1.012  012.5°C 10m
 RH  C 56%     R  75%  => Humidity Chamber 56% => Humidity Room 99%
 Pressure    13.5 psi
 */
-        case 7:
+        case (HumidityMask | PressureMask | GravityMask)://7:
             singleLinedHumidity = 2;
             break;
 
@@ -707,7 +710,6 @@ void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t p
 
     char buffer[32];
     int digitNum=sprintFloat((char*)buffer,value,precision);
-    buffer[digitNum]='\0';
 //    DBG_PRINTF("_printFloatAt %d,%d,%s\n",space,digitNum,buffer);
 
     if(space > digitNum){
@@ -716,6 +718,8 @@ void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t p
     }else{
         digitNum = space;
     }
+    buffer[digitNum]='\0';
+
     for( uint8_t i=0;i< digitNum;i++)
         lcd->write(buffer[i]);
 }

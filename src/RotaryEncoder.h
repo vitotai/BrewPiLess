@@ -63,7 +63,6 @@ class RotaryEncoder
 	static int16_t minimum;
 	static volatile int16_t steps;
 	static volatile bool pushFlag;
-
 };
 
 extern RotaryEncoder rotaryEncoder;
