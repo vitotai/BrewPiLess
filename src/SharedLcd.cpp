@@ -190,6 +190,13 @@ void SharedDisplayManager::debug(String& info){
     + String(", c->next:") + String( (unsigned long)( _current? _current->_next:0) );
 }
 #endif
+
+void SharedDisplayManager::refresh(){
+//    delay(500);
+    _lcd.refresh();
+//    delay(500);
+//    _current->redraw();
+}
 //*****************************************************************
 //BrewPiLcd
 
@@ -200,10 +207,13 @@ BrewPiLcd::BrewPiLcd():SharedLcdDisplay(){
 
 void BrewPiLcd::redraw(){
     //redraw all
+//    DBG_PRINTF("redraw LCD:\n");
     PhysicalLcdDriver *lcd = getLcd();
     for(int i=0;i< 4;i++){
         lcd->setCursor(0,i);
         lcd->print(content[i]);
+//        DBG_PRINTF(content[i]);
+//        DBG_PRINTF("\n");
     }
     // recover cursor location
     lcd->setCursor(_currpos,_currline);
@@ -294,8 +304,9 @@ void BrewPiLcd::print(char * str){
 }
 #if EMIWorkaround
 void BrewPiLcd::refresh(){
-    getLcd()->refresh();
-    redraw();
+    // getLcd()->refresh();
+    //redraw();
+    _manager->refresh();
 }
 #endif
 //*****************************************************************

@@ -81,6 +81,10 @@ public:
     void debug(String& info);
     #endif
 
+#if EMIWorkaround
+    void refresh();
+#endif
+
 protected:
       SharedLcdDisplay* _head;
       SharedLcdDisplay* _current;      

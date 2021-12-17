@@ -44,7 +44,7 @@ class RotaryEncoder
 	static int16_t readsteps(void){
 		return steps;
 	}
-#if BREWPI_BUTTONS || ButtonViaPCF8574
+#if BREWPI_BUTTONS || ButtonViaPCF8574 || ESP32
 	static bool pushed(void);
 #else
 	static bool pushed(void){

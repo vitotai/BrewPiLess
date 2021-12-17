@@ -479,12 +479,6 @@ void RotaryEncoder::process(void){
 }
 bool RotaryEncoder::pushed(void){
 	process();
-	#if ESP32
-	if(resetBackLite){
-		resetBackLite = false;
-		display.resetBacklightTimer();
-	}
-	#endif
 	return pushFlag;
 }
 bool RotaryEncoder::changed(void){
@@ -870,4 +864,14 @@ int16_t RotaryEncoder::read(void){
 #endif
 	return 0;
 }
+#if ESP32
+bool RotaryEncoder::pushed(void){
+		if(resetBackLite){
+			resetBackLite = false;
+			display.resetBacklightTimer();
+		}
+		return pushFlag;
+}
+#endif
+
 #endif // #if BREWPI_BUTTONS

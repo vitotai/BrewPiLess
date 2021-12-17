@@ -2165,6 +2165,7 @@ void loop(void){
 	if( (millis() - _lcdReinitTime) > LCDReInitPeriod){
 		_lcdReinitTime=millis();
 		display.refresh();
+		//DBG_PRINTF("Refresh LCD\n");
 	}
 #endif
 

@@ -172,7 +172,8 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 		case DEVICE_HARDWARE_ENVIRONMENT_TEMP:
 			return new EnvTempSensor( config.hw.pinNr==0? HumidityControl::chamberSensor:HumidityControl::roomSensor,
 				config.hw.calibration); //VTODO
-
+#endif				
+#if EnableBME280Support
 		case DEVICE_HARDWARE_BME280:{
 			Bme280Sensor* bme=new Bme280Sensor(config.hw.pinNr);
 			bme->setHumidityCalibration(tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));

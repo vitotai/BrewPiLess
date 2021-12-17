@@ -119,7 +119,8 @@ void IIClcd::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 	display();
 
 	// clear it off
-	clear();
+	command(LCD_CLEARDISPLAY); //clear();
+	delayMicroseconds(2000);
 
 	// Initialize to default text direction (for roman languages)
 	_displaymode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
@@ -132,11 +133,10 @@ void IIClcd::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 }
 #if EMIWorkaround
   void IIClcd::refresh(){
-    begin(20,4);
-    command(LCD_CLEARDISPLAY);
-
+	begin(20,4);
     for(int i=0;i< 4;i++){
         setCursor(0,i);
+		content[i][20]='\0';
         print(content[i]);
     }
   }
