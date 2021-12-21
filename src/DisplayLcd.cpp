@@ -35,7 +35,6 @@ uint8_t LcdDisplay::flags;
 
 #if TWOFACED_LCD
 LcdDriver LcdDisplay::lcd;
-
 #else // #if TWOFACED_LCD
 
 #if BREWPI_OLED128x64_LCD

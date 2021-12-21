@@ -206,7 +206,7 @@
             }*/
     };
     /* LCD information */
-
+/*
     function parseStatusLine(line) {
         var status = {};
         var i = 0;
@@ -234,6 +234,16 @@
         status.StatusLine = line;
         return status;
     }
+*/
+function parseStateSince(line) {
+    var match;
+    if(match = /(\d+h\d\dm\d\d)/.exec(line)){
+        return match[1];
+    } else if (match = /(\d+m\d\d)/.exec(line)) {
+        return match[1];
+    }
+    return "";    
+}
 
 
     function renderLcdText(info) {
@@ -244,7 +254,10 @@
             if (temp < -10000) return "--.-";
             return (temp / 100).toFixed(1) + "&deg;" + info.tu;
         }
-        var status = parseStatusLine(info.sl);
+        var status = {};
+        status.ControlStateSince = parseStateSince(info.sl);
+        status.StatusLine = info.sl;
+        status.ControlState = info.st;
         status.ControlMode = info.md;
         status.unit = info.tu;
         status.BeerTemp = T(info.bt);
