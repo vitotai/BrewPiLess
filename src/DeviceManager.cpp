@@ -838,11 +838,11 @@ device_slot_t findHardwareDevice(DeviceConfig& find)
 					// fall through
 				case DEVICE_HARDWARE_PIN:
 					match &= find.hw.pinNr==config.hw.pinNr;
-					//fall through
+					break;
 			#if EnableDHTSensorSupport
 				case DEVICE_HARDWARE_ENVIRONMENT_TEMP:
 					match &= isEnvironmentSensorAvailable();
-					//fall through
+					break;
 			#endif
 
 			#if BREWPI_EXTERNAL_SENSOR

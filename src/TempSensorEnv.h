@@ -27,12 +27,17 @@ public:
 	}
 
 	temperature read() {
-		if (!isConnected()) return TEMP_SENSOR_DISCONNECTED;
+		if (!isConnected()){
+//			DBG_PRINTF("**\nDHTxx temp read disconnect!\n**\n");
+			 return TEMP_SENSOR_DISCONNECTED;
+		}
 		float t=_sensor->readTemperature();
 		if(isnan(t) || t == NAN || t > 120.0 || t<-30.0) {
 //			DBG_PRINTF("**\nDHTxx temp read fail!\n**\n");
 			return TEMP_SENSOR_DISCONNECTED;
 		}
+//		DBG_PRINTF("**\nDHTxx temp:");
+//		DBG_PRINT(t);
 //			DBG_PRINTF("DHTxx temp:");
 //			Serial.print(t);
 //			DBG_PRINTF("\n");
