@@ -7,7 +7,7 @@ DHT sensors also report temperature, and the temperature sensor is available aft
 
 NOTE: 
 * The humidity sensor must be assigned to a slot numebr that is smaller than the temperature sensor of the humidity sensor. 
-* I don't get stable readings from my DHT21 sensor. Maybe some fine tune is needed, or it is the nature of DHT21. Don't trust the temperature reading of DHTxx sensor before verifying.
+* I don't get stable readings from my DHT21 sensor. Maybe some fine tuning is needed, or it is the nature of DHT21. Don't trust the temperature reading of DHTxx sensor before verifying.
 
 # Humidity Control
 Humidity control runs similar algorithm as temperature control. The parameters are currently predefined and can be changed only by modification of source code..

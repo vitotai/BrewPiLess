@@ -11,6 +11,9 @@
 #include "PressureMonitor.h"
 #endif
 
+#if EnableHumidityControlSupport
+#include "HumidityControl.h"
+#endif
 
 extern BrewPiProxy brewpi;
 
@@ -132,6 +135,11 @@ void MqttRemoteControl::_reportData(void){
 		    lastID=_publish(KeyGravity, sg,5);
 		    lastID=_publish(KeyPlato, externalData.plato(),1);
 	    }
+
+    	#if EnableHumidityControlSupport
+	    if(humidityControl.isHumidityValid())  lastID=_publish(KeyHumidity,humidityControl.humidity());
+	    #endif
+
 
     	// iSpindel data
 	    float vol=externalData.deviceVoltage();

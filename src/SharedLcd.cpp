@@ -190,13 +190,14 @@ void SharedDisplayManager::debug(String& info){
     + String(", c->next:") + String( (unsigned long)( _current? _current->_next:0) );
 }
 #endif
-
+#if EMIWorkaround
 void SharedDisplayManager::refresh(){
 //    delay(500);
     _lcd.refresh();
 //    delay(500);
 //    _current->redraw();
 }
+#endif
 //*****************************************************************
 //BrewPiLcd
 

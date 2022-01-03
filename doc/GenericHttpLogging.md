@@ -20,6 +20,8 @@ The `format` field in log setup page is like the format in `printf` but uses the
 | %M         | Mode in character: o, b, f, p |
 | %P         | Pressure reading in PSI  |
 | %s         | State in Integer. 0:IDLE, 1:STATE_OFF,2: DOOR_OPEN, 3:HEATING, 4: COOLING, 5: WAITING_TO_COOL, 6:WAITING_TO_HEAT, 7:WAITING_FOR_PEAK_DETECT, 8:COOLING_MIN_TIME, 9:HEATING_MIN_TIME |
+| %H | Hostname |
+| %h | Chamber humidity |
 
 
 For example, let beer setting be `20.0` and beer temperature be `18.3`, if the `format` is `api_key=TheRealApiKeyHere&field1=%B&field2=%b`,
