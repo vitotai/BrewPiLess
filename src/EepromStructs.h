@@ -93,18 +93,18 @@ enum DeviceHardware {
 	DEVICE_HARDWARE_NONE = 0,
 	DEVICE_HARDWARE_PIN = 1,			// a digital pin, either input or output
 	DEVICE_HARDWARE_ONEWIRE_TEMP = 2,	// a onewire temperature sensor
-#if BREWPI_DS2413
+//#if BREWPI_DS2413
 	DEVICE_HARDWARE_ONEWIRE_2413 = 3,	// a onewire 2-channel PIO input or output.
-#endif
-#if BREWPI_EXTERNAL_SENSOR
+//#endif
+//#if BREWPI_EXTERNAL_SENSOR
 	DEVICE_HARDWARE_EXTERNAL_SENSOR = 5,
-#endif
-#if EnableDHTSensorSupport
+//#endif
+//#if EnableDHTSensorSupport
 	DEVICE_HARDWARE_ENVIRONMENT_TEMP = 6, 
-#endif
-#if EnableBME280Support
+//#endif
+//#if EnableBME280Support
 	DEVICE_HARDWARE_BME280 = 7
-#endif
+//#endif
 };
 
 

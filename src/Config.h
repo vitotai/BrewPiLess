@@ -100,6 +100,10 @@
 #endif
 //
 //////////////////////////////////////////////////////////////////////////
+#ifndef EnableHumidityControlSupport
+#define EnableHumidityControlSupport true
+#endif
+
 #if EnableHumidityControlSupport
 #if !EnableBME280Support && !EnableDHTSensorSupport
 #error "Humidity Sesonr is needed to support Humidity Control"
