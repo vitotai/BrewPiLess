@@ -14,7 +14,8 @@
 #define KeyPressure "pressure"
 #define KeyMode "mode"
 #define KeyState "state"
-#define KeyHumidity "humidity"
+#define KeyFridgeHumidity "fridgeHumdity"
+#define KeyRoomHumidity "roomHumdity"
 
 size_t nonNullJson(char *buffer,size_t size);
 size_t dataSprintf(char *buffer,const char *format,const char* invalidStr);

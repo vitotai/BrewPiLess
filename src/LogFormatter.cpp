@@ -115,6 +115,13 @@ size_t dataSprintf(char *buffer,const char *format,const char* invalid)
 		        strcpy(buffer+d,invalid);
         		d+= strlen(invalid);
 				#endif
+			}else if(ch == 'E'){
+				#if EnableHumidityControlSupport
+				 d += printFloat(buffer+d,(float)humidityControl.roomHumidity(),0,humidityControl.isRoomSensorInstalled(),invalid);
+				#else
+		        strcpy(buffer+d,invalid);
+        		d+= strlen(invalid);
+				#endif
 			}else{				
 				// wrong format
 				//return 0; ignored
@@ -193,7 +200,8 @@ size_t nonNullJson(char* buffer,size_t size)
 	#endif
 
 	#if EnableHumidityControlSupport
-	if(humidityControl.isHumidityValid()) root[KeyHumidity] = humidityControl.humidity();
+	if(humidityControl.isHumidityValid()) root[KeyFridgeHumidity] = humidityControl.humidity();
+	if(humidityControl.isRoomSensorInstalled()) root[KeyRoomHumidity] = humidityControl.roomHumidity();
 	#endif
 
 	float sg=externalData.gravity();

@@ -4,24 +4,25 @@ The `format` field in log setup page is like the format in `printf` but uses the
 
 | Specifier   | output  |
 | -------------- |:-------------|
+| %a         | auxiliary temperature   |
 | %b         | Beer temperature   |
 | %B         | Beer setting   |
+| %E         | Environment/Room Humidity |
 | %f         | fridge temperature   |
 | %F         | fridge setting   |
 | %r         | room temperature   |
 | %g         | gravity   |
-| %p         | Plato   |
-| %t         | tilt value from iSpindel   |
-| %a         | auxiliary temperature   |
-| %v         | external device voltage   |
-| %u         | UNIX timestamp of last gravity update   |
-| %U         | 'C' for Celsius or 'F' for Fahrenheit  |
-| %m         | Mode in integer: 0:Off ,1: FridgeConst, 2:BeerConst, 3:BeerProfile  |
-| %M         | Mode in character: o, b, f, p |
-| %P         | Pressure reading in PSI  |
-| %s         | State in Integer. 0:IDLE, 1:STATE_OFF,2: DOOR_OPEN, 3:HEATING, 4: COOLING, 5: WAITING_TO_COOL, 6:WAITING_TO_HEAT, 7:WAITING_FOR_PEAK_DETECT, 8:COOLING_MIN_TIME, 9:HEATING_MIN_TIME |
 | %H | Hostname |
 | %h | Chamber humidity |
+| %m         | Mode in integer: 0:Off ,1: FridgeConst, 2:BeerConst, 3:BeerProfile  |
+| %M         | Mode in character: o, b, f, p |
+| %p         | Plato   |
+| %P         | Pressure reading in PSI  |
+| %s         | State in Integer. 0:IDLE, 1:STATE_OFF,2: DOOR_OPEN, 3:HEATING, 4: COOLING, 5: WAITING_TO_COOL, 6:WAITING_TO_HEAT, 7:WAITING_FOR_PEAK_DETECT, 8:COOLING_MIN_TIME, 9:HEATING_MIN_TIME |
+| %t         | tilt value from iSpindel   |
+| %u         | UNIX timestamp of last gravity update   |
+| %U         | 'C' for Celsius or 'F' for Fahrenheit  |
+| %v         | external device voltage   |
 
 
 For example, let beer setting be `20.0` and beer temperature be `18.3`, if the `format` is `api_key=TheRealApiKeyHere&field1=%B&field2=%b`,

@@ -69,10 +69,10 @@ enum DeviceType {
 	DEVICETYPE_TEMP_SENSOR = 1,		/* BasicTempSensor - OneWire */
 	DEVICETYPE_SWITCH_SENSOR = 2,		/* SwitchSensor - direct pin and onewire are supported */
 	DEVICETYPE_SWITCH_ACTUATOR = 3	/* Actuator - both direct pin and onewire are supported */
-#if EnableDHTSensorSupport	
+//#if EnableDHTSensorSupport	
 	,
 	DEVICETYPE_ENVIRONMENT_SENSOR = 4
-#endif
+//#endif
 };
 
 
