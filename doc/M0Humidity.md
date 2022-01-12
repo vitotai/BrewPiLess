@@ -1,4 +1,3 @@
-**Humidity monitoring and control is in preliminary development stage.**
 # DHT11/DHT21(AM2301)/DHT22 sensors
 DHT sensor family uses proprietary onewire protocol. For maximum flexibility, we don't allocate a dedidcated pin for it. 
 Generic PINs that are used for actuators(cooling, heating, and etc.) can be used for DHTxx sensors.
@@ -7,15 +6,8 @@ Once assigned, the humidity reading is then available.
 DHT sensors also report temperature, and the temperature sensor is available after a PIN is assigned to the DHTxx sensor.
 
 NOTE: 
-* The humidity sensor must be assigned to a slot numebr that is **smaller** than the temperature sensor of the humidity sensor. 
+* The humidity sensor must be assigned to a slot numebr that is smaller than the temperature sensor of the humidity sensor. 
 * I don't get stable readings from my DHT21 sensor. Maybe some fine tuning is needed, or it is the nature of DHT21. Don't trust the temperature reading of DHTxx sensor before verifying.
-* I have to supply 5V to my DHT21/AM2301 sensor when the "line" is too long, like 1 meter(3 feet).
-
-# BME280 sensors
-BME280 utilizes I2C for communication. No extra PINs are required. Howerver, I2C addresses of 0x77 and 0x76 are reserved for BME280, so if the LCD uses one of these addresses, it won't be detected.
-
-If BME280 is present, it should be detected when listing devices.
-
 
 # Humidity Control
 Humidity control runs similar algorithm as temperature control. The parameters are currently predefined and can be changed only by modification of source code..
