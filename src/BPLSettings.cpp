@@ -93,6 +93,9 @@ void BPLSettings::save()
 
 void BPLSettings::setDefault(void)
 {
+
+	DBG_PRINTF("\n\n*** RESET all SETTINGS ***\n\n");
+
 	// clear. to be safe
 	memset((char*)&_data,'\0',sizeof(_data));
 	// 
@@ -159,8 +162,8 @@ bool BPLSettings::systemConfigurationSanity(void){
 		|| strlen(cfg->hostnetworkname)>32
 		|| strlen(cfg->titlelabel) > 32
 		|| cfg->wifiMode ==0){
+			DBG_PRINTF("\n\n*****invalid system configuration!*****\n\n");
 			return false;
-			DBG_PRINTF("invalid system configuration!\n");
 	}
 
 	return true;
@@ -582,13 +585,16 @@ bool BPLSettings::beerProfileSanity(void){
 	BeerTempSchedule *schedule = & _data.tempSchedule;
 	if(schedule->numberOfSteps > MaximumSteps 
 		|| (schedule->unit != 'C' && schedule->unit != 'F')){
+		DBG_PRINTF("\n\n**** Error Beer invalid unit:%d  ***\n\n",schedule->unit);
 		defaultBeerProfile();
 		return false;
 	}
-	char conditions[]="tgsaouvbxwe";
+	char conditions[]="tgsaouvbxwer";
 	for(int i=0;i< schedule->numberOfSteps ;i++){
 		ScheduleStep *step = &schedule->steps[i];
 		if(strchr(conditions,step->condition) == NULL){
+			DBG_PRINTF("\n\n**** Error Beer profile, invalid condition:%d ***\n\n",step->condition);
+
 			defaultBeerProfile();
 			return false;
 		}
@@ -609,7 +615,7 @@ bool BPLSettings::beerProfileSanity(void){
 
 bool BPLSettings::dejsonBeerProfile(String json)
 {
-	const int PROFILE_JSON_BUFFER_SIZE = JSON_ARRAY_SIZE(15) + 7*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(4) + 5*JSON_OBJECT_SIZE(6);
+	const int PROFILE_JSON_BUFFER_SIZE = JSON_ARRAY_SIZE(15) + MaximumSteps *JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(4) + 5*JSON_OBJECT_SIZE(6);
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	DynamicJsonDocument root(PROFILE_JSON_BUFFER_SIZE + json.length());
 	auto error = deserializeJson(root,json);

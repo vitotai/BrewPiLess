@@ -111,7 +111,7 @@ typedef struct _ScheduleStep{
     char     condition;
     uint8_t _padding[2];
 } ScheduleStep; // 12bytes
-// 12 * 7 +12 = 96
+// 12 * 10 +12 = 132
 typedef struct _BeerTempSchedule{
 	ScheduleStep steps[MaximumSteps];
 	time_t   startDay;
