@@ -15,7 +15,9 @@ public:
     }
     
     uint8_t humidity(){
-        return (uint8_t) _bme.readHumidity();
+        uint8_t ret=(uint8_t) _bme.readHumidity();
+        DBG_PRINTF("BME280 Hum:%d \n",ret);
+        return ret;
     }
     float readTemperature(){
         return _bme.readTemperature();
