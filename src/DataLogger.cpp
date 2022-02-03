@@ -74,7 +74,7 @@ void DataLogger::sendData(void)
 	WiFiClientSecure sClient;
 	bool isHttps=false;
 
-	if( strncasecmp(_loggingInfo->url,"isHttps",5) ==0){
+	if( strncasecmp(_loggingInfo->url,"https",5) ==0){
 //		sClient.setBufferSizes(1024, 1024);
 //		sClient.setInsecure();
 		isHttps=true;
