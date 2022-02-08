@@ -27,6 +27,7 @@
     "gravity_att": "ATT:",
     "gravity_abv": "ABV:",
 
+    "ispindel_temperature": "Temperature:",
     "ispindel_battery": "Battery:",
     "ispindel_tilt": "Tilt:",
 
@@ -87,6 +88,12 @@
     "control_gravity": "Gravity",
     "control_capgravity": "Spunding when gravity is less than",
     "control_capafter": "Spunding after",
+
+    "humidity_control": "Humidity Control",
+    "humidity_mode": "Mode",
+    "humidity_off": "Off",
+    "humidity_mcontrol": "Control",   
+    "humidity_target": "Target Relative Humidity",   
 
     "dlg_connecting": "Communicating with BrewPiLess controller...",
 

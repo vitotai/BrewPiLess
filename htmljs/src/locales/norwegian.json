@@ -26,6 +26,7 @@
     "gravity_att": "ATT:",
     "gravity_abv": "ABV:",
 
+    "ispindel_temperature": "Temperatur:",    
     "ispindel_battery": "Batteri:",
     "ispindel_tilt": "Tilt:",
 
@@ -86,6 +87,12 @@
     "control_gravity": "Hydrometer",
     "control_capgravity": "Lukk når OG er mindre enn",
     "control_capafter": "Lukk etter",
+
+    "humidity_control": "Humidity Control",
+    "humidity_mode": "Mode",
+    "humidity_off": "Off",
+    "humidity_mcontrol": "Control",   
+    "humidity_target": "Target Relative Humidity",   
 
     "dlg_connecting": "Kommunisere med BrewPiLess-kontroller ...",
 

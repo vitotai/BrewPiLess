@@ -26,6 +26,7 @@
     "gravity_att": "ATT:",
     "gravity_abv": "ABV:",
 
+    "ispindel_temperature": "Teplota:",
     "ispindel_battery": "Batérie:",
     "ispindel_tilt": "Náklon:",
 
@@ -86,6 +87,12 @@
     "control_gravity": "Hustota",
     "control_capgravity": "Uzavrieť, ak je hustota menšia ako",
     "control_capafter": "Uzavrieť po",
+
+    "humidity_control": "Humidity Control",
+    "humidity_mode": "Mode",
+    "humidity_off": "Off",
+    "humidity_mcontrol": "Control",   
+    "humidity_target": "Target Relative Humidity",   
 
     "dlg_connecting": "Komunikujem s riadiacou jednotkou BrewPiLess...",
 
