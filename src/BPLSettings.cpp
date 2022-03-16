@@ -736,7 +736,7 @@ bool BPLSettings::dejsonBeerProfile(String json)
 	const char *uintStr=root["u"];
 	tempSchedule->unit=  *uintStr;
 
-	DBG_PRINTF("Load finished, st:%ld, unit:%c, _numberOfSteps:%d\n",tempSchedule->startDay,
+	DBG_PRINTF("Load finished, st:%ld, unit:%c, _numberOfSteps:%d\n",(long)tempSchedule->startDay,
 	tempSchedule->unit,tempSchedule->numberOfSteps);
 
 	return true;
@@ -760,7 +760,7 @@ String BPLSettings::jsonBeerProfile(void)
 	//2016-07-01T05:22:33.351Z
 	struct tm * ptm;
 	ptm = localtime(& tempSchedule->startDay);
-	char timeBuf[32];
+	char timeBuf[128];
 	sprintf(timeBuf,"%d-%02d-%02dT%02d:%02d:%02d.0Z",ptm->tm_year+1900,ptm->tm_mon+1,ptm->tm_mday,
 		ptm->tm_hour,ptm->tm_min,ptm->tm_sec);
 	root["s"]=timeBuf;
@@ -1274,7 +1274,7 @@ String BPLSettings::jsonMqttRemoteControlSettings(void){
 
 }
 #if ARDUINOJSON_VERSION_MAJOR == 6
-static char *copyIfExist(JsonDocument root,const char* key,uint16_t &offset,char* ptr,char* base){
+static char *copyIfExist(JsonDocument &root,const char* key,uint16_t &offset,char* ptr,char* base){
 #else
 static char *copyIfExist(JsonObject& root,const char* key,uint16_t &offset,char* ptr,char* base){
 #endif

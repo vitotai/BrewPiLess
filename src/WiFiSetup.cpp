@@ -275,12 +275,12 @@ bool WiFiSetupClass::stayConnected(void)
 				_time=millis();
 
 				if(_mode == WIFI_STA){
-					if(WiFi.SSID() == NULL || WiFi.SSID() == "")
+					if(WiFi.SSID() == NULL || WiFi.SSID() == ""){
 						WiFi.mode(WIFI_AP_STA);
 						#if ESP8266
 						MDNS.notifyAPChange();
 						#endif
-
+					}
 					// just keep WIFI_AP_Mode in case Network isn't specified
 				}
 			}

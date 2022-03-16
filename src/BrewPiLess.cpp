@@ -533,13 +533,13 @@ public:
   			}
 	 	}else if(request->method() == HTTP_GET &&  request->url() == TIME_PATH){
 			AsyncResponseStream *response = request->beginResponseStream("application/json");
-			response->printf("{\"t\":\"%s\",\"e\":%lu,\"o\":%d}",TimeKeeper.getDateTimeStr(),TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset());
+			response->printf("{\"t\":\"%s\",\"e\":%lu,\"o\":%d}",TimeKeeper.getDateTimeStr(),(unsigned long)TimeKeeper.getTimeSeconds(),TimeKeeper.getTimezoneOffset());
 			request->send(response);
 		}else if(request->method() == HTTP_POST &&  request->url() == TIME_PATH){
 			if(request->hasParam("time", true)){
 				  AsyncWebParameter* tvalue = request->getParam("time", true);
 				  time_t time=(time_t)tvalue->value().toInt();
-  				DBG_PRINTF("Set Time:%lu from:%s\n",time,tvalue->value().c_str());
+  				DBG_PRINTF("Set Time:%lu from:%s\n",(unsigned long)time,tvalue->value().c_str());
 	 			TimeKeeper.setCurrentTime(time);
 			 }
 			 if(request->hasParam("off", true)){

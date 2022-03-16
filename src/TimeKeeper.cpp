@@ -41,7 +41,7 @@ void TimeKeeperClass::begin(void)
 	_referenceEpoc += 300; // add 5 minutes.
   	_referenceSystemTime = millis();
 	_lastSaved=_referenceEpoc;
-	DBG_PRINTF("Load saved time:%ld\n",_referenceEpoc);
+	DBG_PRINTF("Load saved time:%ld\n",(long)_referenceEpoc);
 }
 
 time_t TimeKeeperClass::_queryServer(void){
@@ -55,7 +55,7 @@ time_t TimeKeeperClass::_queryServer(void){
 		#else
     	secs = sntp_get_current_timestamp();
 		#endif
-		DBG_PRINTF("Time from NTP :%ld, %d\n",secs,trial);
+		DBG_PRINTF("Time from NTP :%ld, %d\n",(long)secs,trial);
     	if(secs > 1546265623){ 
 			_ntpSynced=true;
 			break;
@@ -93,7 +93,7 @@ void TimeKeeperClass::begin(char* server1,char* server2,char* server3)
 	}
 	if(secs < 1546265623){
 		secs=loadTime() + 30;
-		DBG_PRINTF("failed to connect NTP, load time:%ld\n",secs);
+		DBG_PRINTF("failed to connect NTP, load time:%ld\n",(long)secs);
 	}
 	_referenceSystemTime = millis();
   	_referenceEpoc = secs;
@@ -134,7 +134,7 @@ time_t TimeKeeperClass::getTimeSeconds(void) // get Epoch time
 	return now;
 }
 
-static char _dateTimeStrBuff[24];
+static char _dateTimeStrBuff[64];
 
 const char* TimeKeeperClass::getDateTimeStr(void)
 {
