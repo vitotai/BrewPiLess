@@ -619,3 +619,14 @@
 #define DEFAULT_HOSTNAME "brewpiless"
 #define DEFAULT_USERNAME "brewpiless"
 #define DEFAULT_PASSWORD "brewpiless"
+
+
+#if UseLittleFS
+#if ESP32
+#define FileSystem LITTLEFS
+#else
+#define FileSystem  LittleFS
+#endif
+#else
+#define FileSystem SPIFFS
+#endif

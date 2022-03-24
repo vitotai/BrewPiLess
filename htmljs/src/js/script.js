@@ -469,7 +469,7 @@ function parseStateSince(line) {
 
         if (typeof msg["battery"] != "undefined" && Q("#iSpindel-battery")
             && msg.battery > 0)
-            Q("#iSpindel-battery").innerHTML = msg.battery;
+            Q("#iSpindel-battery").innerHTML ="" + parseFloat(msg.battery).toFixed(2) +"V";
 
         if(msg.lu > 84879460){
           var lu = (typeof msg["lu"] != "undefined")? new Date(msg.lu * 1000):new Date();

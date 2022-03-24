@@ -90,7 +90,11 @@ extern "C" {
 
 
 #if UseLittleFS
+#if ESP32
+#include <LITTLEFS.h>
+#else
 #include <LittleFS.h>
+#endif
 #else
 #if defined(ESP32)
 #include <SPIFFS.h>
@@ -185,11 +189,6 @@ const char *nocache_list[]={
 "/brewpi.cfg"
 };
 
-#if UseLittleFS
-FS& FileSystem = LittleFS;
-#else
-FS& FileSystem =SPIFFS;
-#endif
 
 //*******************************************
 
@@ -985,7 +984,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 	if(type == WS_EVT_CONNECT){
     	DBG_PRINTF("ws[%s][%u] connect\n", server->url(), client->id());
     	//client->printf("Hello Client %u :)", client->id());
-    	client->ping();
+    	//client->ping();
 		#if GreetingInMainLoop
 		_lastWSclient = client;
 		#else
@@ -1868,7 +1867,7 @@ void setup(void){
 
 	//start SPI Filesystem
 #if defined(ESP32)
-  	if(!SPIFFS.begin(true)){
+  	if(!FileSystem.begin(true)){
 #else
 	if(!FileSystem.begin()){
 #endif
@@ -1976,10 +1975,9 @@ void setup(void){
 
 #if defined(ESP32)
 	webServer->on("/fs",[](AsyncWebServerRequest *request){
-		request->send(200,"","totalBytes:" +String(SPIFFS.totalBytes()) +
-		" usedBytes:" + String(SPIFFS.usedBytes()) +
+		request->send(200,"","totalBytes:" +String(FileSystem.totalBytes()) +
+		" usedBytes:" + String(FileSystem.usedBytes()) +
 		" heap:"+String(ESP.getFreeHeap()));
-		//testSPIFFS();
 	});
 #else
 	webServer->on("/fs",[](AsyncWebServerRequest *request){

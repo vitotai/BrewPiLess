@@ -13,7 +13,7 @@
 #include <FS.h>
 
 #if UseLittleFS
-#include <LittleFS.h>
+#include <LITTLEFS.h> //#include <LittleFS.h>
 #else
 #include <SPIFFS.h>
 #endif
@@ -31,7 +31,6 @@
 #include "ExternalData.h"
 #include "BPLSettings.h"
 
-extern FS& FileSystem;
 
 #define EXTERNALDATA_ON_SYNC_SERVER false
 
@@ -348,7 +347,7 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
 	    server.send_P(200,"text/html",spiffsformating_html,sizeof(spiffsformating_html));
       theSettings.preFormat();
 #if ESP32
-      SPIFFS.format();
+      FileSystem.format();
 #else
       FileSystem.format();
 #endif

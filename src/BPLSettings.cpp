@@ -9,7 +9,7 @@
 #elif defined(ESP32)
 #include <WiFi.h>
 #if UseLittleFS
-#include <LittleFS.h>
+#include <LITTLEFS.h> //#include <LittleFS.h>
 #else
 #include <SPIFFS.h>
 #endif
@@ -21,7 +21,6 @@
 #include "BrewLogger.h"
 
 
-extern FS& FileSystem;
 
 BPLSettings theSettings;
 
@@ -279,10 +278,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 #if ESP32
 	root[KeyFlashChipId]=g_rom_flashchip.device_id;
 	root[KeyFlashRealSize]=g_rom_flashchip.chip_size;
-	#if UseLittleFS
-	#error "ESP32 doesn't support LittleFS by default"
-	#endif
-	root[KeyFileSystemSize]=SPIFFS.totalBytes();
+	root[KeyFileSystemSize]=FileSystem.totalBytes();
 #else
 	root[KeyFlashChipId]=ESP.getFlashChipId();
 	root[KeyFlashRealSize]=ESP.getFlashChipRealSize();

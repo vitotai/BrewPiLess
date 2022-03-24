@@ -12,6 +12,9 @@
 #define LoggingPeriod 60000  //in ms
 #define MinimumGapToSync  600  // in seconds
 
+
+#define WriteOnBufferFull true
+
 BrewLogger brewLogger;
 
 BrewLogger::BrewLogger(void){
@@ -51,8 +54,8 @@ BrewLogger::BrewLogger(void){
 	String BrewLogger::fsinfo(void)
 	{
 #if defined(ESP32)
-		String ret=String("{\"size\":") + String(SPIFFS.totalBytes())
-			+",\"used\":"  + String(SPIFFS.usedBytes())
+		String ret=String("{\"size\":") + String(FileSystem.totalBytes())
+			+",\"used\":"  + String(FileSystem.usedBytes())
 //			+",\"block\":" + String(fs_info.blockSize)
 //			+",\"page\":"  + String(fs_info.pageSize)
 			+"}";
@@ -132,8 +135,12 @@ BrewLogger::BrewLogger(void){
 		char filename[36];
 		sprintf(filename,"%s/%s",LOG_PATH,_pFileInfo->logname);
 #if ESP32
+	#if UseLittleFS
+		_logFile=FileSystem.open(filename,"w+");
+	#else
 		// weird behavior of ESP32
 		_logFile=FileSystem.open(filename,"r");
+	#endif
 #else
 		_logFile=FileSystem.open(filename,"a+");
 #endif
@@ -303,8 +310,19 @@ BrewLogger::BrewLogger(void){
 		strcpy(_pFileInfo->logname,filename);
 		char buff[36];
 		sprintf(buff,"%s/%s",LOG_PATH,filename);
-
+		#if ESP32
+		#if UseLittleFS
+		if(!FileSystem.exists(LOG_PATH)){
+			FileSystem.mkdir(LOG_PATH);
+		}
 		_logFile=FileSystem.open(buff,"a+");
+		#else
+		// weird behaviour of ESP32 SPIFFS
+		_logFile=FileSystem.open(buff,"a+");
+		#endif
+		#else
+		_logFile=FileSystem.open(buff,"a+");
+		#endif
 
 		if(!_logFile){
 			DBG_PRINTF("Error open temp file\n");
@@ -354,6 +372,18 @@ BrewLogger::BrewLogger(void){
 
 	void BrewLogger::endSession(void){
 		if(!_recording) return;
+		
+		#if WriteOnBufferFull
+		if(_logIndex >0){
+			size_t wlen=_logFile.write((const uint8_t*)_logBuffer,_logIndex);
+			DBG_PRINTF("Finished Log writen  %d\n",wlen);
+
+			if(wlen != _logIndex){
+				DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
+			}
+		}
+		#endif
+
 		_recording=false;
 		_calibrating=false;
 		_logFile.close();
@@ -594,28 +624,37 @@ BrewLogger::BrewLogger(void){
     
 		// the staring data is not in buffer
 		if( rindex < _savedLength){
-
 			sizeRead = _savedLength +_logIndex - rindex;
 			if(sizeRead > maxLen) sizeRead=maxLen;
 
+			#if WriteOnBufferFull
+			size_t sizeReadFromFile = _savedLength - rindex;
+			#else
+			size_t sizeReadFromFile = sizeRead;
+			#endif
+
 			_logFile.seek(rindex,SeekSet);
 
-			sizeRead=_logFile.read(buffer,sizeRead);
+			size_t dataRead=_logFile.read(buffer,sizeReadFromFile);
 
-			if(sizeRead < maxLen){
-				DBG_PRINTF("!Error: file read:%u of %u, file size:%u\n",sizeRead,maxLen,_logFile.size());
-				size_t insufficient = maxLen - sizeRead;
+			if(dataRead != sizeReadFromFile){
+				DBG_PRINTF("!!!Error: file read:%u of %u, file size:%u\n",dataRead,maxLen,_logFile.size());
+			}
+
+			if(dataRead < maxLen){
+				size_t insufficient = maxLen - dataRead;
                 if(insufficient > _logIndex){
                     size_t fillsize=insufficient - _logIndex;
-                    memset(buffer + sizeRead,FillTag,fillsize);
-                    sizeRead += fillsize;
+                    memset(buffer + dataRead,FillTag,fillsize);
+                    dataRead += fillsize;
                     insufficient = _logIndex;
-    				DBG_PRINTF("!Error: fill blank:%u\n",fillsize);
+    				DBG_PRINTF("!!!Error: fill blank:%u\n",fillsize);
                 }
-                memcpy(buffer+ sizeRead,_logBuffer,insufficient);
-				sizeRead += insufficient;
+                memcpy(buffer+ dataRead,_logBuffer,insufficient);
+				dataRead += insufficient;
 			}
-			DBG_PRINTF("read file:%u\n",sizeRead);
+			DBG_PRINTF("read file:%u\n",dataRead);
+
 		}else{
 			//DBG_PRINTF("read from buffer\n");
 			// read from buffer
@@ -786,7 +825,7 @@ BrewLogger::BrewLogger(void){
 	void BrewLogger::_checkspace(void)
 	{
 #if defined(ESP32)
-		_fsspace = SPIFFS.totalBytes() - SPIFFS.usedBytes();
+		_fsspace = FileSystem.totalBytes() - FileSystem.usedBytes();
 
 		if(_fsspace > RESERVED_SIZE){
 			_fsspace -= RESERVED_SIZE;
@@ -1018,10 +1057,21 @@ BrewLogger::BrewLogger(void){
 		if(!_recording){
 			return _volatileLoggingAlloc(size);
 		}
+
 		if((_logIndex+size) > LogBufferSize){
 			DBG_PRINTF("buffer full, %d + %d >= %d! saved=%d\n",_logIndex,size,LogBufferSize,_savedLength);
-				_savedLength += _logIndex;
-				_logIndex =0;
+
+			#if WriteOnBufferFull
+			size_t wlen=_logFile.write((const uint8_t*)_logBuffer,_logIndex);
+			DBG_PRINTF("Log writen  %d\n",wlen);
+
+			if(wlen != _logIndex){
+				DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
+			}
+			#endif
+
+			_savedLength += _logIndex;
+			_logIndex =0;
 		}
 		if(size >= _fsspace){
 			// run out of space.
@@ -1054,6 +1104,7 @@ BrewLogger::BrewLogger(void){
 				_logIndex -= LogBufferSize;
 			return;
 		}
+		#if ! WriteOnBufferFull
 		char *buf = _logBuffer + idx;
 
 
@@ -1067,6 +1118,7 @@ BrewLogger::BrewLogger(void){
 			int nlen = len  + idx -LogBufferSize;
 			wlen += _logFile.write((const uint8_t*)buf,nlen);
 		}
+		#endif
 		/*
 		if(len !=(wlen=_logFile.write((const uint8_t*)buf,len))){
 

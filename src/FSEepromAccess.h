@@ -22,13 +22,12 @@
 #define FSEepromAccess_H
 #if defined(ESP32)
 #if UseLittleFS
-#include <LittleFS.h>
+#include <LITTLEFS.h> //#include <LittleFS.h>
 #else
 #include <SPIFFS.h>
 #endif
 #endif
 
-extern FS& FileSystem;
 
 #define File_ControlSettings "/eeprom_control_setting"
 #define File_ControlConstant "/eeprom_control_constant"

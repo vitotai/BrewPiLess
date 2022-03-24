@@ -109,6 +109,17 @@ var  CHART_VERSION = 6;
         var colorCoolingMinTime = "rgba(0, 0, 255, 0.6)";
         var colorWaitingPeakDetect = "rgba(0, 0, 0, 0.2)";
 
+        // line colors
+
+        var ColorBeerTemp="rgb(41,170,41)";
+        var ColorBeerSet ="rgb(240, 100, 100)";
+        var ColorFridgeTemp="rgb(89, 184, 255)";
+        var ColorFridgeSet ="rgb(255, 161, 76)";
+        var ColorRoomTemp = "#AAAAAA";
+        var ColorAuxTemp =  "#f5e127";
+        var ColorGravity="rgb(153,0,153)";
+        var ColorFiltersg ="#000abb";
+
         var colorPressure="#0000EE";
         var colorPressureSet="rgb(240, 100, 100)";
         var colorCarbonation="gray";
@@ -175,7 +186,10 @@ var  CHART_VERSION = 6;
             o: "Off",
             p: "Profile"
         };
-        BrewChart.Colors = ["rgb(240, 100, 100)", "rgb(41,170,41)", "rgb(89, 184, 255)", "rgb(255, 161, 76)", "#AAAAAA", "#f5e127", "rgb(153,0,153)", "#000abb",
+
+
+
+        BrewChart.Colors = [ColorBeerSet,ColorBeerTemp, ColorFridgeTemp, ColorFridgeSet, ColorRoomTemp, ColorAuxTemp,ColorGravity, ColorFiltersg,
                         colorPressure,colorPressureSet,colorCarbonation,
                         colorHumidity,colorHumiditySet,colorRoomHumidity];
         BrewChart.Labels = ['Time', 'beerSet', 'beerTemp', 'fridgeTemp', 'fridgeSet', 'roomTemp', 'auxTemp', 'gravity', 'filtersg'];
@@ -341,7 +355,7 @@ var  CHART_VERSION = 6;
             document.body.appendChild(ldiv);
             var opt = {
                 labels: ["Time","psi","psiset","co2"],
-                colors: BrewChart.Colors.slice(PressureLine-1,CarbonationLine-1),
+                colors: BrewChart.Colors.slice(PressureLine-1,CarbonationLine),
                 connectSeparatedPoints: true,
                 ylabel: t.plabel,
                 y2label: t.clabel,
@@ -404,7 +418,7 @@ var  CHART_VERSION = 6;
             document.body.appendChild(ldiv);
             var opt = {
                 labels: BrewChart.Labels,
-                colors: BrewChart.Colors.slice(0,FilteredSgLine-1),
+                colors: BrewChart.Colors.slice(0,FilteredSgLine),
                 connectSeparatedPoints: true,
                 ylabel: ylabel,
                 y2label: y2label,
@@ -829,6 +843,7 @@ var  CHART_VERSION = 6;
                     var ll = data[i++];
                     var v = (hh & 0x7F) * 256 + ll;
                     t.specificGravity = t.plato ? v / 100 : v / 10000;
+                    sgPoint = true;
                 } else if (d0 == 0xFA) { //Ignored mask
                     var b2 = data[i++];
                     var b3 = data[i++];
@@ -1044,7 +1059,7 @@ var  CHART_VERSION = 6;
 
             t.hchart = new Dygraph(document.getElementById(t.hcid), t.rh, {
                 labels: ["Time","rh","set","Room"],
-                colors: BrewChart.Colors.slice(ChamberHumidityLine-1,RoomHumidityLine-1),
+                colors: BrewChart.Colors.slice(ChamberHumidityLine-1,RoomHumidityLine),
                 connectSeparatedPoints: true,
                 ylabel: t.hlabel,
                 y2label: "%",

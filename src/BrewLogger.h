@@ -2,14 +2,11 @@
 #define BrewLogger_H
 #include <FS.h>
 
-#if defined(ESP32)
 #if UseLittleFS
-#include <LittleFS.h>
+#include <LITTLEFS.h> //#include <LittleFS.h>
 #else
 #include <SPIFFS.h>
 #endif
-#endif
-extern FS& FileSystem;
 
 #include "BPLSettings.h"
 #include "TimeKeeper.h"
@@ -23,6 +20,7 @@ extern FS& FileSystem;
 #define LOG_PATH "/log"
 
 #define LogBufferSize 1024
+
 // Log tags
 
 #define PeriodTag 0xF0
