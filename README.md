@@ -48,7 +48,8 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
     * Using environment temperature as room/chamber temperature
     * extend maximum Beer Profile to 10 steps.
     * experimental Humidity control
-    * Rotating LCD for extra information
+    * Rotating LCD for extra information, like iSpiondel information, Humidity, and pressure.
+    * New 'Write on buffer full' option for logging to reduce flash writing.
 
  * 4.1
     * "Real" generic HTTP logging.

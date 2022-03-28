@@ -88,6 +88,7 @@
 #define PressureEncode(p) (((p)>125 || (p)<-50)? INVALID_PRESSURE_INT:(int16_t)(10.0 * ((p) + 100 )+ 0.5))
 #define PressureDecode(p) (float)(p)/10.0
 
+#define MaximumFileRead 1480
 
 class BrewLogger
 {
@@ -104,7 +105,7 @@ public:
 	void rmLog(int index);
 	bool isLogging(void){ return _recording; }
 
-	bool startSession(const char *filename,bool calibrating);
+	bool startSession(const char *filename,bool calibrating,bool wobf=false);
 	void endSession(void);
 	bool resumeSession();
 
@@ -140,7 +141,6 @@ private:
 
 	size_t _logIndex;
 	size_t _savedLength;
-	size_t _lastRead;
 	char _logBuffer[LogBufferSize];
 
 	File    _logFile;
@@ -178,6 +178,7 @@ private:
 #endif
 
 	uint16_t  _headData[VolatileDataHeaderSize];
+	bool _writeOnBufferFull;
 
 	void _resetTempData(void);
 	void _checkspace(void);

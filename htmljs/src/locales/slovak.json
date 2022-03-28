@@ -221,6 +221,7 @@
     "log_new_log_name": "Názov nového záznamu:",
     "log_start_logging": "Spustiť zaznamenávanie",
     "log_options": "Možnosti:",
+    "log_write_on_buffer_full":"Write on Buffer Full",
     "log_calibrate_ispindel": "Kalibrovať iSpindel",
     "log_tilt_in_water": "Hodnota naklonenia vo vode",
     "log_hydrometer_reading": "Nameraná hustota:",

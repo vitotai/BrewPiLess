@@ -121,6 +121,7 @@ void BPLSettings::defaultAutoCapSettings(void){}
 void BPLSettings::defaultLogFileIndexes(void){
 	FileIndexes* info= & _data.logFileIndexes;
 	info->logname[0] = '\0';
+	info->writeOnBufferFull = false;
 	
 	for(int i=0;i<MAX_LOG_FILE_NUMBER;i++){
 		info->files[i].name[0]='\0';

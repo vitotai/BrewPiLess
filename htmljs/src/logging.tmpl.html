@@ -48,9 +48,21 @@
                     </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
+                            <%= log_write_on_buffer_full %>
+                        </h6>
+                        <div>
+                            <input type="checkbox" id="wobf" name="cbpl" class="switch-input" checked="checked">
+                            <label for="wobf" class="switch-label" style="min-width: 0;"></label>
+                        </div>
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
                             <%= log_calibrate_ispindel %>
                         </h6>
-                        <input type=checkbox id=calispindel>
+                        <div>
+                            <input type="checkbox" id="calispindel" name="cbpl" class="switch-input" checked="checked">
+                            <label for="calispindel" class="switch-label" style="min-width: 0;"></label>
+                        </div>
                     </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">

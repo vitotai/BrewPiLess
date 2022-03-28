@@ -98,6 +98,8 @@ var logs = {
                 }
                 arg = "&tw=" + tilt + "&hr=" + reading;
             }
+            var wobf = Q("#wobf").checked;
+            arg += "&wobf=" + (wobf? "1":"0");
 
             if (confirm("<%= script_logging_start_new_log %>")) {
                 //console.log("Start logging");
@@ -202,6 +204,9 @@ var logs = {
                 t.ll = r.list;
                 t.list(r.list);
                 t.fsinfo(r.fs.size, r.fs.used);
+
+                Q("#wobf").checked = (r.wobf !=0);
+
                 if (typeof r["plato"] != "undefined" && r.plato) {
                     window.plato = true;
                     var th = document.querySelectorAll(".tiltwatercorrect");

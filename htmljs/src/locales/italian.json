@@ -222,6 +222,7 @@
     "log_new_log_name": "Nuovo nome log:",
     "log_start_logging": "Avvia Logging",
     "log_options": "Opzioni:",
+    "log_write_on_buffer_full":"Write on Buffer Full",
     "log_calibrate_ispindel": "Calibra iSpindel",
     "log_tilt_in_water": "Valore angolo in acqua",
     "log_hydrometer_reading": "Lettura densimetro:",

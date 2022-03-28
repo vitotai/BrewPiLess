@@ -13,8 +13,6 @@
 #define MinimumGapToSync  600  // in seconds
 
 
-#define WriteOnBufferFull true
-
 BrewLogger brewLogger;
 
 BrewLogger::BrewLogger(void){
@@ -92,6 +90,7 @@ BrewLogger::BrewLogger(void){
 		ret += ",\"fs\":" + fsinfo();
 
 		ret += ",\"plato\":" + String(theSettings.GravityConfig()->usePlato? "1":"0");
+		ret += ",\"wobf\":" + String(_writeOnBufferFull? "1":"0");
 
 		ret += ",\"list\":[";
 
@@ -136,7 +135,7 @@ BrewLogger::BrewLogger(void){
 		sprintf(filename,"%s/%s",LOG_PATH,_pFileInfo->logname);
 #if ESP32
 	#if UseLittleFS
-		_logFile=FileSystem.open(filename,"w+");
+		_logFile=FileSystem.open(filename,"a+");
 	#else
 		// weird behavior of ESP32
 		_logFile=FileSystem.open(filename,"r");
@@ -300,8 +299,10 @@ BrewLogger::BrewLogger(void){
 #endif
 		return true;
 	}
-	bool BrewLogger::startSession(const char *filename,bool calibrating){		
+	bool BrewLogger::startSession(const char *filename,bool calibrating,bool wobf){
 		if(_recording) return false; // alread start
+
+		_pFileInfo->writeOnBufferFull = _writeOnBufferFull = wobf;
 
 		if(_fsspace < 100){
 			DBG_PRINTF("Not enough space:%d\n",_fsspace);
@@ -373,16 +374,16 @@ BrewLogger::BrewLogger(void){
 	void BrewLogger::endSession(void){
 		if(!_recording) return;
 		
-		#if WriteOnBufferFull
-		if(_logIndex >0){
-			size_t wlen=_logFile.write((const uint8_t*)_logBuffer,_logIndex);
-			DBG_PRINTF("Finished Log writen  %d\n",wlen);
+		if(_writeOnBufferFull){
+			if(_logIndex >0){
+				size_t wlen=_logFile.write((const uint8_t*)_logBuffer,_logIndex);
+				DBG_PRINTF("Finished Log writen  %d\n",wlen);
 
-			if(wlen != _logIndex){
-				DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
+				if(wlen != _logIndex){
+					DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
+				}
 			}
 		}
-		#endif
 
 		_recording=false;
 		_calibrating=false;
@@ -592,7 +593,6 @@ BrewLogger::BrewLogger(void){
 	{
 		//for recording log only.
 		if(!_recording) return 0;
-		_lastRead = last;
 		// _logIndex: data in buffer
 		// _savedLength: data in file. However, all data are "writen" to file at the first place.
 		//               Though, some data might remain in write buffer.
@@ -609,60 +609,67 @@ BrewLogger::BrewLogger(void){
 		return ( _logIndex+_savedLength - last);
 	}
 
-	size_t BrewLogger::read(uint8_t *buffer, size_t maxLen, size_t index)
-	
+	size_t BrewLogger::read(uint8_t *buffer, size_t maxLen, size_t index)	
 	{
-		size_t sizeRead;
-		// index is start of "this" read. _lastRead is the starting of request
-		// rindex is the real index of the whole log
-		size_t rindex= index + _lastRead;
+		size_t sizeRead ;
 
-		DBG_PRINTF("read index:%u, max:%u, _lastRead =%u, rindex=%u\n",index,maxLen,_lastRead,rindex);
+		DBG_PRINTF("read index:%u, max:%u\n",index,maxLen);
 
 		// the reqeust data index is more than what we have.
-		if(rindex > (_savedLength +_logIndex)) return maxLen; // return whatever it wants.
+		if(index > (_savedLength +_logIndex)) return 0; // return whatever it wants.
     
 		// the staring data is not in buffer
-		if( rindex < _savedLength){
-			sizeRead = _savedLength +_logIndex - rindex;
-			if(sizeRead > maxLen) sizeRead=maxLen;
+		if( index < _savedLength){
+			size_t totalAvail = _savedLength +_logIndex - index;
 
-			#if WriteOnBufferFull
-			size_t sizeReadFromFile = _savedLength - rindex;
+			size_t size2Read  = (totalAvail > maxLen)? maxLen:totalAvail;
+
+			size_t sizeAavailFromFile =_savedLength - index;
+
+			size_t sizeReadFromFile = (size2Read > sizeAavailFromFile)? sizeAavailFromFile:size2Read;
+
+			_logFile.seek(index,SeekSet);
+
+			#if ReadFileByPortion
+			sizeRead=0;
+			size_t left = sizeReadFromFile;
+			size_t toRead;
+			do{
+				toRead = (left > MaximumFileRead)? MaximumFileRead:left;
+				sizeRead += _logFile.read(buffer+sizeRead,toRead);
+				left -= toRead;
+			}while(left>0);
+
 			#else
-			size_t sizeReadFromFile = sizeRead;
+			sizeRead=_logFile.read(buffer,sizeReadFromFile);
 			#endif
 
-			_logFile.seek(rindex,SeekSet);
-
-			size_t dataRead=_logFile.read(buffer,sizeReadFromFile);
-
-			if(dataRead != sizeReadFromFile){
-				DBG_PRINTF("!!!Error: file read:%u of %u, file size:%u\n",dataRead,maxLen,_logFile.size());
+			if(sizeRead != sizeReadFromFile){
+				DBG_PRINTF("!!!Error: file read:%u of %u, file size:%u\n",sizeRead,maxLen,_logFile.size());
 			}
 
-			if(dataRead < maxLen){
-				size_t insufficient = maxLen - dataRead;
+			if(sizeRead < size2Read){
+				size_t insufficient = size2Read - sizeRead;
                 if(insufficient > _logIndex){
                     size_t fillsize=insufficient - _logIndex;
-                    memset(buffer + dataRead,FillTag,fillsize);
-                    dataRead += fillsize;
+                    memset(buffer + sizeRead,FillTag,fillsize);
+                    sizeRead += fillsize;
                     insufficient = _logIndex;
     				DBG_PRINTF("!!!Error: fill blank:%u\n",fillsize);
                 }
-                memcpy(buffer+ dataRead,_logBuffer,insufficient);
-				dataRead += insufficient;
+                memcpy(buffer+ sizeRead,_logBuffer,insufficient);
+				sizeRead += insufficient;
 			}
-			DBG_PRINTF("read file:%u\n",dataRead);
+			DBG_PRINTF("read file:%u, total:%u\n",sizeReadFromFile,sizeRead);
 
 		}else{
 			//DBG_PRINTF("read from buffer\n");
 			// read from buffer
-			rindex -=  _savedLength;
-			// rindex should be smaller than _logIndex
-			sizeRead = _logIndex - rindex;
+			size_t mIndex = index - _savedLength;
+			// index should be smaller than _logIndex
+			sizeRead = _logIndex - mIndex;
 			if(sizeRead > maxLen) sizeRead=maxLen;
-			memcpy(buffer,_logBuffer+rindex,sizeRead);
+			memcpy(buffer,_logBuffer+mIndex,sizeRead);
 			DBG_PRINTF("read buffer:%u\n",sizeRead);
 		}
 		
@@ -1061,14 +1068,14 @@ BrewLogger::BrewLogger(void){
 		if((_logIndex+size) > LogBufferSize){
 			DBG_PRINTF("buffer full, %d + %d >= %d! saved=%d\n",_logIndex,size,LogBufferSize,_savedLength);
 
-			#if WriteOnBufferFull
-			size_t wlen=_logFile.write((const uint8_t*)_logBuffer,_logIndex);
-			DBG_PRINTF("Log writen  %d\n",wlen);
+			if(_writeOnBufferFull){
+				size_t wlen=_logFile.write((const uint8_t*)_logBuffer,_logIndex);
+				DBG_PRINTF("Log writen  %d\n",wlen);
 
-			if(wlen != _logIndex){
-				DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
+				if(wlen != _logIndex){
+					DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
+				}
 			}
-			#endif
 
 			_savedLength += _logIndex;
 			_logIndex =0;
@@ -1104,35 +1111,20 @@ BrewLogger::BrewLogger(void){
 				_logIndex -= LogBufferSize;
 			return;
 		}
-		#if ! WriteOnBufferFull
-		char *buf = _logBuffer + idx;
+		if(!_writeOnBufferFull){
+			char *buf = _logBuffer + idx;
 
-
-		int wlen;
-		if(idx + len <= LogBufferSize){
-			// continues block
-			wlen=_logFile.write((const uint8_t*)buf,len);
-		}else{
-			wlen=_logFile.write((const uint8_t*)buf,LogBufferSize - idx);
-			buf = _logBuffer;
-			int nlen = len  + idx -LogBufferSize;
-			wlen += _logFile.write((const uint8_t*)buf,nlen);
+			int wlen;
+			if(idx + len <= LogBufferSize){
+				// continues block
+				wlen=_logFile.write((const uint8_t*)buf,len);
+			}else{
+				wlen=_logFile.write((const uint8_t*)buf,LogBufferSize - idx);
+				buf = _logBuffer;
+				int nlen = len  + idx -LogBufferSize;
+				wlen += _logFile.write((const uint8_t*)buf,nlen);
+			}
 		}
-		#endif
-		/*
-		if(len !=(wlen=_logFile.write((const uint8_t*)buf,len))){
-
-			DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
-			_logFile.close();
-			char buff[36];
-			sprintf(buff,"%s/%s",LOG_PATH,_pFileInfo->logname);
-
-			_logFile=FileSystem.open(buff,"a+");
-			_logFile.write((const uint8_t*)buf+wlen,len-wlen);
-		}*/
-
-		//frequent writing is not good for flash.
-		//_logFile.flush();
 		
 	}
 
@@ -1251,6 +1243,7 @@ BrewLogger::BrewLogger(void){
 	void BrewLogger::_loadIdxFile(void)
 	{
         _pFileInfo = theSettings.logFileIndexes();
+		_writeOnBufferFull = _pFileInfo->writeOnBufferFull;
 	}
 
 	void BrewLogger::_saveIdxFile(void)

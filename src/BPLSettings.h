@@ -145,7 +145,8 @@ typedef struct _FileIndexes
 	FileIndexEntry files[MAX_LOG_FILE_NUMBER];
 	char logname[MaximumLogFileName];
 	unsigned long starttime;
-    uint8_t _padding[8];
+    uint8_t writeOnBufferFull;
+    uint8_t _padding[7];
 } FileIndexes;
 
 //*****************************************************

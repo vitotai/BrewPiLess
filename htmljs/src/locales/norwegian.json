@@ -221,6 +221,7 @@
     "log_new_log_name": "Nytt loggnavn:",
     "log_start_logging": "Start logging",
     "log_options": "Alternativer:",
+    "log_write_on_buffer_full":"Write on Buffer Full",
     "log_calibrate_ispindel": "Kalibrer iSpindel",
     "log_tilt_in_water": "Tiltverdi i vann",
     "log_hydrometer_reading": "Hydrometerlesning:",

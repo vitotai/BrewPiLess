@@ -630,3 +630,11 @@
 #else
 #define FileSystem SPIFFS
 #endif
+
+
+#if ESP32
+// when read logs, ESP32, or AsyncTCP to be exact, would request 5623 bytes
+// it seems stressful to SPIFFS. Using this option to read file in a small 
+// portion, 1480. 
+#define ReadFileByPortion true
+#endif

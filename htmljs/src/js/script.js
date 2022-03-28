@@ -9,6 +9,10 @@
     var BChart = {
         offset: 0,
         url: 'chart.php',
+        calibrating:function(){
+            if(typeof this.chart =="undefined") return false;
+            return this.chart.calibrating;
+        },
         toggle: function(line) {
             this.chart.toggleLine(line);
         },
@@ -720,7 +724,7 @@ function parseStateSince(line) {
             if (Q("#gravity-device-last")) Q("#gravity-device-last").innerHTML = lu.shortLocalizedString();
         }
         // gravity
-        if(info.g > -1) updateGravity(window.plato? BrewMath.sg2pla(info.g/1000.0):info.g/1000.0);
+        if(!BChart.calibrating && info.g > 0) updateGravity(window.plato? BrewMath.sg2pla(info.g/1000.0):info.g/1000.0);
         if(info.t > -20000) Q("#gravity-device-temp").innerHTML= info.t/100 + "&deg;" + window.tempUnit;
     }
 

@@ -683,9 +683,10 @@ public:
 						theSettings.save();
 						PressureMonitor.configChanged();
 						request->send(200,"application/json","{}");
-					}else
+					}else{
 						DBG_PRINTF("invalid Json\n");
 						request->send(402);
+					}
 				}else{
 					DBG_PRINTF("no data\n");
 					request->send(401);
@@ -1174,8 +1175,13 @@ public:
 					tiltwater=request->getParam("tw")->value().toFloat();
 					hydroreading=request->getParam("hr")->value().toFloat();
 				}
+				bool wobf=false;
+				
+				if(request->hasParam("wobf")){
+					wobf = ( 0!= request->getParam("tw")->value().toInt());
+				}
 
-				if(brewLogger.startSession(filename.c_str(),cal)){
+				if(brewLogger.startSession(filename.c_str(),cal,wobf)){
 					if(cal){
 						brewLogger.addTiltInWater(tiltwater,hydroreading);
 						externalData.setCalibrating(true);
@@ -1246,11 +1252,10 @@ public:
 				// client in volatile Logging mode. force to reload
 				offset=0;
 			}
-
 			size_t size=brewLogger.beginCopyAfter(offset);
 			if(size >0){
-				request->send("application/octet-stream", size, [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-					return brewLogger.read(buffer, maxLen,index);
+				request->send("application/octet-stream", size, [=](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+					return brewLogger.read(buffer, maxLen,index+offset);
 				});
 			}else{
 				request->send(204);

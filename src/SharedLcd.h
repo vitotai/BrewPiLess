@@ -13,6 +13,10 @@
 #include "IicLcd.h"
 #endif
 
+#define ShareModeRotate 0
+#define ShareModeBrewPi 1
+#define ShareModeAdditional 2
+
 #if BREWPI_OLED128x64_LCD
 #include "IicOledLcd.h"
 #endif
@@ -70,7 +74,6 @@ public:
     void next();
     void previous();
     void forcePrimary(bool primary);
-    void setRotateMode(bool rotate){ _isRotateMode = rotate;}
     
     void setDisplayMode(uint8_t mode);
 
@@ -92,7 +95,8 @@ protected:
       PhysicalLcdDriver _lcd;
       uint32_t _switchTime;
       bool _isForcedPrimary;
-      bool _isRotateMode;
+      bool _isChangingMode;
+      uint8_t _mode;
 
       void _switch(SharedLcdDisplay* newDisplay);
 };
@@ -159,7 +163,7 @@ public:
     void redraw();
 
     
-    void gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlate);
+    void gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlate,float battery);
     void pressureData(float pressure);
     void humidityData(bool chamberValid,uint8_t chamber,bool roomValid, uint8_t room);
     void setIp(IPAddress ip);
@@ -172,6 +176,7 @@ protected:
     bool    _plato;
     float   _gravity;
     float   _temperature;
+    float _battery;
     uint32_t _updateTime;
 
     bool _chamberHumidityAvailable;
@@ -193,7 +198,7 @@ protected:
     void _printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t precision,float value);
     void _printGravityTimeAt(uint8_t col,uint8_t row);
     void _printHumidityValueAt(uint8_t col,uint8_t row,uint8_t value);
-
+    void _printBatteryAt(uint8_t col,uint8_t row);
     bool _updatePartial(uint8_t mask);
 };
 

@@ -63,7 +63,7 @@ _lcd()
 {
     _head=_current=NULL;
     _isForcedPrimary = false;
-    _isRotateMode =false;
+    _isChangingMode =false;
 }
 void SharedDisplayManager::add(SharedLcdDisplay* display,bool isPrimary){
     display->setManager(this);
@@ -120,18 +120,11 @@ void SharedDisplayManager::setPrimary(SharedLcdDisplay* display){
     _current->setHidden(false);
     _current->onShow();
 }
-
 void SharedDisplayManager::setDisplayMode(uint8_t mode){
-    if(mode == 0 ){
-        _isRotateMode = true;
-    }else{
-        _isRotateMode = false;
-        uint8_t count= mode -1;
-        SharedLcdDisplay* display= _head;
-        while( count-- > 0) display = display->_next;
-        _switch(display);
-    }
+    _mode = mode;
+    if(mode != ShareModeRotate) _isChangingMode = true;
 }
+
 
 void SharedDisplayManager::next(){
     if(_current != NULL){
@@ -175,14 +168,23 @@ void SharedDisplayManager::_switch(SharedLcdDisplay* newDisplay){
 }
 
 void SharedDisplayManager::loop(){
-    if(_isForcedPrimary || !_isRotateMode ) return;
+    if(_isChangingMode){
+        _isChangingMode = false;
+        uint8_t count= _mode -1;
+        SharedLcdDisplay* display= _head;
+        while( count-- > 0) display = display->_next;
+        _switch(display);
+        DBG_PRINTF("*LCD changes to %d\n", _mode);
+        return;
+    }
+    if(_isForcedPrimary || _mode != ShareModeRotate ) return;
     if(millis() -_switchTime > SWITCH_TIME) next();
 }
 
 #if DebugSharedDisplay
 void SharedDisplayManager::debug(String& info){
     info = String("Pm:") + String(_isForcedPrimary) 
-    + String(", RM:") +String(_isRotateMode)
+    + String(", mode:") +String(_mode)
     + String(", ST:") + String(_switchTime)
     + String(", H:") + String(_head->_hidden)
     + String(", S:") + String(_head->_next->_hidden)
@@ -341,7 +343,8 @@ layout 1, gravity only  Gravity: L0,1,2
 01234567890123456789
 Gravity        1.045
 Temperature  012.5°C
-Update           99m
+Updated          99m
+ 4.32 V
 
 layout 2: P
 01234567890123456789
@@ -352,7 +355,7 @@ Pressure     13.5psi
 Layout 3:G,P   Gravity: L0, L1, Pressure: L2 
 01234567890123456789
 G 1.012      012.5°C 
-  updated    10m ago
+  Updated    10m ago
 Pressure    13.5 psi              
 
 layout 4: Humidity
@@ -375,9 +378,11 @@ Pressure     13.5psi
 Layout 7: G,P,H；  Gravity: L0,  hmiity L1, pressrure, L2
 01234567890123456789
 G 1.012 012.5°C 010m
+
 RH C 56%      R  75%  => 
 Humidity Chamber 56% => 
 Humidity Room    99%
+
 Pressure    13.5 psi
 */
 void SmartDisplay::_drawFixedPart(){
@@ -391,7 +396,8 @@ void SmartDisplay::_drawFixedPart(){
 01234567890123456789
 Gravity        1.045
 Temp.        012.5°C
-Update       99m ago
+Updated      99m ago
+ 4.23 V
 */
         case GravityMask: //1:
             lcd->setCursor(0,0);
@@ -406,8 +412,10 @@ Update       99m ago
             lcd->setCursor(18,1);
             lcd->write(DegreeSymbolChar);
             lcd->write(_tempUnit);
-            lcd->setCursor(0,2);
-            lcd->print_P(STR_Updated);
+            //lcd->setCursor(0,2);
+            //lcd->print_P(STR_Updated);
+            lcd->setCursor(6,2);
+            lcd->write('V');
             lcd->setCursor(17,2);
             lcd->print_P(STR_ago);
             break;
@@ -425,6 +433,7 @@ Pressure    13.5 psi
 01234567890123456789
 G 1.012      012.5°C 
   updated    10m ago
+  4.32 V
 Pressure    13.5 psi              
 5
 G 1.012      012.5°C 
@@ -449,8 +458,10 @@ RH C 56%      R  75%
             }
 
 
-            lcd->setCursor(2,1);
-            lcd->print_P(STR_Updated);
+            //lcd->setCursor(2,1);
+            //lcd->print_P(STR_Updated);
+            lcd->setCursor(7,1);
+            lcd->write('V');
             lcd->setCursor(17,1);
             lcd->print_P(STR_ago);
             break;
@@ -483,6 +494,7 @@ Pressure     13.5psi
 /*
 01234567890123456789
 G 1.012  012.5°C 10m
+          4.32V
 RH  C 56%     R  75%  => Humidity Chamber 56% => Humidity Room 99%
 Pressure    13.5 psi
 */
@@ -491,6 +503,15 @@ Pressure    13.5 psi
             lcd->write('G');
             pressureLine = 3;
             singleLinedHumidity = 2;
+            if(_battery ==0){
+                lcd->setCursor(14,0);
+                lcd->write(DegreeSymbolChar);
+                lcd->write(_tempUnit);
+            }else{
+                lcd->setCursor(14,0);
+                lcd->write('V');
+            }
+
             if(_plato){
                 lcd->setCursor(6,0);
                 lcd->write(DegreeSymbolChar);
@@ -538,12 +559,14 @@ Gravity       15.6 P
 Gravity        1.045
 Temperature  012.5°C
 Updated      99m ago
+ 4.32 V
 */
         case GravityMask: //1:
             if(_plato) _printFloatAt(14,0,4,1,_gravity);
             else _printFloatAt(15,0,5,3,_gravity);
             _printFloatAt(13,1,5,1,_temperature);
             _printGravityTimeAt(13,2);
+            _printBatteryAt(1,2);
             break;
 /*
 3
@@ -564,18 +587,22 @@ RH C 56%      R  75%
             else _printFloatAt(2,0,5,3,_gravity);
             _printFloatAt(13,0,5,1,_temperature);
             _printGravityTimeAt(13,1);
+            _printBatteryAt(1,1);
             break;
 
 /*
 01234567890123456789
 G 1.012  012.5°C 10m
+G 1.012   4.32V  10m
 RH C 56%      R  75%  => Humidity Chamber 56% => Humidity Room 99%
 Pressure    13.5 psi
 */
         case (HumidityMask | PressureMask | GravityMask)://7:
             if(_plato) _printFloatAt(2,0,4,1,_gravity);
             else _printFloatAt(2,0,5,3,_gravity);
-            _printFloatAt(9,0,5,1,_temperature);
+            // ignore temperature if _battery is valid(not zero)
+            if(_battery ==0.0) _printFloatAt(9,0,5,1,_temperature);
+            else _printBatteryAt(10,0);
             _printGravityTimeAt(17,1);
             break;
 
@@ -736,6 +763,21 @@ void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t p
         lcd->write(buffer[i]);
 }
 
+void SmartDisplay::_printBatteryAt(uint8_t col,uint8_t row){
+    
+    PhysicalLcdDriver *lcd=getLcd();
+    lcd->setCursor(col,row);
+    int fraction = (int) (_battery * 100.0 + 0.5);
+    int ipart = fraction / 100;
+    fraction -= ipart * 100;
+
+    lcd->write('0' + ipart);
+    lcd->write('.');
+    lcd->write('0' + fraction/10);
+    lcd->write('0' + fraction%10);
+
+}
+
 void SmartDisplay::_printGravityTimeAt(uint8_t col,uint8_t row){
 
     PhysicalLcdDriver *lcd=getLcd();
@@ -796,12 +838,13 @@ bool SmartDisplay::_updatePartial(uint8_t mask){
     }
 }
 
-void SmartDisplay::gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlato){
+void SmartDisplay::gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlato,float battery){
     _gravity = gravity;
     _temperature = temperature;
     _updateTime = update;
     _tempUnit = tunit;
     _plato = usePlato;
+    _battery = battery;
     _gravityInfoValid = true;
     _gravityInfoLastPrinted =0; // forced to update
    // if(_updatePartial(GravityMask)) _drawGravity();

@@ -222,6 +222,7 @@
     "log_new_log_name": "新記錄檔名:",
     "log_start_logging": "開始記錄",
     "log_options": "選項:",
+    "log_write_on_buffer_full":"Write on Buffer Full",
     "log_calibrate_ispindel": "校正iSpindel",
     "log_tilt_in_water": "在水中的Tilt值",
     "log_hydrometer_reading": "比重計讀數:",
