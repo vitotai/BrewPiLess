@@ -1178,7 +1178,7 @@ public:
 				bool wobf=false;
 				
 				if(request->hasParam("wobf")){
-					wobf = ( 0!= request->getParam("tw")->value().toInt());
+					wobf = ( 0!= request->getParam("wobf")->value().toInt());
 				}
 
 				if(brewLogger.startSession(filename.c_str(),cal,wobf)){
@@ -1961,20 +1961,15 @@ void setup(void){
 #if ResponseAppleCNA == true
 	webServer->addHandler(&appleCNAHandler);
 #endif
+	externalDataHandler.loadConfig();
 
 	ws.onEvent(onWsEvent);
 	webServer->addHandler(&ws);
-
-
-
+	webServer->addHandler(&logHandler);
+	webServer->addHandler(&externalDataHandler);
+	webServer->addHandler(&networkConfig);
 	webServer->addHandler(&brewPiWebHandler);
 
-	webServer->addHandler(&logHandler);
-
-	externalDataHandler.loadConfig();
-	webServer->addHandler(&externalDataHandler);
-
-	webServer->addHandler(&networkConfig);
 	//3.1.2 file system is part of the serving pages
 	//server.serveStatic("/", file system, "/","public, max-age=259200"); // 3 days
 
