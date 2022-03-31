@@ -397,7 +397,7 @@ void SmartDisplay::_drawFixedPart(){
 Gravity        1.045
 Temp.        012.5°C
 Updated      99m ago
- 4.23 V
+   4.23V
 */
         case GravityMask: //1:
             lcd->setCursor(0,0);
@@ -433,7 +433,7 @@ Pressure    13.5 psi
 01234567890123456789
 G 1.012      012.5°C 
   updated    10m ago
-  4.32 V
+  4.32V
 Pressure    13.5 psi              
 5
 G 1.012      012.5°C 
@@ -460,7 +460,7 @@ RH C 56%      R  75%
 
             //lcd->setCursor(2,1);
             //lcd->print_P(STR_Updated);
-            lcd->setCursor(7,1);
+            lcd->setCursor(6,1);
             lcd->write('V');
             lcd->setCursor(17,1);
             lcd->print_P(STR_ago);
@@ -559,14 +559,14 @@ Gravity       15.6 P
 Gravity        1.045
 Temperature  012.5°C
 Updated      99m ago
- 4.32 V
+  4.32V
 */
         case GravityMask: //1:
             if(_plato) _printFloatAt(14,0,4,1,_gravity);
             else _printFloatAt(15,0,5,3,_gravity);
             _printFloatAt(13,1,5,1,_temperature);
             _printGravityTimeAt(13,2);
-            _printBatteryAt(1,2);
+            _printBatteryAt(2,2);
             break;
 /*
 3
@@ -574,6 +574,7 @@ Updated      99m ago
 G 15.6 P
 G 1.012      012.5°C 
   updated    10m ago
+  4.32V
 Pressure    13.5 psi              
 5
 G 1.012      012.5°C 
@@ -587,7 +588,7 @@ RH C 56%      R  75%
             else _printFloatAt(2,0,5,3,_gravity);
             _printFloatAt(13,0,5,1,_temperature);
             _printGravityTimeAt(13,1);
-            _printBatteryAt(1,1);
+            _printBatteryAt(2,1);
             break;
 
 /*
