@@ -843,7 +843,8 @@ var  CHART_VERSION = 6;
                     var ll = data[i++];
                     var v = (hh & 0x7F) * 256 + ll;
                     t.specificGravity = t.plato ? v / 100 : v / 10000;
-                    sgPoint = true;
+                    // setting sgPoint is useless in this version, because the data isnot yet push into array
+                    //sgPoint = true;
                 } else if (d0 == 0xFA) { //Ignored mask
                     var b2 = data[i++];
                     var b3 = data[i++];
@@ -862,7 +863,8 @@ var  CHART_VERSION = 6;
                     var d = new Date(this.ctime * 1000);
                     //t.incTime(); // add one time interval
                     t.dataset = [d];
-                    t.processRecord();
+                    if(t.processRecord() && t.calibrating) sgPoint=true;
+                    
                 } else if (d0 < 128) { // temp. or gravity
                     var tp = d0 * 256 + d1;
                     if (t.lidx == GravityAndTiltIndex) {
@@ -890,7 +892,7 @@ var  CHART_VERSION = 6;
                             t.dataset.push(tp);
                             t.laststat[t.lidx] = tp;
                             t.lidx++;
-                            t.processRecord();
+                            if(t.processRecord() && t.calibrating) sgPoint=true;
                         } else {
                             console.log("Error: missing tag.");
                         }
@@ -968,7 +970,6 @@ var  CHART_VERSION = 6;
             // fill blank/unchanged fileds by checking the change mask(t.chnages)
             while ((((1 << t.lidx) & t.changes) == 0) && t.lidx < t.numData) {
                 // gravity data is independant, use "null" to connect the line. (NaN) to disconnect.
-
                 t.dataset.push((t.lidx > RoomTemperatureIndex && t.lidx != PSIDataIndex) ? null : t.laststat[t.lidx]);
                 t.lidx++;
             }
@@ -986,21 +987,27 @@ var  CHART_VERSION = 6;
                 var gravityTilt = t.dataset[GravityLine];
                 if(! t.calibrating){
                     if(gravityTilt != null) sg = gravityTilt;
-                }else if (!t.calculateSG && t.specificGravity != null) {
-                    // calibrating, but not having formula
-                    // if "gravity" data is available and currently not "calculating"(first run or not calibrating)
-                    sg = t.specificGravity;
-                } else if (t.calculateSG) {
-                    // must be in calibrating mode
-                    // data field #8 is tilt in source data
-                    if (minuteRecord[GravityLine] != null){
-                        var temp = (this.celius) ? C2F(t.dataset[AuxTempLine]) : t.dataset[AuxTempLine];
-                        sg = t.sgByTilt(t.dataset[GravityLine]);
+                }else{ 
+                    // calibrating
+                    if (!t.calculateSG) {
+                        // calibrating, but not having formula
+                        // if "gravity" data is available and currently not "calculating"(first run or not calibrating)
+                        //sg = t.specificGravity;
+                        // it's tilt data */
+                        minuteRecord[GravityLine] = null;
+                    } else {
+                        //if (t.calculateSG) 
+                        // must be in calibrating mode
+                        // data field #8 is tilt in source data
+                        if (minuteRecord[GravityLine] != null){
+                            var temp = (this.celius) ? C2F(t.dataset[AuxTempLine]) : t.dataset[AuxTempLine];
+                            sg = t.sgByTilt(t.dataset[GravityLine]);
 
-                        if (t.plato) {
-                            sg = BrewMath.sg2pla(BrewMath.tempCorrectionF(BrewMath.pla2sg(sg), temp, C2F(t.coTemp)));
+                            if (t.plato) {
+                                sg = BrewMath.sg2pla(BrewMath.tempCorrectionF(BrewMath.pla2sg(sg), temp, C2F(t.coTemp)));
+                            }
+                            minuteRecord[GravityLine] = sg;
                         }
-                        minuteRecord[GravityLine] = sg;
                     }
                 }
                 if (!isNaN(sg)) {
@@ -1029,10 +1036,11 @@ var  CHART_VERSION = 6;
                 
                 t.data.push(minuteRecord);
                 t.state.push(t.cstate);
- 
+                var ret=false;
                 if(t.calibrating){
                     t.angles.push(gravityTilt);
                     t.rawSG.push(t.specificGravity);
+                    if(t.specificGravity != null) ret =true;
                     t.specificGravity = null;
                 }
                 // humidity
@@ -1043,6 +1051,7 @@ var  CHART_VERSION = 6;
                 
 
                 t.incTime(); // add one time interval
+                return ret;
             }
         };
 
