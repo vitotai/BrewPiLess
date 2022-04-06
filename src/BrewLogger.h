@@ -19,7 +19,7 @@
 
 #define LOG_PATH "/log"
 
-#define LogBufferSize 1024
+#define LogBufferSize 128 //1024
 
 // Log tags
 

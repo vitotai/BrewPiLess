@@ -253,6 +253,11 @@ static void handleFileList(void) {
   // avoid recursive call, which might open too many directories 
   #if ESP32
   File dir = FileSystem.open(path);
+  int exlen =path.length();
+  
+  if(path.charAt(exlen - 1) != '/') exlen ++;
+
+  DBG_PRINTF("length: %d",exlen);
   #else
   Dir dir = FileSystem.openDir(path);
   #endif
@@ -270,15 +275,22 @@ static void handleFileList(void) {
   #endif
     if (output != "[") output += ',';
     #if UseLittleFS
-    bool isDir = dir.isDirectory();
+    bool isDir = entry.isDirectory();
     #else
     bool isDir = false;
     #endif
+
+    DBG_PRINTF(" %s [%s]\n ", entry.name(),isDir? "DIR":"FILE");
+
     output += "{\"type\":\"";
-    output += (isDir)?"dir":"file";
+    output += (isDir)? "dir":"file";
     output += "\",\"name\":\"";
     #if UseLittleFS
+    #if ESP32
+    output += String(entry.name()).substring(exlen);
+    #else
     output += entry.name();
+    #endif
     #else
     output += String(entry.name()).substring(1);
     #endif
@@ -291,6 +303,7 @@ static void handleFileList(void) {
   }
 
   output += "]";
+  DBG_PRINTF(" ret: %s \n",output.c_str());
   server.send(200, "text/json", output);
 }
 
@@ -306,7 +319,6 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
   server.on("/list", HTTP_GET, handleFileList);
   //load editor
   server.on(FILE_MANAGEMENT_PATH, HTTP_GET, [](){
-//    if(!handleFileRead("/edit.htm")) server.send(404, "text/plain", "FileNotFound");
 	  server.sendHeader("Content-Encoding", "gzip");
 	   server.send_P(200,"text/html",edit_htm_gz,edit_htm_gz_len);
   });

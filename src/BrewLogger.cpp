@@ -12,6 +12,7 @@
 #define LoggingPeriod 60000  //in ms
 #define MinimumGapToSync  600  // in seconds
 
+#define FORCE_CLOSE_ON_WRITE true
 
 BrewLogger brewLogger;
 
@@ -131,11 +132,18 @@ BrewLogger::BrewLogger(void){
 	{
     	_resumeLastLogTime = _pFileInfo->starttime;
 
-		char filename[36];
+		char filename[128];
 		sprintf(filename,"%s/%s",LOG_PATH,_pFileInfo->logname);
+		// debug
+		if(FileSystem.exists(filename)){
+			DBG_PRINTF("%s exists\n",filename);
+		}else{
+			DBG_PRINTF("%s doesnot exists\n",filename);
+		}
+
 #if ESP32
 	#if UseLittleFS
-		_logFile=FileSystem.open(filename,"a+");
+		_logFile=FileSystem.open(filename,"r");
 	#else
 		// weird behavior of ESP32
 		_logFile=FileSystem.open(filename,"r");
@@ -144,18 +152,11 @@ BrewLogger::BrewLogger(void){
 		_logFile=FileSystem.open(filename,"a+");
 #endif
 		if(! _logFile){
-            DBG_PRINTF("resume failed\n");
+            DBG_PRINTF("!!!! fail to open, resume failed\n");
             return false;
 		}
-		size_t fsize= _logFile.size(); 	
-		DBG_PRINTF("resume file:%s size:%d\n",filename,fsize);
+		DBG_PRINTF("resume file:%s size:%d\n",filename, _logFile.size());
 
-/*		if(fsize < 8){
-            DBG_PRINTF("resume failed\n");
-			_logFile.close();
-			return false;
-		}
-*/
 		int dataRead;
 		size_t offset=0;
 		int    processIndex=0;
@@ -273,11 +274,8 @@ BrewLogger::BrewLogger(void){
 		if(processIndex !=dataRead) {
 			DBG_PRINTF("Incomplete record:%d\n",dataRead-processIndex);
 		}
-		// seek for SeekEnd might has a bug. use 
-		//_logFile.seek(dataAvail,SeekEnd);
-		//_logFile.seek(fsize,SeekSet);
 		_logIndex =0;
-		_savedLength = fsize;
+		_savedLength =  _logFile.size();
 		DBG_PRINTF("resume, total _savedLength:%d, _logIndex:%d\n",_savedLength,_logIndex);
 
 		_lastTempLog=0;
@@ -309,12 +307,17 @@ BrewLogger::BrewLogger(void){
 			return false;
 		}
 		strcpy(_pFileInfo->logname,filename);
-		char buff[36];
+		char buff[128];
 		sprintf(buff,"%s/%s",LOG_PATH,filename);
 		#if ESP32
 		#if UseLittleFS
 		if(!FileSystem.exists(LOG_PATH)){
-			FileSystem.mkdir(LOG_PATH);
+			if(FileSystem.mkdir(LOG_PATH)){
+				DBG_PRINTF("*%s Created",LOG_PATH);
+			}else{
+				DBG_PRINTF("***%s failed to creat",LOG_PATH);
+				return false;
+			}
 		}
 		_logFile=FileSystem.open(buff,"a+");
 		#else
@@ -326,7 +329,7 @@ BrewLogger::BrewLogger(void){
 		#endif
 
 		if(!_logFile){
-			DBG_PRINTF("Error open temp file\n");
+			DBG_PRINTF("***Error open temp file\n");
 			return false;
 		}
 
@@ -1083,6 +1086,18 @@ BrewLogger::BrewLogger(void){
 				#if ESP32
 				#if UseLittleFs
 				_logFile.flush();
+
+				#if FORCE_CLOSE_ON_WRITE
+				//for LITTLEFS, close seems tom be necessary to 'save' the file
+				_logFile.close();
+				char filename[128];
+				sprintf(filename,"%s/%s",LOG_PATH,_pFileInfo->logname);
+				_logFile=FileSystem.open(filename,"a");
+				if(! _logFile){
+					DBG_PRINTF("!!!write failed to reopen\n");
+				}
+				#endif
+
 				#endif
 				#endif
 			}
