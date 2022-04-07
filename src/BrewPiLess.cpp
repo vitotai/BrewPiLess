@@ -315,6 +315,25 @@ class BrewPiWebHandler: public AsyncWebHandler
         } else
           request->send(404);
     }
+	#if UseLittleFS
+	void createDirectoryIfNeeded(String path){
+		const char delimitor='/';
+		String rpath=String();
+
+		int from =(path.charAt(0) == delimitor)? 1:0;
+
+		int found;
+		while( (found = path.indexOf(delimitor, from)) >=0){
+			String dir = path.substring(from,found);			
+			rpath = rpath + String(delimitor) + dir;
+			if(! FileSystem.exists(rpath)){
+				DBG_PRINTF("Directory not exists, create %s\n",rpath.c_str());
+				FileSystem.mkdir(rpath);
+			}
+			from = found +1;
+		}
+	}
+	#endif
 
 	void handleFilePuts(AsyncWebServerRequest *request){
 		if(request->hasParam("path", true)
@@ -323,6 +342,9 @@ class BrewPiWebHandler: public AsyncWebHandler
         	ESP.wdtDisable();
 			#endif
     		String file=request->getParam("path", true)->value();
+			#if UseLittleFS
+			createDirectoryIfNeeded(file);
+			#endif
     		File fh= FileSystem.open(file, "w");
     		if(!fh){
     			request->send(500);
