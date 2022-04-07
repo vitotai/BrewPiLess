@@ -12,7 +12,6 @@
 #define LoggingPeriod 60000  //in ms
 #define MinimumGapToSync  600  // in seconds
 
-#define FORCE_CLOSE_ON_WRITE true
 
 BrewLogger brewLogger;
 
@@ -386,7 +385,7 @@ BrewLogger::BrewLogger(void){
 					DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
 				}
 				#if ESP32
-				#if UseLittleFs
+				#if UseLittleFS
 				_logFile.flush();
 				#endif
 				#endif
@@ -1084,21 +1083,10 @@ BrewLogger::BrewLogger(void){
 					DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
 				}
 				#if ESP32
-				#if UseLittleFs
+				#if UseLittleFS
 				_logFile.flush();
-
-				#if FORCE_CLOSE_ON_WRITE
-				//for LITTLEFS, close seems tom be necessary to 'save' the file
-				_logFile.close();
-				char filename[128];
-				sprintf(filename,"%s/%s",LOG_PATH,_pFileInfo->logname);
-				_logFile=FileSystem.open(filename,"a");
-				if(! _logFile){
-					DBG_PRINTF("!!!write failed to reopen\n");
-				}
 				#endif
 
-				#endif
 				#endif
 			}
 
@@ -1150,7 +1138,7 @@ BrewLogger::BrewLogger(void){
 				wlen += _logFile.write((const uint8_t*)buf,nlen);
 			}
 			#if ESP32
-			#if UseLittleFs
+			#if UseLittleFS
 			_logFile.flush();
 			#endif
 			#endif
