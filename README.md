@@ -50,6 +50,7 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
     * experimental Humidity control
     * Rotating LCD for extra information, like iSpiondel information, Humidity, and pressure.
     * New 'Write on buffer full' option for logging to reduce flash writing.
+    * Backup/restore settings
 
  * 4.1
     * "Real" generic HTTP logging.

@@ -1404,6 +1404,7 @@ public:
 			}else{
 				request->send(400);
 			}
+			return;
 		}//else{
 			// get
 		if(request->hasParam("data")){
