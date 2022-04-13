@@ -150,6 +150,7 @@ void SharedDisplayManager::loop(){
     }
     if(_isForcedPrimary || _mode != ShareModeRotate ) return;
     if(millis() -_switchTime > SWITCH_TIME) next();
+    _current->loop();
 }
 
 #if DebugSharedDisplay
@@ -171,8 +172,10 @@ void SharedDisplayManager::refresh(){
 //    _current->redraw();
 }
 #endif
+
 //*****************************************************************
 //BrewPiLcd
+//*****************************************************************
 
 
 BrewPiLcd::BrewPiLcd():SharedLcdDisplay(){
@@ -189,6 +192,9 @@ void BrewPiLcd::redraw(){
 //        DBG_PRINTF(content[i]);
 //        DBG_PRINTF("\n");
     }
+    #if STATUS_LINE
+    _printTime(TimeKeeper.getLocalTimeSeconds());
+    #endif
     // recover cursor location
     lcd->setCursor(_currpos,_currline);
 }
@@ -249,12 +255,6 @@ void BrewPiLcd::getLine(uint8_t lineNumber, char * buffer){
     buffer[_cols] = '\0'; // NULL terminate string
 }
 
-#ifdef STATUS_LINE
-void BrewPiLcd::printStatus(char* str){
-    if(! _hidden) getLcd()->printStatus(str);
-}
-#endif
-
 // pass through. 
 void BrewPiLcd::resetBacklightTimer(void){
     getLcd()->resetBacklightTimer();
@@ -283,3 +283,25 @@ void BrewPiLcd::refresh(){
     _manager->refresh();
 }
 #endif
+
+#ifdef STATUS_LINE
+void BrewPiLcd::printStatus(char* str){
+    if(! _hidden) getLcd()->printStatus(str);
+}
+void BrewPiLcd::_printTime(time_t now){
+		struct tm t;
+		if(_displayTime == now) return;
+		_displayTime = now;
+		makeTime(TimeKeeper.getLocalTimeSeconds(),t);
+		char buf[21];
+		sprintf(buf,"%d/%02d/%02d %02d:%02d:%02d",t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
+		printStatus(buf);
+}
+#endif
+
+void BrewPiLcd::loop(){
+    #ifdef STATUS_LINE
+    time_t now = TimeKeeper.getTimeSeconds();
+    if(now != _displayTime ) _printTime(now);
+    #endif
+}

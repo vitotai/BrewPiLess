@@ -95,7 +95,7 @@ public:
     virtual void onShow();
     virtual void onHide();
     virtual void redraw();
-
+    virtual void loop();
     // linked list 
 protected:
     void setHidden(bool hidden){ _hidden=hidden;}
@@ -116,7 +116,8 @@ public:
     void onShow(){}
     void onHide(){}
     void redraw();
-
+    void loop();
+    
     void init();
     void begin(uint8_t cols, uint8_t lines);
     void clear();
@@ -140,12 +141,15 @@ public:
         print(buf); // print from RAM
         #endif
         }
- #ifdef STATUS_LINE
+    
+    #ifdef STATUS_LINE
 	void printStatus(char* str);
- #endif
-#if EMIWorkaround
+    void _printTime(time_t now);
+    #endif
+    
+    #if EMIWorkaround
     void refresh();
-#endif
+    #endif
 protected:
     char content[4][21]; // always keep a copy of the display content in this variable
     bool _bufferOnly;
@@ -153,6 +157,10 @@ protected:
     uint8_t _currpos;
     uint8_t _cols;
     uint8_t _rows;
+
+#if STATUS_LINE
+	time_t _displayTime;
+#endif
 
     void _clearBuffer();
 };
@@ -168,13 +176,12 @@ public:
     void onShow(){}
     void onHide(){}
     void redraw();
-
+    void loop();
     
     void gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlate,float battery);
     void pressureData(float pressure);
     void humidityData(bool chamberValid,uint8_t chamber,bool roomValid, uint8_t room);
     void setIp(IPAddress ip);
-    void update();
 protected:
     uint8_t _layout;
     IPAddress _ip;
@@ -210,3 +217,5 @@ protected:
 };
 
 extern SmartDisplay smartDisplay;
+
+extern void makeTime(time_t timeInput, struct tm &tm);

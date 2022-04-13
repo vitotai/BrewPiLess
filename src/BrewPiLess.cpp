@@ -1741,82 +1741,6 @@ void brewpiLoop(void)
 //}brewpi
 
 
-#ifdef STATUS_LINE
-extern void makeTime(time_t timeInput, struct tm &tm);
-
-typedef enum _StatusLineDisplayItem{
-StatusLineDisplayIP=0,
-StatusLineDisplayTime
-}StatusLineDisplayItem;
-
-#define DisplayTimeDuration 8
-#define DisplayIPDuration 3
-
-class StatusLine{
-protected:
-	static time_t _displayTime;
-	static time_t _switchTime;
-	static StatusLineDisplayItem _displaying;
-
-	static void _printTime(time_t now){
-		struct tm t;
-		if(_displayTime == now) return;
-		_displayTime = now;
-		makeTime(TimeKeeper.getLocalTimeSeconds(),t);
-		char buf[21];
-		sprintf(buf,"%d/%02d/%02d %02d:%02d:%02d",t.tm_year,t.tm_mon,t.tm_mday,t.tm_hour,t.tm_min,t.tm_sec);
-		display.printStatus(buf);
-	}
-	#if !TWOFACED_LCD
-	static void _printIP(void){
-		
-		IPAddress ip =(WiFiSetup.isApMode())? WiFi.softAPIP():WiFi.localIP();
-		char buf[21];
-		sprintf(buf,"IP:%d.%d.%d.%d",ip[0],ip[1],ip[2],ip[3]);
-		display.printStatus(buf);
-	}
-	#endif
-
-public:
-	StatusLine(){
-	}
-
-
-	static void loop(time_t now){	
-		if(now == _displayTime) return;
-		#if TWOFACED_LCD
-			if(now - _switchTime > DisplayIPDuration){
-				_printTime(now);
-				_switchTime = now;
-			}
-		#else
-		if(_displaying == StatusLineDisplayIP){
-			if(now - _switchTime > DisplayIPDuration){
-				_printTime(now);
-				_switchTime = now;
-				_displaying = StatusLineDisplayTime;
-			}
-		}else if(_displaying == StatusLineDisplayTime){
-			if(now - _switchTime > DisplayTimeDuration){
-				_printIP();
-				_switchTime = now;
-				_displaying = StatusLineDisplayIP;
-			}else _printTime(now);
-		}
-		#endif
-	}
-
-};
-time_t StatusLine::_displayTime;
-time_t  StatusLine::_switchTime;
-StatusLineDisplayItem StatusLine::_displaying = StatusLineDisplayTime;
-
-
-StatusLine statusLine;
-#endif
-
-
-
 #define SystemStateOperating 0
 #define SystemStateRestartPending 1
 #define SystemStateWaitRestart 2
@@ -2069,10 +1993,6 @@ void setup(void){
 	parasiteTempController.init();
 #endif
 
-
-#ifdef STATUS_LINE
-	statusLine.loop(0);
-#endif
 #ifdef EMIWorkaround
 	_lcdReinitTime = millis();
 #endif
@@ -2132,13 +2052,8 @@ void loop(void){
 
 #if TWOFACED_LCD
 	sharedDisplayManager.loop();
-	smartDisplay.update();
 #endif
 
-
-#ifdef STATUS_LINE
-	statusLine.loop(now);
-#endif
 	if( (now - _rssiReportTime) > RssiReportPeriod){
 		_rssiReportTime =now;
 		reportRssi();

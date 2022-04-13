@@ -591,7 +591,7 @@ void SmartDisplay::setIp(IPAddress ip){
     if(!_hidden) _drawIp();
 }
 
-void SmartDisplay::update(){
+void SmartDisplay::loop(){
    if(_gravityInfoValid){
        if(millis() - _gravityInfoLastPrinted > GravityInfoUpdatePeriod){
            if(_updatePartial(GravityMask)) _drawGravity();
