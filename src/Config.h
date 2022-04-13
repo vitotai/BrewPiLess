@@ -509,7 +509,7 @@
 
 #ifdef BREWPI_OLED128x64_LCD
 #define OLED128x64_LCD_ADDRESS 0x3c
-#define STATUS_LINE 1
+#define STATUS_LINE true
 //////////////////////////////////////////////////////////////////////////
 //
 // OLED orientation

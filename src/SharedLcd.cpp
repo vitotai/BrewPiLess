@@ -280,7 +280,7 @@ void BrewPiLcd::getLine(uint8_t lineNumber, char * buffer){
 
 #ifdef STATUS_LINE
 void BrewPiLcd::printStatus(char* str){
-    getLcd()->printStatus(str);
+    if(! _hidden) getLcd()->printStatus(str);
 }
 #endif
 
