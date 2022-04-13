@@ -34,34 +34,8 @@
 #endif //BREWPI_OLED128x64_LCD
 
 
-class SharedDisplayManager;
-// debate:
-//  let SharedLcdDisplay determine if realy drainw should be done
-//  or let the manager do.
-// if the manager manages, then every call to LCD should be passed to
-// the manager, and the manager need to check "calling" party against
-// current active one.
 
-class SharedLcdDisplay{
-public:
-    friend class SharedDisplayManager;
-
-    SharedLcdDisplay();
-    // sharing parts
-    virtual void onShow();
-    virtual void onHide();
-    virtual void redraw();
-
-    // linked list 
-protected:
-    void setHidden(bool hidden){ _hidden=hidden;}
-    void setManager(SharedDisplayManager *manager){ _manager=manager; }
-    SharedLcdDisplay* _next;
-    SharedLcdDisplay* _previous;
-    SharedDisplayManager *_manager;
-    PhysicalLcdDriver *getLcd();
-    bool _hidden;
-};
+class SharedLcdDisplay;
 
 class SharedDisplayManager{
 public:
@@ -100,6 +74,39 @@ protected:
 
       void _switch(SharedLcdDisplay* newDisplay);
 };
+
+
+// debate:
+//  let SharedLcdDisplay determine if realy drainw should be done
+//  or let the manager do.
+// if the manager manages, then every call to LCD should be passed to
+// the manager, and the manager need to check "calling" party against
+// current active one.
+
+class SharedLcdDisplay{
+public:
+    friend class SharedDisplayManager;
+
+    SharedLcdDisplay(){
+        _next = _previous = NULL;
+        _hidden = true;
+    }
+    // sharing parts
+    virtual void onShow();
+    virtual void onHide();
+    virtual void redraw();
+
+    // linked list 
+protected:
+    void setHidden(bool hidden){ _hidden=hidden;}
+    void setManager(SharedDisplayManager *manager){ _manager=manager; }
+    SharedLcdDisplay* _next;
+    SharedLcdDisplay* _previous;
+    SharedDisplayManager *_manager;
+    PhysicalLcdDriver *getLcd(){return _manager->getLcd();}
+    bool _hidden;
+};
+
 
 extern SharedDisplayManager sharedDisplayManager;
 
