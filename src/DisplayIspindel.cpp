@@ -185,6 +185,7 @@ void DisplayIspindel::_showSignalAt(int16_t x, int16_t y,int8_t strength){
 
 void DisplayIspindel::_showFixedParts(){
     DBG_PRINTF("DisplayIspindel::_showFixedParts()\n");
+    _display->setColor(TextColor);
     // Gravity
     _display->drawXbm(LB_SG_POS, Grvity_XBM_width, Grvity_XBM_height, Grvity_XBM);
     // temperature
