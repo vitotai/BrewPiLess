@@ -42,6 +42,11 @@ static const uint8_t TILT_XBM[] PROGMEM= {
  0x00,0xf0,0x00,0xf0,0x00,0xf4,0x00,0xf2,0x00,0xf1,0x80,0xf0,
  0x40,0xf0,0x20,0xf0,0xf0,0xf7,0x00,0xf0,0x00,0xf0,0x00,0xf0};
 
+#define NOWIFI_XBM_width  12
+#define NOWIFI_XBM_height 12
+static const uint8_t NOWIFI_XBM[] PROGMEM= {
+ 0x00,0xf0,0xf0,0xf0,0x08,0xf1,0x04,0xf3,0x82,0xf4,0x42,0xf4,
+ 0x22,0xf4,0x12,0xf4,0x0c,0xf2,0x08,0xf1,0xf0,0xf0,0x00,0xf0};
 
 #define LargeFontWidth 10
 #define LargeFontHeight 21
@@ -159,8 +164,13 @@ void DisplayIspindel::_showSignalAt(int16_t x, int16_t y,int8_t strength){
     // clear
     _display->setColor(BackgroundColor);
     _display->fillRect(x,y,SIGNAL_WIDTH,SINGAL_HEIGHT);
-    
+
     _display->setColor(TextColor);
+
+    if(barNum ==0){
+        _display->drawXbm(x, y, NOWIFI_XBM_width,NOWIFI_XBM_height, NOWIFI_XBM);
+        return;
+    }
     
     int16_t xpos = x;
     int16_t ypos = y + SINGAL_HEIGHT - SINGAL_HEIGHT/4;
@@ -270,8 +280,8 @@ void DisplayIspindel::_showLastSeen(){
     int idx=0;
     uint32_t diff =TimeKeeper.getTimeSeconds() - _updateTime;
     if(diff > 30* 86400){ // greater than 10 days
-        strcpy(buffer,"???");
-        idx = 3;
+        strcpy(buffer,"long");
+        idx = 4;
     }else if(diff >  99*60*60){  // greater than 99 hours, in days
         uint32_t days = diff/86400;
         buffer[idx++]= days < 10? ' ':'0' + days/10;
