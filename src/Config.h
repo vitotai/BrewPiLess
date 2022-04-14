@@ -504,6 +504,30 @@
 #define TWOFACED_LCD true
 #endif
 
+#ifndef ISPINDEL_DISPLAY
+#define ISPINDEL_DISPLAY false
+#endif
+
+#if TWOFACED_LCD
+
+#if ISPINDEL_DISPLAY
+#define SMART_DISPLAY false
+#else
+#define SMART_DISPLAY true
+#endif
+
+
+#else
+#define SMART_DISPLAY false
+#define ISPINDEL_DISPLAY false
+#endif
+
+#if ISPINDEL_DISPLAY
+#if ! OLED_LCD
+#error "ISPINDEL_DISPLAY is only available for OLED display"
+#endif
+#endif
+
 #define IIC_LCD_ADDRESS 0x27
 #define LCD_AUTO_ADDRESSING true
 

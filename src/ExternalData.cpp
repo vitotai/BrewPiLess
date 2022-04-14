@@ -8,6 +8,10 @@
 
 #include "SharedLcd.h"
 
+#if ISPINDEL_DISPLAY
+#include "DisplayIspindel.h"
+#endif
+
 #endif
 
 ExternalData externalData;
@@ -89,7 +93,7 @@ void ExternalData::setTiltInfo(uint16_t gravity, uint16_t temperature, int rssi)
 	setGravity(fgravity, TimeKeeper.getTimeSeconds());
 	// display
 
-	#if TWOFACED_LCD
+	#if SMART_DISPLAY
 	// duplicated code, I know...
 	char unit;
 	float max,min;
@@ -309,20 +313,26 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 
         float itemp=root["temperature"];
 		float tempC=itemp;
+		char iTU='C';
 		if(root.containsKey("temp_units")){
 			const char *TU=root["temp_units"];
 			if(*TU == 'F') tempC = (itemp-32)/1.8;
 			else if(*TU == 'K') tempC = itemp- 273.15;
+			iTU = TU[0];
 		}
 
 		setAuxTemperatureCelsius(tempC);
+		float battery=0;
 
-        if(root.containsKey("battery"))
-    	    setDeviceVoltage(root["battery"]);
-
-        if(root.containsKey("RSSI"))
-    	    setDeviceRssi(root["RSSI"]);
-
+        if(root.containsKey("battery")){
+			battery=root["battery"];
+    	    setDeviceVoltage(battery);
+		}
+		int8_t rssi=-120;
+        if(root.containsKey("RSSI")){
+			rssi=root["RSSI"];
+    	    setDeviceRssi(rssi);
+		}
 		//Serial.print("temperature:");
 		//Serial.println(itemp);
 
@@ -338,23 +348,31 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 			// update, gravity data calculated
 			// in "brew N cal" mode, only tilt is logged.
 			setGravity(calculatedSg,_lastUpdate,!_calibrating); // save only when not calibrating.
-			#if TWOFACED_LCD
+			#if SMART_DISPLAY
 			char unit;
 			float max,min;
 
 		    brewPi.getTemperatureSetting(&unit,&min,&max);
 			smartDisplay.gravityDeviceData(calculatedSg,(unit =='C')? tempC:C2F(tempC),_lastUpdate,unit,_cfg->usePlato,_deviceVoltage);
 			#endif
+			#if ISPINDEL_DISPLAY
+			displayIspindel.updateInfo(calculatedSg,itemp,iTU,battery,_ispindelTilt,rssi);
+			#endif
+
 		}else if(root.containsKey("gravity")){
 			// gravity information directly from iSpindel
 			float sgreading=root["gravity"];
 			if(IsGravityInValidRange(sgreading)) setGravity(sgreading, TimeKeeper.getTimeSeconds());
 
-			#if TWOFACED_LCD
+			#if SMART_DISPLAY
 			char unit;
 			float max,min;
     		brewPi.getTemperatureSetting(&unit,&min,&max);			
 			smartDisplay.gravityDeviceData(sgreading,(unit =='C')? tempC:C2F(tempC),_lastUpdate,unit,_cfg->usePlato,_deviceVoltage);
+			#endif
+
+			#if ISPINDEL_DISPLAY
+			displayIspindel.updateInfo(sgreading,itemp,iTU,battery,_ispindelTilt,rssi);
 			#endif
         }
 	}else{

@@ -88,6 +88,9 @@ extern "C" {
 #include "TiltListener.h"
 #endif
 
+#if ISPINDEL_DISPLAY
+#include "DisplayIspindel.h"
+#endif
 
 #if UseLittleFS
 #if ESP32
@@ -1584,7 +1587,7 @@ void wiFiEvent(const char* msg){
 		MDNS.notifyAPChange(); */
 
 	}
-	#if TWOFACED_LCD
+	#if SMART_DISPLAY
 	smartDisplay.setIp(WiFi.localIP());
 	#endif
 }
@@ -2006,10 +2009,16 @@ void setup(void){
 	humidityControl.begin();
 	#endif
 
-#if TWOFACED_LCD
+#if SMART_DISPLAY
 	sharedDisplayManager.add(&smartDisplay);
-	rotaryEncoder.setRange(1,0,2);
+#endif
 
+#if ISPINDEL_DISPLAY
+	sharedDisplayManager.add(&displayIspindel);
+#endif
+
+#if TWOFACED_LCD
+	rotaryEncoder.setRange(1,0,2);
 	sharedDisplayManager.setDisplayMode(theSettings.systemConfiguration()->displayMode);
 #endif
 

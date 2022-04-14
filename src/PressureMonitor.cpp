@@ -12,7 +12,7 @@
 
 #include "PressureMonitor.h"
 
-#if TWOFACED_LCD
+#if SMART_DISPLAY
 #include "SharedLcd.h"
 #endif
 
@@ -105,7 +105,7 @@ void PressureMonitorClass::_readPressure(void){
     DBG_PRINTF("ADC:%d  PSIx10:%d\n",(int)reading,(int)(psi*10));
     #endif
 
-    #if TWOFACED_LCD
+    #if SMART_DISPLAY
     smartDisplay.pressureData(psi);
     #endif
 }

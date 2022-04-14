@@ -12,8 +12,10 @@
 
 #if BREWPI_OLED_SH1106   // New 
 #include "SH1106.h"
+typedef SH1106 OledDisplay;
 #else
 #include "SSD1306.h"
+typedef SSD1306 OledDisplay;
 #endif
 class IICOledLcd : public Print {
 public:
@@ -100,14 +102,12 @@ public:
   void refresh(){}
 #endif
 
+  OledDisplay* getDisplayDriver(){ return &_display;}
 
 private:
   uint32_t backlightAutoOffPeriod;
-#if BREWPI_OLED_SH1106
-SH1106  _display;
-#else
-SSD1306  _display;
-#endif
+  OledDisplay  _display;
+
   uint8_t _Addr;
   uint8_t _currline;
   uint8_t _currpos;

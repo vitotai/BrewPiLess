@@ -148,9 +148,10 @@ void SharedDisplayManager::loop(){
         DBG_PRINTF("*LCD changes to %d\n", _mode);
         return;
     }
-    if(_isForcedPrimary || _mode != ShareModeRotate ) return;
-    if(millis() -_switchTime > SWITCH_TIME) next();
     _current->loop();
+    if(!_isForcedPrimary && _mode == ShareModeRotate ){
+        if(millis() -_switchTime > SWITCH_TIME) next();
+    }
 }
 
 #if DebugSharedDisplay

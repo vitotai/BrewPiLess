@@ -6,7 +6,7 @@
 #include "DHTSensor.h"
 #include "BPLSettings.h"
 #include "EnvironmentSensor.h"
-#if TWOFACED_LCD
+#if SMART_DISPLAY
 #include "SharedLcd.h"
 #endif
 
@@ -103,7 +103,7 @@ public:
                 _lastreadtime = currenttime;
                 _humidity= chamberSensor->humidity();
 
-                #if TWOFACED_LCD
+                #if SMART_DISPLAY
                 smartDisplay.humidityData(isChamberSensorInstalled(),_humidity,isRoomSensorInstalled(),roomSensor->humidity());
                 #endif
 
