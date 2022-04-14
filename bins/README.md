@@ -19,6 +19,7 @@ Those images are prebuilt:
  * Tom's frontend instead of classic one
  * framework 2.2.0
  * flash layout 4m2m(2M program/2M file space)
+ * LITTLEFS for ESP8266, SPIFFS for ESP32
 
 ## spainish, Portuguese-br, slovak, italian, norwegian
  * Default configuration in languages other than English
@@ -41,15 +42,18 @@ Those images are prebuilt:
  * same as esp8285, but D5 is released to be used with AM2301. Manual setup is required, though. 
 
 
-
 ## oled
  * Standard options
  * SSD1306 OLED I2C 128x64 instead of 20x4 LCD
- * new ui
 
 ## thorrax
  * Thorrax's board, Cooling and heating PIN on D5, D0
- * new ui
 
 ## esp32 & esp32.oled
  * ESP32 w/ 20x4 LCD & OLED LCD
+
+## littlefs for esp32
+ * LittleFS instead of SPIFFS
+
+## ispindel
+ * Dedicated display of iSpindel infomration. For OLED only.

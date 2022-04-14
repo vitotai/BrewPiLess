@@ -1,3 +1,4 @@
+#if ISPINDEL_DISPLAY
 #include "IicOledLcd.h"
 #include "DisplayIspindel.h"
 #include "font_cousine_10.h"
@@ -182,7 +183,6 @@ void DisplayIspindel::_showSignalAt(int16_t x, int16_t y,int8_t strength){
         ypos -= SINGAL_HEIGHT/4;
         barHeight += SINGAL_HEIGHT/4;
     }
-    //TODO: signal ==0, no SINGAL
 }
 
 void DisplayIspindel::_showFixedParts(){
@@ -324,3 +324,4 @@ void DisplayIspindel::_showIp(){
 
 	_display->drawString(IP_POS,buf);
 }
+#endif //ISPINDEL_DISPLAY
