@@ -149,8 +149,6 @@ void DisplayIspindel::_showUpdates(){
 
     _showSignalAt(BPL_SIGNAL,WiFi.RSSI());
     _showSignalAt(Ispindel_SIGNAL_POS,_wifiStrength);
-
-     _display->display();
 }
 
 void DisplayIspindel::_showSignalAt(int16_t x, int16_t y,int8_t strength){
@@ -202,41 +200,8 @@ void DisplayIspindel::_showFixedParts(){
     _display->drawString(LB_VOLT_POS,"V");
 
     _display->drawRect(0,0,128,64);
-
-/*
-    // 
-
-    _display->setColor(BackgroundColor);
-#if 0
-    // fill block
-    //line 0
-    _display->fillRect(LB_SG_POS,LB_SG_WIDTH,LB_SG_HEIGHT);
-    _display->fillRect(LB_TEMP_POS,LB_TEMP_WIDTH,LB_TEMP_HEIGHT);
-    // line 1
-    _display->fillRect(LB_BAT_POS,LB_BAT_WIDTH,LB_BAT_HEIGHT);
-    _display->fillRect(LB_TILT_POS,LB_TILT_WIDTH,LB_TILT_HEIGHT);
-    // line 3
-    _display->fillRect(LB_IP_POS,LB_SG_WIDTH,LB_IP_HEIGHT);
-#endif    
-    // string
-    // line 2, direct draw
-    _display->drawString(LB_LASTSEEN_POS,"Last seen");
-    _display->drawString(LB_AGO_POS,"ago");
-    // line 0 , temp unit
-#if 0
-    // revsersed color
-    _display->setColor(BackgroundColor);
-    // line 0
-#endif
-    _display->drawString(LB_SG_POS,"SG");
-    _display->drawString(LB_TEMP_POS,"T");
-    // line 1
-    _display->drawString(LB_BAT_POS,"BAT");
-    _display->drawString(LB_TILT_POS,"Tilt");
-    // line 3
-    _display->drawString(LB_IP_POS,"IP");
-    */
 }
+
 void DisplayIspindel::_drawFloatAt(int16_t x, int16_t y, float value, uint8_t space, uint8_t precision, uint16_t fontWidth,uint16_t fontHeight){
     char buffer[32];
     
@@ -309,7 +274,6 @@ void DisplayIspindel::_showLastSeen(){
     _display->setColor(BackgroundColor);
     _display->fillRect(LASTSEEN_POS,LASTSEEN_WIDTH,SINGAL_HEIGHT);
     _display->setColor(TextColor);
-
     _display->drawString(LASTSEEN_POS,buffer);
 }
 
