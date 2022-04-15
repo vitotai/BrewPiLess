@@ -155,10 +155,10 @@ void DisplayIspindel::_showSignalAt(int16_t x, int16_t y,int8_t strength){
 
     int barNum;
     
-    if(strength > -60) barNum = 4;
+    if(strength > -67) barNum = 4;
     else if(strength > -70) barNum = 3;
     else if(strength > -80) barNum = 2;
-    else if(strength > -120) barNum = 1;
+    else if(strength > -90) barNum = 1;
     else barNum = 0;    
     // clear
     _display->setColor(BackgroundColor);

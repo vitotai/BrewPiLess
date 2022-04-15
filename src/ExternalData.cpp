@@ -99,7 +99,7 @@ void ExternalData::setTiltInfo(uint16_t gravity, uint16_t temperature, int rssi)
 	float max,min;
 
 	brewPi.getTemperatureSetting(&unit,&min,&max);
-	smartDisplay.gravityDeviceData(fgravity,(unit =='C')? ((float)temperature  -32.0)* 5.0/9.0:temperature,_lastUpdate,unit,_cfg->usePlato,0);
+	smartDisplay.gravityDeviceData(fgravity,(unit =='C')? ((float)temperature  -32.0)* 5.0/9.0:temperature,_lastUpdate,unit,_cfg->usePlato,0,0,rssi);
 	#endif
 
 }
@@ -353,7 +353,7 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 			float max,min;
 
 		    brewPi.getTemperatureSetting(&unit,&min,&max);
-			smartDisplay.gravityDeviceData(calculatedSg,(unit =='C')? tempC:C2F(tempC),_lastUpdate,unit,_cfg->usePlato,_deviceVoltage);
+			smartDisplay.gravityDeviceData(calculatedSg,itemp,_lastUpdate,iTU,_cfg->usePlato,_deviceVoltage,_ispindelTilt,rssi);
 			#endif
 			#if ISPINDEL_DISPLAY
 			displayIspindel.updateInfo(calculatedSg,itemp,iTU,battery,_ispindelTilt,rssi);
@@ -368,7 +368,7 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 			char unit;
 			float max,min;
     		brewPi.getTemperatureSetting(&unit,&min,&max);			
-			smartDisplay.gravityDeviceData(sgreading,(unit =='C')? tempC:C2F(tempC),_lastUpdate,unit,_cfg->usePlato,_deviceVoltage);
+			smartDisplay.gravityDeviceData(sgreading,itemp,_lastUpdate,iTU,_cfg->usePlato,_deviceVoltage,_ispindelTilt,rssi);
 			#endif
 
 			#if ISPINDEL_DISPLAY

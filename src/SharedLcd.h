@@ -13,6 +13,12 @@
 #include "IicLcd.h"
 #endif
 
+#if OLED_LCD
+#define CustomGlyph false
+#else
+#define CustomGlyph true
+#endif
+
 #define ShareModeRotate 0
 #define ShareModeBrewPi 1
 #define ShareModeAdditional 2
@@ -178,7 +184,7 @@ public:
     void redraw();
     void loop();
     
-    void gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlate,float battery);
+    void gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlate,float battery,float tilt,int8_t rssi);
     void pressureData(float pressure);
     void humidityData(bool chamberValid,uint8_t chamber,bool roomValid, uint8_t room);
     void setIp(IPAddress ip);
@@ -191,7 +197,9 @@ protected:
     float   _gravity;
     float   _temperature;
     float _battery;
+    float _tilt;
     uint32_t _updateTime;
+    int8_t _rssi;
 
     bool _chamberHumidityAvailable;
     bool _roomHumidityAvailable;
@@ -212,8 +220,12 @@ protected:
     void _printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t precision,float value);
     void _printGravityTimeAt(uint8_t col,uint8_t row);
     void _printHumidityValueAt(uint8_t col,uint8_t row,uint8_t value);
-    void _printBatteryAt(uint8_t col,uint8_t row);
     bool _updatePartial(uint8_t mask);
+    #if CustomGlyph
+    void _createCustomChar(char ch, const uint8_t bmp[8]);
+    void _createAllCustomChars();
+    #endif
+    void _drawSignalAt(uint8_t col,uint8_t row,int8_t rssi);
 };
 
 extern SmartDisplay smartDisplay;

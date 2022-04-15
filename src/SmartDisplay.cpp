@@ -24,7 +24,7 @@ SmartDisplay smartDisplay;
 
 static const char STR_Gravity[] PROGMEM = "Gravity ";
 static const char STR_Temperature[] PROGMEM = "Temperature";
-static const char STR_Updated[] PROGMEM = "Updated";
+static const char STR_Updated[] PROGMEM = "Last seen";
 static const char STR_ago[] PROGMEM = "ago";
 static const char STR_HumidityChamber[] PROGMEM= "Humidity Chamber";
 static const char STR_Room[] PROGMEM = "Room";
@@ -41,6 +41,110 @@ static const char STR_Unknown[] PROGMEM = "NA";
 static const char STR_Less_1m[] PROGMEM = "<1m";
 static const char STR___[] PROGMEM = "--";
 
+
+#if CustomGlyph
+static const uint8_t BMP_WifiSignal1[8]  PROGMEM  = {
+    B00000, 
+    B00000, 
+    B00000, 
+    B00000, 
+    B00000, 
+    B00000, 
+    B00001,
+    B00000};
+static const uint8_t BMP_WifiSignal2[8]  PROGMEM  = {
+    B00000, 
+    B00000, 
+    B00000, 
+    B00000, 
+    B00011, 
+    B00000, 
+    B00001,
+    B00000};
+static const uint8_t BMP_WifiSignal3[8]  PROGMEM  = {
+    B00000, 
+    B00000, 
+    B00111, 
+    B00000, 
+    B00011, 
+    B00000, 
+    B00001,
+    B00000};
+static const uint8_t BMP_WifiSignal4[8]  PROGMEM  = {
+    B01111, 
+    B00000, 
+    B00111, 
+    B00000, 
+    B00011, 
+    B00000, 
+    B00001,
+    B00000};
+
+static const uint8_t BMP_Battery[8]  PROGMEM  = {
+    B00000, 
+    B01100, 
+    B01100, 
+    B11110, 
+    B11110, 
+    B11110, 
+    B11110,
+    B00000};
+
+static const uint8_t BMP_Tilt[8]  PROGMEM  = {
+    B00000, 
+    B00000, 
+    B00001, 
+    B00010, 
+    B00100, 
+    B01000, 
+    B11111, 
+    B00000};
+
+#define CharSignal_1 1
+#define CharSignal_2 2
+#define CharSignal_3 3
+#define CharSignal_4 4
+#define CharBattery 5
+#define CharTilt 6
+
+void SmartDisplay::_createCustomChar(char ch, const uint8_t bmp[8]){
+    uint8_t buffer[8];
+    memcpy_P(buffer,bmp,8);
+    getLcd()->createChar(ch,buffer);
+}
+void SmartDisplay::_createAllCustomChars(){
+    _createCustomChar(CharSignal_1,BMP_WifiSignal1);
+    _createCustomChar(CharSignal_2,BMP_WifiSignal2);
+    _createCustomChar(CharSignal_3,BMP_WifiSignal3);
+    _createCustomChar(CharSignal_4,BMP_WifiSignal4);
+    _createCustomChar(CharBattery,BMP_Battery);
+    _createCustomChar(CharTilt,BMP_Tilt);
+}
+#else
+
+#define CharSignal_1 '1'
+#define CharSignal_2 '2'
+#define CharSignal_3 '3'
+#define CharSignal_4 '4'
+#define CharBattery 'B'
+#define CharTilt 'A'
+
+
+#endif //#if CustomGlyph
+
+void SmartDisplay::_drawSignalAt(uint8_t col,uint8_t row,int8_t rssi){
+    char ch;
+    
+    if(rssi > -67) ch = CharSignal_4;
+    else if(rssi > -70) ch = CharSignal_3;
+    else if(rssi > -80)  ch = CharSignal_2;
+    else if(rssi > -90)  ch = CharSignal_1;
+    else ch = '!';
+
+    PhysicalLcdDriver *lcd=getLcd();
+    lcd->setCursor(col,row);
+    lcd->write(ch);
+}
 
 SmartDisplay::SmartDisplay(){
     _gravityInfoValid=false;
@@ -123,24 +227,30 @@ Updated      99m ago
    4.23V
 */
         case GravityMask: //1:
-            lcd->setCursor(0,0);
-            lcd->print_P(STR_Gravity);
-            if(_plato){
-                lcd->setCursor(18,0);
+                #if CustomGlyph
+                _createAllCustomChars();
+                #endif
+
+                lcd->setCursor(0,0);
+                lcd->print("G:");
+                lcd->setCursor(10,0);
+                lcd->print("T:");
+                lcd->setCursor(17,0);
                 lcd->write(DegreeSymbolChar);
-                lcd->write('P');
-            }
-            lcd->setCursor(0,1);
-            lcd->print_P(STR_Temperature);
-            lcd->setCursor(18,1);
-            lcd->write(DegreeSymbolChar);
-            lcd->write(_tempUnit);
-            //lcd->setCursor(0,2);
-            //lcd->print_P(STR_Updated);
-            lcd->setCursor(6,2);
-            lcd->write('V');
-            lcd->setCursor(17,2);
-            lcd->print_P(STR_ago);
+                lcd->write(_tempUnit);
+                lcd->setCursor(0,1);
+                lcd->write(CharBattery);
+                lcd->write(':');
+                lcd->setCursor(6,1);
+                lcd->write('V');
+                lcd->setCursor(10,1);
+                lcd->write(CharTilt);
+                lcd->write(':');
+                lcd->setCursor(0,2);
+                lcd->print_P(STR_Updated);
+                lcd->setCursor(17,2);
+                lcd->print_P(STR_ago);
+
             break;
 /*
 01234567890123456789
@@ -180,9 +290,6 @@ RH C 56%      R  75%
                 lcd->write('P');
             }
 
-
-            //lcd->setCursor(2,1);
-            //lcd->print_P(STR_Updated);
             lcd->setCursor(6,1);
             lcd->write('V');
             lcd->setCursor(17,1);
@@ -285,11 +392,16 @@ Updated      99m ago
   4.32V
 */
         case GravityMask: //1:
-            if(_plato) _printFloatAt(14,0,4,1,_gravity);
-            else _printFloatAt(15,0,5,3,_gravity);
-            _printFloatAt(13,1,5,1,_temperature);
+            if(_plato) _printFloatAt(3,0,4,1,_gravity);
+            else _printFloatAt(2,0,5,3,_gravity);
+
+            _printFloatAt(12,0,5,1,_temperature);
             _printGravityTimeAt(13,2);
-            _printBatteryAt(2,2);
+            _printFloatAt(2,1,4,2,_battery);
+            _printFloatAt(12,1,5,2,_tilt);
+            _printGravityTimeAt(13,2);
+            _drawSignalAt(19,1,_rssi);
+            _drawSignalAt(19,3,WiFi.RSSI());
             break;
 /*
 3
@@ -311,7 +423,7 @@ RH C 56%      R  75%
             else _printFloatAt(2,0,5,3,_gravity);
             _printFloatAt(13,0,5,1,_temperature);
             _printGravityTimeAt(13,1);
-            _printBatteryAt(2,1);
+            _printFloatAt(2,1,4,2,_battery);
             break;
 
 /*
@@ -326,7 +438,7 @@ Pressure    13.5 psi
             else _printFloatAt(2,0,5,3,_gravity);
             // ignore temperature if _battery is valid(not zero)
             if(_battery ==0.0) _printFloatAt(9,0,5,1,_temperature);
-            else _printBatteryAt(10,0);
+            else _printFloatAt(10,0,4,2,_battery);
             _printGravityTimeAt(17,1);
             break;
 
@@ -487,20 +599,6 @@ void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t p
         lcd->write(buffer[i]);
 }
 
-void SmartDisplay::_printBatteryAt(uint8_t col,uint8_t row){
-    
-    PhysicalLcdDriver *lcd=getLcd();
-    lcd->setCursor(col,row);
-    int fraction = (int) (_battery * 100.0 + 0.5);
-    int ipart = fraction / 100;
-    fraction -= ipart * 100;
-
-    lcd->write('0' + ipart);
-    lcd->write('.');
-    lcd->write('0' + fraction/10);
-    lcd->write('0' + fraction%10);
-
-}
 
 void SmartDisplay::_printGravityTimeAt(uint8_t col,uint8_t row){
 
@@ -562,13 +660,15 @@ bool SmartDisplay::_updatePartial(uint8_t mask){
     }
 }
 
-void SmartDisplay::gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlato,float battery){
+void SmartDisplay::gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlato,float battery,float tilt,int8_t rssi){
     _gravity = gravity;
     _temperature = temperature;
     _updateTime = update;
     _tempUnit = tunit;
     _plato = usePlato;
     _battery = battery;
+    _rssi = rssi;
+    _tilt = tilt;
     _gravityInfoValid = true;
     _gravityInfoLastPrinted =0; // forced to update
    // if(_updatePartial(GravityMask)) _drawGravity();
