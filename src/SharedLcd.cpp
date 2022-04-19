@@ -19,6 +19,33 @@ SharedDisplayManager sharedDisplayManager;
 
 uint8_t SharedDisplayManager::i2cLcdAddr = IIC_LCD_ADDRESS;
 
+
+#if CustomGlyph
+
+static const uint8_t BMP_WifiSignal1[8]  PROGMEM  = {B00000, B00000, B00000, B00000, B00000, B00000, B00001,B00000};
+static const uint8_t BMP_WifiSignal2[8]  PROGMEM  = {B00000, B00000, B00000, B00000, B00011, B00000, B00001,B00000};
+static const uint8_t BMP_WifiSignal3[8]  PROGMEM  = {B00000, B00000, B00111, B00000, B00011, B00000, B00001,B00000};
+static const uint8_t BMP_WifiSignal4[8]  PROGMEM  = {B01111, B00000, B00111, B00000, B00011, B00000, B00001,B00000};
+
+static const uint8_t BMP_Battery[8]  PROGMEM  = {B00000, B01100, B01100, B11110, B11110, B11110, B11110,B00000};
+static const uint8_t BMP_Tilt[8]  PROGMEM  = {B00000, B00000, B00001, B00010, B00100, B01000, B11111, B00000};
+
+void SharedDisplayManager::_createCustomChar(char ch, const uint8_t bmp[8]){
+    uint8_t buf[12];
+    memcpy_P(buf,bmp,8);
+    _lcd.createChar(ch,buf);
+   
+}
+void SharedDisplayManager::_createAllCustomChars(){
+    _createCustomChar(CharSignal_1,BMP_WifiSignal1);
+    _createCustomChar(CharSignal_2,BMP_WifiSignal2);
+    _createCustomChar(CharSignal_3,BMP_WifiSignal3);
+    _createCustomChar(CharSignal_4,BMP_WifiSignal4);
+    _createCustomChar(CharBattery,BMP_Battery);
+    _createCustomChar(CharTilt,BMP_Tilt);
+}
+#endif
+
 //*****************************************************************
 //SharedDisplayManager
 SharedDisplayManager::SharedDisplayManager():
@@ -81,15 +108,9 @@ void SharedDisplayManager::init(){
 #if BREWPI_IIC_LCD    
     _lcd.noCursor();
 #endif
-
-    SharedLcdDisplay* disp=_head;
-    if(disp){
-        do{
-           disp->initLcd(&_lcd);
-        disp= disp->_next;
-        }while(disp != _head);
-    }
-
+    #if CustomGlyph
+    _createAllCustomChars();
+    #endif
 }
 void SharedDisplayManager::setPrimary(SharedLcdDisplay* display){
     _head= display;
@@ -181,12 +202,9 @@ void SharedDisplayManager::refresh(){
     _lcd.refresh();
 //    delay(500);
 //    _current->redraw();
-    SharedLcdDisplay* disp=_head;
-    do{
-       disp->initLcd(&_lcd);
-       disp= disp->_next;
-    }while(disp != _head);
-    
+    #if CustomGlyph
+    _createAllCustomChars();
+    #endif
 }
 #endif
 

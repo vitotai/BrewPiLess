@@ -88,9 +88,6 @@ extern "C" {
 #include "TiltListener.h"
 #endif
 
-#if ISPINDEL_DISPLAY
-#include "DisplayIspindel.h"
-#endif
 
 #if UseLittleFS
 #if ESP32
@@ -2013,9 +2010,6 @@ void setup(void){
 	sharedDisplayManager.add(&smartDisplay);
 #endif
 
-#if ISPINDEL_DISPLAY
-	sharedDisplayManager.add(&displayIspindel);
-#endif
 
 #if TWOFACED_LCD
 	rotaryEncoder.setRange(1,0,2);

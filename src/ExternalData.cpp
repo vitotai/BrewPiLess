@@ -8,9 +8,6 @@
 
 #include "SharedLcd.h"
 
-#if ISPINDEL_DISPLAY
-#include "DisplayIspindel.h"
-#endif
 
 #endif
 
@@ -355,9 +352,6 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 		    brewPi.getTemperatureSetting(&unit,&min,&max);
 			smartDisplay.gravityDeviceData(calculatedSg,itemp,_lastUpdate,iTU,_cfg->usePlato,_deviceVoltage,_ispindelTilt,rssi);
 			#endif
-			#if ISPINDEL_DISPLAY
-			displayIspindel.updateInfo(calculatedSg,itemp,iTU,battery,_ispindelTilt,rssi);
-			#endif
 
 		}else if(root.containsKey("gravity")){
 			// gravity information directly from iSpindel
@@ -371,9 +365,6 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 			smartDisplay.gravityDeviceData(sgreading,itemp,_lastUpdate,iTU,_cfg->usePlato,_deviceVoltage,_ispindelTilt,rssi);
 			#endif
 
-			#if ISPINDEL_DISPLAY
-			displayIspindel.updateInfo(sgreading,itemp,iTU,battery,_ispindelTilt,rssi);
-			#endif
         }
 	}else{
 		    error = ErrorUnknownSource;

@@ -8,7 +8,7 @@ public:
         _temperature=0.0;
         _battery=0.0;
         _tilt=0.0;
-        _updateTime=0;
+        _lastSeen=0;
         _wifiStrength=-120;
         _unit='C';
     }
@@ -26,7 +26,7 @@ protected:
     float _temperature;
     float _battery;
     float _tilt;
-    time_t _updateTime;
+    time_t _lastSeen;
     int8_t _wifiStrength;
     char _unit;
     

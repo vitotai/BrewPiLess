@@ -130,7 +130,7 @@ void DisplayIspindel::updateInfo(float gravity,float temperature,char unit,float
     _wifiStrength=wifiStrength;
     _unit=unit;;
 
-    _updateTime=TimeKeeper.getTimeSeconds();
+    _lastSeen=TimeKeeper.getTimeSeconds();
     // for update in next loop()
     _lastUpdated=0;
 }
@@ -244,7 +244,7 @@ void DisplayIspindel::_showTilt(){
 void DisplayIspindel::_showLastSeen(){
     char buffer[32];
     int idx=0;
-    uint32_t diff =TimeKeeper.getTimeSeconds() - _updateTime;
+    uint32_t diff =TimeKeeper.getTimeSeconds() - _lastSeen;
     if(diff > 30* 86400){ // greater than 10 days
         strcpy(buffer,"long");
         idx = 4;

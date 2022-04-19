@@ -16,7 +16,7 @@
 #if OLED_LCD
 #define CustomGlyph false
 #else
-#define CustomGlyph true
+#define CustomGlyph false // triger watchdog. have to re-think about it.
 #endif
 
 #define ShareModeRotate 0
@@ -79,6 +79,10 @@ protected:
       uint8_t _mode;
 
       void _switch(SharedLcdDisplay* newDisplay);
+    #if CustomGlyph
+    void _createCustomChar(char ch, const uint8_t bmp[8]);
+    void _createAllCustomChars();
+    #endif
 };
 
 
@@ -102,7 +106,6 @@ public:
     virtual void onHide();
     virtual void redraw();
     virtual void loop();
-    virtual void initLcd(PhysicalLcdDriver *lcd);
     // linked list 
 protected:
     void setHidden(bool hidden){ _hidden=hidden;}
@@ -124,7 +127,6 @@ public:
     void onHide(){}
     void redraw();
     void loop();
-    void initLcd(PhysicalLcdDriver *lcd){}
 
     void init();
     void begin(uint8_t cols, uint8_t lines);
@@ -185,7 +187,6 @@ public:
     void onHide(){}
     void redraw();
     void loop();
-    void initLcd(PhysicalLcdDriver *lcd);
     
     void gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlate,float battery,float tilt,int8_t rssi);
     void pressureData(float pressure);
@@ -201,7 +202,7 @@ protected:
     float   _temperature;
     float _battery;
     float _tilt;
-    uint32_t _updateTime;
+    uint32_t _lastSeen;
     int8_t _rssi;
 
     bool _chamberHumidityAvailable;
@@ -229,8 +230,46 @@ protected:
     void _createAllCustomChars(PhysicalLcdDriver *lcd);
     #endif
     void _drawSignalAt(uint8_t col,uint8_t row,int8_t rssi);
+    int _lastSeenString(char *buffer);
+#if ISPINDEL_DISPLAY
+    OledDisplay *_display;
+
+    void _showGravityFixedParts();
+    void _showGravityValues();
+
+    void _showGravity();
+    void _showTemperature();
+    void _showBattery();
+    void _showTilt();
+    void _showLastSeen();
+    void _showIp();
+    void _showFloatAt(int16_t x, int16_t y, float value, uint8_t space, uint8_t precision, uint16_t fontWidth,uint16_t fontHeight);
+    void _showSignalAt(int16_t x, int16_t y,int8_t strength);
+
+#endif
+
 };
 
 extern SmartDisplay smartDisplay;
 
 extern void makeTime(time_t timeInput, struct tm &tm);
+
+
+
+
+#if CustomGlyph
+#define CharSignal_1 '1'
+#define CharSignal_2 '2'
+#define CharSignal_3 '3'
+#define CharSignal_4 '4'
+#define CharBattery 'B'
+#define CharTilt 'A'
+
+#else
+#define CharSignal_1 1
+#define CharSignal_2 2
+#define CharSignal_3 3
+#define CharSignal_4 4
+#define CharBattery 5
+#define CharTilt 6
+#endif
