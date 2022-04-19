@@ -102,6 +102,7 @@ public:
     virtual void onHide();
     virtual void redraw();
     virtual void loop();
+    virtual void initLcd(PhysicalLcdDriver *lcd);
     // linked list 
 protected:
     void setHidden(bool hidden){ _hidden=hidden;}
@@ -123,7 +124,8 @@ public:
     void onHide(){}
     void redraw();
     void loop();
-    
+    void initLcd(PhysicalLcdDriver *lcd){}
+
     void init();
     void begin(uint8_t cols, uint8_t lines);
     void clear();
@@ -183,6 +185,7 @@ public:
     void onHide(){}
     void redraw();
     void loop();
+    void initLcd(PhysicalLcdDriver *lcd);
     
     void gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlate,float battery,float tilt,int8_t rssi);
     void pressureData(float pressure);
@@ -222,8 +225,8 @@ protected:
     void _printHumidityValueAt(uint8_t col,uint8_t row,uint8_t value);
     bool _updatePartial(uint8_t mask);
     #if CustomGlyph
-    void _createCustomChar(char ch, const uint8_t bmp[8]);
-    void _createAllCustomChars();
+    void _createCustomChar(PhysicalLcdDriver *lcd,char ch, const uint8_t bmp[8]);
+    void _createAllCustomChars(PhysicalLcdDriver *lcd);
     #endif
     void _drawSignalAt(uint8_t col,uint8_t row,int8_t rssi);
 };

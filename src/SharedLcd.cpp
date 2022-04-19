@@ -38,6 +38,7 @@ _lcd()
 }
 void SharedDisplayManager::add(SharedLcdDisplay* display,bool isPrimary){
     display->setManager(this);
+
     if(_head == NULL){
         _head  = display;
         display->_next = display;
@@ -80,6 +81,15 @@ void SharedDisplayManager::init(){
 #if BREWPI_IIC_LCD    
     _lcd.noCursor();
 #endif
+
+    SharedLcdDisplay* disp=_head;
+    if(disp){
+        do{
+           disp->initLcd(&_lcd);
+        disp= disp->_next;
+        }while(disp != _head);
+    }
+
 }
 void SharedDisplayManager::setPrimary(SharedLcdDisplay* display){
     _head= display;
@@ -171,6 +181,12 @@ void SharedDisplayManager::refresh(){
     _lcd.refresh();
 //    delay(500);
 //    _current->redraw();
+    SharedLcdDisplay* disp=_head;
+    do{
+       disp->initLcd(&_lcd);
+       disp= disp->_next;
+    }while(disp != _head);
+    
 }
 #endif
 

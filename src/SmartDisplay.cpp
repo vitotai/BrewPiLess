@@ -107,18 +107,19 @@ static const uint8_t BMP_Tilt[8]  PROGMEM  = {
 #define CharBattery 5
 #define CharTilt 6
 
-void SmartDisplay::_createCustomChar(char ch, const uint8_t bmp[8]){
-    uint8_t buffer[8];
-    memcpy_P(buffer,bmp,8);
-    getLcd()->createChar(ch,buffer);
+void SmartDisplay::_createCustomChar(PhysicalLcdDriver *lcd,char ch, const uint8_t bmp[8]){
+    uint8_t buf[12];
+    memcpy_P(buf,bmp,8);
+    lcd->createChar(ch,buf);
+   
 }
-void SmartDisplay::_createAllCustomChars(){
-    _createCustomChar(CharSignal_1,BMP_WifiSignal1);
-    _createCustomChar(CharSignal_2,BMP_WifiSignal2);
-    _createCustomChar(CharSignal_3,BMP_WifiSignal3);
-    _createCustomChar(CharSignal_4,BMP_WifiSignal4);
-    _createCustomChar(CharBattery,BMP_Battery);
-    _createCustomChar(CharTilt,BMP_Tilt);
+void SmartDisplay::_createAllCustomChars(PhysicalLcdDriver *lcd){
+    _createCustomChar(lcd,CharSignal_1,BMP_WifiSignal1);
+    _createCustomChar(lcd,CharSignal_2,BMP_WifiSignal2);
+    _createCustomChar(lcd,CharSignal_3,BMP_WifiSignal3);
+    _createCustomChar(lcd,CharSignal_4,BMP_WifiSignal4);
+    _createCustomChar(lcd,CharBattery,BMP_Battery);
+    _createCustomChar(lcd,CharTilt,BMP_Tilt);
 }
 #else
 
@@ -228,7 +229,7 @@ Updated      99m ago
 */
         case GravityMask: //1:
                 #if CustomGlyph
-                _createAllCustomChars();
+                //_createAllCustomChars(); 
                 #endif
 
                 lcd->setCursor(0,0);
@@ -393,7 +394,12 @@ Updated      99m ago
 */
         case GravityMask: //1:
             if(_plato) _printFloatAt(3,0,4,1,_gravity);
-            else _printFloatAt(2,0,5,3,_gravity);
+            else{
+                /*DBG_PRINTF("print gravity:");
+                DBG_PRINT(_gravity);
+                DBG_PRINTF("\n"); */
+                _printFloatAt(2,0,5,3,_gravity);
+            }
 
             _printFloatAt(12,0,5,1,_temperature);
             _printGravityTimeAt(13,2);
@@ -584,8 +590,9 @@ void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t p
     lcd->setCursor(col,row);
 
     char buffer[32];
+    /*
     int digitNum=sprintFloat((char*)buffer,value,precision);
-//    DBG_PRINTF("_printFloatAt %d,%d,%s\n",space,digitNum,buffer);
+    DBG_PRINTF("_printFloatAt %d,%d,%s\n",space,digitNum,buffer);
 
     if(space > digitNum){
         uint8_t i=space - (uint8_t)digitNum;
@@ -594,9 +601,15 @@ void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t p
         digitNum = space;
     }
     buffer[digitNum]='\0';
-
     for( uint8_t i=0;i< digitNum;i++)
-        lcd->write(buffer[i]);
+        lcd->print(buffer[i]);
+
+    */
+    char fmt[8];
+    sprintf(fmt,"%%%d.%df",space,precision);
+    sprintf(buffer,fmt,value);
+//    DBG_PRINTF("_printFloatAt fmt:%s res:%s\n",fmt,buffer);
+    lcd->print(buffer);
 }
 
 
@@ -697,4 +710,11 @@ void SmartDisplay::loop(){
            if(_updatePartial(GravityMask)) _drawGravity();
        }
    }
+}
+
+void SmartDisplay::initLcd(PhysicalLcdDriver *lcd){
+    #if CustomGlyph
+    _createAllCustomChars(lcd);
+    DBG_PRINTF("lcd=0x%x\n",lcd);
+    #endif
 }
