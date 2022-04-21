@@ -16,7 +16,7 @@
 #if OLED_LCD
 #define CustomGlyph false
 #else
-#define CustomGlyph false // triger watchdog. have to re-think about it.
+#define CustomGlyph false // triggering exception, have to re-think about it.
 #endif
 
 #define ShareModeRotate 0
@@ -258,6 +258,13 @@ extern void makeTime(time_t timeInput, struct tm &tm);
 
 
 #if CustomGlyph
+#define CharSignal_1 1
+#define CharSignal_2 2
+#define CharSignal_3 3
+#define CharSignal_4 4
+#define CharBattery 5
+#define CharTilt 6
+#else
 #define CharSignal_1 '1'
 #define CharSignal_2 '2'
 #define CharSignal_3 '3'
@@ -265,11 +272,4 @@ extern void makeTime(time_t timeInput, struct tm &tm);
 #define CharBattery 'B'
 #define CharTilt 'A'
 
-#else
-#define CharSignal_1 1
-#define CharSignal_2 2
-#define CharSignal_3 3
-#define CharSignal_4 4
-#define CharBattery 5
-#define CharTilt 6
 #endif

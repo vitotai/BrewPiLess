@@ -87,9 +87,7 @@ void SmartDisplay::redraw(){
     if(_layout & GravityMask) _drawGravity();
     if(_layout & PressureMask) _drawPressure();
     if(_layout & HumidityMask) _drawHumidity();
-    if(_layout != GravityMask){
-        _drawIp();
-    }
+    _drawIp();
 
 }
 

@@ -40,6 +40,7 @@ void SharedDisplayManager::_createAllCustomChars(){
     _createCustomChar(CharSignal_1,BMP_WifiSignal1);
     _createCustomChar(CharSignal_2,BMP_WifiSignal2);
     _createCustomChar(CharSignal_3,BMP_WifiSignal3);
+    yield();
     _createCustomChar(CharSignal_4,BMP_WifiSignal4);
     _createCustomChar(CharBattery,BMP_Battery);
     _createCustomChar(CharTilt,BMP_Tilt);
