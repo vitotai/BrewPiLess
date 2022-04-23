@@ -178,6 +178,12 @@ Updated      99m ago
                 lcd->print_P(STR_Updated);
                 lcd->setCursor(17,2);
                 lcd->print_P(STR_ago);
+                #if !CustomGlyph
+                lcd->setCursor(18,1);
+                lcd->write('w');
+                lcd->setCursor(18,3);
+                lcd->write('w');
+                #endif
             #endif
             break;
 /*

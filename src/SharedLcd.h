@@ -258,12 +258,15 @@ extern void makeTime(time_t timeInput, struct tm &tm);
 
 
 #if CustomGlyph
-#define CharSignal_1 1
+//#define CharSignal_1 1
+#define CharSignal_1 '.'
 #define CharSignal_2 2
 #define CharSignal_3 3
 #define CharSignal_4 4
-#define CharBattery 5
-#define CharTilt 6
+//#define CharBattery 5
+//#define CharTilt 6
+#define CharBattery 'B'
+#define CharTilt 'A'
 #else
 #define CharSignal_1 '1'
 #define CharSignal_2 '2'

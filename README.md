@@ -52,7 +52,8 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
     * New 'Write on buffer full' option for logging to reduce flash writing.
     * Backup/restore settings
     * LittleFS replaces SPIFFS for all ESP8266.
-    * SPIFFS is default for ESP32.
+    * LittleFS is default for ESP32.
+    * Partition table for ESP32 has changed. Flash via USB might be necessary.
 
  * 4.1
     * "Real" generic HTTP logging.

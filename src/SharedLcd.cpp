@@ -23,9 +23,12 @@ uint8_t SharedDisplayManager::i2cLcdAddr = IIC_LCD_ADDRESS;
 #if CustomGlyph
 
 static const uint8_t BMP_WifiSignal1[8]  PROGMEM  = {B00000, B00000, B00000, B00000, B00000, B00000, B00001,B00000};
-static const uint8_t BMP_WifiSignal2[8]  PROGMEM  = {B00000, B00000, B00000, B00000, B00011, B00000, B00001,B00000};
-static const uint8_t BMP_WifiSignal3[8]  PROGMEM  = {B00000, B00000, B00111, B00000, B00011, B00000, B00001,B00000};
-static const uint8_t BMP_WifiSignal4[8]  PROGMEM  = {B01111, B00000, B00111, B00000, B00011, B00000, B00001,B00000};
+//static const uint8_t BMP_WifiSignal2[8]  PROGMEM  = {B00000, B00000, B00000, B00000, B00011, B00000, B00001,B00000};
+//static const uint8_t BMP_WifiSignal3[8]  PROGMEM  = {B00000, B00000, B00111, B00000, B00011, B00000, B00001,B00000};
+//static const uint8_t BMP_WifiSignal4[8]  PROGMEM  = {B01111, B00000, B00111, B00000, B00011, B00000, B00001,B00000};
+static const uint8_t BMP_WifiSignal2[8]  PROGMEM  = {B00000, B00000, B00000, B00000, B01100, B00000, B01000,B00000};
+static const uint8_t BMP_WifiSignal3[8]  PROGMEM  = {B00000, B00000, B01110, B00000, B01100, B00000, B01000,B00000};
+static const uint8_t BMP_WifiSignal4[8]  PROGMEM  = {B01111, B00000, B01110, B00000, B01100, B00000, B01000,B00000};
 
 static const uint8_t BMP_Battery[8]  PROGMEM  = {B00000, B01100, B01100, B11110, B11110, B11110, B11110,B00000};
 static const uint8_t BMP_Tilt[8]  PROGMEM  = {B00000, B00000, B00001, B00010, B00100, B01000, B11111, B00000};
@@ -37,13 +40,12 @@ void SharedDisplayManager::_createCustomChar(char ch, const uint8_t bmp[8]){
    
 }
 void SharedDisplayManager::_createAllCustomChars(){
-    _createCustomChar(CharSignal_1,BMP_WifiSignal1);
+//    _createCustomChar(CharSignal_1,BMP_WifiSignal1);
     _createCustomChar(CharSignal_2,BMP_WifiSignal2);
     _createCustomChar(CharSignal_3,BMP_WifiSignal3);
-    yield();
     _createCustomChar(CharSignal_4,BMP_WifiSignal4);
-    _createCustomChar(CharBattery,BMP_Battery);
-    _createCustomChar(CharTilt,BMP_Tilt);
+//    _createCustomChar(CharBattery,BMP_Battery);
+//    _createCustomChar(CharTilt,BMP_Tilt);
 }
 #endif
 
