@@ -30,6 +30,11 @@ PressureMonitorClass PressureMonitor;
 
 // for esp32
 #if ESP32
+
+#ifndef ADC1_GPIO36_CHANNEL
+#define ADC1_GPIO36_CHANNEL ADC1_CHANNEL_0
+#endif
+
 #define ConcateChanel(pin) ADC1_GPIO ## pin ## _CHANNEL
 #define AdcChannelFromPinNr(pin) ConcateChanel(pin)
 

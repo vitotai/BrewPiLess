@@ -309,11 +309,7 @@
 
 #ifndef UseLittleFS
 
-#if ESP32
-#define UseLittleFS false
-#else
 #define UseLittleFS true
-#endif
 
 #endif
 
