@@ -20,7 +20,7 @@
 #define IsVoltageValid(v) ((v) > 0)
 //#define IsGravityValid(g) ((g) > 0)
 
-#define IsGravityInValidRange(g) ((g) > 0.8 && (g) < 1.25)
+//#define IsGravityInValidRange(g) ((g) > 0.8 && (g) < 1.25)
 #define GavityDeviceConfigFilename "/gdconfig"
 #define MAX_CONFIGDATA_SIZE 256
 

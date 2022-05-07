@@ -356,8 +356,12 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 		}else if(root.containsKey("gravity")){
 			// gravity information directly from iSpindel
 			float sgreading=root["gravity"];
-			if(IsGravityInValidRange(sgreading)) setGravity(sgreading, TimeKeeper.getTimeSeconds());
+			
+			if((_cfg->usePlato && sgreading >0 && sgreading <90)
+			  ||(!_cfg->usePlato && sgreading >0.8 && sgreading <1.3) ){ 
 
+				setGravity(sgreading, TimeKeeper.getTimeSeconds());
+			}
 			#if SMART_DISPLAY
 			char unit;
 			float max,min;
