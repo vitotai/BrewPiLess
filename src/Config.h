@@ -636,7 +636,7 @@
 
 #if UseLittleFS
 #if ESP32
-#define FileSystem LITTLEFS
+#define FileSystem LittleFS
 #else
 #define FileSystem  LittleFS
 #endif

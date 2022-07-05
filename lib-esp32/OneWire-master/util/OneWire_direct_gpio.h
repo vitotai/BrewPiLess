@@ -1,60 +1,11 @@
-#ifndef OneWire_h
-#define OneWire_h
+#ifndef OneWire_Direct_GPIO_h
+#define OneWire_Direct_GPIO_h
 
-#include <inttypes.h>
+// This header should ONLY be included by OneWire.cpp.  These defines are
+// meant to be private, used within OneWire.cpp, but not exposed to Arduino
+// sketches or other libraries which may include OneWire.h.
 
-#if defined(__AVR__)
-#include <util/crc16.h>
-#endif
-
-#if ARDUINO >= 100
-#include "Arduino.h"       // for delayMicroseconds, digitalPinToBitMask, etc
-#else
-#include "WProgram.h"      // for delayMicroseconds
-#include "pins_arduino.h"  // for digitalPinToBitMask, etc
-#endif
-
-// You can exclude certain features from OneWire.  In theory, this
-// might save some space.  In practice, the compiler automatically
-// removes unused code (technically, the linker, using -fdata-sections
-// and -ffunction-sections when compiling, and Wl,--gc-sections
-// when linking), so most of these will not result in any code size
-// reduction.  Well, unless you try to use the missing features
-// and redesign your program to not need them!  ONEWIRE_CRC8_TABLE
-// is the exception, because it selects a fast but large algorithm
-// or a small but slow algorithm.
-
-// you can exclude onewire_search by defining that to 0
-#ifndef ONEWIRE_SEARCH
-#define ONEWIRE_SEARCH 1
-#endif
-
-// You can exclude CRC checks altogether by defining this to 0
-#ifndef ONEWIRE_CRC
-#define ONEWIRE_CRC 1
-#endif
-
-// Select the table-lookup method of computing the 8-bit CRC
-// by setting this to 1.  The lookup table enlarges code size by
-// about 250 bytes.  It does NOT consume RAM (but did in very
-// old versions of OneWire).  If you disable this, a slower
-// but very compact algorithm is used.
-#ifndef ONEWIRE_CRC8_TABLE
-#define ONEWIRE_CRC8_TABLE 1
-#endif
-
-// You can allow 16-bit CRC checks by defining this to 1
-// (Note that ONEWIRE_CRC must also be 1.)
-#ifndef ONEWIRE_CRC16
-#define ONEWIRE_CRC16 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-#ifndef TRUE
-#define TRUE  1
-#endif
+#include <stdint.h>
 
 // Platform specific I/O definitions
 
@@ -64,11 +15,19 @@
 #define IO_REG_TYPE uint8_t
 #define IO_REG_BASE_ATTR asm("r30")
 #define IO_REG_MASK_ATTR
+#if defined(__AVR_ATmega4809__)
+#define DIRECT_READ(base, mask)         (((*(base)) & (mask)) ? 1 : 0)
+#define DIRECT_MODE_INPUT(base, mask)   ((*((base)-8)) &= ~(mask))
+#define DIRECT_MODE_OUTPUT(base, mask)  ((*((base)-8)) |= (mask))
+#define DIRECT_WRITE_LOW(base, mask)    ((*((base)-4)) &= ~(mask))
+#define DIRECT_WRITE_HIGH(base, mask)   ((*((base)-4)) |= (mask))
+#else
 #define DIRECT_READ(base, mask)         (((*(base)) & (mask)) ? 1 : 0)
 #define DIRECT_MODE_INPUT(base, mask)   ((*((base)+1)) &= ~(mask))
 #define DIRECT_MODE_OUTPUT(base, mask)  ((*((base)+1)) |= (mask))
 #define DIRECT_WRITE_LOW(base, mask)    ((*((base)+2)) &= ~(mask))
 #define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+2)) |= (mask))
+#endif
 
 #elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK66FX1M0__) || defined(__MK64FX512__)
 #define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))
@@ -93,6 +52,18 @@
 #define DIRECT_MODE_OUTPUT(base, mask)  (*((base)+20) |= (mask))
 #define DIRECT_WRITE_LOW(base, mask)    (*((base)+8) = (mask))
 #define DIRECT_WRITE_HIGH(base, mask)   (*((base)+4) = (mask))
+
+#elif defined(__IMXRT1052__) || defined(__IMXRT1062__)
+#define PIN_TO_BASEREG(pin)             (portOutputRegister(pin))
+#define PIN_TO_BITMASK(pin)             (digitalPinToBitMask(pin))
+#define IO_REG_TYPE uint32_t
+#define IO_REG_BASE_ATTR
+#define IO_REG_MASK_ATTR
+#define DIRECT_READ(base, mask)         ((*((base)+2) & (mask)) ? 1 : 0)
+#define DIRECT_MODE_INPUT(base, mask)   (*((base)+1) &= ~(mask))
+#define DIRECT_MODE_OUTPUT(base, mask)  (*((base)+1) |= (mask))
+#define DIRECT_WRITE_LOW(base, mask)    (*((base)+34) = (mask))
+#define DIRECT_WRITE_HIGH(base, mask)   (*((base)+33) = (mask))
 
 #elif defined(__SAM3X8E__) || defined(__SAM3A8C__) || defined(__SAM3A4C__)
 // Arduino 1.5.1 may have a bug in delayMicroseconds() on Arduino Due.
@@ -156,10 +127,14 @@
 static inline __attribute__((always_inline))
 IO_REG_TYPE directRead(IO_REG_TYPE pin)
 {
+#if CONFIG_IDF_TARGET_ESP32C3
+    return (GPIO.in.val >> pin) & 0x1;
+#else // plain ESP32
     if ( pin < 32 )
         return (GPIO.in >> pin) & 0x1;
-    else if ( pin < 40 )
+    else if ( pin < 46 )
         return (GPIO.in1.val >> (pin - 32)) & 0x1;
+#endif
 
     return 0;
 }
@@ -167,26 +142,38 @@ IO_REG_TYPE directRead(IO_REG_TYPE pin)
 static inline __attribute__((always_inline))
 void directWriteLow(IO_REG_TYPE pin)
 {
+#if CONFIG_IDF_TARGET_ESP32C3
+    GPIO.out_w1tc.val = ((uint32_t)1 << pin);
+#else // plain ESP32
     if ( pin < 32 )
         GPIO.out_w1tc = ((uint32_t)1 << pin);
-    else if ( pin < 34 )
+    else if ( pin < 46 )
         GPIO.out1_w1tc.val = ((uint32_t)1 << (pin - 32));
+#endif
 }
 
 static inline __attribute__((always_inline))
 void directWriteHigh(IO_REG_TYPE pin)
 {
+#if CONFIG_IDF_TARGET_ESP32C3
+    GPIO.out_w1ts.val = ((uint32_t)1 << pin);
+#else // plain ESP32
     if ( pin < 32 )
         GPIO.out_w1ts = ((uint32_t)1 << pin);
-    else if ( pin < 34 )
+    else if ( pin < 46 )
         GPIO.out1_w1ts.val = ((uint32_t)1 << (pin - 32));
+#endif
 }
 
 static inline __attribute__((always_inline))
 void directModeInput(IO_REG_TYPE pin)
 {
+#if CONFIG_IDF_TARGET_ESP32C3
+    GPIO.enable_w1tc.val = ((uint32_t)1 << (pin));
+#else
     if ( digitalPinIsValid(pin) )
     {
+#if ESP_IDF_VERSION_MAJOR < 4      // IDF 3.x ESP32/PICO-D4
         uint32_t rtc_reg(rtc_gpio_desc[pin].reg);
 
         if ( rtc_reg ) // RTC pins PULL settings
@@ -194,27 +181,25 @@ void directModeInput(IO_REG_TYPE pin)
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].mux);
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].pullup | rtc_gpio_desc[pin].pulldown);
         }
-
+#endif
+	// Input
         if ( pin < 32 )
             GPIO.enable_w1tc = ((uint32_t)1 << pin);
         else
             GPIO.enable1_w1tc.val = ((uint32_t)1 << (pin - 32));
-
-        uint32_t pinFunction((uint32_t)2 << FUN_DRV_S); // what are the drivers?
-        pinFunction |= FUN_IE; // input enable but required for output as well?
-        pinFunction |= ((uint32_t)2 << MCU_SEL_S);
-
-        ESP_REG(DR_REG_IO_MUX_BASE + esp32_gpioMux[pin].reg) = pinFunction;
-
-        GPIO.pin[pin].val = 0;
     }
+#endif
 }
 
 static inline __attribute__((always_inline))
 void directModeOutput(IO_REG_TYPE pin)
 {
+#if CONFIG_IDF_TARGET_ESP32C3
+    GPIO.enable_w1ts.val = ((uint32_t)1 << (pin));
+#else
     if ( digitalPinIsValid(pin) && pin <= 33 ) // pins above 33 can be only inputs
     {
+#if ESP_IDF_VERSION_MAJOR < 4      // IDF 3.x ESP32/PICO-D4
         uint32_t rtc_reg(rtc_gpio_desc[pin].reg);
 
         if ( rtc_reg ) // RTC pins PULL settings
@@ -222,20 +207,14 @@ void directModeOutput(IO_REG_TYPE pin)
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].mux);
             ESP_REG(rtc_reg) = ESP_REG(rtc_reg) & ~(rtc_gpio_desc[pin].pullup | rtc_gpio_desc[pin].pulldown);
         }
-
+#endif
+        // Output
         if ( pin < 32 )
             GPIO.enable_w1ts = ((uint32_t)1 << pin);
         else // already validated to pins <= 33
             GPIO.enable1_w1ts.val = ((uint32_t)1 << (pin - 32));
-
-        uint32_t pinFunction((uint32_t)2 << FUN_DRV_S); // what are the drivers?
-        pinFunction |= FUN_IE; // input enable but required for output as well?
-        pinFunction |= ((uint32_t)2 << MCU_SEL_S);
-
-        ESP_REG(DR_REG_IO_MUX_BASE + esp32_gpioMux[pin].reg) = pinFunction;
-
-        GPIO.pin[pin].val = 0;
     }
+#endif
 }
 
 #define DIRECT_READ(base, pin)          directRead(pin)
@@ -243,7 +222,29 @@ void directModeOutput(IO_REG_TYPE pin)
 #define DIRECT_WRITE_HIGH(base, pin)    directWriteHigh(pin)
 #define DIRECT_MODE_INPUT(base, pin)    directModeInput(pin)
 #define DIRECT_MODE_OUTPUT(base, pin)   directModeOutput(pin)
+// https://github.com/PaulStoffregen/OneWire/pull/47
+// https://github.com/stickbreaker/OneWire/commit/6eb7fc1c11a15b6ac8c60e5671cf36eb6829f82c
+#ifdef  interrupts
+#undef  interrupts
+#endif
+#ifdef  noInterrupts
+#undef  noInterrupts
+#endif
+#define noInterrupts() {portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;portENTER_CRITICAL(&mux)
+#define interrupts() portEXIT_CRITICAL(&mux);}
 //#warning "ESP32 OneWire testing"
+
+#elif defined(ARDUINO_ARCH_STM32)
+#define PIN_TO_BASEREG(pin)             (0)
+#define PIN_TO_BITMASK(pin)             ((uint32_t)digitalPinToPinName(pin))
+#define IO_REG_TYPE uint32_t
+#define IO_REG_BASE_ATTR
+#define IO_REG_MASK_ATTR
+#define DIRECT_READ(base, pin)          digitalReadFast((PinName)pin)
+#define DIRECT_WRITE_LOW(base, pin)     digitalWriteFast((PinName)pin, LOW)
+#define DIRECT_WRITE_HIGH(base, pin)    digitalWriteFast((PinName)pin, HIGH)
+#define DIRECT_MODE_INPUT(base, pin)    pin_function((PinName)pin, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0))
+#define DIRECT_MODE_OUTPUT(base, pin)   pin_function((PinName)pin, STM_PIN_DATA(STM_MODE_OUTPUT_PP, GPIO_NOPULL, 0))
 
 #elif defined(__SAMD21G18A__)
 #define PIN_TO_BASEREG(pin)             portModeRegister(digitalPinToPort(pin))
@@ -256,6 +257,23 @@ void directModeOutput(IO_REG_TYPE pin)
 #define DIRECT_MODE_OUTPUT(base, mask)  ((*((base)+2)) = (mask))
 #define DIRECT_WRITE_LOW(base, mask)    ((*((base)+5)) = (mask))
 #define DIRECT_WRITE_HIGH(base, mask)   ((*((base)+6)) = (mask))
+
+#elif defined(__ASR6501__)
+#define PIN_IN_PORT(pin)    (pin % PIN_NUMBER_IN_PORT)
+#define PORT_FROM_PIN(pin)  (pin / PIN_NUMBER_IN_PORT)
+#define PORT_OFFSET(port)   (PORT_REG_SHFIT * port)
+#define PORT_ADDRESS(pin)   (CYDEV_GPIO_BASE + PORT_OFFSET(PORT_FROM_PIN(pin)))
+
+#define PIN_TO_BASEREG(pin)             (0)
+#define PIN_TO_BITMASK(pin)             (pin)
+#define IO_REG_TYPE uint32_t
+#define IO_REG_BASE_ATTR
+#define IO_REG_MASK_ATTR
+#define DIRECT_READ(base, pin)          CY_SYS_PINS_READ_PIN(PORT_ADDRESS(pin)+4, PIN_IN_PORT(pin))
+#define DIRECT_WRITE_LOW(base, pin)     CY_SYS_PINS_CLEAR_PIN(PORT_ADDRESS(pin), PIN_IN_PORT(pin))
+#define DIRECT_WRITE_HIGH(base, pin)    CY_SYS_PINS_SET_PIN(PORT_ADDRESS(pin), PIN_IN_PORT(pin))
+#define DIRECT_MODE_INPUT(base, pin)    CY_SYS_PINS_SET_DRIVE_MODE(PORT_ADDRESS(pin)+8, PIN_IN_PORT(pin), CY_SYS_PINS_DM_DIG_HIZ)
+#define DIRECT_MODE_OUTPUT(base, pin)   CY_SYS_PINS_SET_DRIVE_MODE(PORT_ADDRESS(pin)+8, PIN_IN_PORT(pin), CY_SYS_PINS_DM_STRONG)
 
 #elif defined(RBL_NRF51822)
 #define PIN_TO_BASEREG(pin)             (0)
@@ -409,6 +427,20 @@ void directWriteHigh(IO_REG_TYPE mask)
 #define DIRECT_MODE_INPUT(base, mask)    directModeInput(mask)
 #define DIRECT_MODE_OUTPUT(base, mask)   directModeOutput(mask)
 
+#elif defined(ARDUINO_ARCH_MBED_RP2040)|| defined(ARDUINO_ARCH_RP2040)
+#define delayMicroseconds(time)         busy_wait_us(time)
+#define PIN_TO_BASEREG(pin)             (0)
+#define PIN_TO_BITMASK(pin)             (pin)
+#define IO_REG_TYPE unsigned int
+#define IO_REG_BASE_ATTR
+#define IO_REG_MASK_ATTR
+#define DIRECT_READ(base, pin)          digitalRead(pin)
+#define DIRECT_WRITE_LOW(base, pin)     digitalWrite(pin, LOW)
+#define DIRECT_WRITE_HIGH(base, pin)    digitalWrite(pin, HIGH)
+#define DIRECT_MODE_INPUT(base, pin)    pinMode(pin,INPUT)
+#define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
+#warning "OneWire. RP2040 in Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite."
+
 #else
 #define PIN_TO_BASEREG(pin)             (0)
 #define PIN_TO_BITMASK(pin)             (pin)
@@ -423,123 +455,5 @@ void directWriteHigh(IO_REG_TYPE mask)
 #warning "OneWire. Fallback mode. Using API calls for pinMode,digitalRead and digitalWrite. Operation of this library is not guaranteed on this architecture."
 
 #endif
-
-
-class OneWire
-{
-  private:
-    IO_REG_TYPE bitmask;
-    volatile IO_REG_TYPE *baseReg;
-
-#if ONEWIRE_SEARCH
-    // global search state
-    unsigned char ROM_NO[8];
-    uint8_t LastDiscrepancy;
-    uint8_t LastFamilyDiscrepancy;
-    uint8_t LastDeviceFlag;
-#endif
-
-  public:
-    OneWire( uint8_t pin);
-
-    // Perform a 1-Wire reset cycle. Returns 1 if a device responds
-    // with a presence pulse.  Returns 0 if there is no device or the
-    // bus is shorted or otherwise held low for more than 250uS
-    uint8_t reset(void);
-
-    // Issue a 1-Wire rom select command, you do the reset first.
-    void select(const uint8_t rom[8]);
-
-    // Issue a 1-Wire rom skip command, to address all on bus.
-    void skip(void);
-
-    // Write a byte. If 'power' is one then the wire is held high at
-    // the end for parasitically powered devices. You are responsible
-    // for eventually depowering it by calling depower() or doing
-    // another read or write.
-    void write(uint8_t v, uint8_t power = 0);
-
-    void write_bytes(const uint8_t *buf, uint16_t count, bool power = 0);
-
-    // Read a byte.
-    uint8_t read(void);
-
-    void read_bytes(uint8_t *buf, uint16_t count);
-
-    // Write a bit. The bus is always left powered at the end, see
-    // note in write() about that.
-    void write_bit(uint8_t v);
-
-    // Read a bit.
-    uint8_t read_bit(void);
-
-    // Stop forcing power onto the bus. You only need to do this if
-    // you used the 'power' flag to write() or used a write_bit() call
-    // and aren't about to do another read or write. You would rather
-    // not leave this powered if you don't have to, just in case
-    // someone shorts your bus.
-    void depower(void);
-
-#if ONEWIRE_SEARCH
-    // Clear the search state so that if will start from the beginning again.
-    void reset_search();
-
-    // Setup the search to find the device type 'family_code' on the next call
-    // to search(*newAddr) if it is present.
-    void target_search(uint8_t family_code);
-
-    // Look for the next device. Returns 1 if a new address has been
-    // returned. A zero might mean that the bus is shorted, there are
-    // no devices, or you have already retrieved all of them.  It
-    // might be a good idea to check the CRC to make sure you didn't
-    // get garbage.  The order is deterministic. You will always get
-    // the same devices in the same order.
-    uint8_t search(uint8_t *newAddr, bool search_mode = true);
-#endif
-
-#if ONEWIRE_CRC
-    // Compute a Dallas Semiconductor 8 bit CRC, these are used in the
-    // ROM and scratchpad registers.
-    static uint8_t crc8(const uint8_t *addr, uint8_t len);
-
-#if ONEWIRE_CRC16
-    // Compute the 1-Wire CRC16 and compare it against the received CRC.
-    // Example usage (reading a DS2408):
-    //    // Put everything in a buffer so we can compute the CRC easily.
-    //    uint8_t buf[13];
-    //    buf[0] = 0xF0;    // Read PIO Registers
-    //    buf[1] = 0x88;    // LSB address
-    //    buf[2] = 0x00;    // MSB address
-    //    WriteBytes(net, buf, 3);    // Write 3 cmd bytes
-    //    ReadBytes(net, buf+3, 10);  // Read 6 data bytes, 2 0xFF, 2 CRC16
-    //    if (!CheckCRC16(buf, 11, &buf[11])) {
-    //        // Handle error.
-    //    }     
-    //          
-    // @param input - Array of bytes to checksum.
-    // @param len - How many bytes to use.
-    // @param inverted_crc - The two CRC16 bytes in the received data.
-    //                       This should just point into the received data,
-    //                       *not* at a 16-bit integer.
-    // @param crc - The crc starting value (optional)
-    // @return True, iff the CRC matches.
-    static bool check_crc16(const uint8_t* input, uint16_t len, const uint8_t* inverted_crc, uint16_t crc = 0);
-
-    // Compute a Dallas Semiconductor 16 bit CRC.  This is required to check
-    // the integrity of data received from many 1-Wire devices.  Note that the
-    // CRC computed here is *not* what you'll get from the 1-Wire network,
-    // for two reasons:
-    //   1) The CRC is transmitted bitwise inverted.
-    //   2) Depending on the endian-ness of your processor, the binary
-    //      representation of the two-byte return value may have a different
-    //      byte order than the two bytes you get from 1-Wire.
-    // @param input - Array of bytes to checksum.
-    // @param len - How many bytes to use.
-    // @param crc - The crc starting value (optional)
-    // @return The CRC16, as defined by Dallas Semiconductor.
-    static uint16_t crc16(const uint8_t* input, uint16_t len, uint16_t crc = 0);
-#endif
-#endif
-};
 
 #endif

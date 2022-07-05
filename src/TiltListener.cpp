@@ -37,11 +37,31 @@ void TiltListener::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
 
 bool TiltListener::_getTiltInfo(NimBLEAdvertisedDevice* advertisedDevice,TiltHydrometerInfo& tiltInfo){
 
-    if(!advertisedDevice->haveManufacturerData()) return false;
 
     std::string strManufacturerData = advertisedDevice->getManufacturerData();
+    #if 1
+    // printout data
+    DBG_PRINTF("  Dev: %s, %d ",(advertisedDevice->haveName())? advertisedDevice->getName().c_str():"NONAME",advertisedDevice->getRSSI());
+    DBG_PRINTF("\t  %s :",(advertisedDevice->haveServiceData())? advertisedDevice->getServiceDataUUID(0).toString().c_str():"NO ServiceData");
+   
+    DBG_PRINTF(" Man len: %d ", strManufacturerData.length());
+
+    std::string strServiceData = advertisedDevice->getServiceData();
+    DBG_PRINTF(" Ser len: %d \n", strServiceData.length());
+    if(strServiceData.length() >0){
+        DBG_PRINTF("\t\t");
+        uint8_t cServiceData[100];
+        strServiceData.copy((char *)cServiceData, strServiceData.length(), 0);
+        for(int i=0;i< strServiceData.length();i++){
+            if(i>0) DBG_PRINT(",");
+            DBG_PRINTF("0x%x",cServiceData[i]);
+        }
+        DBG_PRINTF("\n");
+    }
+
+    #endif
     
-    //DBG_PRINTF("AdvertisedDevice length: %d \n", strManufacturerData.length());
+    if(!advertisedDevice->haveManufacturerData()) return false;
 
     if (strManufacturerData.length() != 25) return false;
 
