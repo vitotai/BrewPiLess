@@ -253,15 +253,13 @@ static void handleFileList(void) {
   // avoid recursive call, which might open too many directories 
   #if ESP32
   File dir = FileSystem.open(path);
-  int exlen =path.length();
-  
-  if(path.charAt(exlen - 1) != '/') exlen ++;
+ 
 
-  DBG_PRINTF("length: %d",exlen);
+//  DBG_PRINTF("length: %d",exlen);
   #else
   Dir dir = FileSystem.openDir(path);
   #endif
-  path = String();
+  //path = String();
 
   String output = "[";
   #if ESP32
@@ -285,14 +283,36 @@ static void handleFileList(void) {
     output += "{\"type\":\"";
     output += (isDir)? "dir":"file";
     output += "\",\"name\":\"";
+
+    DBG_PRINTF("%s, %s, cmp:%d, ", entry.name(),path.c_str(), strncmp(entry.name(),path.c_str(),path.length()));
+    String name=(entry.name());
+    if(name.startsWith(path)){
+      
+      int exlen =path.length();  
+      if(path.charAt(exlen - 1) != '/') exlen ++;
+      DBG_PRINTF("exlen:%d\n",exlen);
+      output += name.substring(exlen);
+    }else{
+       if(entry.name()[0] == '/'){
+        DBG_PRINTF("starts with path delimiter\n");
+        output += name.substring(1);
+       }else{
+         DBG_PRINTF("simple name\n");
+        output += name;
+       }
+    }
+    #if 0
     #if UseLittleFS
     #if ESP32
+    // the name is so complicated.
+    // 
     output += String(entry.name()).substring(exlen);
     #else
     output += entry.name();
     #endif
     #else
     output += String(entry.name()).substring(1);
+    #endif
     #endif
     output += "\"}";
     entry.close();  

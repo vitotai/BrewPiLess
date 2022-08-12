@@ -18,9 +18,9 @@
 #define INVALID_GRAVITY -1
 
 #define LOG_PATH "/log"
-
+#ifndef LogBufferSize
 #define LogBufferSize 1024
-
+#endif
 // Log tags
 
 #define PeriodTag 0xF0
