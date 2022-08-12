@@ -284,20 +284,17 @@ static void handleFileList(void) {
     output += (isDir)? "dir":"file";
     output += "\",\"name\":\"";
 
-    DBG_PRINTF("%s, %s, cmp:%d, ", entry.name(),path.c_str(), strncmp(entry.name(),path.c_str(),path.length()));
+    //DBG_PRINTF("%s, %s, cmp:%d, ", entry.name(),path.c_str(), strncmp(entry.name(),path.c_str(),path.length()));
     String name=(entry.name());
     if(name.startsWith(path)){
       
       int exlen =path.length();  
       if(path.charAt(exlen - 1) != '/') exlen ++;
-      DBG_PRINTF("exlen:%d\n",exlen);
       output += name.substring(exlen);
     }else{
        if(entry.name()[0] == '/'){
-        DBG_PRINTF("starts with path delimiter\n");
         output += name.substring(1);
        }else{
-         DBG_PRINTF("simple name\n");
         output += name;
        }
     }
