@@ -97,7 +97,7 @@ void DataLogger::sendData(void)
 		#endif
 		_http.begin(wifiClient,_loggingInfo->url);
 
- 		if(_loggingInfo->contentType){
+ 		if(_loggingInfo->contentType && _loggingInfo->contentType[0]!='\0'){
   			_http.addHeader("Content-Type", _loggingInfo->contentType);
  		}else{
   			_http.addHeader("Content-Type", "application/x-www-form-urlencoded");

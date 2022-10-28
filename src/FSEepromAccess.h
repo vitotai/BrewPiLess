@@ -22,7 +22,7 @@
 #define FSEepromAccess_H
 #if defined(ESP32)
 #if UseLittleFS
-#include <LITTLEFS.h> //#include <LittleFS.h>
+#include <LittleFS.h>
 #else
 #include <SPIFFS.h>
 #endif

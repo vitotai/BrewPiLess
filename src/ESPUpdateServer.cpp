@@ -13,7 +13,7 @@
 #include <FS.h>
 
 #if UseLittleFS
-#include <LITTLEFS.h> //#include <LittleFS.h>
+#include <LittleFS.h>
 #else
 #include <SPIFFS.h>
 #endif

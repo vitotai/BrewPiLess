@@ -90,11 +90,7 @@ extern "C" {
 
 
 #if UseLittleFS
-#if ESP32
-#include <LITTLEFS.h>
-#else
 #include <LittleFS.h>
-#endif
 #else
 #if defined(ESP32)
 #include <SPIFFS.h>

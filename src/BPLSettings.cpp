@@ -9,7 +9,7 @@
 #elif defined(ESP32)
 #include <WiFi.h>
 #if UseLittleFS
-#include <LITTLEFS.h> //#include <LittleFS.h>
+#include <LittleFS.h>
 #else
 #include <SPIFFS.h>
 #endif
