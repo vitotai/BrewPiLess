@@ -470,7 +470,7 @@ RH C 56%      R  75%
 */
 
         case (HumidityMask | GravityMask)://5:
-            singleLinedHumidity = 3;
+            singleLinedHumidity = 2;
             break;
 /*
 layout 4: Humidity
