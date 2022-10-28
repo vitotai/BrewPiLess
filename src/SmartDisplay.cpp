@@ -210,8 +210,8 @@ RH C 56%      R  75%
 
         case (PressureMask | GravityMask): //3:
         case (HumidityMask | GravityMask)://5:
-            if(_layout == 3) pressureLine = 3;
-            else singleLinedHumidity = 3;
+            if(_layout == 3) pressureLine = 2;
+            else singleLinedHumidity = 2;
 
             lcd->setCursor(0,0);
             lcd->write('G');
@@ -418,7 +418,7 @@ RH C 56%      R  75%
         case (PressureMask | GravityMask): //3:
         case (HumidityMask | PressureMask)://6:
         case (HumidityMask | PressureMask | GravityMask)://7:
-            pressureLine = 3;
+            pressureLine = 2;
             break;
 /*
 layout 4: Humidity
