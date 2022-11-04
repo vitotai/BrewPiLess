@@ -175,6 +175,10 @@ extern "C" {
 
 #define HUMIDITY_CONTROL_PATH "/rh"
 
+#ifdef METRICS
+#define METRICS_PATH "/metrics"
+#endif
+
 const char *public_list[]={
 "/bwf.js",
 "/brewing.json"
@@ -607,6 +611,22 @@ public:
 			+String("}");
 			request->send(200,"application/json",json);
 		}
+		#ifdef METRICS
+		else if (request->method() == HTTP_GET && request->url() == METRICS_PATH){
+                        uint8_t mode, state;
+                        float beerSet, beerTemp, fridgeTemp, fridgeSet, roomTemp;
+                        brewPi.getAllStatus(&state, &mode, &beerTemp, &beerSet, &fridgeTemp, &fridgeSet, &roomTemp);
+                        #define TEMPor0(a) (IS_FLOAT_TEMP_VALID(a)?  String(a):String("0"))
+						String instance_string = String("{instance=\"" + String(syscfg->titlelabel) + "\"} ");
+                        String body = 
+                        String("brewpi_beer_temp" +   instance_string + TEMPor0(beerTemp) + "\n") +
+                        String("brewpi_beer_set" +    instance_string + TEMPor0(beerSet)  + "\n") +
+                        String("brewpi_fridge_temp" + instance_string + TEMPor0(fridgeTemp) + "\n") +
+                        String("brewpi_fridge_set" +  instance_string + TEMPor0(fridgeSet) + "\n") +
+                        String("brewpi_room_temp" +   instance_string + TEMPor0(roomTemp) + "\n"); 
+                        request->send(200,"text/plain",body);
+		}
+		#endif
 	 	#ifdef ENABLE_LOGGING
 	 	else if (request->url() == LOGGING_PATH){
 	 		if(request->method() == HTTP_POST){
@@ -783,6 +803,9 @@ public:
 			 || request->url() == GETSTATUS_PATH
 			 || request->url() == BEER_PROFILE_PATH
 			 || request->url() == MQTT_PATH
+			 #ifdef METRICS
+			 || request->url() == METRICS_PATH
+			 #endif
 	 		#ifdef ENABLE_LOGGING
 	 		|| request->url() == LOGGING_PATH
 	 		#endif
