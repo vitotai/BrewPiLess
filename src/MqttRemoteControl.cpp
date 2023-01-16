@@ -94,7 +94,12 @@ uint16_t MqttRemoteControl::_publish(const char* key,char value){
     char data[4];
     data[0]=value;
     data[1]='\0';
-    return _client.publish(topic,DefaultLogginQoS,true,data,1);
+    uint16_t packetid=_client.publish(topic,DefaultLogginQoS,true,data,1);
+    if(packetid ==0){
+        // error
+        _client.disconnect();
+    }
+    return packetid;
 }
 
 void MqttRemoteControl::_reportData(void){

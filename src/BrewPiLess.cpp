@@ -128,16 +128,16 @@ extern "C" {
 #define LOGGING_PATH	"/log"
 #endif
 
-#define LOGLIST_PATH  "/loglist.php"
+#define LOGLIST_PATH    "/loglist.php"
 #define CHART_DATA_PATH "/chart.php"
 
 #define CONFIG_PATH		"/config"
 #define TIME_PATH       "/time"
-#define RESETWIFI_PATH       "/erasewifisetting"
-
-#define FPUTS_PATH       "/fputs"
-#define FLIST_PATH       "/list"
-#define DELETE_PATH       "/rm"
+#define RESETWIFI_PATH  "/erasewifisetting"
+#define RESTART_PATH	"/restart"
+#define FPUTS_PATH      "/fputs"
+#define FLIST_PATH      "/list"
+#define DELETE_PATH     "/rm"
 
 #define CHART_LIB_PATH       "/dygraph-combined.js"
 
@@ -577,6 +577,11 @@ public:
 			theSettings.save();
 			#endif
 			requestRestart(true);
+		}else if(request->method() == HTTP_GET &&  request->url() == RESTART_PATH){
+	 	    if(!request->authenticate(syscfg->username, syscfg->password))
+	        return request->requestAuthentication();
+		 	request->send(200,"text/html","Done, restarting..");
+			requestRestart(false);
 	 	}else if(request->method() == HTTP_POST &&  request->url() == FLIST_PATH){
 	 	    if(!request->authenticate(syscfg->username, syscfg->password))
 	        return request->requestAuthentication();
@@ -778,8 +783,8 @@ public:
 	bool canHandle(AsyncWebServerRequest *request){
 	 	if(request->method() == HTTP_GET){
 	 		if( request->url() == CONFIG_PATH || request->url() == TIME_PATH
-
 			 || request->url() == RESETWIFI_PATH  
+			 || request->url() == RESTART_PATH  
 			 || request->url() == GETSTATUS_PATH
 			 || request->url() == BEER_PROFILE_PATH
 			 || request->url() == MQTT_PATH
