@@ -289,6 +289,8 @@ var HW_1W_2413=3;
 var HW_EXT_SENSOR=5;
 var HW_ENV_SENSOR= 6;
 var HW_BME280=7;
+var HW_BLE_SENSOR=8;
+var HW_BLE_TEMP_SENSOR=9;
 
 var devices = {
     pinlabel:function(pin){
@@ -323,11 +325,12 @@ var devices = {
     },
     add: function(a, f) {
         var g;
-        if (f.h == HW_1W_SENSOR) { // sensor
+        if (f.h == HW_1W_SENSOR || f.h ==HW_BLE_TEMP_SENSOR) { // sensor
             g = window.sensorContainer.cloneNode(true);
             g.querySelector("span.device-address").innerHTML = f.a;
             g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : f.v
             g.querySelector("input.device-calibration").value = f.j;
+            if(f.h ==HW_BLE_TEMP_SENSOR)  g.querySelector("span.device-pin").innerHTML = "NA";
         } else if (f.h == HW_EXT_SENSOR) { // external sensor
             g = window.extsensorContainer.cloneNode(true);
             g.querySelector("span.device-value").innerHTML = (typeof f.v === "undefined") ? "-" : f.v;
@@ -351,6 +354,11 @@ var devices = {
         } else if (f.h == HW_BME280) { // BME280
             g = window.bme280Container.cloneNode(true);
             g.querySelector("span.device-address").innerHTML = "0x" + parseInt(f.p).toString(16);
+        } else if (f.h == HW_BLE_SENSOR) { // BLE sensor
+            g = window.bleSensorContainer.cloneNode(true);
+            g.querySelector("span.device-address").innerHTML =f.a;
+            g.querySelector("input.device-calibration").value = f.j;
+            g.querySelector("select.ble-broadcast-format").value = f.p;
         } else {
             // pin devices
             g = window.pinContainer.cloneNode(true);
@@ -365,7 +373,8 @@ var devices = {
             }
         }
         g.querySelector("select.slot-select").value = f.i;
-        if(f.h != HW_BME280 && f.h != HW_ENV_SENSOR) g.querySelector("span.device-pin").innerHTML = this.pinlabel(f.p);
+        if(f.h != HW_BME280 && f.h != HW_ENV_SENSOR && f.h !=HW_BLE_SENSOR && f.h !=HW_BLE_TEMP_SENSOR) 
+            g.querySelector("span.device-pin").innerHTML = this.pinlabel(f.p);
         g.querySelector("select.device-function").value = f.f;
         g.querySelector("select.device-function").onchange=function(){
           devices.pinFuncChange(g);  
@@ -414,8 +423,13 @@ function cmdfrom(b) {
     } else if (c.h == HW_PIN) { // hardware pin
         if( c.f ==8) c.s = parseInt(div.querySelector("select.device-humidity-sensor").value);
         else c.x = parseInt(div.querySelector("select.device-pintype").value);
+    }else if (c.h == HW_BLE_SENSOR){
+        c.a = a.a;
+        c.p = parseInt(div.querySelector("select.ble-broadcast-format").value);
+    }else if(c.h ==HW_BLE_TEMP_SENSOR){
+        c.a = a.a;
     }
-    if(c.h == HW_1W_SENSOR || c.h == HW_EXT_SENSOR ||  c.h == HW_ENV_SENSOR || c.f ==Func_ChamberHumSensor || c.f ==Func_RoomHumSensor){ // onewire temp &  external sensor
+    if(c.h == HW_1W_SENSOR || c.h == HW_EXT_SENSOR ||  c.h == HW_ENV_SENSOR || c.h == HW_BLE_SENSOR  || c.f ==Func_ChamberHumSensor || c.f ==Func_RoomHumSensor){ // onewire temp &  external sensor
         c.j = parseInt(div.querySelector("input.device-calibration").value);
         if(isNaN(c.j)) c.j=0;
     }
@@ -593,6 +607,7 @@ function init(classic) {
     window.owContainer = detachNode(".device-container.ow-device");
     window.dhtsensorContainer =detachNode(".device-container.env-temp-device");
     window.bme280Container=detachNode(".device-container.bme280-device");
+    window.bleSensorContainer=detachNode(".device-container.ble-env-device");
     window.board= "e"; //default ESP8266
     BWF.init({
         error: function(a) {
@@ -1937,6 +1952,86 @@ select.md {
                         <div class="device-setting-container">
                             <span class="setting-name">Verdi</span>
                             <span class="setting-value device-value"></span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="device-setting-container device-humidity-sensor-container device-calibration">
+                            <span class="setting-name">Kalibrering</span>
+                            <input size="6" class="setting-value device-calibration">
+                        </div>
+                    </td>    
+                    <td>
+                        <div class="device-setting-container">
+                            <span class="setting-name">Funksjon</span>
+                            <select class="setting-value device-function">
+                                <option value="0">Ingen</option>
+                                <option value="8">Chamber Humidity Sensor</option>
+                                <option value="18">Room Humidity Sensor</option>
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="device-container ble-env-device">
+            <table>
+                <tr>
+                    <td rowspan="2">
+                        <div class="device-title"></div>
+                        <br>
+                        <button>Bruk</button>
+                    </td>
+                    <td>
+                        <div class="device-setting-container">
+                            <span class="setting-name">Enhetsplass</span>
+                            <select class="slot-select">
+                                <option value="-1">Ikke tilordnet</option>
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="13">13</option>
+                                <option value="14">14</option>
+                                <option value="15">15</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="device-setting-container">
+                            <span class="setting-name">Maskinvaretype</span>
+                            <span class="setting-value device-type"> BLE Sensor </span>
+                        </div>
+                    </td>
+                    <td></td>
+                    <td>
+                        <div class="device-setting-container">
+                            <span class="setting-name">Adresse</span>
+                            <span class="setting-value device-address"></span>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+
+                    </td>
+                    <td>
+                        <div class="device-setting-container">
+                            <span class="setting-name"> Format </span>
+
+                            <select class="setting-value ble-broadcast-format">
+                                <option value="0">ATC1441</option>
+                                <option value="1">PVVX</option>
+                            </select>
                         </div>
                     </td>
                     <td>

@@ -270,6 +270,267 @@ function formatDateForPicker(date) {
 }
 </script>
     <script>
+var Func_ChamberHumSensor=8;
+var Func_RoomHumSensor=18;
+var HW_PIN=1;
+var HW_1W_SENSOR=2;
+var HW_1W_2413=3;
+var HW_EXT_SENSOR=5;
+var HW_ENV_SENSOR= 6;
+var HW_BME280=7;
+
+var Settings=
+[{lb:"gdc",url:"/gdc?data",wurl:"/gdc",f:"json"},  
+{lb:"rlog",url:"/log?data=1",wurl:"/log",f:"x-www-form-urlencoded"},
+{lb:"pressure",url:"/psi",wurl:"/psi",f:"x-www-form-urlencoded"}, 
+{lb:"mqtt", url:"/mqtt",wurl:"/mqtt",f:"x-www-form-urlencoded"},
+{lb:"syscfg",url:"/config?cfg=1",wurl:"/config?nb=1",f:"x-www-form-urlencoded"}];
+
+function prompt(hint){
+    document.querySelectorAll(".hint").forEach(function(h){
+        h.style.display="none";
+    });
+    Q(hint).style.display="block";
+    Q("#processing").style.display="block";
+}
+
+function unprompt(){
+    Q("#processing").style.display="none";
+}
+function clearMark(){
+    Settings.forEach(function(cfg){
+        Q("."+cfg.lb + "-status").innerHTML = "";
+    });
+}
+
+function mark(sec,status){
+    var Symbols={
+        loaded:"Loaded",
+        notavailable:"Not Available",
+        loadfailed:"Fail to Load",
+        uploaded:"Restored",
+        uploadfailed:"Restoration Failed",
+        download:"Downloaded"
+    };
+    Q("."+sec + "-status").innerHTML =  (typeof Symbols[status] == "undefined")? "Unknown": Symbols[status];
+}
+
+
+
+var Backup={
+convertDev:function(list){
+    if (list.length == 0) {
+            return [];
+    }
+    var c = [];
+    for (var a = 0; a < list.length; a++) {
+            var f = list[a];
+            var e = {
+                i: f.i,
+                c: f.c,
+                b: f.b,
+                f: f.f,
+                h: f.h,
+                p: f.p
+            };
+            if (f.h == HW_1W_SENSOR) {
+                e.a = f.a
+            } else {
+                e.x = f.x
+            }
+            if(f.h == HW_1W_SENSOR || f.h == HW_EXT_SENSOR || c.h == HW_ENV_SENSOR || c.f ==Func_ChamberHumSensor || c.f ==Func_RoomHumSensor) e.j=f.j;
+            c.push(e)
+        }
+    return c;
+},  
+conBWF:function(){
+    if(BWF.status() != 0) BWF.init({
+        error: function(a) {
+            alert("error communication between server")
+        },
+        handlers: {}
+    });
+},
+restoreDev:function (b){
+    var a = 0;
+    // erase EEPROM
+    BWF.send("E");
+    BWF.on("U", function(d) {
+        if (++a >= b.length) {
+            BWF.on("U", null);
+            mark('device','uploaded');
+            Backup.restoreCfg();
+            return;
+        }
+        BWF.send("U" + JSON.stringify(b[a]))
+    });
+    BWF.send("U" + JSON.stringify(b[a]))
+},
+getDevCfg:function(){
+    if(BWF.status()==0){
+        BWF.on('d',
+        function(a) {
+            if(a.length > 0){
+                window.data['device'] = Backup.convertDev(a);
+                mark('device','download');
+            }else{
+                window.data['device'] =[];
+                mark('device','notavailable');
+            }
+            BWF.on('d',null);
+            Backup.getAll();
+        });
+        BWF.send("d{r:1}");
+    }else{
+        mark("device","notavailable");
+        Backup.getAll();
+    }
+},
+processCfg:function(idx,nethdlr,dhdlr,done){
+    console.log("Processing "  + idx + " tag:"+ Settings[idx].lb);
+    nethdlr(idx,function(result){
+        console.log("  Result:" + (result? "Success!":"failed!"))
+        dhdlr(Settings[idx].lb,result);
+        if((idx +1)< Settings.length) Backup.processCfg(idx+1,nethdlr,dhdlr,done);
+        else done();
+    });
+
+},
+getAll:function(){
+    prompt("#hint_get");
+    Backup.processCfg(0,
+        function(idx,final){
+            s_ajax({
+                url:Settings[idx].url,
+                m:"GET",
+                success:function(d){
+                    final(d);
+                },
+                fail:function(){
+                    final(false);
+                }
+            });
+        },
+        function(lb,cfg){
+            if(cfg !== false){
+                window.data[lb] = JSON.parse(cfg);
+                mark(lb,"download");
+            }else mark(lb,"loadfailed");
+        },
+        function(){
+        window.data.date=Date.now();
+        //alert("done");
+        Backup.save2local();
+        unprompt();
+    });
+},
+restore:function(){
+    clearMark();
+    prompt("#hint_put");
+    if(typeof window.data['device'] !="undefined" && window.data['device'].length > 0) Backup.restoreDev(window.data['device']);
+    else Backup.restoreCfg();
+},
+restoreCfg:function(){
+    Backup.processCfg(0,
+        function(idx,final){
+            var json= JSON.stringify(window.data[Settings[idx].lb]);
+            var data=(Settings[idx].f == "json")? json:"data="+encodeURIComponent(json);
+        
+            s_ajax({
+                url:Settings[idx].wurl,
+                m:"POST",
+                data:data,
+                mime:"application/" + Settings[idx].f ,
+                success:function(d){
+                    final(d);
+                },
+                fail:function(){
+                    final(false);
+                }
+            });
+        }
+        ,
+        function(lb,cfg){
+            if(cfg !== false){
+                mark(lb,"uploaded");
+            }else  mark(lb,"uploadfailed");
+        },
+        function(){
+        //alert("done");
+        unprompt();
+    });
+},
+
+dataLoaded:function(){
+    if(typeof window.data['device'] == "undefined" || window.data['device'].length ==0)mark('device',"notavailable");
+    else mark('device',"loaded");
+
+    Settings.forEach(function(cfg){
+        mark(cfg.lb, (typeof window.data[cfg.lb] != "undefined")? "loaded":"notavailable");
+    });
+    var dt=new Date(window.data.date);
+    Q("#backuptime").innerHTML = dt.toLocaleDateString() +" " + dt.toLocaleTimeString();
+},
+
+save2local:function() {
+    var link = document.createElement("a");
+
+    if (link.download === undefined) { // feature detection
+        alert("Browser non supporta scaricamento file.");
+        return;
+    }
+
+        // special process of syscfg
+        if(typeof window.data["syscfg"] != "undefined"){
+            var remover=["fid","frsize","fs","fsize","date","mac"];
+            remover.forEach(function(item){
+                if(typeof window.data.syscfg[item] != "undefined") delete window.data.syscfg[item];
+            });
+        }
+        var json = JSON.stringify(window.data);
+        var blob = new Blob([json], { type: 'application/json;' });
+
+
+    var url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", 'bpl.settings.json');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+},
+save:function(){
+    window.data={};
+    clearMark();
+
+    Backup.getDevCfg();
+},
+init:function(){
+    Backup.conBWF();
+    Q("#backupfile").onchange=function(evt) {
+        //Retrieve the first (and only!) File from the FileList object
+        var f = evt.target.files[0];
+        var r = new FileReader();
+        r.onload = function(e) {
+            clearMark();
+        //console.log(e.target.result);
+            try {
+                var json = JSON.parse(e.target.result);
+                window.data=json;
+                Backup.dataLoaded();
+            } catch (e) {
+                    alert("error file format:" + e);
+            }
+        };
+        f.onerror = function(e) {
+            alert("error open file:" + e);
+        };
+        r.readAsText(f);
+    };
+}
+};
+</script>
+    <script>
 function formatIP(ip) {
     if (ip == "0.0.0.0") return "";
     return ip;
@@ -1449,6 +1710,8 @@ input {
 
                     <div layout horizontal cross-center>
                         <button class="btn btn--raised" onclick="showsysinfo(); return false;">Sysinfo</button>
+                        <button class="btn btn--raised" onclick="Backup.init(),Q('#backup-diag').style.display = 'block'; return false;">Backup/Restore</button>
+                       
                     </div>
 
                     <div class="card-footer">
@@ -1499,11 +1762,12 @@ input {
         </div>
     </div>
 
-    <li id="sysinfo" class="modal">
+    <div id="sysinfo" class="modal">
         <div class="modal-content" style="width:320px">
+            <div class="modal-header">
+                System Information
+            </div>
             <ul>
-                <li layout horizontal main-justified>
-                    <h6 class="inline-header"><strong>System Information</strong></h6></li>
                 <li layout horizontal main-justified><span class="descriptor">MAC Address</span>    <span id="mac-address"></span></li>
                 <li layout horizontal main-justified><span class="descriptor">Flash Chip ID</span>  <span id="flash-id"></span></li>
                 <li layout horizontal main-justified><span class="descriptor">Real Flash Size</span>    <span id="real-flash-size"></span></li>
@@ -1513,9 +1777,35 @@ input {
             <button onclick="hidesysinfo();return false;">Done</button>
 
         </div>
-    
+    </div>
 
 
-</li></body>
+    <div id="backup-diag" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                Setting Backup/Restore
+            </div>
+            <ul>            
+                <li layout horizontal main-justified><span class="descriptor">Backup Time </span><span id="backuptime"></span></li>
+                <li layout horizontal main-justified><span class=""> dispositivo</span><span class="device-status"></span></li>
+                <li layout horizontal main-justified><span class=""> densità</span><span class="gdc-status"></span></li>
+                <li layout horizontal main-justified><span class="">logs</span> <span class="rlog-status"></span> </li>
+                <li layout horizontal main-justified><span class="">Pressione</span><span class="pressure-status"></span></li>
+                <li layout horizontal main-justified><span class="">MQTT</span><span class="mqtt-status"></span></li>
+                <li layout horizontal main-justified><span class="">sistema</span><span class="syscfg-status"></span></li>
+            </ul>
+            <div class="modal" id="processing">
+                <div class="modal-content hint" id="hint_get">Retriving data...</div>
+                <div class="modal-content hint" id="hint_put">Sending data to controller...</div>
+            </div>
+            <button onclick="Backup.save();return false">Save </button>
+            Restore from  <input type="file" id="backupfile">
+            <button onclick="Backup.restore();return false"> Restore  </button>
+            <button onclick="Q('#backup-diag').style.display = 'none';return false">Cancella </button>
+        </div>
+    </div>
+
+
+</body>
 
 </html>

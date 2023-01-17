@@ -1037,7 +1037,14 @@ var PL = {
         return "/" + this.pl_path + "/" + a
     },
     depath: function(a) {
-        return a.substring(this.pl_path.length + 1)
+        var dir;
+        if(a.startsWith("/")){
+           dir= "/" + this.pl_path + "/" ;
+        }else{
+            dir= this.pl_path + "/" ;
+        }
+        if(a.startsWith(dir)) return a.substring(dir.length);
+        else return a;
     },
     rm: function(e) {
         var f = this;
@@ -2457,6 +2464,7 @@ table.profileTable thead {
   font-size: 18px;
   text-transform: uppercase;
   margin-top: 0;
+  text-align: center;
 }
 
 .btn--delete {
@@ -2833,13 +2841,14 @@ table.profileTable thead {
             <h2 class="profile-load-heading">
                 Načítať profil
             </h2>
-            <ul class="profile-list" style="margin: 16px 0;">
-                <li layout horizontal main-justified cross-center style="margin: 8px 0;">
+            <hr style="margin:4px">
+            <ul class="profile-list">
+                <li layout horizontal main-justified>
                     <a href="#" class="profile-name"></a>
-                    <span class="btn--delete rmbutton"></span>
+                    <button class="btn rmbutton" style="color:red">DEL</button>
                 </li>
             </ul>
-            <button class="btn" onclick="PL.toggle()">Zrušiť</button>
+            <button class="btn btn--raised" onclick="PL.toggle()">Zrušiť</button>
         </div>
     </div>
 
@@ -2848,9 +2857,9 @@ table.profileTable thead {
             <p>Poznámka:</p> <p>Aby pracoval pivný profil správne,</p> <p> <strong> musí byť zadaná pôvodná hustota (OG) </strong> ak je SG uvedené ako percento(%), a <strong> musí byť aktivované lokálne zaznamenávanie </strong> ak sa používa hodnota stabilizovanej hustoty. </p> Pôvodná hustota (OG):
                 <input type="text" size="6" value="1.0">
                 <div class="dialog-buttons">
-                    <button class="oknog">OK, spusť</button>
-                    <button class="ok">Nastav OG, a spusť</button>
-                    <button class="cancel">Zrušiť</button>
+                    <button class="oknog btn">OK, spusť</button>
+                    <button class="ok btn btn--raised">Nastav OG, a spusť</button>
+                    <button class="cancel btn btn--raised">Zrušiť</button>
                 </div>
         </div>
     </div>
@@ -2861,8 +2870,8 @@ table.profileTable thead {
             <br><input type="text" size="32">
             <br>
             *Nie sú povolené žiadne špeciálne písmená a medzery.
-                <button onclick="PL.cancelSave()">Zrušiť</button>
-                <button onclick="PL.doSave()">OK</button>
+                <button onclick="PL.cancelSave()" class="btn btn--raised">Zrušiť</button>
+                <button onclick="PL.doSave()" class="btn">OK</button>
         </div>
     </div>
 

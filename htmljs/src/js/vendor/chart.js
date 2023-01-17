@@ -798,6 +798,7 @@ var  CHART_VERSION = 6;
                     if (ntime > t.ctime) {
                         // add a gap to it                   
                         t.data.push([new Date(t.ctime * 1000), NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN]);
+                        t.psi.push( [new Date(t.ctime * 1000),  NaN,NaN,NaN]);
                         t.state.push(null);
                         t.angles.push(null);
                         t.rawSG.push[null];

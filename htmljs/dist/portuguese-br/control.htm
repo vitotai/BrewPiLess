@@ -1037,7 +1037,14 @@ var PL = {
         return "/" + this.pl_path + "/" + a
     },
     depath: function(a) {
-        return a.substring(this.pl_path.length + 1)
+        var dir;
+        if(a.startsWith("/")){
+           dir= "/" + this.pl_path + "/" ;
+        }else{
+            dir= this.pl_path + "/" ;
+        }
+        if(a.startsWith(dir)) return a.substring(dir.length);
+        else return a;
     },
     rm: function(e) {
         var f = this;
@@ -2457,6 +2464,7 @@ table.profileTable thead {
   font-size: 18px;
   text-transform: uppercase;
   margin-top: 0;
+  text-align: center;
 }
 
 .btn--delete {
@@ -2833,13 +2841,14 @@ table.profileTable thead {
             <h2 class="profile-load-heading">
                 Carregar Perfil
             </h2>
-            <ul class="profile-list" style="margin: 16px 0;">
-                <li layout horizontal main-justified cross-center style="margin: 8px 0;">
+            <hr style="margin:4px">
+            <ul class="profile-list">
+                <li layout horizontal main-justified>
                     <a href="#" class="profile-name"></a>
-                    <span class="btn--delete rmbutton"></span>
+                    <button class="btn rmbutton" style="color:red">DEL</button>
                 </li>
             </ul>
-            <button class="btn" onclick="PL.toggle()">Cancelar</button>
+            <button class="btn btn--raised" onclick="PL.toggle()">Cancelar</button>
         </div>
     </div>
 
@@ -2848,9 +2857,9 @@ table.profileTable thead {
             <p><strong>ATENÇÃO: </strong>Melhore o Perfil de Fermentação.</p> <p> <strong> 1.</strong> Informando corretamente a OG <BR /><strong> 2.</strong> Ativando o registro de dados local <BR /><strong> 3.</strong> Informando a SG em percentual (%)<BR /><BR /><strong>Isso ajudará na estabilidade das leituras.</strong> </p> <BR />Informe a Densidade Original (OG):
                 <input type="text" size="6" value="1.0">
                 <div class="dialog-buttons">
-                    <button class="oknog">Ignorar</button>
-                    <button class="ok">Definir OG e Continuar</button>
-                    <button class="cancel">Cancelar</button>
+                    <button class="oknog btn">Ignorar</button>
+                    <button class="ok btn btn--raised">Definir OG e Continuar</button>
+                    <button class="cancel btn btn--raised">Cancelar</button>
                 </div>
         </div>
     </div>
@@ -2861,8 +2870,8 @@ table.profileTable thead {
             <br><input type="text" size="32">
             <br>
             Não é permitido caracteres especiais e espaços.
-                <button onclick="PL.cancelSave()">Cancelar</button>
-                <button onclick="PL.doSave()">Confirmar</button>
+                <button onclick="PL.cancelSave()" class="btn btn--raised">Cancelar</button>
+                <button onclick="PL.doSave()" class="btn">Confirmar</button>
         </div>
     </div>
 

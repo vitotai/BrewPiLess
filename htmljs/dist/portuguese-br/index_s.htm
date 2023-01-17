@@ -2180,7 +2180,7 @@ var Capper = {
 };
 </script>
     <script>
-    var T_CHART_REQUEST = 12000;
+    var T_CHART_REQUEST = 20000;
     var T_CHART_RETRYTO = 6000;
     var T_CHART_ZERODATA = 10000;
     var T_CHART_REFRESH = 2500;
@@ -4409,7 +4409,6 @@ input[type=datetime-local]:invalid {
 
     <div id="polynomialpane" class="modal">
         <div class="modal-content">
-            <div id="xclose" onclick="closepolynomialpane()">X</div>
             <table>
                 <tr>
                     <td>
@@ -4451,6 +4450,11 @@ input[type=datetime-local]:invalid {
                     </td>
                 </tr>
             </table>
+
+            <div class="dialog-buttons">
+                <button class="btn btn--rise" onclick="closepolynomialpane()">Confirmar</button>
+            </div>
+
         </div>
     </div>
 

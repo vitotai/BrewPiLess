@@ -1037,7 +1037,14 @@ var PL = {
         return "/" + this.pl_path + "/" + a
     },
     depath: function(a) {
-        return a.substring(this.pl_path.length + 1)
+        var dir;
+        if(a.startsWith("/")){
+           dir= "/" + this.pl_path + "/" ;
+        }else{
+            dir= this.pl_path + "/" ;
+        }
+        if(a.startsWith(dir)) return a.substring(dir.length);
+        else return a;
     },
     rm: function(e) {
         var f = this;
@@ -2457,6 +2464,7 @@ table.profileTable thead {
   font-size: 18px;
   text-transform: uppercase;
   margin-top: 0;
+  text-align: center;
 }
 
 .btn--delete {
@@ -2833,13 +2841,14 @@ table.profileTable thead {
             <h2 class="profile-load-heading">
                 Cargar Perfil
             </h2>
-            <ul class="profile-list" style="margin: 16px 0;">
-                <li layout horizontal main-justified cross-center style="margin: 8px 0;">
+            <hr style="margin:4px">
+            <ul class="profile-list">
+                <li layout horizontal main-justified>
                     <a href="#" class="profile-name"></a>
-                    <span class="btn--delete rmbutton"></span>
+                    <button class="btn rmbutton" style="color:red">DEL</button>
                 </li>
             </ul>
-            <button class="btn" onclick="PL.toggle()">Cancelar</button>
+            <button class="btn btn--raised" onclick="PL.toggle()">Cancelar</button>
         </div>
     </div>
 
@@ -2848,9 +2857,9 @@ table.profileTable thead {
             <p>Nota:</p> <p>Para que el perfil de cerveza funcione correctamente:</p> <p> <strong> Se debe especificar la gravedad original (OG) </strong> si SG es especificada como porcentaje(%), y <strong> El registro local de datos debe estar activado </strong> si se usa la lectura de la densidad estabilizada. </p> Densidad Original (OG):
                 <input type="text" size="6" value="1.0">
                 <div class="dialog-buttons">
-                    <button class="oknog">Comenzar ahora</button>
-                    <button class="ok">Establecer OG y comenzar</button>
-                    <button class="cancel">Cancelar</button>
+                    <button class="oknog btn">Comenzar ahora</button>
+                    <button class="ok btn btn--raised">Establecer OG y comenzar</button>
+                    <button class="cancel btn btn--raised">Cancelar</button>
                 </div>
         </div>
     </div>
@@ -2861,8 +2870,8 @@ table.profileTable thead {
             <br><input type="text" size="32">
             <br>
             No se permiten caracteres especiales ni espacios.
-                <button onclick="PL.cancelSave()">Cancelar</button>
-                <button onclick="PL.doSave()">Aceptar</button>
+                <button onclick="PL.cancelSave()" class="btn btn--raised">Cancelar</button>
+                <button onclick="PL.doSave()" class="btn">Aceptar</button>
         </div>
     </div>
 

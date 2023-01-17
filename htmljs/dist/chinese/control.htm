@@ -1037,7 +1037,14 @@ var PL = {
         return "/" + this.pl_path + "/" + a
     },
     depath: function(a) {
-        return a.substring(this.pl_path.length + 1)
+        var dir;
+        if(a.startsWith("/")){
+           dir= "/" + this.pl_path + "/" ;
+        }else{
+            dir= this.pl_path + "/" ;
+        }
+        if(a.startsWith(dir)) return a.substring(dir.length);
+        else return a;
     },
     rm: function(e) {
         var f = this;
@@ -2457,6 +2464,7 @@ table.profileTable thead {
   font-size: 18px;
   text-transform: uppercase;
   margin-top: 0;
+  text-align: center;
 }
 
 .btn--delete {
@@ -2833,13 +2841,14 @@ table.profileTable thead {
             <h2 class="profile-load-heading">
                 載入行程
             </h2>
-            <ul class="profile-list" style="margin: 16px 0;">
-                <li layout horizontal main-justified cross-center style="margin: 8px 0;">
+            <hr style="margin:4px">
+            <ul class="profile-list">
+                <li layout horizontal main-justified>
                     <a href="#" class="profile-name"></a>
-                    <span class="btn--delete rmbutton"></span>
+                    <button class="btn rmbutton" style="color:red">DEL</button>
                 </li>
             </ul>
-            <button class="btn" onclick="PL.toggle()">取消</button>
+            <button class="btn btn--raised" onclick="PL.toggle()">取消</button>
         </div>
     </div>
 
@@ -2848,9 +2857,9 @@ table.profileTable thead {
             <p>注意:</p> <p>溫度行程必須符合下列條件才能正常作用：</p> <p> <strong>如果比重條件是用%輸入，OG必須輸入。</strong> 如果使用比重穩定條件，<strong>本地記錄必須啓用。</strong></p> 初始比重(OG):
                 <input type="text" size="6" value="1.0">
                 <div class="dialog-buttons">
-                    <button class="oknog">OK,不要管OG</button>
-                    <button class="ok">輸入OG,開始執行</button>
-                    <button class="cancel">取消</button>
+                    <button class="oknog btn">OK,不要管OG</button>
+                    <button class="ok btn btn--raised">輸入OG,開始執行</button>
+                    <button class="cancel btn btn--raised">取消</button>
                 </div>
         </div>
     </div>
@@ -2861,8 +2870,8 @@ table.profileTable thead {
             <br><input type="text" size="32">
             <br>
             *請勿使用特殊字元及空白。
-                <button onclick="PL.cancelSave()">取消</button>
-                <button onclick="PL.doSave()">OK</button>
+                <button onclick="PL.cancelSave()" class="btn btn--raised">取消</button>
+                <button onclick="PL.doSave()" class="btn">OK</button>
         </div>
     </div>
 
