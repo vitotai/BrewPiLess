@@ -1673,6 +1673,10 @@ void brewpi_setup()
 
 	logDebug("init complete");
 }
+// SensorWatch
+bool _beerSensorConnected=false;
+
+//SensorWatch
 
 void brewpiLoop(void)
 {
@@ -1684,6 +1688,14 @@ void brewpiLoop(void)
 
 #if BREWPI_BUZZER
 		buzzer.setActive(alarmActuator.isActive() && !buzzer.isActive());
+
+		if( _beerSensorConnected && ! tempControl.beerSensor->isConnected(true)){
+			alarmActuator.setActive(true);
+		}else if(tempControl.beerSensor->isConnected(true)){
+			alarmActuator.setActive(false);
+		}
+		_beerSensorConnected = tempControl.beerSensor->isConnected(true);
+
 #endif
 
 		tempControl.updateTemperatures();

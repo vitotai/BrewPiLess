@@ -71,7 +71,9 @@ class TempSensor {
 	void init();
 	
 	#if FridgeSensorFallBack
-	bool isConnected() {
+	bool isConnected(bool physical=false) {
+			if(physical) return _sensor->isConnected(); 
+			
 			if(_useBackupSensor && _backupSensor)
 				return _backupSensor->isConnected();
 			else

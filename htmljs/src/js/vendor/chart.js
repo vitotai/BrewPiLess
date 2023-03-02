@@ -843,7 +843,16 @@ var  CHART_VERSION = 6;
                     var hh = data[i++];
                     var ll = data[i++];
                     var v = (hh & 0x7F) * 256 + ll;
-                    t.specificGravity = t.plato ? v / 100 : v / 10000;
+                    if(t.plato){
+                        var p =v / 100;
+                        if(p> 100){
+                            // probably a negative value
+                            p=  (v- 32768)/100; // tow's complement
+                        }
+                        t.specificGravity = p;
+                    }else{
+                        t.specificGravity =  v / 10000;
+                    }
                     // setting sgPoint is useless in this version, because the data isnot yet push into array
                     //sgPoint = true;
                 } else if (d0 == 0xFA) { //Ignored mask
