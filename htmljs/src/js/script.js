@@ -499,9 +499,6 @@ function parseStateSince(line) {
         if (typeof msg["lpf"] != "undefined")
             GravityFilter.setBeta(msg["lpf"]);
 
-        if (typeof msg["stpt"] != "undefined")
-            GravityTracker.setThreshold(msg["stpt"]);
-
         if (typeof msg["ctemp"] != "undefined")
             window.caltemp = msg["ctemp"];
     }

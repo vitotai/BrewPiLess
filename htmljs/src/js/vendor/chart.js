@@ -1,6 +1,24 @@
 /* chart.js */
 var  CHART_VERSION = 6;
-         
+
+    function SimpleFilter(beta) {
+        this.b = beta;
+        this.y =0;
+    }
+    SimpleFilter.prototype.reset =function() {
+        this.y = 0;
+    };
+    SimpleFilter.prototype.add= function(gravity) {
+        if (this.y == 0) this.y = gravity;
+        else this.y = this.y + this.b * (gravity - this.y);
+        return this.y * 10000;
+    };
+    SimpleFilter.prototype.setBeta=function(beta) {
+        this.b = beta;
+    };
+
+    var GravityFilter= new SimpleFilter(0.1);
+
         // gravity tracking
         var GravityFilter = {
             b: 0.1,
@@ -19,29 +37,30 @@ var  CHART_VERSION = 6;
         };
         var GravityTracker = {
             NumberOfSlots: 48,
-            InvalidValue: 0xFF,
+            InvalidValue: 0xFFFF,
             ridx: 0,
             record: [],
-            threshold: 1,
-            setThreshold: function(t) {
-                this.threshold = t;
-            },
             addRecord: function(v) {
                 this.record[this.ridx++] = v;
                 if (this.ridx >= this.NumberOfSlots) this.ridx = 0;
             },
-            stable: function(duration, to) {
-                to = (typeof to == "undefined") ? this.threshold : to;
+            isValid(duration){
+                var previous = this.NumberOfSlots + this.ridx - duration;
+                while (previous >= this.NumberOfSlots) previous -= this.NumberOfSlots;
+                return this.record[previous] != this.InvalidValue;
+            },
+            ptDiff(duration){
                 var current = this.ridx - 1;
                 if (current < 0) current = this.NumberOfSlots - 1;
                 var previous = this.NumberOfSlots + this.ridx - duration;
                 while (previous >= this.NumberOfSlots) previous -= this.NumberOfSlots;
-                return (this.record[previous] - this.record[current]) <= to;
+                return this.record[previous] - this.record[current];
             },
             Period: 60 * 60,
             init: function() {
                 this.curerntStart = 0;
                 this.lastValue = 0;
+                for(var i=0;i<this.NumberOfSlots;i++) this.record[i]= this.InvalidValue;
             },
             add: function(gravity, time) {
                 //gravity = Math.round(fgravity * 1000, 1);
@@ -62,24 +81,19 @@ var  CHART_VERSION = 6;
             }
         };
 
-
-        function fgstate(duration) {
-            var Color = {
-                0: "red",
-                12: "orange",
-                24: "yellow",
-                48: "green"
-            };
-            Q("#fgstate").style.backgroundColor = Color[duration];
+        function respPtDiff(duration,fraction){
+            if(GravityTracker.isValid(duration)){
+                var value =GravityTracker.ptDiff(duration);
+                if(value > 1) return value.toFixed(fraction);
+                else return value.toFixed(1);
+            }else{
+                return "--";
+            }
         }
 
         function checkfgstate() {
-            if (GravityTracker.stable(12)) {
-                if (GravityTracker.stable(24)) {
-                    if (GravityTracker.stable(48)) fgstate(48);
-                    else fgstate(24); // 24
-                } else fgstate(12); // 
-            } else fgstate(0);
+            
+            Q("#sgchanged").innerHTML = respPtDiff(48,0) + "/" + respPtDiff(24,0)+ "/" + respPtDiff(12,1);
         }
         // gravity tracking
         var GravityAndTiltIndex = 6;
@@ -98,6 +112,7 @@ var  CHART_VERSION = 6;
 
             t.lidx = 0;
             t.celius = true;
+            t.GravityChangeChart=false;
             t.clearData();
         };
         var colorIdle = "white";
@@ -127,6 +142,9 @@ var  CHART_VERSION = 6;
         var colorHumidity="#2222DD";
         var colorHumiditySet="#EE1111";
         var colorRoomHumidity="#AAAAAA";
+        var SgChange1Color="#DD33DD";
+        var SgChange2Color="#3333DD";
+        var SgChange3Color="#33DD33";
 
         var STATE_LINE_WIDTH = 15;
         var STATES = [{
@@ -191,11 +209,11 @@ var  CHART_VERSION = 6;
 
         BrewChart.Colors = [ColorBeerSet,ColorBeerTemp, ColorFridgeTemp, ColorFridgeSet, ColorRoomTemp, ColorAuxTemp,ColorGravity, ColorFiltersg,
                         colorPressure,colorPressureSet,colorCarbonation,
-                        colorHumidity,colorHumiditySet,colorRoomHumidity];
+                        colorHumidity,colorHumiditySet,colorRoomHumidity,SgChange1Color,SgChange2Color,SgChange3Color];
         BrewChart.Labels = ['Time', 'beerSet', 'beerTemp', 'fridgeTemp', 'fridgeSet', 'roomTemp', 'auxTemp', 'gravity', 'filtersg'];
         BrewChart.ClassLabels = ['', 'beer-set', 'beer-temp', 'fridge-temp', 'fridge-set', 'room-temp', 'aux-temp', 'gravity', 'filtersg',
                             'pressure','pressure-set','carbonation',
-                            'humidity','humidity-set','room-humidity'];
+                            'humidity','humidity-set','room-humidity','sgchange1','sgchange2','sgchange3'];
 
         var BeerSetLine = 1;
         var BeerTempLine = 2;
@@ -215,7 +233,14 @@ var  CHART_VERSION = 6;
         var SetHumidityLine = 13;
         var RoomHumidityLine = 14;
 
-        var NumberOfLines =14;
+
+        var SgChange1Line = 15;
+        var SgChange2Line = 16;
+        var SgChange3Line = 17;
+
+        var NumberOfLines =17;
+
+
 
         var PSIDataIndex = 8;
 
@@ -298,6 +323,16 @@ var  CHART_VERSION = 6;
                 Q(".chart-legend-row.room-humidity .legend-value").innerHTML = (isNaN(room) || room == null || room==255)? "--":(room+"%");
             }
 
+            if(this.GravityChangeChart){
+                var v1 = this.gcchart.getValue(row, 1);
+                var v2 = this.gcchart.getValue(row, 2);
+                var v3 = this.gcchart.getValue(row, 3);
+
+                Q(".chart-legend-row.sgchange1 .legend-value").innerHTML = ( (isNaN(v1) || v1==null)? "--":v1.toFixed(1)); 
+                Q(".chart-legend-row.sgchange2 .legend-value").innerHTML = ( (isNaN(v2) || v2==null)? "--":v2.toFixed(1)); 
+                Q(".chart-legend-row.sgchange3 .legend-value").innerHTML = ( (isNaN(v3) || v3==null)? "--":v3.toFixed(1));                      
+            }
+
         };
 
         BrewChart.prototype.hideLegend = function() {
@@ -332,8 +367,10 @@ var  CHART_VERSION = 6;
             me.shownlist[line] = !me.shownlist[line];
             var divclass = BrewChart.ClassLabels[line];
             
-            var chart = (line >= ChamberHumidityLine)? me.hchart:(line >= PressureLine)? me.pchart:me.chart;
-            var base=(line >= ChamberHumidityLine)? ChamberHumidityLine:(line >= PressureLine)? PressureLine:1;
+            
+
+            var chart =(line >=SgChange1Line)?   me.gcchart:((line >= ChamberHumidityLine)? me.hchart:(line >= PressureLine)? me.pchart:me.chart);
+            var base=(line >=SgChange1Line)?    SgChange1Line:((line >= ChamberHumidityLine)? ChamberHumidityLine:(line >= PressureLine)? PressureLine:1);
             chart.setVisibility(line - base, me.shownlist[line]);
 
             if (Q("." + divclass + " .toggle")) Q("." + divclass + " .toggle").style.backgroundColor =
@@ -766,6 +803,7 @@ var  CHART_VERSION = 6;
                     t.lastRoomRh=255;
                     t.lastSetRh=255;
                     t.rhValid=false;
+                    t.gravityChanges=[];
 
                     t.targetPsi = NaN; // to denote "no line/point"
 
@@ -844,12 +882,8 @@ var  CHART_VERSION = 6;
                     var ll = data[i++];
                     var v = (hh & 0x7F) * 256 + ll;
                     if(t.plato){
-                        var p =v / 100;
-                        if(p> 100){
-                            // probably a negative value
-                            p=  (v- 32768)/100; // tow's complement
-                        }
-                        t.specificGravity = p;
+                        // negative value in two's complement
+                        t.specificGravity = (v>16383)?  ((v- 32768)/100):(v / 100);
                     }else{
                         t.specificGravity =  v / 10000;
                     }
@@ -930,6 +964,7 @@ var  CHART_VERSION = 6;
         BrewChart.prototype.synchronize=function(){
             var t=this;
             var charts=[t.chart];
+            if(t.GravityChangeChart) charts.push(t.gcchart);
             if(t.psiAvail) charts.push(t.pchart);
             if(t.rhValid) charts.push(t.hchart);
             if(charts.length >1) t.sync = Dygraph.synchronize(charts,{selection: true,zoom:true,range:false});
@@ -941,7 +976,23 @@ var  CHART_VERSION = 6;
                 'file': t.data
             });
             t.chart.setAnnotations(t.anno);
+
             var sync=false;
+            if(t.GravityChangeChart){
+                if(typeof t.gcchart == "undefined"){
+                    document.querySelectorAll(".sgchange-group").forEach(function(ele){
+                        ele.classList.remove("forced-hidden");
+                    });
+                    t.createGravityChangeChart();
+                    sync=true;
+                }else{
+                    t.gcchart.updateOptions({
+                        'file': t.gravityChanges,
+                        'dateWindow':[t.psi[0][0],t.psi[t.psi.length-1][0]]
+                    });
+                }
+            }
+
             if(t.psiAvail){
                 if(typeof t.pchart == "undefined"){
                     document.querySelectorAll(".pressure-group").forEach(function(ele){
@@ -1024,9 +1075,9 @@ var  CHART_VERSION = 6;
                     t.sg = sg;
                     t.filterSg = GravityFilter.add(sg);
                     if (t.plato)
-                        GravityTracker.add(Math.round(t.filterSg * 10), t.ctime);
+                        GravityTracker.add(t.filterSg * 10, t.ctime);//GravityTracker.add(Math.round(t.filterSg * 10), t.ctime);
                     else
-                        GravityTracker.add(Math.round(t.filterSg * 1000), t.ctime);
+                        GravityTracker.add(t.filterSg * 1000, t.ctime);    //GravityTracker.add(Math.round(t.filterSg * 1000), t.ctime);
                 }
 
                 if (!isNaN(t.sg)) minuteRecord.push(t.filterSg);
@@ -1059,6 +1110,14 @@ var  CHART_VERSION = 6;
                         (t.lastSetRh<=100)? t.lastSetRh:NaN,
                         (t.lastRoomRh <=100)? t.lastRoomRh:NaN]);
                 
+                
+                if(t.GravityChangeChart){
+                    if (!isNaN(sg)) t.gravityChanges.push([t.dataset[0],
+                        GravityTracker.isValid(3)?   GravityTracker.ptDiff(3):NaN,
+                        GravityTracker.isValid(6)?   GravityTracker.ptDiff(6):NaN,
+                        GravityTracker.isValid(12)?  GravityTracker.ptDiff(12):NaN]);
+                    else t.gravityChanges.push([t.dataset[0], null,null,null]);
+                }
 
                 t.incTime(); // add one time interval
                 return ret;
@@ -1101,4 +1160,66 @@ var  CHART_VERSION = 6;
             });
             t.hchart.setVisibility(0,true);
         };
+        BrewChart.prototype.setGcChart = function(id,label) {
+            this.gccid=id;
+            this.gclabel=label;
+        };
+
+        BrewChart.prototype.createGravityChangeChart = function() {
+            var t=this;
+            var ldiv = document.createElement("div");
+            ldiv.className = "hide";
+            document.body.appendChild(ldiv);
+
+            t.gcchart = new Dygraph(document.getElementById(t.gccid), t.gravityChanges, {
+                labels: ["Time","gc3","gc6","gc12"],
+                colors: [SgChange1Color,SgChange2Color,SgChange3Color],
+                connectSeparatedPoints: true,
+                ylabel: t.gclabel,
+                y2label: t.gclabel,
+                series: {
+                    'gc3': {
+                        axis: 'y2',
+                        drawPoints: false
+                    }
+                }, 
+
+                axisLabelFontSize: 12,
+                gridLineColor: '#ccc',
+                gridLineWidth: '0.1px',
+                labelsDiv: ldiv,
+                labelsDivStyles: {
+                    'display': 'none'
+                },
+                //displayAnnotations: true,
+                //showRangeSelector: true,
+                strokeWidth: 1,
+                axes: {
+                    y: {
+                        valueFormatter: function(y) {
+                            return y.toFixed(1);
+                        },
+                        axisLabelFormatter: function(y) {
+                            return y.toFixed(1);
+                        }
+                    },
+                    y2: {
+                        valueFormatter: function(y) {
+                            return y.toFixed(1);
+                        },
+                        axisLabelFormatter: function(y) {
+                            return y.toFixed(1);
+                        }
+                    }
+                }, 
+                highlightCallback: function(e, x, pts, row) {
+                    t.showLegend(x, row);
+                },
+                unhighlightCallback: function(e) {
+                    t.hideLegend();
+                }
+            });
+            t.gcchart.setVisibility(0,true);
+        };
+
         /* end of chart.js */

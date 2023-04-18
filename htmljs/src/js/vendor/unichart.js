@@ -68,6 +68,8 @@ UniBrewChart.prototype.process_v5 = function(data) {
             t.cstate = 0;
             t.coTemp = 20;
             t.cal_igmask = 0;
+            t.gravityChanges=[];
+
             this.clearData();
             newchart = true;
             // gravity tracking
@@ -199,9 +201,9 @@ UniBrewChart.prototype.processRecord_v5 = function() {
             t.sg = sg;
             t.filterSg = GravityFilter.add(sg);
             if (t.plato)
-                GravityTracker.add(Math.round(t.filterSg * 10), t.ctime);
+                GravityTracker.add(t.filterSg * 10, t.ctime);//GravityTracker.add(Math.round(t.filterSg * 10), t.ctime);
             else
-                GravityTracker.add(Math.round(t.filterSg * 1000), t.ctime);
+                GravityTracker.add(t.filterSg * 1000, t.ctime);    //GravityTracker.add(Math.round(t.filterSg * 1000), t.ctime);
         }
 
         if (!isNaN(t.sg)) dataset.push(t.filterSg);
@@ -211,6 +213,14 @@ UniBrewChart.prototype.processRecord_v5 = function() {
         t.state.push(t.cstate);
         t.angles.push(t.dataset[8]);
         t.rawSG.push(rawSG);
+
+        if(t.GravityChangeChart){
+            t.gravityChanges.push([t.dataset[0],
+                GravityTracker.isValid(3)?   GravityTracker.ptDiff(3):NaN,
+                GravityTracker.isValid(6)?   GravityTracker.ptDiff(6):NaN,
+                GravityTracker.isValid(12)?  GravityTracker.ptDiff(12):NaN]);
+        }
+
         t.incTime(); // add one time interval
     }
 };
