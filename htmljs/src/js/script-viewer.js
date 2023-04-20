@@ -10,7 +10,8 @@
                 this.chart.setPChart(id2,pl,carbonation)
                 this.chart.setHChart(id3,rhLabel);
                 this.chart.setGcChart(id4,gclabel);
-                //GravityChangeChart this.chart.GravityChangeChart=true;
+                //GravityChangeChart 
+                this.chart.GravityChangeChart=true;
            },
             setIgnoredMask: function(m) {
                 var t = this;
@@ -68,8 +69,9 @@
             }
 
 //            BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML);
-              BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML,"div_h",Q("#rhlabel").innerHTML);
-//GravityChangeChart            BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML,"div_h",Q("#rhlabel").innerHTML,"div_gc",Q("#gclabel").innerHTML);
+//              BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML,"div_h",Q("#rhlabel").innerHTML);
+//GravityChangeChart            
+BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML,"div_h",Q("#rhlabel").innerHTML,"div_gc",Q("#gclabel").innerHTML);
 
             if (Q('#dropfile')) {
                 Q('#dropfile').ondragover = function(e) {

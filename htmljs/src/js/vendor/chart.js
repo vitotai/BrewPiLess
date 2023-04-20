@@ -1,6 +1,9 @@
 /* chart.js */
 var  CHART_VERSION = 6;
 
+var GravityChangePeriod1 = 6 * 3600;
+var GravityChangePeriod2 = 12 * 3600;
+var GravityChangePeriod3 =24 * 3600;
     function SimpleFilter(beta) {
         this.b = beta;
         this.y =0;
@@ -11,7 +14,7 @@ var  CHART_VERSION = 6;
     SimpleFilter.prototype.add= function(gravity) {
         if (this.y == 0) this.y = gravity;
         else this.y = this.y + this.b * (gravity - this.y);
-        return this.y * 10000;
+        return this.y;
     };
     SimpleFilter.prototype.setBeta=function(beta) {
         this.b = beta;
@@ -19,82 +22,7 @@ var  CHART_VERSION = 6;
 
     var GravityFilter= new SimpleFilter(0.1);
 
-        // gravity tracking
-        var GravityFilter = {
-            b: 0.1,
-            y: 0,
-            reset: function() {
-                this.y = 0;
-            },
-            add: function(gravity) {
-                if (this.y == 0) this.y = gravity;
-                else this.y = this.y + this.b * (gravity - this.y);
-                return Math.round(this.y * 10000) / 10000;
-            },
-            setBeta: function(beta) {
-                this.b = beta;
-            }
-        };
-        var GravityTracker = {
-            NumberOfSlots: 48,
-            InvalidValue: 0xFFFF,
-            ridx: 0,
-            record: [],
-            addRecord: function(v) {
-                this.record[this.ridx++] = v;
-                if (this.ridx >= this.NumberOfSlots) this.ridx = 0;
-            },
-            isValid(duration){
-                var previous = this.NumberOfSlots + this.ridx - duration;
-                while (previous >= this.NumberOfSlots) previous -= this.NumberOfSlots;
-                return this.record[previous] != this.InvalidValue;
-            },
-            ptDiff(duration){
-                var current = this.ridx - 1;
-                if (current < 0) current = this.NumberOfSlots - 1;
-                var previous = this.NumberOfSlots + this.ridx - duration;
-                while (previous >= this.NumberOfSlots) previous -= this.NumberOfSlots;
-                return this.record[previous] - this.record[current];
-            },
-            Period: 60 * 60,
-            init: function() {
-                this.curerntStart = 0;
-                this.lastValue = 0;
-                for(var i=0;i<this.NumberOfSlots;i++) this.record[i]= this.InvalidValue;
-            },
-            add: function(gravity, time) {
-                //gravity = Math.round(fgravity * 1000, 1);
-                var timediff = time - this.curerntStart;
 
-                if (timediff > this.Period) {
-                    this.addRecord(gravity);
-                    if (this.lastValue != 0) {
-                        timediff -= this.Period;
-                        while (timediff > this.Period) {
-                            timediff -= this.Period;
-                            this.addRecord(this.lastValue);
-                        }
-                    }
-                    this.curerntStart = time;
-                    this.lastValue = gravity;
-                }
-            }
-        };
-
-        function respPtDiff(duration,fraction){
-            if(GravityTracker.isValid(duration)){
-                var value =GravityTracker.ptDiff(duration);
-                if(value > 1) return value.toFixed(fraction);
-                else return value.toFixed(1);
-            }else{
-                return "--";
-            }
-        }
-
-        function checkfgstate() {
-            
-            Q("#sgchanged").innerHTML = respPtDiff(48,0) + "/" + respPtDiff(24,0)+ "/" + respPtDiff(12,1);
-        }
         // gravity tracking
         var GravityAndTiltIndex = 6;
         var PSIIndex = 7;
@@ -113,6 +41,7 @@ var  CHART_VERSION = 6;
             t.lidx = 0;
             t.celius = true;
             t.GravityChangeChart=false;
+            t.data = [];
             t.clearData();
         };
         var colorIdle = "white";
@@ -552,7 +481,21 @@ var  CHART_VERSION = 6;
             };
             t.chart = new Dygraph(document.getElementById(t.cid), t.data, opt);
         };
+        BrewChart.prototype.getGravityOfTime=function(time){
+            var duration =  this.ctime - time;
+            return this.getGravityBefore(duration>0? duration:0);
+        };
+        BrewChart.prototype.getGravityBefore=function(duration){
+            var row = this.data.length - Math.round(duration/this.interval);
 
+            while(row>=0){
+                var gravity=this.data[row][GravityLine];
+                if(gravity != null) return gravity;
+                row--;
+            }
+            return NaN;
+        };
+        
         BrewChart.prototype.findNearestRow = function(g, time) {
             "use strict";
             var low = 0,
@@ -812,7 +755,6 @@ var  CHART_VERSION = 6;
                     t.psiAvail = false;
                     // gravity tracking
                     GravityFilter.reset();
-                    GravityTracker.init();
                     // gravity tracking
                 } else if (d0 == 0xF3) { // correction temperature
                     t.coTemp = d1; // always celisus
@@ -1074,10 +1016,6 @@ var  CHART_VERSION = 6;
                 if (!isNaN(sg)) {
                     t.sg = sg;
                     t.filterSg = GravityFilter.add(sg);
-                    if (t.plato)
-                        GravityTracker.add(t.filterSg * 10, t.ctime);//GravityTracker.add(Math.round(t.filterSg * 10), t.ctime);
-                    else
-                        GravityTracker.add(t.filterSg * 1000, t.ctime);    //GravityTracker.add(Math.round(t.filterSg * 1000), t.ctime);
                 }
 
                 if (!isNaN(t.sg)) minuteRecord.push(t.filterSg);
@@ -1112,11 +1050,21 @@ var  CHART_VERSION = 6;
                 
                 
                 if(t.GravityChangeChart){
-                    if (!isNaN(sg)) t.gravityChanges.push([t.dataset[0],
-                        GravityTracker.isValid(3)?   GravityTracker.ptDiff(3):NaN,
-                        GravityTracker.isValid(6)?   GravityTracker.ptDiff(6):NaN,
-                        GravityTracker.isValid(12)?  GravityTracker.ptDiff(12):NaN]);
-                    else t.gravityChanges.push([t.dataset[0], null,null,null]);
+                    function GD(p){
+                        var v=t.getGravityBefore(p);
+                        if(isNaN(v)) return NaN;
+                        if(t.plato) return v-sg;
+                        return (v-sg)*1000;
+                    }
+
+                    if (!isNaN(sg)){
+                        t.gravityChanges.push([t.dataset[0],
+                            GD(GravityChangePeriod1),
+                            GD(GravityChangePeriod2),
+                            GD(GravityChangePeriod3)
+                            ]);
+                        
+                    } else t.gravityChanges.push([t.dataset[0], null,null,null]);
                 }
 
                 t.incTime(); // add one time interval
@@ -1178,7 +1126,7 @@ var  CHART_VERSION = 6;
                 ylabel: t.gclabel,
                 y2label: t.gclabel,
                 series: {
-                    'gc3': {
+                    'gc12': {
                         axis: 'y2',
                         drawPoints: false
                     }

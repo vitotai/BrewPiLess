@@ -4,11 +4,15 @@
                 else this.chart.toggleLine(line);
             },
     
-            init: function(id, y1, y2,id2,pl,carbonation) {
+            init: function(id, y1, y2,id2,pl,carbonation,id3,rhLabel,id4,gclabel) {
                 this.chart = new UniBrewChart(id);
                 this.chart.setLabels(y1, y2);
                 this.chart.setPChart(id2,pl,carbonation)
-            },
+                this.chart.setHChart(id3,rhLabel);
+                this.chart.setGcChart(id4,gclabel);
+                //GravityChangeChart 
+                this.chart.GravityChangeChart=true;
+           },
             setIgnoredMask: function(m) {
                 var t = this;
                 if (t.chart.cal_igmask == m) return;
@@ -68,7 +72,10 @@
             if (range) {
                 window.iniRange = range.split("-");
             }
-            BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML);
+            //BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML);
+//GravityChangeChart            
+            BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML,"div_h",Q("#rhlabel").innerHTML,"div_gc",Q("#gclabel").innerHTML);
+            
             Q("#div_g").oncontextmenu = function(ev) {
                 ev = ev || window.event;
 

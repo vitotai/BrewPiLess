@@ -8,8 +8,8 @@
     <title>BPL Log Viewer v3.0 - online</title>
     <meta name=apple-mobile-web-app-title content=BrewPiLess>
     <meta name=apple-mobile-web-app-capable content=yes>
-    <script type="text/javascript" src="js/vendor/dygraph.min.js"></script>
-    <script type="text/javascript" src="js/vendor/synchronizer.js"></script>
+    <script type="text/javascript" src="js/dygraph-2.2.1/dygraph.min.js"></script>
+    <script type="text/javascript" src="js/dygraph-2.2.1/extras/synchronizer.js"></script>
 
     <script type="text/javascript" src="js/vendor/regression.js"></script>
     <script type="text/javascript" src="js/shared.js"></script>
@@ -17,7 +17,7 @@
     <script type="text/javascript" src="js/vendor/chart.js"></script>
     <script type="text/javascript" src="js/vendor/unichart.js"></script>
     <script type="text/javascript" src="js/script-webviewer.js"></script>
-    <link rel="stylesheet" href="js/vendor/dygraph.css">
+    <link rel="stylesheet" href="js/dygraph-2.2.1/dygraph.min.css">
 
 
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel=stylesheet>
@@ -32,6 +32,8 @@
         <span id="psilabel"><%= chart_pressure %></span>
         <span id="vollabel"><%= chart_co2vol %></span>
         <span id="rhlabel"><%= chart_rh %></span>
+        <span id="gclabel"><%= gravity_change %></span>
+
 </div>
 
     <div viewport layout horizontal>
@@ -40,6 +42,8 @@
             <div layout horizontal>
                 <div class=chart>
                     <div id=div_g class=chart-main></div>
+                    <div id="div_gc" class="chart-p chart-gc"></div>
+
                     <div id=div_p class="chart-p pressure-group"></div>
                     <div id=div_h class="chart-p humidity-group forced-hidden"></div>
                 </div>
@@ -71,18 +75,32 @@
                     <li layout horizontal main-justified class="chart-legend-row filtersg"><input type=checkbox id=filtersg name=set-name class=switch-input checked><label onclick='BChart.toggle(FilteredSgLine)' for=filtersg class=switch-label><%= legend_filteredsg %><span class=platounit>&deg;P</span></label>
                         <div class=legend-value>--</div>
                     </li>
-                    <li layout horizontal main-justified class="chart-legend-row pressure">
+                    
+                    <li layout horizontal main-justified class="chart-legend-row sgchange1 sgchange-group forced-hidden"><input type="checkbox" id="sgchange1" name="set-name" class="switch-input" checked="checked"><label onclick="BChart.toggle(SgChange1Line)" for="sgchange1" class="switch-label"><%= gravity_change_6h %><span class="platounit">&deg;P</span></label>
+                        <div class="legend-value">--</div>
+                      </li>
+  
+                      <li layout horizontal main-justified class="chart-legend-row sgchange2 sgchange-group forced-hidden"><input type="checkbox" id="sgchange2" name="set-name" class="switch-input" checked="checked"><label onclick="BChart.toggle(SgChange2Line)" for="sgchange2" class="switch-label"><%= gravity_change_12h %><span class="platounit">&deg;P</span></label>
+                        <div class="legend-value">--</div>
+                      </li>
+  
+                      <li layout horizontal main-justified class="chart-legend-row sgchange3 sgchange-group forced-hidden"><input type="checkbox" id="sgchange3" name="set-name" class="switch-input" checked="checked"><label onclick="BChart.toggle(SgChange3Line)" for="sgchange3" class="switch-label"><%= gravity_change_24h %><span class="platounit">&deg;P</span></label>
+                        <div class="legend-value">--</div>
+                      </li>
+  
+
+                    <li layout horizontal main-justified class="chart-legend-row pressure pressure-group forced-hidden">
                         <input type="checkbox" id="pressure" name="set-name" class="switch-input" checked>
                         <label onclick="BChart.toggle(PressureLine,1)" for="pressure" class="switch-label"><%= legend_pressure %></label>
                         <div class="legend-value">--</div>
                     </li>
-                    <li layout horizontal main-justified class="chart-legend-row pressure pressure-group">
+                    <li layout horizontal main-justified class="chart-legend-row pressure pressure-group forced-hidden">
                         <input type="checkbox" id="pressure" name="set-name" class="switch-input" checked>
                         <label onclick="BChart.toggle(PressureLine,1)" for="pressure" class="switch-label"><%= legend_pressure %></label>
                         <div class="legend-value">--</div>
                     </li>
 
-                    <li layout horizontal main-justified class="chart-legend-row pressure-set pressure-group">
+                    <li layout horizontal main-justified class="chart-legend-row pressure-set pressure-group forced-hidden">
                         <input type="checkbox" id="pressure-set" name="set-name" class="switch-input" checked>
                         <label onclick="BChart.toggle(PressureSetLine,1)" for="pressure-set" class="switch-label"><%= legend_pressure_set %></label>
                         <div class="legend-value">--</div>

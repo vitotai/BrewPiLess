@@ -74,7 +74,6 @@ UniBrewChart.prototype.process_v5 = function(data) {
             newchart = true;
             // gravity tracking
             GravityFilter.reset();
-            GravityTracker.init();
             // gravity tracking
         } else if (d0 == 0xF3) { // correction temperature
             t.coTemp = d1; // always celisus
@@ -200,10 +199,6 @@ UniBrewChart.prototype.processRecord_v5 = function() {
         if (!isNaN(sg)) {
             t.sg = sg;
             t.filterSg = GravityFilter.add(sg);
-            if (t.plato)
-                GravityTracker.add(t.filterSg * 10, t.ctime);//GravityTracker.add(Math.round(t.filterSg * 10), t.ctime);
-            else
-                GravityTracker.add(t.filterSg * 1000, t.ctime);    //GravityTracker.add(Math.round(t.filterSg * 1000), t.ctime);
         }
 
         if (!isNaN(t.sg)) dataset.push(t.filterSg);
@@ -215,10 +210,21 @@ UniBrewChart.prototype.processRecord_v5 = function() {
         t.rawSG.push(rawSG);
 
         if(t.GravityChangeChart){
-            t.gravityChanges.push([t.dataset[0],
-                GravityTracker.isValid(3)?   GravityTracker.ptDiff(3):NaN,
-                GravityTracker.isValid(6)?   GravityTracker.ptDiff(6):NaN,
-                GravityTracker.isValid(12)?  GravityTracker.ptDiff(12):NaN]);
+            function GD(p){
+                var v=t.getGravityBefore(p);
+                if(isNaN(v)) return NaN;
+                if(t.plato) return v-sg;
+                return (v-sg)*1000;
+            }
+
+            if (!isNaN(sg)){
+                t.gravityChanges.push([t.dataset[0],
+                    GD(GravityChangePeriod1),
+                    GD(GravityChangePeriod2),
+                    GD(GravityChangePeriod3)
+                    ]);
+                
+            } else t.gravityChanges.push([t.dataset[0], null,null,null]);
         }
 
         t.incTime(); // add one time interval

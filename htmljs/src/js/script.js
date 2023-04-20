@@ -6,6 +6,8 @@
     var T_LOAD_CHART = 150;
     var T_BWF_RECONNECT = 10000;
     var T_BWF_LCD = 10000;
+
+
     var BChart = {
         offset: 0,
         url: 'chart.php',
@@ -48,7 +50,7 @@
             if (t.chart.sg && !isNaN(t.chart.sg)) {
                 updateGravity(t.chart.sg);
                 t.chart.sg = NaN;
-                checkfgstate();
+                //checkfgstate();
             }
             t.chart.updateChart();
         },
@@ -144,7 +146,7 @@
                 if (t.chart.sg && !isNaN(t.chart.sg)) {
                     updateGravity(t.chart.sg);
                     t.chart.sg = NaN;
-                    checkfgstate();
+                    //checkfgstate();
                 }
                 if (t.timer == null) t.settimer();
             };
@@ -504,6 +506,20 @@ function parseStateSince(line) {
     }
 
 
+
+    function respPtDiff(sg,duration){
+        var preG =BChart.chart.getGravityOfTime((new Date().getTime())/1000 - duration);
+
+        if(isNaN(preG)) return "--";
+
+        var value=preG - sg;
+        if(window.plato) return value.toFixed(1);
+
+        value = value * 1000;
+         return value.toFixed(1);
+    }
+
+
     function updateGravity(sg) {
         //if(typeof window.sg != "undefined") return;
         window.sg = sg;
@@ -512,6 +528,8 @@ function parseStateSince(line) {
             Q("#gravity-att").innerHTML = window.plato ? BrewMath.attP(window.og, sg) : BrewMath.att(window.og, sg);
             Q("#gravity-abv").innerHTML = window.plato ? BrewMath.abvP(window.og, sg) : BrewMath.abv(window.og, sg);
         }
+
+        Q("#sgchanged").innerHTML = respPtDiff(sg,48*3600) + "/" + respPtDiff(sg,24*3600)+ "/" + respPtDiff(sg,12*3600);
     }
 
     function updateOriginGravity(og) {
