@@ -481,15 +481,17 @@ var GravityChangePeriod3 =24 * 3600;
             };
             t.chart = new Dygraph(document.getElementById(t.cid), t.data, opt);
         };
-        BrewChart.prototype.getGravityOfTime=function(time){
+        BrewChart.prototype.getGravityOfTime=function(time,filtered=true){
+            if(typeof filtered == "undefined") filtered=true;
             var duration =  this.ctime - time;
-            return this.getGravityBefore(duration>0? duration:0);
+            return this.getGravityBefore(duration>0? duration:0,filtered);
         };
-        BrewChart.prototype.getGravityBefore=function(duration){
+        BrewChart.prototype.getGravityBefore=function(duration,filtered){
+            if(typeof filtered == "undefined") filtered=true;
             var row = this.data.length - Math.round(duration/this.interval);
-
+            var index=filtered? FilteredSgLine:GravityLine;
             while(row>=0){
-                var gravity=this.data[row][GravityLine];
+                var gravity=this.data[row][index];
                 if(gravity != null) return gravity;
                 row--;
             }
@@ -1053,8 +1055,8 @@ var GravityChangePeriod3 =24 * 3600;
                     function GD(p){
                         var v=t.getGravityBefore(p);
                         if(isNaN(v)) return NaN;
-                        if(t.plato) return v-sg;
-                        return (v-sg)*1000;
+                        if(t.plato) return v-t.filterSg;
+                        return (v-t.filterSg)*1000;
                     }
 
                     if (!isNaN(sg)){

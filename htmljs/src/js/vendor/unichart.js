@@ -213,8 +213,8 @@ UniBrewChart.prototype.processRecord_v5 = function() {
             function GD(p){
                 var v=t.getGravityBefore(p);
                 if(isNaN(v)) return NaN;
-                if(t.plato) return v-sg;
-                return (v-sg)*1000;
+                if(t.plato) return v-t.filterSg;
+                return (v-t.filterSg)*1000;
             }
 
             if (!isNaN(sg)){

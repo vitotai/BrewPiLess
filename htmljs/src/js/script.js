@@ -49,6 +49,7 @@
             var t = this;
             if (t.chart.sg && !isNaN(t.chart.sg)) {
                 updateGravity(t.chart.sg);
+                gravityChangeUpdate(t.chart.filterSg);
                 t.chart.sg = NaN;
                 //checkfgstate();
             }
@@ -145,6 +146,7 @@
                 }
                 if (t.chart.sg && !isNaN(t.chart.sg)) {
                     updateGravity(t.chart.sg);
+                    gravityChangeUpdate(t.chart.filterSg);
                     t.chart.sg = NaN;
                     //checkfgstate();
                 }
@@ -484,9 +486,10 @@ function parseStateSince(line) {
         }
 
         if (!BChart.chart.calibrating && typeof msg["sg"] != "undefined" &&
-            msg.sg > 0)
-            updateGravity(msg.sg);
-
+            msg.sg > 0){
+                updateGravity(msg.sg);
+                gravityChangeUpdate(msg.sg);
+            }
         if (typeof msg["angle"] != "undefined") {
             if (Q("#iSpindel-tilt"))
                 Q("#iSpindel-tilt").innerHTML = "" + msg["angle"];
@@ -519,6 +522,9 @@ function parseStateSince(line) {
          return value.toFixed(1);
     }
 
+    function gravityChangeUpdate(fsg){
+        Q("#sgchanged").innerHTML = respPtDiff(fsg,48*3600) + "/" + respPtDiff(fsg,24*3600)+ "/" + respPtDiff(fsg,12*3600);
+    }
 
     function updateGravity(sg) {
         //if(typeof window.sg != "undefined") return;
@@ -528,8 +534,6 @@ function parseStateSince(line) {
             Q("#gravity-att").innerHTML = window.plato ? BrewMath.attP(window.og, sg) : BrewMath.att(window.og, sg);
             Q("#gravity-abv").innerHTML = window.plato ? BrewMath.abvP(window.og, sg) : BrewMath.abv(window.og, sg);
         }
-
-        Q("#sgchanged").innerHTML = respPtDiff(sg,48*3600) + "/" + respPtDiff(sg,24*3600)+ "/" + respPtDiff(sg,12*3600);
     }
 
     function updateOriginGravity(og) {
@@ -605,8 +609,11 @@ function parseStateSince(line) {
         openDlgLoading();
 
         if (window.isog) updateOriginGravity(gravity);
-        else updateGravity(gravity);
-
+        else {
+            // user input
+            updateGravity(gravity);
+            gravityChangeUpdate(gravity);
+        }
         var data = {
             name: "webjs",
             gravity: gravity
@@ -738,7 +745,7 @@ function parseStateSince(line) {
             var lu = new Date(info.u * 1000);
             if (Q("#gravity-device-last")) Q("#gravity-device-last").innerHTML = lu.shortLocalizedString();
         }
-        // gravity
+        // gravity reported from controller, whitch is resulted by reported from iSpindel
         if(!BChart.calibrating && info.g > 0) updateGravity(window.plato? BrewMath.sg2pla(info.g/1000.0):info.g/1000.0);
         if(info.t > -20000) Q("#gravity-device-temp").innerHTML= info.t/100 + "&deg;" + window.tempUnit;
     }
