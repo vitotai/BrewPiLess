@@ -20,8 +20,6 @@
 #include "BPLSettings.h"
 #include "BrewLogger.h"
 
-
-
 BPLSettings theSettings;
 
 #define BPLSettingFileName "/bpl.cfg"
@@ -1241,7 +1239,7 @@ String BPLSettings::jsonMqttRemoteControlSettings(void){
 	}
 #endif
 
-#if Auto_CAP
+#if AUTO_CAP
 	if(settings->capControlPathOffset){
 		root[CapPathKey] = settings->_strings + settings->capControlPathOffset;
 	}
@@ -1355,7 +1353,7 @@ bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 	if(!(ptr=copyIfExist(root,PtcPathKey,settings->ptcPathOffset,ptr,base))) return false;
 	#endif
 
-	#if Auto_CAP
+	#if AUTO_CAP
 	if(!(ptr=copyIfExist(root,CapPathKey,settings->capControlPathOffset,ptr,base))) return false;
 	#endif
 
