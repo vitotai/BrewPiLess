@@ -40,7 +40,7 @@ struct ControlConstants {
 	uint8_t lightAsHeater;		// use the light to heat rather than the configured heater device
 	uint8_t rotaryHalfSteps; // define whether to use full or half steps for the rotary encoder
 	temperature pidMax;
-#if SettableMinimumCoolTime
+#if 1 // SettableMinimumCoolTime
     uint16_t minCoolTime;
     uint16_t minCoolIdleTime;
     uint16_t minHeatTime;

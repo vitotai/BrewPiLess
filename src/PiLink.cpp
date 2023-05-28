@@ -666,7 +666,7 @@ const PiLink::JsonOutput PiLink::jsonOutputCCMap[] PROGMEM = {
 	JSON_OUTPUT_CC_MAP(coolingTargetLower, JOCC_TEMP_DIFF),
 	JSON_OUTPUT_CC_MAP(maxHeatTimeForEstimate, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(maxCoolTimeForEstimate, JOCC_UINT16),
-#if SettableMinimumCoolTime 
+#if 1 //SettableMinimumCoolTime 
 	JSON_OUTPUT_CC_MAP(minCoolTime, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(minCoolIdleTime, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(minHeatTime, JOCC_UINT16),
@@ -1015,7 +1015,7 @@ const PiLink::JsonParserConvert PiLink::jsonParserConverters[] PROGMEM = {
 	JSON_CONVERT(JSONKEY_Kp, &tempControl.cc.Kp, setStringToFixedPoint),
 	JSON_CONVERT(JSONKEY_Ki, &tempControl.cc.Ki, setStringToFixedPoint),
 	JSON_CONVERT(JSONKEY_Kd, &tempControl.cc.Kd, setStringToFixedPoint),
-#if SettableMinimumCoolTime 
+#if 1 //SettableMinimumCoolTime 
 	JSON_CONVERT(JSONKEY_minCoolTime, &tempControl.cc.minCoolTime, setUint16),
 	JSON_CONVERT(JSONKEY_minCoolIdleTime, &tempControl.cc.minCoolIdleTime, setUint16),
 	JSON_CONVERT(JSONKEY_minHeatTime, &tempControl.cc.minHeatTime, setUint16),

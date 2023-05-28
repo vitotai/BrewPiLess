@@ -304,7 +304,7 @@
 
 //#ifdef EnableGlycolSupport
 #define FridgeSensorFallBack true
-#define SettableMinimumCoolTime true
+// always true #define SettableMinimumCoolTime true
 //#endif
 
 #ifndef UseLittleFS
@@ -589,7 +589,7 @@
 
 //#ifdef EnableGlycolSupport
 #define FridgeSensorFallBack true
-#define SettableMinimumCoolTime true
+// always true #define SettableMinimumCoolTime true
 //#endif
 
 

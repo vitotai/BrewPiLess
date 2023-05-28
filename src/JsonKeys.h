@@ -61,7 +61,7 @@ static const char JSONKEY_beerSlowFilter[] PROGMEM = "beerSlowFilt";
 static const char JSONKEY_beerSlopeFilter[] PROGMEM = "beerSlopeFilt";
 static const char JSONKEY_lightAsHeater[] PROGMEM = "lah";
 static const char JSONKEY_rotaryHalfSteps[] PROGMEM = "hs";
-#if SettableMinimumCoolTime 
+#if 1 //SettableMinimumCoolTime 
 static const char JSONKEY_minCoolTime[] PROGMEM = "minCoolTime";
 static const char JSONKEY_minCoolIdleTime[] PROGMEM = "minCoolIdleTime";
 static const char JSONKEY_minHeatTime[] PROGMEM = "minHeatTime";

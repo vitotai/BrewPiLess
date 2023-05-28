@@ -31,7 +31,7 @@
 
 
 
-#if !SettableMinimumCoolTime
+#if 0 // !SettableMinimumCoolTime
 // Set minimum off time to prevent short cycling the compressor in seconds
 const uint16_t MIN_COOL_OFF_TIME = 300;
 // Use a minimum off time for the heater as well, so it heats in cycles, not lots of short bursts
@@ -46,7 +46,7 @@ const uint16_t MIN_HEAT_ON_TIME = 180;
 const uint16_t MIN_COOL_OFF_TIME_FRIDGE_CONSTANT = 600;
 // Set a minimum off time between switching between heating and cooling
 
-#if !SettableMinimumCoolTime
+#if 0 // !SettableMinimumCoolTime
 const uint16_t MIN_SWITCH_TIME = 600;
 #endif
 

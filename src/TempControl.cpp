@@ -257,7 +257,7 @@ void TempControl::updateState(void){
 			}
 			resetWaitTime();
 			if(fridgeFast > (cs.fridgeSetting+cc.idleRangeHigh) ){  // fridge temperature is too high
-				#if SettableMinimumCoolTime
+				#if 1 //SettableMinimumCoolTime
 				tempControl.updateWaitTime(cc.mutexDeadTime, sinceHeating);
 				#else
 				tempControl.updateWaitTime(MIN_SWITCH_TIME, sinceHeating);
@@ -270,7 +270,7 @@ void TempControl::updateState(void){
 						state = IDLE; // beer is already colder than setting, stay in or go to idle
 						break;
 					}
-					#if SettableMinimumCoolTime
+					#if 1 // SettableMinimumCoolTime
 					tempControl.updateWaitTime(cc.minCoolIdleTime, sinceCooling);
 					#else
 					tempControl.updateWaitTime(MIN_COOL_OFF_TIME, sinceCooling);
@@ -286,7 +286,7 @@ void TempControl::updateState(void){
 				}
 			}
 			else if(fridgeFast < (cs.fridgeSetting+cc.idleRangeLow)){  // fridge temperature is too low
-				#if SettableMinimumCoolTime
+				#if 1 // SettableMinimumCoolTime
 				tempControl.updateWaitTime(cc.mutexDeadTime, sinceCooling);
 				tempControl.updateWaitTime(cc.minHeatIdleTime, sinceHeating);
 				#else
@@ -332,7 +332,7 @@ void TempControl::updateState(void){
 
 			// stop cooling when estimated fridge temp peak lands on target or if beer is already too cold (1/2 sensor bit idle zone)
 			if(cv.estimatedPeak <= cs.fridgeSetting || (cs.mode != MODE_FRIDGE_CONSTANT && beerFast < (cs.beerSetting - 16))){
-				#if SettableMinimumCoolTime
+				#if 1 //SettableMinimumCoolTime
 				if(sinceIdle > cc.minCoolTime){
 				#else
 				if(sinceIdle > MIN_COOL_ON_TIME){
@@ -358,7 +358,7 @@ void TempControl::updateState(void){
 
 			// stop heating when estimated fridge temp peak lands on target or if beer is already too warm (1/2 sensor bit idle zone)
 			if(cv.estimatedPeak >= cs.fridgeSetting || (cs.mode != MODE_FRIDGE_CONSTANT && beerFast > (cs.beerSetting + 16))){
-				#if SettableMinimumCoolTime
+				#if 1 //SettableMinimumCoolTime
 				if(sinceIdle > cc.minHeatTime){
 				#else
 				if(sinceIdle > MIN_HEAT_ON_TIME){
@@ -689,7 +689,7 @@ const ControlConstants TempControl::ccDefaults PROGMEM =
 	/* rotaryHalfSteps */ 0,
 
 	/* pidMax */ intToTempDiff(10),	// +/- 10 deg Celsius
-#if SettableMinimumCoolTime
+#if 1 //SettableMinimumCoolTime
     /* minCoolTime */ 180,
     /* minCoolIdleTime */ 300,
     /* minHeatTime */  180,
