@@ -218,6 +218,8 @@ size_t nonNullJson(char* buffer,size_t size)
 		if(IS_FLOAT_TEMP_VALID(at)) root[KeyAuxTemp] = at;
 		float tilt=externalData.tiltValue();
 		root[KeyTilt]=tilt;
+		int16_t rssi=externalData.rssi();
+		root[KeyIspindelRssi]=rssi;
 	}
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	return	serializeJson(root,buffer,size);

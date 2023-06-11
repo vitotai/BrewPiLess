@@ -155,6 +155,8 @@ void MqttRemoteControl::_reportData(void){
 		    if(IS_FLOAT_TEMP_VALID(at)) lastID=_publish(KeyAuxTemp, at,1);
 		    float tilt=externalData.tiltValue();
 		    lastID=_publish(KeyTilt,tilt,2);
+            int16_t rssi=externalData.rssi();
+    		lastID=_publish(KeyIspindelRssi,(float)rssi,0);
 	    }
     }
     _lastPacketId = lastID;

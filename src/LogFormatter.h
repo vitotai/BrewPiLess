@@ -16,6 +16,7 @@
 #define KeyState "state"
 #define KeyFridgeHumidity "fridgeHumidity"
 #define KeyRoomHumidity "roomHumidity"
+#define KeyIspindelRssi "ispindelRssi"
 
 size_t nonNullJson(char *buffer,size_t size);
 size_t dataSprintf(char *buffer,const char *format,const char* invalidStr);
