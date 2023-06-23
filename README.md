@@ -42,7 +42,9 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
- * 4.2r
+ * 4.2.2
+   * Dedicated GLYCOL support binary. Glycol chilling is NOT supported by default.
+ * 4.2.1
     * [Only web front changes.] Show gravity changes of latest 48H/24H/12H instead of "stable". 
  * 4.2
     * BMP280 support
