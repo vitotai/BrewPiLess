@@ -1689,12 +1689,12 @@ void brewpiLoop(void)
 #if BREWPI_BUZZER
 		buzzer.setActive(alarmActuator.isActive() && !buzzer.isActive());
 
-		if( _beerSensorConnected && ! tempControl.beerSensor->isConnected(true)){
+		if( _beerSensorConnected && ! tempControl.beerSensor->isConnected()){
 			alarmActuator.setActive(true);
-		}else if(tempControl.beerSensor->isConnected(true)){
+		}else if(tempControl.beerSensor->isConnected()){
 			alarmActuator.setActive(false);
 		}
-		_beerSensorConnected = tempControl.beerSensor->isConnected(true);
+		_beerSensorConnected = tempControl.beerSensor->isConnected();
 
 #endif
 

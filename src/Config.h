@@ -302,10 +302,10 @@
 #define ENABLE_LOGGING 1
 #define EARLY_DISPLAY 1
 
-//#ifdef EnableGlycolSupport
+#ifdef EnableGlycolSupport
 #define FridgeSensorFallBack true
 // always true #define SettableMinimumCoolTime true
-//#endif
+#endif
 
 #ifndef UseLittleFS
 
@@ -586,11 +586,6 @@
 #define BUFFER_PILINK_PRINTS 1
 
 #define EARLY_DISPLAY 1
-
-//#ifdef EnableGlycolSupport
-#define FridgeSensorFallBack true
-// always true #define SettableMinimumCoolTime true
-//#endif
 
 
 #if ESP32
