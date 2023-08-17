@@ -5,7 +5,7 @@
 <head>
     <meta http-equiv=content-type content="text/html; charset=utf-8">
     <meta name=viewport content="width=device-width,initial-scale=1">
-    <title>BrewPiLess Log Viewer v4.0</title>
+    <title>BrewPiLess Log Viewer v4.2</title>
     <meta name=apple-mobile-web-app-title content=BrewPiLess>
     <meta name=apple-mobile-web-app-capable content=yes>
     <script type="text/javascript" src="js/dygraph-2.2.1/dygraph.min.js"></script>
@@ -25,7 +25,7 @@
 
 <body onload=loaded()>
     <header layout horizontal main-justified cross-center relative class=header>
-        <h1 class=header_title><span id=hostname>BPL LogViewer</span> <span id=verinfo class=header_version-display>v3.0</span></h1>
+        <h1 class=header_title><span id=hostname>BPL LogViewer</span> <span id=verinfo class=header_version-display>v4.2</span></h1>
         <div id="fileinputgrp">
             <input type="file" id="fileinput" />
         </div>
@@ -131,7 +131,7 @@
                         <div class="legend-value">--</div>
                     </li>
 
-                    <li layout horizontal main-justified class="chart-legend-row" id="formula-btn" onclick="openpolynomialpane()">formula</li>
+                    <li layout horizontal main-justified class="chart-legend-row" id="formula-btn" onclick="openpolynomialpane();openNewCalibrationPointInput();">formula</li>
                 </ul>
             </div>
         </div>
@@ -172,9 +172,30 @@
                                 </tr>
                             </tobdy>
                         </table>
-                        <div style="float:right;"><button onclick="applyIgnoreMask()"><%= control_apply %></button></div>
-                    </td>
-                    <td>
+                        <div id="append_calibration" style="padding-top: 1em;">
+                            <table>
+                              <tr>
+                                <th>Time:</th>
+                                <td><input type="datetime-local" style="max-width: 140px" id="newcaltime"" onchange="calibrationTimeChanged()"></td>
+                              </tr>
+                              <tr>
+                                <th>Tilt:</th>
+                                <td><span id="tilt-value">--</span></td>
+                            </tr>
+                            <tr>
+                              <th>Gravity:</th>
+                              <td><input type="number" style="max-width: 100px"  id="newcalsg"></td>
+                            </tr>
+                            </table>
+                            <div style="padding-top: 0.5em;">
+                              <div style="text-align:right;"><button class="btn btn--raised" onclick="addNewCalibrationPoint()">Add</button></div>
+                            </div>  
+                          </div>
+                          <div style="padding-top: 1em;">
+                            <div style="float:right;"><button class="btn btn--raised" onclick="applyPolynomial()">Apply</button></div>
+                          </div>
+                        </td>
+                        <td>
                         <div id="graph"></div>
                         <span id="polynormial"></span>
                     </td>

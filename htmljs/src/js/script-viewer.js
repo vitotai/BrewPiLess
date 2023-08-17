@@ -154,6 +154,65 @@ BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('
             var data = BChart.chart.partial(ranges[0], ranges[1]);
             download(new Blob(data, { type: 'octet/stream' }), window.file.name + "-partial");
         }
+
+        function calibrationTimeChanged(){
+            var ntime=new Date(Q("#newcaltime").value);
+            var tilt = BChart.chart.getTiltAroundTime(ntime);
+            Q("#tilt-value").innerText = (tilt < 0)? "--":""+tilt;
+        }
+        
+        PolyRegression.appendPoint=function(tilt,ng){
+            PolyRegression.allpoints.push([tilt,ng]);
+            PolyRegression.allpoints.sort(function(a,b){
+                return  b[0] - a[0];
+            });
+            PolyRegression.igchanged();            
+        };
+
+        function addNewCalibrationPoint(){
+            var ng= parseFloat(Q("#newcalsg").value);
+            var tilt= parseFloat(Q("#tilt-value").innerText);
+
+            if( isNaN(ng) ) return;
+            if(isNaN(tilt)) return;
+
+            PolyRegression.appendPoint(tilt,ng);
+            // record new temp
+            if(typeof window.newPts == "undefined") window.newPts=Array();
+            
+            window.newPts.push({
+                time: new Date(Q("#newcaltime").value),
+                gravity: ng 
+            });
+        }
+
+        function openNewCalibrationPointInput(){
+            var end=BChart.chart.end();
+            var dd= new Date( end.getTime() - end.getTimezoneOffset() * 60000);
+            Q("#newcaltime").value =dd.toISOString().slice(0, 16);
+            calibrationTimeChanged();
+        }
+        function applyPolynomial(){
+            if(typeof window.newPts !="undefined" && window.newPts.length > 0){
+                for(var i=0;i< window.newPts.length;i++){
+                    var r=window.newPts[i];
+                    BChart.chart.addCalibration(r.time,r.gravity);
+                }
+                BChart.chart.getFormula();
+                // rowSG is overwritten by the following function call
+                // a new function that update Gravity only should be created
+                // Now, just take a easy and dirty way
+                BChart.chart.process(BChart.raw);
+                BChart.chart.updateChart();
+                for(var i=0;i< window.newPts.length;i++){
+                    var r=window.newPts[i];
+                    BChart.chart.addCalibration(r.time,r.gravity);
+                }
+
+            }else{
+                BChart.setIgnoredMask(PolyRegression.cal_igmask);
+            }
+        }
 /*
         function cutrange2p() {
             if (typeof window.file == "undefined") return;
