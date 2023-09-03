@@ -12,6 +12,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script type="text/javascript" src="js/vendor/bwf.js"></script>
     <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/backup.js"></script>
     <script type="text/javascript" src="js/script-config.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="style-config.css">
@@ -111,6 +112,8 @@
 
                     <div layout horizontal cross-center>
                         <button class="btn btn--raised" onclick="showsysinfo(); return false;">Sysinfo</button>
+                        <button class="btn btn--raised" onclick="Backup.init(),Q('#backup-diag').style.display = 'block'; return false;">Backup/Restore</button>
+                        <button class="btn btn--raised" onclick="showAdvanced(); return false;">Advanced</button>                       
                     </div>
 
                     <div class="card-footer">
@@ -159,21 +162,270 @@
         </div>
     </div>
 
-    <li id="sysinfo" class="modal">
+    <div id="sysinfo" class="modal">
         <div class="modal-content" style="width:320px">
+            <div class="modal-header">
+                System Information
+            </div>
             <ul>
-                <li layout horizontal main-justified>
-                    <h6 class="inline-header"><strong>System Information</strong></h6></li>
                 <li layout horizontal main-justified><span class="descriptor">MAC Address</span>    <span id="mac-address"></span></li>
                 <li layout horizontal main-justified><span class="descriptor">Flash Chip ID</span>  <span id="flash-id"></span></li>
                 <li layout horizontal main-justified><span class="descriptor">Real Flash Size</span>    <span id="real-flash-size"></span></li>
                 <li layout horizontal main-justified><span class="descriptor">Specified Flash Size</span>   <span id="specified-flash-size"></span></li>
                 <li layout horizontal main-justified><span class="descriptor">File System Size</span>   <span id="fs-size"></span></li>
             </ul>
-            <button onclick="hidesysinfo();return false;">Done</button>
+            <button class="btn btn--raised" onclick="hidesysinfo();return false;">Done</button>
 
         </div>
     </div>
+
+
+    <div id="backup-diag" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <%= config_backup_restore %>
+            </div>
+            <ul>            
+                <li layout horizontal main-justified><span class="descriptor"><%= config_backup_time %> </span><span id="backuptime"></span></li>
+                <li layout horizontal main-justified><span class=""> <%= menu2_setup %></span><span class="device-status"></span></li>
+                <li layout horizontal main-justified><span class=""> <%= menu2_gravity %></span><span class="gdc-status"></span></li>
+                <li layout horizontal main-justified><span class=""><%= menu2_logs %></span> <span class="rlog-status"></span> </li>
+                <li layout horizontal main-justified><span class=""><%= menu2_pressure %></span><span class="pressure-status"></span></li>
+                <li layout horizontal main-justified><span class="">MQTT</span><span class="mqtt-status"></span></li>
+                <li layout horizontal main-justified><span class=""><%= menu2_config %></span><span class="syscfg-status"></span></li>
+            </ul>
+            <div class="modal" id="processing">
+                <div class="modal-content hint" id="hint_get"><%= config_getting %></div>
+                <div class="modal-content hint" id="hint_put"><%= config_putting %></div>
+            </div>
+            <button onclick="Backup.save();return false"><%= config_save %> </button>
+            <%= confg_restore_from %>  <input type="file" id="backupfile"></input>
+            <button onclick="Backup.restore();return false"> <%= config_restore %>  </button>
+            <button onclick=" Q('#backup-diag').style.display = 'none';return false"><%= dlg_cancel %> </button>
+        </div>
+    </div>
+
+
+    <div id="advanced" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+              Advanced Settings
+          </div>
+        <div layout horizontal cross-center>
+            <h6 class="inline-header">
+              tempFormat
+            </h6>
+              <div>
+                <select id=tempFormat name=tempFormat>
+                  <option value="C"> &deg;C</option>
+                  <option value="F"> &deg;F </option>
+                </select>
+              </div>
+        </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                tempSettingMin
+              </h6>
+              <input type="number" id="tempSetMin" size="4" step="0.001"> &deg;
+            </div>
+
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                tempSettingMax
+              </h6>
+              <input type="number" id="tempSetMax" size="4" step="0.001"> &deg;
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                pidMax
+              </h6>
+              <input type="number" id="pidMax" size="4" step="0.001"> &deg;
+            </div>
+
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                Kp
+              </h6>
+              <input type="number" id="Kp" size="4" step="0.001">
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                Ki
+              </h6>
+              <input type="number" id="Ki" size="4" step="0.001">
+            </div>
+
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                Kd
+              </h6>
+              <input type="number" id="Kd" size="4" step="0.001">
+            </div>
+
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                iMaxErr
+              </h6>
+              <input type="number" id="iMaxErr" size="4" step="0.001">
+            </div>
+
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                idleRangeH
+              </h6>
+              <input type="number" id="idleRangeH" size="4" step="0.001"> &deg;
+            </div>
+
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                idleRangeL
+              </h6>
+              <input type="number" id="idleRangeL" size="4" step="0.001"> &deg;
+            </div>
+
+
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                heatTargetH
+              </h6>
+              <input type="number" id="heatTargetH" size="4" step="0.001"> &deg;
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                heatTargetL
+              </h6>
+              <input type="number" id="heatTargetL" size="4" step="0.001"> &deg;
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                coolTargetH
+              </h6>
+              <input type="number" id="coolTargetH" size="4" step="0.001"> &deg;
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                coolTargetL
+              </h6>
+              <input type="number" id="coolTargetL" size="4" step="0.001"> &deg;
+            </div>
+
+
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                maxHeatTimeForEst
+              </h6>
+              <input type="number" id="maxHeatTimeForEst" size="4"> Seconds
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                maxCoolTimeForEst
+              </h6>
+              <input type="number" id="maxCoolTimeForEst" size="4"> Seconds
+            </div>
+
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                fridgeFastFilt
+              </h6>
+              <input type="number" id="fridgeFastFilt" size="4" step="0.001">
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                fridgeSlowFilt
+              </h6>
+              <input type="number" id="fridgeSlowFilt" size="4" step="0.001">
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                fridgeSlopeFilt
+              </h6>
+              <input type="number" id="fridgeSlopeFilt" size="4" step="0.001">
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                beerFastFilt
+              </h6>
+              <input type="number" id="beerFastFilt" size="4" step="0.001">
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                beerSlowFilt
+              </h6>
+              <input type="number" id="beerSlowFilt" size="4" step="0.001">
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                beerSlopeFilt
+              </h6>
+              <input type="number" id="beerSlopeFilt" size="4" step="0.001">
+            </div>
+
+            <div layout horizontal cross-center>
+            <h6 class="inline-header">
+              lightAsHeater
+            </h6>
+              <div>
+                <select id=lah name=lah>
+                  <option value="0"> NO</option>
+                  <option value="1"> YES </option>
+                </select>
+              </div>
+          </div>
+          
+          <div layout horizontal cross-center>
+            <h6 class="inline-header">
+              RotaryHalfStep
+            </h6>
+              <div>
+                <select id=hs name=hs>
+                  <option value="0"> NO</option>
+                  <option value="1"> YES </option>
+                </select>
+              </div>
+          </div>
+
+          <div layout horizontal cross-center>
+            <h6 class="inline-header">
+              minCoolTime
+            </h6>
+            <input type="number" id="minCoolTime" size="4"> Seconds
+          </div>
+          <div layout horizontal cross-center>
+            <h6 class="inline-header">
+              minCoolIdleTime
+            </h6>
+            <input type="number" id="minCoolIdleTime" size="4"> Seconds
+          </div>
+          <div layout horizontal cross-center>
+            <h6 class="inline-header">
+              minHeatTime
+            </h6>
+            <input type="number" id="minHeatTime" size="4"> Seconds
+          </div>
+          <div layout horizontal cross-center>
+            <h6 class="inline-header">
+              minHeatIdleTime
+            </h6>
+            <input type="number" id="minHeatIdleTime" size="4"> Seconds
+          </div>
+          <div layout horizontal cross-center>
+            <h6 class="inline-header">
+              deadTime
+            </h6>
+            <input type="number" id="deadTime" size="4"> Seconds
+          </div>
+          <hr>
+            <div>
+            <input type="checkbox" id="warning" name="warning">
+            <label for="warning" style="min-width: 0;">I understand the risk of modifying these values.</label>
+          </div>
+
+          <div style="text-align: center;">
+            <button class="btn btn--raised" onclick="setAdvancedOptions()" id="adv-update">Update</button>
+            <button class="btn btn--raised" onclick="hideAdvanced();">Close</button>
+          </div>
+        </div>
+      </div>
 
 
 </body>

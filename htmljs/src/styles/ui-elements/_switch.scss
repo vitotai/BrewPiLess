@@ -88,3 +88,13 @@
 .switch-input:checked + label[for=room-humidity].switch-label:after {
 	background-color: $room-humidity-color;
 }
+
+.switch-input:checked + label[for=sgchange1].switch-label:after {
+	background-color: $gravity-change-1-color;
+}
+.switch-input:checked + label[for=sgchange2].switch-label:after {
+	background-color: $gravity-change-2-color;
+}
+.switch-input:checked + label[for=sgchange3].switch-label:after {
+	background-color: $gravity-change-3-color;
+}

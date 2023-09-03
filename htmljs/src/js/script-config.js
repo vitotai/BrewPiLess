@@ -78,7 +78,7 @@ function save() {
     var div = Q("select[name=wifi]");
     json["wifi"] = div.value;
     json["dis"] = Q("select[name=dis]").value;
-    console.log(JSON.stringify(json));
+    //console.log(JSON.stringify(json));
     var url = "config" + (reboot ? "" : "?nb");
     s_ajax({
         url: url,
@@ -227,4 +227,75 @@ function savewifi(){
             window.oridata.wifi=3;
         }
     }
+}
+function initAdvanced(){
+    var inputs = document.querySelectorAll('#advanced input,select'), i;
+
+    for (i = 0; i < inputs.length; ++i) {
+        inputs[i].onchange = function(){
+         //   console.log("item:"+ this.id +" value:" + this.value);
+            window.ccModified[this.id]=this.value;
+            checkModify();
+
+        }
+    } 
+
+    Q("#warning").onchange=function(){
+        checkModify();
+    }
+}
+
+
+function checkModify(){
+    var dirty=false;
+    Object.keys(window.ccModified).forEach(key => {
+        if(window.ccModified[key] != window.ccConstants[key])
+            //console.log("modified:" + key +" value:" + window.ccModified[key]);
+        dirty = true;
+    });
+
+
+    Q("#adv-update").disabled= ! Q("#warning").checked || !dirty;
+}
+
+function cResponse(cc){
+    window.ccModified={};
+    window.ccConstants=cc;
+    Q("#adv-update").disabled=true;
+    Object.keys(cc).forEach(key => {
+    //    console.log(key, cc[key]);
+
+        Q("#" + key).value = cc[key];
+    });
+}
+var testConfig={"tempFormat":"C","tempSetMin": 1.0,"tempSetMax": 30.0,"pidMax": 10.000,"Kp": 5.000,"Ki": 0.250,"Kd":-1.500,"iMaxErr": 0.500,"idleRangeH": 1.000,"idleRangeL":-1.000,"heatTargetH": 0.299,"heatTargetL":-0.199,"coolTargetH": 0.199,"coolTargetL":-0.299,"maxHeatTimeForEst":600,"maxCoolTimeForEst":1200,"minCoolTime":180,"minCoolIdleTime":300,"minHeatTime":180,"minHeatIdleTime":300,"deadTime":600,"fridgeFastFilt":1,"fridgeSlowFilt":4,"fridgeSlopeFilt":3,"beerFastFilt":3,"beerSlowFilt":4,"beerSlopeFilt":4,"lah":0,"hs":0};
+
+function showAdvanced(){
+    Q("#advanced").style.display = "block";
+    if(typeof BWF.handlers['C'] == "undefined"){
+        BWF.on('C',cResponse);
+        initAdvanced();
+    }
+    window.ccModified={};
+    Q("#adv-update").disabled=true;
+    //Test code
+    //BWF.handlers.C(testConfig);
+    BWF.send("c");
+}
+
+function hideAdvanced(){
+    Q("#advanced").style.display = "none";
+}
+
+
+function setAdvancedOptions(){
+    var cmd={};
+    Object.keys(window.ccModified).forEach(key => {
+        if(window.ccModified[key] != window.ccConstants[key])
+            //console.log("modified:" + key +" value:" + window.ccModified[key]);
+        cmd[key] = window.ccModified[key];
+    });
+
+    //console.log("j" +JSON.stringify(cmd));
+    BWF.send("j" + JSON.stringify(cmd));
 }

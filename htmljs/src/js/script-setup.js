@@ -339,6 +339,7 @@ function init(classic) {
             },
             N:function(a){
                 window.board= a.b;
+                list();
             }
         }
     })
