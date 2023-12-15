@@ -153,6 +153,7 @@ bool BPLSettings::autoCapSettingsSanity(void){ return true;}
 
 #define KeyDisplayMode "dis"
 
+#define KeyGlycol "glycol"
 
 bool BPLSettings::systemConfigurationSanity(void){
 	SystemConfiguration *cfg=  systemConfiguration();
@@ -199,7 +200,7 @@ void BPLSettings::defaultSystemConfiguration(void){
     syscfg->gw = (uint32_t) IPAddress(0,0,0,0);
     syscfg->netmask = (uint32_t) IPAddress(0,0,0,0);
     syscfg->dns = (uint32_t) IPAddress(0,0,0,0);
-
+    syscfg->glycolChilling = 0;
 	#if TWOFACED_LCD
 	syscfg->displayMode = 0;
 	#endif
@@ -238,7 +239,7 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
 		#if TWOFACED_LCD		
 		syscfg->displayMode = root[KeyDisplayMode];
 		#endif
-
+        syscfg->glycolChilling=root[KeyGlycol];
 		return true;
     }
 	return false;
@@ -268,6 +269,7 @@ String BPLSettings::jsonSystemConfiguration(void){
     root[KeyGateway]= IPAddress(syscfg->gw).toString();
     root[KeyNetmask]= IPAddress(syscfg->netmask).toString();
 	root[KeyDNS] = IPAddress(syscfg->dns).toString();
+	root[KeyGlycol] = syscfg->glycolChilling;
 
 	#if TWOFACED_LCD		
 	root[KeyDisplayMode] = syscfg->displayMode;

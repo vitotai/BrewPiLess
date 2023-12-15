@@ -1650,7 +1650,7 @@ void brewpi_setup()
 #endif
 
 	piLink.init();
-
+	deviceManager.setFridgeSensorFallBack(theSettings.systemConfiguration()->glycolChilling !=0);
 	logDebug("started");
 	tempControl.init();
 	settingsManager.loadSettings();

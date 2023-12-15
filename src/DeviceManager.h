@@ -306,7 +306,7 @@ public:
 	static bool enumDevice(DeviceDisplay& dd, DeviceConfig& dc, uint8_t idx);
 
 	static void listDevices();
-
+	static void setFridgeSensorFallBack(bool fb){ fridgeSensorFallBack = fb; }
 private:
 	#if EnableDHTSensorSupport
 	static void enumerateEnvTempDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
@@ -343,6 +343,7 @@ private:
 
 #endif
 	static bool firstDeviceOutput;
+	static bool fridgeSensorFallBack;
 };
 
 

@@ -19,7 +19,8 @@ typedef struct _SystemConfiguration{
     uint8_t wifiMode;
     uint32_t dns;
     uint8_t  displayMode;
-    uint8_t _padding[3];
+    uint8_t glycolChilling;
+    uint8_t _padding[2];
 }SystemConfiguration;
 
 //*****************************************************

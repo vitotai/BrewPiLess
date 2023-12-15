@@ -49,7 +49,7 @@ class TempSensor {
 	TempSensor(TempSensorType sensorType, BasicTempSensor* sensor =NULL)  {
 		updateCounter = 255; // first update for slope filter after (255-4s)
 		setSensor(sensor);
-		#if FridgeSensorFallBack
+		#if 1 // FridgeSensorFallBack
 		_useBackupSensor=false;
 		_backupSensor=NULL;
 		#endif
@@ -59,7 +59,7 @@ class TempSensor {
 		 _sensor = sensor;
 		 failedReadCount = -1;
 	 }
-	#if FridgeSensorFallBack
+	#if 1 //FridgeSensorFallBack
 	void setBackupSensor(BasicTempSensor* sensor) {
 		 _backupSensor = sensor;
 	 }
@@ -70,7 +70,7 @@ class TempSensor {
 
 	void init();
 	
-	#if FridgeSensorFallBack
+	#if 1 // FridgeSensorFallBack
 	bool isConnected(bool physical=false) {
 			if(physical) return _sensor->isConnected(); 
 			
@@ -111,7 +111,7 @@ class TempSensor {
 	TempSensorFilter slopeFilter;
 	unsigned char updateCounter;
 	temperature_precise prevOutputForSlope;
-	#if FridgeSensorFallBack
+	#if 1 //FridgeSensorFallBack
 	BasicTempSensor* _backupSensor;
 	bool _useBackupSensor;
 	#endif

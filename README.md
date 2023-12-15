@@ -42,6 +42,9 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * 4.3.1 
+   * Auto list device list on page open
+   * Advanced settings for control constants.
  * 4.3
    * update ESP32 framework to 5.4.0
    * update ESP8266 framework to 4.2.0
