@@ -225,7 +225,23 @@ static void handleFileDelete(void){
   server.send(200, "text/plain", "");
   path = String();
 }
+static void handleDirCreate(void){
 
+  if(server.args() == 0)
+    return server.send(500, "text/plain", "BAD ARGS");
+  String path = server.arg(0);
+  DBG_PRINTLN("handleDirCreate: " + path);
+  if(path == "/")
+    return server.send(500, "text/plain", "BAD PATH");
+  if(FileSystem.exists(path))
+    return server.send(500, "text/plain", "FILE EXISTS");
+
+  if(FileSystem.mkdir(path)){
+    server.send(200, "text/plain", "");
+  }else{
+    server.send(500, "text/plain", "CREATE FAILED");
+  }
+}
 static void handleFileCreate(void){
   if(server.args() == 0)
     return server.send(500, "text/plain", "BAD ARGS");
@@ -340,7 +356,7 @@ void ESPUpdateServer_setup(const char* user, const char* pass){
 	   server.send_P(200,"text/html",edit_htm_gz,edit_htm_gz_len);
   });
   //create file
-  server.on("/edit", HTTP_PUT, handleFileCreate);
+  server.on("/edit", HTTP_PUT, handleDirCreate);
   //delete file
   server.on("/edit", HTTP_DELETE, handleFileDelete);
   //first callback is called after the request has ended with all parsed arguments
