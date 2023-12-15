@@ -45,6 +45,8 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  * 4.3.1 
    * Auto list device list on page open
    * Advanced settings for control constants.
+   * Glycol as an option. No more dedicated Glycol build.
+   * Update Filemanager.
  * 4.3
    * update ESP32 framework to 5.4.0
    * update ESP8266 framework to 4.2.0

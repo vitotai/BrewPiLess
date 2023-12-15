@@ -1,4 +1,4 @@
-var JSVERSION = "4.3";
+var JSVERSION = "4.3.1";
 
 function s_ajax(b) {
     var c = new XMLHttpRequest();
