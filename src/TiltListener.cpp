@@ -2,8 +2,6 @@
 #include <string>
 #if SupportTiltHydrometer
 
-#define  BLEScanTime  2 //In seconds
-#define  TiltMonitorPeriod 10000
 
 #define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
 
@@ -32,18 +30,15 @@ const uint8_t UUIDPink[]={0xA4,0x95,0xBB,0x80,0xC5,0xB1,0x4B,0x44,0xB5,0x12,0x13
 
 #define UUID_SIZE sizeof(UUIDPink)
 
-void TiltListener::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
-}
 
-bool TiltListener::_getTiltInfo(NimBLEAdvertisedDevice* advertisedDevice,TiltHydrometerInfo& tiltInfo){
+bool TiltListener::_parseTiltInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,TiltHydrometerInfo& tiltInfo){
 
 
     std::string strManufacturerData = advertisedDevice->getManufacturerData();
-    #if 1
+    #if 0
     // printout data
     DBG_PRINTF("  Dev: %s, %d ",(advertisedDevice->haveName())? advertisedDevice->getName().c_str():"NONAME",advertisedDevice->getRSSI());
-    DBG_PRINTF("\t  %s :",(advertisedDevice->haveServiceData())? advertisedDevice->getServiceDataUUID(0).toString().c_str():"NO ServiceData");
-   
+    DBG_PRINTF("\t  %s :",(advertisedDevice->haveServiceData())? advertisedDevice->getServiceDataUUID(0).toString().c_str():"NO ServiceData");   
     DBG_PRINTF(" Man len: %d ", strManufacturerData.length());
 
     std::string strServiceData = advertisedDevice->getServiceData();
@@ -62,7 +57,6 @@ bool TiltListener::_getTiltInfo(NimBLEAdvertisedDevice* advertisedDevice,TiltHyd
     #endif
     
     if(!advertisedDevice->haveManufacturerData()) return false;
-
     if (strManufacturerData.length() != 25) return false;
 
     uint8_t cManufacturerData[100];
@@ -73,7 +67,6 @@ bool TiltListener::_getTiltInfo(NimBLEAdvertisedDevice* advertisedDevice,TiltHyd
     
     BLEBeacon oBeacon = BLEBeacon();
     oBeacon.setData(strManufacturerData);
-//    DBG_PRINTF("ID: %04X Major: %d Minor: %d UUID: %s Power: %d\n", oBeacon.getManufacturerId(), ENDIAN_CHANGE_U16(oBeacon.getMajor()), ENDIAN_CHANGE_U16(oBeacon.getMinor()), oBeacon.getProximityUUID().toString().c_str(), oBeacon.getSignalPower());
     
     uint8_t* uuid= cManufacturerData + 4;
     
@@ -100,86 +93,60 @@ bool TiltListener::_getTiltInfo(NimBLEAdvertisedDevice* advertisedDevice,TiltHyd
     return true;
 }
 
-
-void TiltListener::begin(void) {
-  BLEDevice::init("");
-  _pBLEScan = BLEDevice::getScan(); //create new scan
-  _pBLEScan->setAdvertisedDeviceCallbacks(this);
-  _pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
-  _pBLEScan->setInterval(100);
-  _pBLEScan->setWindow(99);  // less or equal setInterval value
+void TiltListener::scanComplete(NimBLEScanResults& result){
+    if(_scanCompleteHandler && _availTilts){
+        _scanCompleteHandler(_numTiltFound,_availTilts);
+        free(_availTilts);
+        _availTilts=NULL;
+        _scanCompleteHandler =NULL;
+    }
 }
 
-void TiltListener::scanComplete(NimBLEScanResults& result){
-    DBG_PRINTF("BLE found:%d\n",result.getCount());
-    
-    TiltHydrometerInfo tiltInfos[MaxTiltNumber];
-    int count=0;
-    
-    for(auto it = result.begin(); it != result.end(); ++it) {
-        if(_getTiltInfo( *it, tiltInfos[count])){
-            if(tiltInfos[count].color == _targetColor && _dataAvailableHandler ){
-                _dataAvailableHandler(tiltInfos[count]);
+
+
+void TiltListener::deviceFound(NimBLEAdvertisedDevice* device){
+    TiltHydrometerInfo tinfo;
+    if(_parseTiltInfoFromAdvertise(device, tinfo)){
+        if(tinfo.color == _targetColor && _dataAvailableHandler ){
+            _dataAvailableHandler(tinfo);
+        }
+
+        if(_scanCompleteHandler && _availTilts){
+            if(_numTiltFound < MaxTiltNumber){
+                _availTilts[_numTiltFound] = tinfo;
+                _numTiltFound ++;
             }
-            count++;
-            if(count >= MaxTiltNumber) break;
         }
     }
-    DBG_PRINTF("TILT found:%d\n",count);
-    if(_scanCompleteHandler){
-        _scanCompleteHandler(count,tiltInfos);
-    }
-    _scanning =false;
-    _pBLEScan->clearResults();   // delete results fromBLEScan buffer to release memory
+}
+
+static void deviceFoudCB(NimBLEAdvertisedDevice* device){
+    tiltListener.deviceFound(device);
+}
+
+void TiltListener::listen(TiltColor color,TiltDataHandler onData){
+    _dataAvailableHandler=onData;
+    _targetColor = color;
+    bleListener.listen(deviceFoudCB);
+}
+
+void TiltListener::stopListen(void) {
+    _targetColor=TiltColorInvalid;
+    _dataAvailableHandler=NULL;
+    bleListener.stopListen();
 }
 
 static void scanDone(BLEScanResults scanResults){
     tiltListener.scanComplete(scanResults);
 }
 
-void TiltListener::_scan(void) {
-    // put your main code here, to run repeatedly:
-    _scanning=true;
-    _lastScanTime=millis();
-    if(!_pBLEScan->start(BLEScanTime, scanDone)){
-        Serial.printf("Error starting scan\n");
-        _scanning=false;
-    }
-     Serial.printf("BLE scanning\n");
-}
-
-void TiltListener::listen(TiltColor color,TiltDataHandler onData){
-
-    _dataAvailableHandler=onData;
-    _targetColor = color;
-}
-
-void TiltListener::stopListen(void) {
-    _targetColor=TiltColorInvalid;
-    _dataAvailableHandler=NULL;
-}
-
-void TiltListener::loop(void) {
-    if(_scanning) return;
-    // else, finish searching
-    if(_commandScan){
-        DBG_PRINTF("Scanning\n");
-        _commandScan=false;
-        _scan();
-    }else if(_targetColor != TiltColorInvalid
-        && ((millis() - _lastScanTime) > TiltMonitorPeriod )){
-        _scan();
-    }
-}
-
 void TiltListener::scan(void (*scanCompleteHandler)(int,TiltHydrometerInfo*)){
-    if(_commandScan) return;
-    DBG_PRINTF("start scanning:%d\n",_scanning);
     _scanCompleteHandler = scanCompleteHandler;
-    _commandScan = true;
-}
-
-void TiltListener::_clearData(void){
+    if(_availTilts ==NULL){
+        _availTilts = (TiltHydrometerInfo*) malloc(sizeof(TiltHydrometerInfo)* MaxTiltNumber);
+        _numTiltFound =0;
+    }
+    bleListener.scanNow(scanDone);
 }
 
 #endif

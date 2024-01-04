@@ -5,18 +5,8 @@
 
 #include "Config.h"
 #if SupportTiltHydrometer
-#if 0
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEScan.h>
-#include <BLEAdvertisedDevice.h>
-#endif
 
-#include <NimBLEDevice.h>
-#include <NimBLEAdvertisedDevice.h>
-#include "NimBLEEddystoneURL.h"
-#include "NimBLEEddystoneTLM.h"
-#include "NimBLEBeacon.h"
+#include "BleListener.h"
 
 
 typedef enum _TiltColor{
@@ -43,36 +33,26 @@ typedef struct _TiltHydrometerInfo {
 typedef std::function<void(TiltHydrometerInfo&)> TiltDataHandler;
 
 
-class TiltListener :public BLEAdvertisedDeviceCallbacks{
+class TiltListener {
 public:
-    TiltListener():_scanning(false),_commandScan(false),_scanCompleteHandler(NULL),_dataAvailableHandler(NULL),_targetColor(TiltColorInvalid){
-        _clearData();
-    }
-    void begin(void);
-    void loop(void);
+    TiltListener():_scanCompleteHandler(NULL),_dataAvailableHandler(NULL),_targetColor(TiltColorInvalid),_availTilts(NULL){}
+
     void scan(void (*scanCompleteHandler)(int,TiltHydrometerInfo*)); // callback result.
 
     void listen(TiltColor color,TiltDataHandler onData);
     void stopListen(void);
-    
-    TiltHydrometerInfo *getTiltBy(TiltColor color);
     // callbacks
     void scanComplete(NimBLEScanResults& result);
-    virtual void onResult(NimBLEAdvertisedDevice* advertisedDevice);
+    void deviceFound(NimBLEAdvertisedDevice* device);
 protected:
-    void _scan(void);
-    void _clearData(void);
-    bool _getTiltInfo(NimBLEAdvertisedDevice* advertisedDevice,TiltHydrometerInfo& tiltInfo);
+    bool _parseTiltInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,TiltHydrometerInfo& tiltInfo);
     
-    bool _scanning;
-    bool _commandScan;
     void (*_scanCompleteHandler)(int,TiltHydrometerInfo*);
     TiltDataHandler _dataAvailableHandler;
 
-    BLEScan* _pBLEScan;
-
     TiltColor _targetColor;
-    uint32_t _lastScanTime;
+    TiltHydrometerInfo* _availTilts;
+    uint8_t  _numTiltFound;
 };
 
 extern TiltListener tiltListener;
