@@ -1998,8 +1998,8 @@ void setup(void){
 	autoCapControl.begin();
 	#endif
 
-#if SupportTiltHydrometer
-	tiltListener.begin();
+#if SupportBLEScanner
+	bleListener.begin();
 #endif
 
 #if EanbleParasiteTempControl
@@ -2100,8 +2100,8 @@ void loop(void){
 	PressureMonitor.loop();
 	#endif
 	
-	#if SupportTiltHydrometer
-	tiltListener.loop();
+	#if SupportBLEScanner
+	bleListener.loop();
 	#endif
 
 	#if EnableHumidityControlSupport
