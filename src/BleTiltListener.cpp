@@ -1,4 +1,4 @@
-#include "TiltListener.h"
+#include "BleTiltListener.h"
 #include <string>
 #if SupportTiltHydrometer
 
@@ -93,60 +93,33 @@ bool TiltListener::_parseTiltInfoFromAdvertise(NimBLEAdvertisedDevice* advertise
     return true;
 }
 
-void TiltListener::scanComplete(NimBLEScanResults& result){
-    if(_scanCompleteHandler && _availTilts){
-        _scanCompleteHandler(_numTiltFound,_availTilts);
-        free(_availTilts);
-        _availTilts=NULL;
-        _scanCompleteHandler =NULL;
-    }
-}
-
-
-
-void TiltListener::deviceFound(NimBLEAdvertisedDevice* device){
-    TiltHydrometerInfo tinfo;
-    if(_parseTiltInfoFromAdvertise(device, tinfo)){
-        if(tinfo.color == _targetColor && _dataAvailableHandler ){
-            _dataAvailableHandler(tinfo);
-        }
-
-        if(_scanCompleteHandler && _availTilts){
-            if(_numTiltFound < MaxTiltNumber){
-                _availTilts[_numTiltFound] = tinfo;
-                _numTiltFound ++;
-            }
-        }
-    }
-}
-
-static void deviceFoudCB(NimBLEAdvertisedDevice* device){
-    tiltListener.deviceFound(device);
-}
 
 void TiltListener::listen(TiltColor color,TiltDataHandler onData){
     _dataAvailableHandler=onData;
     _targetColor = color;
-    bleListener.listen(deviceFoudCB);
+    startListen();
 }
 
-void TiltListener::stopListen(void) {
-    _targetColor=TiltColorInvalid;
-    _dataAvailableHandler=NULL;
-    bleListener.stopListen();
-}
-
-static void scanDone(BLEScanResults scanResults){
-    tiltListener.scanComplete(scanResults);
-}
-
-void TiltListener::scan(void (*scanCompleteHandler)(int,TiltHydrometerInfo*)){
+void TiltListener::scan(void (*scanCompleteHandler)(std::vector<BleHydrometerDevice*>)){
     _scanCompleteHandler = scanCompleteHandler;
-    if(_availTilts ==NULL){
-        _availTilts = (TiltHydrometerInfo*) malloc(sizeof(TiltHydrometerInfo)* MaxTiltNumber);
-        _numTiltFound =0;
-    }
-    bleListener.scanNow(scanDone);
+    requestScan();
 }
+
+
+BleHydrometerDevice* TiltListener::identifyDevice(NimBLEAdvertisedDevice* device){
+    if(_parseTiltInfoFromAdvertise(device,_tiltInfo)){
+        if(_tiltInfo.color == _targetColor){
+            if(_dataAvailableHandler) _dataAvailableHandler(_tiltInfo);
+        }
+        return &_tiltInfo; // dangerous. But I don't like freqent allocation and free memory
+    }else{
+        return NULL;
+    }
+}
+
+void TiltListener::scanDone(std::vector<BleHydrometerDevice*> foundDevices){
+    _scanCompleteHandler(foundDevices);
+}
+
 
 #endif

@@ -85,7 +85,7 @@ extern "C" {
 #endif
 
 #if SupportTiltHydrometer
-#include "TiltListener.h"
+#include "BleTiltListener.h"
 #endif
 
 
@@ -1346,14 +1346,15 @@ public:
 	 	if(request->url() == TiltCommandPath){
 			 if(request->hasParam("scan")){
 				 DBG_PRINTF("scan BLE\n");
-				 tiltListener.scan([](int count,TiltHydrometerInfo *tilts){
+				 tiltListener.scan([](std::vector<BleHydrometerDevice*> devices){
 					String ret="{\"tilts\":[";
-						 for(int i=0;i<count;i++){
-							 ret += String("{\"c\":")+ String(tilts[i].color) +
-							 		String(",\"r\":")+ String(tilts[i].rssi) +
-									String(",\"g\":")+ String(tilts[i].gravity) +
-									String(",\"t\":")+ String(tilts[i].temperature) +
-									((i==count-1)? String("}"): String("},"));
+						for (int i = 0; i < devices.size(); i++) {
+							TiltHydrometerInfo *tilt=(TiltHydrometerInfo*) devices[i];
+							 ret += String("{\"c\":")+ String(tilt->color) +
+							 		String(",\"r\":")+ String(tilt->rssi) +
+									String(",\"g\":")+ String(tilt->gravity) +
+									String(",\"t\":")+ String(tilt->temperature) +
+									((i==devices.size()-1)? String("}"): String("},"));
 						 }
 					ret += "]}";
 					tiltScanResult(ret);
