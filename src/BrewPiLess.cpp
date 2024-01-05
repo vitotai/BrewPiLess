@@ -1346,7 +1346,8 @@ public:
 	 	if(request->url() == TiltCommandPath){
 			 if(request->hasParam("scan")){
 				 DBG_PRINTF("scan BLE\n");
-				 tiltListener.scan([](std::vector<BleHydrometerDevice*> devices){
+				 TiltScanner scanner;
+				 scanner.scan([](std::vector<BleHydrometerDevice*> devices){
 					String ret="{\"tilts\":[";
 						for (int i = 0; i < devices.size(); i++) {
 							TiltHydrometerInfo *tilt=(TiltHydrometerInfo*) devices[i];

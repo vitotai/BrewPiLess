@@ -41,25 +41,29 @@ public:
 };
 
 
-typedef std::function<void(TiltHydrometerInfo&)> TiltDataHandler;
+typedef std::function<void(TiltHydrometerInfo*)> TiltDataHandler;
 
 
-class TiltListener:public BleDeviceScanner {
+class TiltListener:public BleDeviceListener {
 public:
-    TiltListener():_scanCompleteHandler(NULL),_dataAvailableHandler(NULL),_targetColor(TiltColorInvalid){}
+    TiltListener():_dataAvailableHandler(NULL),_targetColor(TiltColorInvalid){}
 
-    void scan(void (*scanCompleteHandler)(std::vector<BleHydrometerDevice*>)); // callback result.
     void listen(TiltColor color,TiltDataHandler onData);
     // callbacks
-    BleHydrometerDevice* identifyDevice(NimBLEAdvertisedDevice*);
-    void scanDone(std::vector<BleHydrometerDevice*> foundDevices);
+    bool identifyDevice(NimBLEAdvertisedDevice*);
 protected:
-    bool _parseTiltInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,TiltHydrometerInfo& tiltInfo);
-    
-    void (*_scanCompleteHandler)(std::vector<BleHydrometerDevice*>);
     TiltDataHandler _dataAvailableHandler;
     TiltHydrometerInfo _tiltInfo;
     TiltColor _targetColor;
+};
+
+class TiltScanner:public BleDeviceScanner {
+public:
+    TiltScanner(){}
+    // callbacks
+    BleHydrometerDevice* getDevice(NimBLEAdvertisedDevice*);
+protected:
+    TiltHydrometerInfo _tiltInfo;
 };
 
 extern TiltListener tiltListener;

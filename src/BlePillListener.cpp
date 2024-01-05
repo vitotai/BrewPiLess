@@ -36,7 +36,7 @@ union ArrayFloat{
     float   fval;
 };
 
-bool PillListener::_parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHydrometerInfo& info){
+bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHydrometerInfo& info){
 
 
     std::string strManufacturerData = advertisedDevice->getManufacturerData();
@@ -104,24 +104,23 @@ void PillListener::listen(uint8_t macAddr[6],PillDataHandler onData){
     startListen();
 }
 
-
-void PillListener::scan(void (*scanCompleteHandler)(std::vector<BleHydrometerDevice*>)){
-    _scanCompleteHandler = scanCompleteHandler;
-    requestScan();
-}
-
-BleHydrometerDevice* PillListener::identifyDevice(NimBLEAdvertisedDevice* device){
+bool PillListener::identifyDevice(NimBLEAdvertisedDevice* device){
     if(_parsePillInfoFromAdvertise(device,_info)){
         if(memcmp(_info.mac,_macAddr,6)==0){
             if(_dataAvailableHandler) _dataAvailableHandler(_info);
+            return true;
         }
-        return &_info; // dangerous. But I don't like freqent allocation and free memory
+    }
+    return NULL;
+}
+
+BleHydrometerDevice* PillScanner::getDevice(NimBLEAdvertisedDevice* device){
+    if(_parsePillInfoFromAdvertise(device,_info)){
+        return _info.duplicate(); 
     }else{
         return NULL;
     }
 }
 
-void PillListener::scanDone(std::vector<BleHydrometerDevice*> foundDevices){
-    _scanCompleteHandler(foundDevices);
-}
+
 #endif

@@ -114,8 +114,8 @@ void ExternalData::reconfig(void){
 	#if SupportTiltHydrometer
 	else if(_cfg->gravityDeviceType == GravityDeviceTilt){
 	    filter.setBeta(TiltFilterParameter);
-		tiltListener.listen((TiltColor) _tcfg->tiltColor,[&](TiltHydrometerInfo& info){
-			setTiltInfo(info.gravity,info.temperature,info.rssi);
+		tiltListener.listen((TiltColor) _tcfg->tiltColor,[&](TiltHydrometerInfo* info){
+			setTiltInfo(info->gravity,info->temperature,info->rssi);
 		});
 	}
 	#endif

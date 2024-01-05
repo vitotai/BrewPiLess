@@ -31,7 +31,7 @@ const uint8_t UUIDPink[]={0xA4,0x95,0xBB,0x80,0xC5,0xB1,0x4B,0x44,0xB5,0x12,0x13
 #define UUID_SIZE sizeof(UUIDPink)
 
 
-bool TiltListener::_parseTiltInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,TiltHydrometerInfo& tiltInfo){
+bool _parseTiltInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,TiltHydrometerInfo& tiltInfo){
 
 
     std::string strManufacturerData = advertisedDevice->getManufacturerData();
@@ -100,25 +100,22 @@ void TiltListener::listen(TiltColor color,TiltDataHandler onData){
     startListen();
 }
 
-void TiltListener::scan(void (*scanCompleteHandler)(std::vector<BleHydrometerDevice*>)){
-    _scanCompleteHandler = scanCompleteHandler;
-    requestScan();
-}
-
-
-BleHydrometerDevice* TiltListener::identifyDevice(NimBLEAdvertisedDevice* device){
+bool TiltListener::identifyDevice(NimBLEAdvertisedDevice* device){
     if(_parseTiltInfoFromAdvertise(device,_tiltInfo)){
         if(_tiltInfo.color == _targetColor){
-            if(_dataAvailableHandler) _dataAvailableHandler(_tiltInfo);
+            if(_dataAvailableHandler) _dataAvailableHandler(&_tiltInfo);
+            return true;
         }
-        return &_tiltInfo; // dangerous. But I don't like freqent allocation and free memory
+    }
+    return false;
+}
+
+BleHydrometerDevice* TiltScanner::getDevice(NimBLEAdvertisedDevice* device){
+    if(_parseTiltInfoFromAdvertise(device,_tiltInfo)){
+        return _tiltInfo.duplicate(); 
     }else{
         return NULL;
     }
-}
-
-void TiltListener::scanDone(std::vector<BleHydrometerDevice*> foundDevices){
-    _scanCompleteHandler(foundDevices);
 }
 
 

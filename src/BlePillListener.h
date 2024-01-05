@@ -39,26 +39,29 @@ public:
 typedef std::function<void(PillHydrometerInfo&)> PillDataHandler;
 
 
-class PillListener:public BleDeviceScanner {
+class PillListener:public BleDeviceListener {
 public:
-    PillListener():_scanCompleteHandler(NULL),_dataAvailableHandler(NULL){}
-
-    void scan(void (*scanCompleteHandler)(std::vector<BleHydrometerDevice*>)); // callback result.
+    PillListener():_dataAvailableHandler(NULL){}
 
     void listen(uint8_t macAddr[6],PillDataHandler onData);
     // callbacks
-    BleHydrometerDevice* identifyDevice(NimBLEAdvertisedDevice*);
-    void scanDone(std::vector<BleHydrometerDevice*> foundDevices);
+    bool identifyDevice(NimBLEAdvertisedDevice*);
 protected:
-    bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHydrometerInfo& tiltInfo);
-    
-    void (*_scanCompleteHandler)(std::vector<BleHydrometerDevice*>);
     PillDataHandler _dataAvailableHandler;
     uint8_t _macAddr[6];
     PillHydrometerInfo _info;
 };
 
-extern PillListener pillListener;
+class PillScanner:public BleDeviceScanner {
+public:
+    PillScanner(){}
+    // callbacks
+    BleHydrometerDevice* getDevice(NimBLEAdvertisedDevice*);
+protected:
+    PillHydrometerInfo _info;
+};
+
+
 
 #endif
 
