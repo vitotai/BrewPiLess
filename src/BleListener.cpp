@@ -23,16 +23,8 @@ void BleListener::begin(void) {
 
 void BleListener::scanComplete(NimBLEScanResults& result){
     DBG_PRINTF("BLE found:%d\n",result.getCount());
-
-    if(_deviceFoundCb){
-        for(auto it = result.begin(); it != result.end(); ++it) {
-            _deviceFoundCb(*it);
-        }
-    }
-
-    if(_scanResultCb){
-        _scanResultCb(result);
-        _scanResultCb = NULL;
+    if(_bleDeviceScanner){
+        _bleDeviceScanner->scanComplete(result);
     }
     _scanning =false;
     _pBLEScan->clearResults();   // delete results fromBLEScan buffer to release memory
@@ -53,14 +45,12 @@ void BleListener::_startScan(void) {
    //  Serial.printf("BLE scanning\n");
 }
 
-void BleListener::listen(ScannedDeviceHandler scannedDeviceCb){
-    _deviceFoundCb = scannedDeviceCb;
+void BleListener::startListen(void){
     _enabled=true;
 }
 
 void BleListener::stopListen(void) {
     _enabled=false;
-    _deviceFoundCb=NULL;
 }
 
 void BleListener::loop(void) {
@@ -76,8 +66,7 @@ void BleListener::loop(void) {
     }
 }
 
-void BleListener::scanNow(ScannedResultHandler scanResultCb){
-    _scanResultCb= scanResultCb;
+void BleListener::scanNow(void){
     if(_commandScan) return;
     DBG_PRINTF("start scanning:%d\n",_scanning);
     _commandScan = true;
@@ -85,5 +74,49 @@ void BleListener::scanNow(ScannedResultHandler scanResultCb){
 
 void BleListener::_clearData(void){
 }
+//***********************************************************************
+// BleDeviceScanner
+ 
+ BleDeviceScanner::BleDeviceScanner(void){
+    _scanAll=false;
+    bleListener.setBleDeviceScanner(this);
+ }
 
+void BleDeviceScanner::scanComplete(NimBLEScanResults& result){
+    for(auto it = result.begin(); it != result.end(); ++it) {
+        // to avoid frequent allocation and free/delete
+        // the return object is "static". 
+        BleHydrometerDevice* dev=identifyDevice(*it);
+        if(dev && _scanAll){
+            // duplicate the device
+            BleHydrometerDevice* device= dev->duplicate();
+            _scannedDevices.push_back(device);
+        }
+    }
+    if(_scanAll){
+        scanDone(_scannedDevices);
+        clearResult();
+        _scanAll=false;
+    }
+}
+
+void BleDeviceScanner::requestScan(void){
+    _scanAll = true;
+    bleListener.scanNow();
+}
+
+void BleDeviceScanner::startListen(void){
+    bleListener.startListen();
+}
+void BleDeviceScanner::stopListen(void){
+    bleListener.stopListen();
+}
+
+void BleDeviceScanner::clearResult(void){
+    for (auto ptr : _scannedDevices) {
+            delete ptr;
+    }
+    // Clearing the vector
+    _scannedDevices.clear();
+}
 #endif
