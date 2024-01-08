@@ -1,7 +1,7 @@
 
 #include "BleListener.h"
 #include <string>
-#if SupportBLEScanner
+#if SupportBleHydrometer
 
 #define  BLEScanTime  2 //In seconds
 
@@ -29,9 +29,9 @@ void BleListener::scanComplete(NimBLEScanResults& result){
         }
     }
 
-    if (_bleDeviceListener) {
+    if (_bleDeviceScanner) {
         _bleDeviceScanner->scanComplete(result);
-        _bleDeviceListener=NULL;
+        _bleDeviceScanner=NULL;
     }
     _scanning =false;
     _pBLEScan->clearResults();   // delete results fromBLEScan buffer to release memory
@@ -102,7 +102,34 @@ void BleDeviceListener::stopListen(void){
 
 void BleDeviceScanner::scanComplete(NimBLEScanResults& result){
     for(auto it = result.begin(); it != result.end(); ++it) {
-        BleHydrometerDevice* dev=getDevice(*it);
+
+    NimBLEAdvertisedDevice* advertisedDevice= *it;
+
+    #if 1
+    // printout data
+    std::string strManufacturerData = advertisedDevice->getManufacturerData();
+    //uint8_t cManufacturerData[100];
+    //strManufacturerData.copy((char *)cManufacturerData, strManufacturerData.length(), 0);
+
+    DBG_PRINTF("  Dev: %s, %d ",(advertisedDevice->haveName())? advertisedDevice->getName().c_str():"NONAME",advertisedDevice->getRSSI());
+    DBG_PRINTF("\t  %s :",(advertisedDevice->haveServiceData())? advertisedDevice->getServiceDataUUID(0).toString().c_str():"NO ServiceData");   
+    DBG_PRINTF(" Man len: %d ", strManufacturerData.length());
+
+    std::string strServiceData = advertisedDevice->getServiceData();
+    DBG_PRINTF(" Ser len: %d \n", strServiceData.length());
+    if(strServiceData.length() >0){
+        DBG_PRINTF("\t\t");
+        uint8_t cServiceData[100];
+        strServiceData.copy((char *)cServiceData, strServiceData.length(), 0);
+        for(int i=0;i< strServiceData.length();i++){
+            if(i>0) DBG_PRINT(",");
+            DBG_PRINTF("0x%x",cServiceData[i]);
+        }
+        DBG_PRINTF("\n");
+    }
+    #endif
+
+        BleHydrometerDevice* dev=checkDevice(advertisedDevice);
         if(dev){
             _scannedDevices.push_back(dev);
         }

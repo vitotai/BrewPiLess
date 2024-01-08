@@ -1,10 +1,9 @@
-#ifndef BleTiltListener_H
-#define BleTiltListener_H
+#ifndef BlePillListener_H
+#define BlePillListener_H
 #include <Arduino.h>
 #include <functional>
 
 #include "Config.h"
-#if SupportPillHydrometer
 
 #include "BleListener.h"
 
@@ -36,7 +35,7 @@ public:
 };
 
 
-typedef std::function<void(PillHydrometerInfo&)> PillDataHandler;
+typedef std::function<void(PillHydrometerInfo*)> PillDataHandler;
 
 
 class PillListener:public BleDeviceListener {
@@ -46,6 +45,7 @@ public:
     void listen(uint8_t macAddr[6],PillDataHandler onData);
     // callbacks
     bool identifyDevice(NimBLEAdvertisedDevice*);
+    void setMac(uint8_t mac[6]){ memcpy(_macAddr,mac,6); }
 protected:
     PillDataHandler _dataAvailableHandler;
     uint8_t _macAddr[6];
@@ -56,13 +56,8 @@ class PillScanner:public BleDeviceScanner {
 public:
     PillScanner(){}
     // callbacks
-    BleHydrometerDevice* getDevice(NimBLEAdvertisedDevice*);
-protected:
-    PillHydrometerInfo _info;
+    BleHydrometerDevice* checkDevice(NimBLEAdvertisedDevice*);
 };
 
-
-
-#endif
-
+extern PillScanner pillScanner;
 #endif

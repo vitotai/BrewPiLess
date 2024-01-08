@@ -38,6 +38,7 @@ typedef struct _TimeInformation{
 #define GravityDeviceNone 0
 #define GravityDeviceIspindel 1
 #define GravityDeviceTilt 2
+#define GravityDevicePill 3
 
 typedef struct _GravityDeviceConfiguration{
     float ispindelCoefficients[4];
@@ -55,19 +56,32 @@ typedef struct _GravityDeviceConfiguration{
 }GravityDeviceConfiguration;
 
 
-#if SupportTiltHydrometer
-typedef  struct _TiltCalibrationPoint{
+#if SupportBleHydrometer
+typedef  struct _CalibrationPoint{
         uint16_t rawsg;
         uint16_t calsg;
-} TiltCalibrationPoint;
+} CalibrationPoint;
 
 typedef struct _TiltConfiguratoin{
     float coefficients[4];
-    TiltCalibrationPoint  calibrationPoints[6];
+    CalibrationPoint  calibrationPoints[6];
     uint8_t  numCalPoints;
     uint8_t  tiltColor;
     uint8_t  _padding[10];
 } TiltConfiguration;
+
+typedef struct _PillConfiguratoin{
+    float coefficients[4];
+    CalibrationPoint  calibrationPoints[6];
+    uint8_t  numCalPoints;
+    uint8_t  macAddress[6];
+    uint8_t  _padding[5];
+} PillConfiguration;
+
+typedef union _BleHydrometerConfiguration{
+    TiltConfiguration tilt;
+    PillConfiguration pill;
+}BleHydrometerConfiguration;
 
 #endif
 //*****************************************************
@@ -310,8 +324,8 @@ struct Settings{
 #ifdef SaveWiFiConfiguration
     WiFiConfiguration wifiConfiguration;
 #endif
-#if SupportTiltHydrometer
-    TiltConfiguration tiltConfiguration;
+#if SupportBleHydrometer
+    BleHydrometerConfiguration bleHydrometerConfiguration;
 #endif
 #if EnableHumidityControlSupport
     HumidityControlSettings humidityControl;
@@ -384,7 +398,10 @@ public:
 #endif
 
 #if SupportTiltHydrometer
-    TiltConfiguration* tiltConfiguration(void){ return & _data.tiltConfiguration;}
+    TiltConfiguration* tiltConfiguration(void){ return & _data.bleHydrometerConfiguration.tilt;}
+#endif
+#if SupportPillHydrometer
+    PillConfiguration* pillConfiguration(void){ return & _data.bleHydrometerConfiguration.pill;}
 #endif
 
 

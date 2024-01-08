@@ -590,7 +590,7 @@
 
 #if ESP32
 #define SupportTiltHydrometer true
-#define SupportBLEScanner true
+#define SupportBleHydrometer true
 #define SupportPillHydrometer true
 #endif
 /**************************************************************************************/

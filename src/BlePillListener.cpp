@@ -5,8 +5,6 @@
 
 #define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
 
-PillListener pillListener;
-
 /*
 v1 format
 0x52 0x41 0x50 0x54 0x01 mm mm mm mm mm mm tt tt gg gg gg gg xx xx yy yy zz zz bb bb
@@ -107,16 +105,19 @@ void PillListener::listen(uint8_t macAddr[6],PillDataHandler onData){
 bool PillListener::identifyDevice(NimBLEAdvertisedDevice* device){
     if(_parsePillInfoFromAdvertise(device,_info)){
         if(memcmp(_info.mac,_macAddr,6)==0){
-            if(_dataAvailableHandler) _dataAvailableHandler(_info);
+            if(_dataAvailableHandler) _dataAvailableHandler(&_info);
             return true;
         }
     }
     return NULL;
 }
 
-BleHydrometerDevice* PillScanner::getDevice(NimBLEAdvertisedDevice* device){
-    if(_parsePillInfoFromAdvertise(device,_info)){
-        return _info.duplicate(); 
+PillScanner pillScanner;
+
+BleHydrometerDevice* PillScanner::checkDevice(NimBLEAdvertisedDevice* device){
+    PillHydrometerInfo info;
+    if(_parsePillInfoFromAdvertise(device,info)){
+        return info.duplicate(); 
     }else{
         return NULL;
     }

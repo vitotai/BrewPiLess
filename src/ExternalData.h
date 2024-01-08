@@ -10,6 +10,14 @@
 #include "TempSensorWireless.h"
 #endif
 
+#if SupportTiltHydrometer 
+#include "BleTiltListener.h"
+#endif
+
+#if SupportPillHydrometer
+#include "BlePillListener.h"
+#endif
+
 #define INVALID_VOLTAGE -1
 #define INVALID_GRAVITY -1
 #ifdef INVALID_TEMP
@@ -57,75 +65,88 @@ public:
 class ExternalData
 {
 protected:
+
+	// shared values for all devices: gravity(calculated or not), temperature, RSSI, last update time
 	float _gravity;
 	float _auxTemp;
 	time_t _lastUpdate;
-	float  _deviceVoltage;
-//	float _og;
-	SimpleFilter filter;
-    char *_ispindelName;
-	float _ispindelTilt;
-	bool  _calibrating;
-	float _filteredGravity;
 	int16_t _rssi;
 	bool _rssiValid;
 
-	#if SupportTiltHydrometer
+	// iSpindel and Pill: battery, tilt Angle
+
+	float  _deviceVoltage;
+	float _tiltAngle;
+	
+	// iSpindel specific: name
+    char *_ispindelName;
+
+
+	bool  _calibrating;
+	float _filteredGravity;
+	SimpleFilter filter;
+
+	#if SupportTiltHydrometer || SupportPillHydrometer
 	uint16_t _tiltRawGravity;
-	TiltConfiguration * _tcfg;
+	BleDeviceListener  *_bleHydrometer; // tilt or pill
+	uint8_t   _bleHydrometerType;
 	#endif
 
 	GravityDeviceConfiguration *_cfg;
 
-	float temperatureCorrection(float sg, float t, float c);
+	float _calculateGravitybyAngle(float tilt,float temp);
+	void _setGravity(float sg, time_t now,bool log=true);
+	void _setAuxTemperatureCelsius(float temp);
+	void _setOriginalGravity(float og);	
+	void _setDeviceRssi(int16_t rssi){_rssi = rssi;  _rssiValid=true;}
 
-	float calculateGravitybyAngle(float tilt,float temp);
-	void setGravity(float sg, time_t now,bool log=true);
-	void setAuxTemperatureCelsius(float temp);
-	void setOriginalGravity(float og);	
-
-	void reconfig(void);
+	void _reconfig(void);
 	#if SupportTiltHydrometer
-	void setTiltInfo(uint16_t gravity, uint16_t temperature, int rssi);
+	void _gotTiltInfo(TiltHydrometerInfo* info);
 	#endif
+	#if SupportPillHydrometer
+	void _gotPillInfo(PillHydrometerInfo* info);
+	#endif
+
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),
 	_lastUpdate(0),_deviceVoltage(INVALID_VOLTAGE)
-	,_ispindelName(NULL),_calibrating(false),_rssiValid(false)
-	{ _filteredGravity = INVALID_GRAVITY;}
+	,_ispindelName(NULL),_calibrating(false),_rssiValid(false){
+		_filteredGravity = INVALID_GRAVITY;
+		#if SupportTiltHydrometer || SupportPillHydrometer		
+		_bleHydrometerType = GravityDeviceNone;
+		#endif
+	}
 
-	float gravity(bool filtered=false);
-	float plato(bool filtered=false);
 
 	// to prevent from calculate gravity when no valid formula available.
 	void waitFormula();
 	void setCalibrating(bool cal){ _calibrating=cal;}
 	//configuration reading
-    bool iSpindelEnabled(void);
-    bool gravityDeviceEnabled(void);
+//    bool iSpindelEnabled(void);
 
-	float hydrometerCalibration(void);
+	float hydrometerCalibrationTemp(void);
 
     void sseNotify(char *buf);
 	//configuration processs
     bool processconfig(char* configdata);
 	void loadConfig(void);
 	//update formula
-	void formula(float coeff[4],uint32_t npt);
+	void setFormula(float coeff[4],uint32_t npt);
 
+	void setUpdateTime(time_t update){ _lastUpdate=update;}
 
 	// for remote data logger
+	float gravity(bool filtered=false);
+	float plato(bool filtered=false);
+    bool gravityDeviceEnabled(void);
 	float auxTemp(void){return _auxTemp; }
-//	void setUpdateTime(time_t update){ _lastUpdate=update;}
 	time_t lastUpdate(void){return _lastUpdate;}
 	int16_t rssi(void){return _rssiValid? _rssi:-999;}
-	
-	void setDeviceVoltage(float vol){ _deviceVoltage = vol; }
-	void setDeviceRssi(int16_t rssi){_rssi = rssi;  _rssiValid=true;}
 	float deviceVoltage(void){return _deviceVoltage;}
-	float tiltValue(void){return _ispindelTilt;}
-	void invalidateDeviceVoltage(void) { _deviceVoltage= INVALID_VOLTAGE; }
-
+	float tiltValue(void){return _tiltAngle;}
+	
+	// to process web request
 	bool processGravityReport(char data[],size_t length, bool authenticated, uint8_t& error);
 };
 

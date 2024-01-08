@@ -51,6 +51,7 @@ public:
     void listen(TiltColor color,TiltDataHandler onData);
     // callbacks
     bool identifyDevice(NimBLEAdvertisedDevice*);
+    void setColor(TiltColor color){ _targetColor = color; }
 protected:
     TiltDataHandler _dataAvailableHandler;
     TiltHydrometerInfo _tiltInfo;
@@ -61,13 +62,10 @@ class TiltScanner:public BleDeviceScanner {
 public:
     TiltScanner(){}
     // callbacks
-    BleHydrometerDevice* getDevice(NimBLEAdvertisedDevice*);
-protected:
-    TiltHydrometerInfo _tiltInfo;
+    BleHydrometerDevice* checkDevice(NimBLEAdvertisedDevice*);
 };
 
-extern TiltListener tiltListener;
-
+extern TiltScanner tiltScanner;
 #endif
 
 #endif

@@ -38,7 +38,7 @@ public:
     // request to scan now
     void scan(BleHydrometerScanResultHandler resultHandler); // callback result.
 
-    virtual BleHydrometerDevice* getDevice(NimBLEAdvertisedDevice*)=0;
+    virtual BleHydrometerDevice* checkDevice(NimBLEAdvertisedDevice*)=0;
     // call back for BLE scanner
     void scanComplete(NimBLEScanResults&);
 protected:

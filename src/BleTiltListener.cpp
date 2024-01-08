@@ -5,8 +5,6 @@
 
 #define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
 
-TiltListener tiltListener;
-
 // NimBLEUUID seems to be revsersed.
 #if 0
 const NimBLEUUID UUIDRed("A495BB10-C5B1-4B44-B512-1370F02D74DE");
@@ -35,26 +33,6 @@ bool _parseTiltInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,TiltHy
 
 
     std::string strManufacturerData = advertisedDevice->getManufacturerData();
-    #if 0
-    // printout data
-    DBG_PRINTF("  Dev: %s, %d ",(advertisedDevice->haveName())? advertisedDevice->getName().c_str():"NONAME",advertisedDevice->getRSSI());
-    DBG_PRINTF("\t  %s :",(advertisedDevice->haveServiceData())? advertisedDevice->getServiceDataUUID(0).toString().c_str():"NO ServiceData");   
-    DBG_PRINTF(" Man len: %d ", strManufacturerData.length());
-
-    std::string strServiceData = advertisedDevice->getServiceData();
-    DBG_PRINTF(" Ser len: %d \n", strServiceData.length());
-    if(strServiceData.length() >0){
-        DBG_PRINTF("\t\t");
-        uint8_t cServiceData[100];
-        strServiceData.copy((char *)cServiceData, strServiceData.length(), 0);
-        for(int i=0;i< strServiceData.length();i++){
-            if(i>0) DBG_PRINT(",");
-            DBG_PRINTF("0x%x",cServiceData[i]);
-        }
-        DBG_PRINTF("\n");
-    }
-
-    #endif
     
     if(!advertisedDevice->haveManufacturerData()) return false;
     if (strManufacturerData.length() != 25) return false;
@@ -110,9 +88,12 @@ bool TiltListener::identifyDevice(NimBLEAdvertisedDevice* device){
     return false;
 }
 
-BleHydrometerDevice* TiltScanner::getDevice(NimBLEAdvertisedDevice* device){
-    if(_parseTiltInfoFromAdvertise(device,_tiltInfo)){
-        return _tiltInfo.duplicate(); 
+TiltScanner tiltScanner;
+
+BleHydrometerDevice* TiltScanner::checkDevice(NimBLEAdvertisedDevice* device){
+    TiltHydrometerInfo info;
+    if(_parseTiltInfoFromAdvertise(device,info)){
+        return info.duplicate(); 
     }else{
         return NULL;
     }

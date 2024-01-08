@@ -26,7 +26,7 @@
 #define SetupHtmFile EVALUATOR(WebPageLanguage,_setup_htm.h)
 #define LogHtmFile EVALUATOR(WebPageLanguage,_log_htm.h)
 
-#if SupportTiltHydrometer
+#if SupportBleHydrometer
 #define GravityHtmFile EVALUATOR(WebPageLanguage,_gdc_e32_htm.h)
 #else
 #define GravityHtmFile EVALUATOR(WebPageLanguage,_gdc_htm.h)

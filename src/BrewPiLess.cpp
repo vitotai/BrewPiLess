@@ -87,6 +87,9 @@ extern "C" {
 #if SupportTiltHydrometer
 #include "BleTiltListener.h"
 #endif
+#if SupportPillHydrometer
+#include "BlePillListener.h"
+#endif
 
 
 #if UseLittleFS
@@ -158,6 +161,9 @@ extern "C" {
 #if SupportTiltHydrometer
 #define TiltCommandPath "/tcmd"
 #endif
+#if SupportPillHydrometer
+#define PillCommandPath "/pill"
+#endif
 
 
 #if AUTO_CAP
@@ -221,6 +227,7 @@ extern const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned 
 
 void requestRestart(bool disc);
 void tiltScanResult(String& result);
+void pillScanResult(String& result);
 
 void initTime(bool apmode)
 {
@@ -1136,7 +1143,7 @@ void reportRssi(void)
 	G["t"] = (int)(externalData.auxTemp() * 100);
 	G["r"] = externalData.rssi();
 	G["g"] = (int)(externalData.gravity() * 1000);
-
+	G["a"] = externalData.tiltValue();
 
 	String out="A:";
 	serializeJson(doc,out);
@@ -1211,7 +1218,7 @@ public:
 						DBG_PRINTF("Start BrweNCal log\n");
 					}
 
-					brewLogger.addCorrectionTemperature(externalData.hydrometerCalibration());
+					brewLogger.addCorrectionTemperature(externalData.hydrometerCalibrationTemp());
 
 					request->send(200,"application/json","{}");
 					notifyLogStatus();
@@ -1337,6 +1344,9 @@ public:
 #if	SupportTiltHydrometer
 	 	if(request->url() == TiltCommandPath) return true;
 #endif
+#if	SupportPillHydrometer
+	 	if(request->url() == PillCommandPath) return true;
+#endif
 
 	 	return false;
 	}
@@ -1346,8 +1356,7 @@ public:
 	 	if(request->url() == TiltCommandPath){
 			 if(request->hasParam("scan")){
 				 DBG_PRINTF("scan BLE\n");
-				 TiltScanner scanner;
-				 scanner.scan([](std::vector<BleHydrometerDevice*> devices){
+				 tiltScanner.scan([&](std::vector<BleHydrometerDevice*> devices){
 					String ret="{\"tilts\":[";
 						for (int i = 0; i < devices.size(); i++) {
 							TiltHydrometerInfo *tilt=(TiltHydrometerInfo*) devices[i];
@@ -1365,6 +1374,33 @@ public:
 			 return;
 		 }
 #endif
+#if	SupportPillHydrometer
+	 	if(request->url() == PillCommandPath){
+			 if(request->hasParam("scan")){
+				 DBG_PRINTF("scan BLE\n");
+				 pillScanner.scan([](std::vector<BleHydrometerDevice*> devices){
+					String ret="{\"pills\":[";
+						for (int i = 0; i < devices.size(); i++) {
+							PillHydrometerInfo *pill=(PillHydrometerInfo*) devices[i];
+							 ret += String("{\"a\":[");
+							 for(int a=0;a<6;a++){
+									ret += String(pill->mac[a]);
+									if(a<5) ret+=String(",");
+							 }
+							 ret+= String("],\"r\":")+ String(pill->rssi) +
+									String(",\"g\":")+ String(pill->gravity) +
+									String(",\"t\":")+ String(pill->temperature) +
+									((i==devices.size()-1)? String("}"): String("},"));
+						 }
+					ret += "]}";
+					pillScanResult(ret);
+				 });
+				 request->send(200);
+			 }
+			 return;
+		 }
+#endif
+
 
 		if(request->url() == GRAVITY_PATH){
 			if(request->method() != HTTP_POST){
@@ -1388,7 +1424,7 @@ public:
 				coeff[2]=request->getParam("a2")->value().toFloat();
 				coeff[3]=request->getParam("a3")->value().toFloat();
 				uint32_t npt=(uint32_t) request->getParam("pt")->value().toInt();
-				externalData.formula(coeff,npt);
+				externalData.setFormula(coeff,npt);
 
 				brewLogger.addIgnoredCalPointMask(npt & 0xFFFFFF);
   				
@@ -1596,6 +1632,11 @@ void tiltScanResult(String& result){
 	String report="T:" + result;
 	stringAvailable(report.c_str());
 }
+void pillScanResult(String& result){
+	String report="P:" + result;
+	stringAvailable(report.c_str());
+}
+
 //{brewpi
 
 
@@ -1990,6 +2031,7 @@ void setup(void){
 	if(brewLogger.begin()){
 		// resume, update calibrating information to external data
 		externalData.setCalibrating(brewLogger.isCalibrating());
+		externalData.setUpdateTime(brewLogger.lastGravityDeviceUpdate());
 		DBG_PRINTF("Start BrweNCal log:%d\n",brewLogger.isCalibrating());
 	}
 	
@@ -2000,7 +2042,7 @@ void setup(void){
 	autoCapControl.begin();
 	#endif
 
-#if SupportBLEScanner
+#if SupportBleHydrometer
 	bleListener.begin();
 #endif
 
@@ -2102,7 +2144,7 @@ void loop(void){
 	PressureMonitor.loop();
 	#endif
 	
-	#if SupportBLEScanner
+	#if SupportBleHydrometer
 	bleListener.loop();
 	#endif
 

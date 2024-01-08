@@ -210,23 +210,14 @@ BrewLogger::BrewLogger(void){
 					bitmask=1;
         			for(int i=0;i<NumberDataBitMask;i++, bitmask=bitmask<<1){
 	        			if(mask & bitmask){
-								#if SerialDebug
-							int d0=_logBuffer[processIndex++];
-    			    	   	int d1=_logBuffer[processIndex++];
-							   #endif
 							// get gravity data that we need							
-		    				if(!_calibrating){
-			
-			    				if( i == OrderGravityInfo){        
-									#if SerialDebug
-										int gravityInt = (d0 << 8) | d1;
-    	                        		DBG_PRINTF("resume@%u, SG:%d\n",_resumeLastLogTime,gravityInt);
-									#endif
-                                    // dont trust the data
-//                            	if(gravityInt > 8000 && gravityInt < 12500)
-//                                    gravityTracker.add(GravityDecode(gravityInt),_resumeLastLogTime);
-				        		} // if this is gravity data
+		    				if(i == OrderGravityInfo){
+								//uint8_t D0 =_logBuffer[processIndex];
+								//uint8_t D1 =_logBuffer[processIndex+1];
+								_lastGravityDeviceUpdate  = _resumeLastLogTime;
 							}
+
+							processIndex +=2;			        		
 			        	} // if the field exists
 			    	} // for each bit
 		    	}else if(tag == ResumeBrewTag){

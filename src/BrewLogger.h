@@ -129,12 +129,14 @@ public:
 	void addIgnoredCalPointMask(uint32_t mask);
 	//format file system
 	void onFormatFS(void);
+	uint32_t lastGravityDeviceUpdate(void){return _lastGravityDeviceUpdate;}
 private:
 	size_t _fsspace;
 	uint32_t  _chartTime;
 	uint32_t _lastTempLog;
     uint32_t _resumeLastLogTime;
 	uint32_t _trackedTime;
+	uint32_t _lastGravityDeviceUpdate;
 
 	bool _recording;
 	bool _calibrating;
