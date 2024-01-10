@@ -21,18 +21,15 @@ v2 format
 	• gg gg gg gg: specific gravity, encoded as an IEEE 754 single-precision floating-point number, with big-endian storage
 	• xx xx, yy yy, zz zz = raw accelerometer data * 16, encoded as a 16-bit signed big-endian integer
 	• bb bb = battery state-of-charge, percentage * 256, encoded as a 16-bit unsigned big-endian integer
-
-
+ex:
+0x52,0x41,0x50,0x54,0x2,0x0,0x0,0x0,0x0,0x0,0x0, 0x94,0x2b, 0x43,0x2e,0xed,0x7,0x40,0x37,0x0,0x95,0x2,0x2,0x64,0x0
+                                                   tt   tt    gg   gg   gg  gg   xx  xx   yy  yy   zz zz    bb  bb
 */
 #define DataLength 25
 
 const uint8_t PillIdentifier[]={0x52,0x41,0x50,0x54};
 #define BigEndianU16(a0,a1) ( ((a0)<<8) | (a1))
 
-union ArrayFloat{
-    uint8_t data[4];
-    float   fval;
-};
 
 bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHydrometerInfo& info){
 
@@ -51,16 +48,14 @@ bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHy
     if(memcmp(cManufacturerData,PillIdentifier,sizeof(PillIdentifier))!=0) return false;
     
     uint8_t *ptr = cManufacturerData+sizeof(PillIdentifier);
-    if(*ptr == 0x01){
-        memcpy(info.mac,ptr,6);
-    }else if(*ptr == 0x02){
-        NimBLEAddress bleAddress= advertisedDevice->getAddress();
-         memcpy(info.mac,bleAddress.getNative(),6);
+    if(*ptr == 0x01 || *ptr == 0x02){
     } else{
         // unknown version
         return false;
     }
     // get mac address anyway
+    info.macAddress=advertisedDevice->getAddress();
+    info.rssi = advertisedDevice->getRSSI();
 
     ptr += 7; // skip version, mac addr or gravity velocity
     // temperature in Kelvin, multiplied by 128
@@ -70,12 +65,16 @@ bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHy
     ptr += 2; 
 
     // gravity in float, big endian
-    ArrayFloat gravity;
-    for(int i=0;i<4;i++){
-        // ESP32 is little endian
-        gravity.data[3-i] = *(ptr + i);
-    }
-    info.gravity = gravity.fval;
+    uint32_t raw_data;
+    uint8_t *bytes= ptr;
+   #if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+    // Little-endian system, reverse the byte order
+    raw_data = ((uint32_t)bytes[3] << 24) | ((uint32_t)bytes[2] << 16) | ((uint32_t)bytes[1] << 8) | bytes[0];
+    #else
+    // Big-endian system, no need to reverse the byte order
+    raw_data = ((uint32_t)bytes[0] << 24) | ((uint32_t)bytes[1] << 16) | ((uint32_t)bytes[2] << 8) | bytes[3];
+    #endif
+    memcpy(& info.gravity, &raw_data,sizeof(float));
     ptr +=4;
 
     // keep acc value as is
@@ -90,21 +89,38 @@ bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHy
     ptr +=2;
 
     // battery state-of-charge, percentage * 256,
-    info.battery= (float)BigEndianU16(*ptr,*(ptr+1)) /256.0;
+    info.battery= ((float)BigEndianU16(*ptr,*(ptr+1))) /256.0;
+    
+    #if SerialDebug
+    DBG_PRINTF("\t RAW:");
+    for(int i=0;i< strManufacturerData.length();i++){
+        if(i>0) DBG_PRINT(",");
+        DBG_PRINTF("0x%x",cManufacturerData[i]);
+    }
+    DBG_PRINTF("\n");
+
+    DBG_PRINT(" SG:");
+    DBG_PRINT(info.gravity,4);
+    DBG_PRINT(" Temp:");
+    DBG_PRINT(info.temperature);
+    DBG_PRINT(" Battery:");
+    DBG_PRINT(info.battery);
+    DBG_PRINT("%\n");
+
+    #endif
 
     return true;
 }
 
 
-void PillListener::listen(uint8_t macAddr[6],PillDataHandler onData){
+void PillListener::listen(PillDataHandler onData){
     _dataAvailableHandler=onData;
-    memcpy(_macAddr,macAddr,6);
     startListen();
 }
 
 bool PillListener::identifyDevice(NimBLEAdvertisedDevice* device){
     if(_parsePillInfoFromAdvertise(device,_info)){
-        if(memcmp(_info.mac,_macAddr,6)==0){
+        if(_mac == _info.macAddress){
             if(_dataAvailableHandler) _dataAvailableHandler(&_info);
             return true;
         }

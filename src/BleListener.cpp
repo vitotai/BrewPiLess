@@ -10,6 +10,10 @@
 BleListener bleListener;
 
 void BleListener::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
+    //DBG_PRINTF("OnResult:%s\n",advertisedDevice->getAddress().toString().c_str());
+    if(_bleDeviceListener){
+           _bleDeviceListener->identifyDevice(advertisedDevice);
+    }
 }
 
 void BleListener::begin(void) {
@@ -17,18 +21,18 @@ void BleListener::begin(void) {
   _pBLEScan = BLEDevice::getScan(); //create new scan
   _pBLEScan->setAdvertisedDeviceCallbacks(this);
   _pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
-  _pBLEScan->setInterval(100);
-  _pBLEScan->setWindow(99);  // less or equal setInterval value
+  _pBLEScan->setInterval(100); // in msecs
+  _pBLEScan->setWindow(100);  // less or equal setInterval value
 }
 
 void BleListener::scanComplete(NimBLEScanResults& result){
-    DBG_PRINTF("BLE found:%d\n",result.getCount());
-    if(_bleDeviceListener){
+    DBG_PRINTF("Time:%ld BLE found:%d\n",result.getCount(),millis()-_lastScanTime);
+/*    if(_bleDeviceListener){
         for(auto it = result.begin(); it != result.end(); ++it) {
-            _bleDeviceListener->identifyDevice(*it);
+           if(_bleDeviceListener->identifyDevice(*it)) break;
         }
     }
-
+*/
     if (_bleDeviceScanner) {
         _bleDeviceScanner->scanComplete(result);
         _bleDeviceScanner=NULL;
@@ -101,39 +105,46 @@ void BleDeviceListener::stopListen(void){
  }
 
 void BleDeviceScanner::scanComplete(NimBLEScanResults& result){
+    bool ignored;
     for(auto it = result.begin(); it != result.end(); ++it) {
 
-    NimBLEAdvertisedDevice* advertisedDevice= *it;
+        NimBLEAdvertisedDevice* advertisedDevice= *it;
 
-    #if 1
-    // printout data
-    std::string strManufacturerData = advertisedDevice->getManufacturerData();
-    //uint8_t cManufacturerData[100];
-    //strManufacturerData.copy((char *)cManufacturerData, strManufacturerData.length(), 0);
+        #if 0
+        // printout data
+        std::string strManufacturerData = advertisedDevice->getManufacturerData();
+        NimBLEAddress address = advertisedDevice->getAddress();
 
-    DBG_PRINTF("  Dev: %s, %d ",(advertisedDevice->haveName())? advertisedDevice->getName().c_str():"NONAME",advertisedDevice->getRSSI());
-    DBG_PRINTF("\t  %s :",(advertisedDevice->haveServiceData())? advertisedDevice->getServiceDataUUID(0).toString().c_str():"NO ServiceData");   
-    DBG_PRINTF(" Man len: %d ", strManufacturerData.length());
-
-    std::string strServiceData = advertisedDevice->getServiceData();
-    DBG_PRINTF(" Ser len: %d \n", strServiceData.length());
-    if(strServiceData.length() >0){
-        DBG_PRINTF("\t\t");
-        uint8_t cServiceData[100];
-        strServiceData.copy((char *)cServiceData, strServiceData.length(), 0);
-        for(int i=0;i< strServiceData.length();i++){
-            if(i>0) DBG_PRINT(",");
-            DBG_PRINTF("0x%x",cServiceData[i]);
+        DBG_PRINTF("  Dev: %s, %d ",(advertisedDevice->haveName())? advertisedDevice->getName().c_str():"NONAME",advertisedDevice->getRSSI());
+        DBG_PRINTF("\t  %s ",address.toString().c_str());   
+        DBG_PRINTF(" Man len: %d \n", strManufacturerData.length());
+        if(strManufacturerData.length() >0){
+            DBG_PRINTF("\t\t");
+            uint8_t cManufacturerData[100];
+            strManufacturerData.copy((char *)cManufacturerData, strManufacturerData.length(), 0);
+            for(int i=0;i< strManufacturerData.length();i++){
+                if(i>0) DBG_PRINT(",");
+                DBG_PRINTF("0x%x",cManufacturerData[i]);
+            }
+            DBG_PRINTF("\n");
         }
-        DBG_PRINTF("\n");
-    }
-    #endif
-
-        BleHydrometerDevice* dev=checkDevice(advertisedDevice);
-        if(dev){
-            _scannedDevices.push_back(dev);
+        #endif
+        // eliminated duplicated, I thought the library would've done it.
+        ignored=false;
+        for (int i = 0; i < _scannedDevices.size(); i++) {
+            BleHydrometerDevice* d =_scannedDevices[i];
+            if(advertisedDevice->getAddress() == d->macAddress){
+                ignored=true;
+                break;
+            }
         }
-    }
+        if(!ignored){
+            BleHydrometerDevice* dev=checkDevice(advertisedDevice);
+            if(dev){
+                _scannedDevices.push_back(dev);
+            }
+        }
+    } // for loop
     if(_scanResultHandler){
         _scanResultHandler(_scannedDevices);
         _scanResultHandler=NULL;

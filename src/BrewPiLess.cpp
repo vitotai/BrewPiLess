@@ -227,7 +227,7 @@ extern const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned 
 
 void requestRestart(bool disc);
 void tiltScanResult(String& result);
-void pillScanResult(String& result);
+
 
 void initTime(bool apmode)
 {
@@ -1383,8 +1383,9 @@ public:
 						for (int i = 0; i < devices.size(); i++) {
 							PillHydrometerInfo *pill=(PillHydrometerInfo*) devices[i];
 							 ret += String("{\"a\":[");
+							 const uint8_t *address = pill->macAddress.getNative();
 							 for(int a=0;a<6;a++){
-									ret += String(pill->mac[a]);
+									ret += address[a];
 									if(a<5) ret+=String(",");
 							 }
 							 ret+= String("],\"r\":")+ String(pill->rssi) +
@@ -1393,7 +1394,7 @@ public:
 									((i==devices.size()-1)? String("}"): String("},"));
 						 }
 					ret += "]}";
-					pillScanResult(ret);
+					tiltScanResult(ret);
 				 });
 				 request->send(200);
 			 }

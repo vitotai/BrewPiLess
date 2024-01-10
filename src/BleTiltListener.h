@@ -32,6 +32,7 @@ public:
         info->temperature = this->temperature;
         info->rssi = this->rssi;
         info->color = this->color;
+        info->macAddress = this->macAddress;
         return info;
     }
     uint16_t gravity;

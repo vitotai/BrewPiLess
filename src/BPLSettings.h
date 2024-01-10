@@ -39,7 +39,7 @@ typedef struct _TimeInformation{
 #define GravityDeviceIspindel 1
 #define GravityDeviceTilt 2
 #define GravityDevicePill 3
-
+#define MaxDeviceTypeNumber 3
 typedef struct _GravityDeviceConfiguration{
     float ispindelCoefficients[4];
     float   lpfBeta;

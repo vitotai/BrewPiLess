@@ -21,7 +21,8 @@ public:
         info->accY = this->accY;
         info->accZ = this->accZ;
         info->battery = this->battery;
-        memcpy(info->mac,this->mac,6);
+        info->macAddress=this->macAddress;
+        info->rssi = this->rssi;
         return info;
     }
     float gravity;
@@ -30,8 +31,6 @@ public:
     uint16_t accY;
     uint16_t accZ;
     float battery;
-    int rssi;    
-    uint8_t mac[6];
 };
 
 
@@ -40,16 +39,19 @@ typedef std::function<void(PillHydrometerInfo*)> PillDataHandler;
 
 class PillListener:public BleDeviceListener {
 public:
-    PillListener():_dataAvailableHandler(NULL){}
+    PillListener(uint8_t mac[6]):_dataAvailableHandler(NULL),_mac(mac){}
 
-    void listen(uint8_t macAddr[6],PillDataHandler onData);
+    void listen(PillDataHandler onData);
     // callbacks
     bool identifyDevice(NimBLEAdvertisedDevice*);
-    void setMac(uint8_t mac[6]){ memcpy(_macAddr,mac,6); }
+    void setMac(uint8_t mac[6]){
+            NimBLEAddress nmac(mac);
+            _mac = nmac;
+        }
 protected:
     PillDataHandler _dataAvailableHandler;
-    uint8_t _macAddr[6];
     PillHydrometerInfo _info;
+    NimBLEAddress _mac;
 };
 
 class PillScanner:public BleDeviceScanner {

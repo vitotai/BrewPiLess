@@ -59,13 +59,14 @@ bool _parseTiltInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,TiltHy
     else if( memcmp(uuid, UUIDYellow,UUID_SIZE) ==0  ) color = TiltColorYellow;
     else if( memcmp(uuid, UUIDPink,UUID_SIZE) ==0  ) color = TiltColorPink;
     else {
-        DBG_PRINTF("unknown TILT UUID\n");
+        DBG_PRINTF("unknown TILT UUID:%s\n",advertisedDevice->getAddress().toString().c_str());
         return false;
     }
     tiltInfo.color= color;
     tiltInfo.gravity =(uint16_t)  ENDIAN_CHANGE_U16(oBeacon.getMinor());
     tiltInfo.temperature =(uint16_t)  ENDIAN_CHANGE_U16(oBeacon.getMajor());
     tiltInfo.rssi = advertisedDevice->getRSSI();
+    tiltInfo.macAddress=advertisedDevice->getAddress();
 
     DBG_PRINTF("TILT- color:%d temp:%d sg:%d, rssi:%d\n",color, tiltInfo.temperature, tiltInfo.gravity,tiltInfo.rssi); 
     return true;

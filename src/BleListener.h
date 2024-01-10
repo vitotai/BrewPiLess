@@ -16,6 +16,9 @@ class BleHydrometerDevice{
 public:
     BleHydrometerDevice(){}
     virtual BleHydrometerDevice* duplicate(void)=0;
+
+    int rssi;   
+    NimBLEAddress macAddress;
 };
 
 typedef std::function<void(BleHydrometerDevice*)> BleHydrometerDataHandler;

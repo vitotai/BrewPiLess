@@ -337,7 +337,7 @@ String BPLSettings::jsonSystemConfiguration(void){
 bool BPLSettings::gravityConfigSantiy(){
 	GravityDeviceConfiguration *gdc = &_data.gdc;
 
-	if(gdc->gravityDeviceType > 2){
+	if(gdc->gravityDeviceType > MaxDeviceTypeNumber){
 		defaultGravityConfig();
 		return false;
 	}
@@ -412,7 +412,7 @@ bool BPLSettings::dejsonGravityConfig(char* json)
 				pcfg->macAddress[a]=(uint8_t) v.as<int>();
 				a++;
 			}
-
+			/*
 			JsonArray calpts = root[KeyPillCalibrationPoints].as<JsonArray>();
 			int i=0;
 			for(JsonVariant v : calpts) {
@@ -424,6 +424,7 @@ bool BPLSettings::dejsonGravityConfig(char* json)
 			pcfg->numCalPoints = calpts.size();
 			JsonArray tcoe= root[KeyPillCoefficients].as<JsonArray>();
 			for(i=0;i<4;i++) pcfg->coefficients[i] = tcoe[i];
+			*/
 		}
 		#endif
 

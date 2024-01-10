@@ -139,6 +139,10 @@ void ExternalData::_gotPillInfo(PillHydrometerInfo* info){
 	_deviceVoltage=info->battery;
 
 	_tiltAngle = calcTilt(info->accX,info->accY,info->accZ);
+	DBG_PRINTF(" Pill Tilt:");
+	DBG_PRINT(_tiltAngle);
+	DBG_PRINT("\n");
+
 	brewLogger.addTiltAngle(_tiltAngle);
 	float fgravity;
 	if(_calibrating){
@@ -154,7 +158,7 @@ void ExternalData::_gotPillInfo(PillHydrometerInfo* info){
 #endif
 
 void ExternalData::_reconfig(void){
-
+	DBG_PRINTF("refoncig: devicetype:%d, %d\n",_cfg->gravityDeviceType,_bleHydrometerType);
 	#if SupportTiltHydrometer || SupportPillHydrometer
 	if(_cfg->gravityDeviceType != _bleHydrometerType){
 		if((_bleHydrometerType == GravityDeviceTilt) || (_bleHydrometerType == GravityDevicePill) ){
@@ -170,16 +174,16 @@ void ExternalData::_reconfig(void){
 	if(_cfg->gravityDeviceType == GravityDeviceIspindel){	    
 		filter.setBeta(_cfg->lpfBeta);		
 	}
-	#if SupportTiltHydrometer || SupportPillHydrometer
 	#if SupportTiltHydrometer 
 	else if(_cfg->gravityDeviceType == GravityDeviceTilt){
 		
 		TiltConfiguration* tcfg = theSettings.tiltConfiguration();
-
 		if(_bleHydrometerType == GravityDeviceTilt){
 			// already tilt, change color, maybe
+			DBG_PRINTF("Change Tilt color to %d\n",tcfg->tiltColor);
 			((TiltListener *)_bleHydrometer)->setColor((TiltColor) tcfg->tiltColor);
 		}else{
+			DBG_PRINTF("Create Tilt color of %d\n",tcfg->tiltColor);
 
 			TiltListener *tilt=new TiltListener;
 			_bleHydrometer = tilt;
@@ -192,18 +196,20 @@ void ExternalData::_reconfig(void){
 	#endif
 	#if SupportPillHydrometer
 	else if(_cfg->gravityDeviceType == GravityDevicePill){
-		
 		PillConfiguration* pcfg = theSettings.pillConfiguration();
 
 		if(_bleHydrometerType == GravityDevicePill){
 			// already tilt, change color, maybe
+			DBG_PRINTF("Change Pill address\n");
+
 			((PillListener *)_bleHydrometer)->setMac(pcfg->macAddress);
 		}else{
+			DBG_PRINTF("Create Pill:\n");
 
-			PillListener *pill=new PillListener;
+			PillListener *pill=new PillListener(pcfg->macAddress);
 			_bleHydrometer = pill;
 	    	filter.setBeta(TiltFilterParameter);		
-			pill->listen(pcfg->macAddress,[&](PillHydrometerInfo* info){
+			pill->listen([&](PillHydrometerInfo* info){
 				_gotPillInfo(info);
 			});
 		}
@@ -211,7 +217,6 @@ void ExternalData::_reconfig(void){
 	#endif
 
 	_bleHydrometerType = _cfg->gravityDeviceType;
-	#endif
 }
 
 void ExternalData::loadConfig(void){
