@@ -129,7 +129,7 @@ void PillListener::listen(PillDataHandler onData){
     startListen();
 }
 
-bool PillListener::identifyDevice(NimBLEAdvertisedDevice* device){
+bool PillListener::onDeviceFound(NimBLEAdvertisedDevice* device){
     
     const uint8_t *amac=device->getAddress().getNative();
 //    DBG_PRINTF("Target:%x:%x:%x:%x:%x:%x rcv: %x:%x:%x:%x:%x:%x\n",_macAddress[0],_macAddress[1],_macAddress[2],_macAddress[3],_macAddress[4],_macAddress[5],amac[0],amac[1],amac[2],amac[3],amac[4],amac[5]);
@@ -150,14 +150,22 @@ bool PillListener::identifyDevice(NimBLEAdvertisedDevice* device){
 
 PillScanner pillScanner;
 
-BleHydrometerDevice* PillScanner::checkDevice(NimBLEAdvertisedDevice* device){
-    PillHydrometerInfo info;
-    if(_parsePillInfoFromAdvertise(device,info)){
-        return info.duplicate(); 
-    }else{
-        return NULL;
-    }
+void PillScanner::scan(PillDataHandler onData){
+    _dataAvailableHandler=onData;
+    startListen();
 }
 
+void PillScanner::stopScan(void){
+    stopListen();
+}
 
+bool PillScanner::onDeviceFound(NimBLEAdvertisedDevice* device){
+    PillHydrometerInfo info;
+    if(_parsePillInfoFromAdvertise(device,info)){
+        DBG_PRINTF("Scan device found!!!\n");
+        if(_dataAvailableHandler) _dataAvailableHandler(&info);
+        return true;
+    }
+    return false;
+}
 #endif

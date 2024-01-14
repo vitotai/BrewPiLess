@@ -43,7 +43,7 @@ public:
 
     void listen(PillDataHandler onData);
     // callbacks
-    bool identifyDevice(NimBLEAdvertisedDevice*);
+    bool onDeviceFound(NimBLEAdvertisedDevice*);
     void setMac(uint8_t mac[6]){
             //NimBLEAddress nmac(mac);
             //_mac = nmac;
@@ -57,11 +57,16 @@ protected:
     uint8_t _macAddress[6];
 };
 
-class PillScanner:public BleDeviceScanner {
+class PillScanner:public BleDeviceListener {
 public:
     PillScanner(){}
     // callbacks
-    BleHydrometerDevice* checkDevice(NimBLEAdvertisedDevice*);
+    
+    void scan(PillDataHandler onData);
+    void stopScan(void);
+    bool onDeviceFound(NimBLEAdvertisedDevice*);
+protected:
+    PillDataHandler _dataAvailableHandler;
 };
 
 extern PillScanner pillScanner;

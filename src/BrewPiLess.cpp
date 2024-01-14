@@ -226,7 +226,7 @@ DataLogger dataLogger;
 extern const uint8_t* getEmbeddedFile(const char* filename,bool &gzip, unsigned int &size);
 
 void requestRestart(bool disc);
-void tiltScanResult(String& result);
+void bleDeviceScanResult(String& result);
 
 
 void initTime(bool apmode)
@@ -1355,21 +1355,24 @@ public:
 #if	SupportTiltHydrometer
 	 	if(request->url() == TiltCommandPath){
 			 if(request->hasParam("scan")){
-				 DBG_PRINTF("scan BLE\n");
-				 tiltScanner.scan([&](std::vector<BleHydrometerDevice*> devices){
-					String ret="{\"tilts\":[";
-						for (int i = 0; i < devices.size(); i++) {
-							TiltHydrometerInfo *tilt=(TiltHydrometerInfo*) devices[i];
-							 ret += String("{\"c\":")+ String(tilt->color) +
-							 		String(",\"r\":")+ String(tilt->rssi) +
-									String(",\"g\":")+ String(tilt->gravity) +
-									String(",\"t\":")+ String(tilt->temperature) +
-									((i==devices.size()-1)? String("}"): String("},"));
-						 }
-					ret += "]}";
-					tiltScanResult(ret);
-				 });
-				 request->send(200);
+				if(request->getParam("scan")->value().toInt() ==1){
+					 DBG_PRINTF("scan for Tilts...\n");
+					 tiltScanner.scan([](TiltHydrometerInfo *tilt){
+						String ret="{\"tilt\":{\"c\":";
+								 ret += String(tilt->color) +
+								 		String(",\"r\":")+ String(tilt->rssi) +
+										String(",\"g\":")+ String(tilt->gravity) +
+										String(",\"t\":")+ String(tilt->temperature) +
+										String("}}");
+						bleDeviceScanResult(ret);
+					 });
+					 request->send(200);
+				}else{
+					tiltScanner.stopScan();
+					request->send(200);
+				}
+			 }else{
+				request->send(404);
 			 }
 			 return;
 		 }
@@ -1377,26 +1380,30 @@ public:
 #if	SupportPillHydrometer
 	 	if(request->url() == PillCommandPath){
 			 if(request->hasParam("scan")){
-				 DBG_PRINTF("scan BLE\n");
-				 pillScanner.scan([](std::vector<BleHydrometerDevice*> devices){
-					String ret="{\"pills\":[";
-						for (int i = 0; i < devices.size(); i++) {
-							PillHydrometerInfo *pill=(PillHydrometerInfo*) devices[i];
-							 ret += String("{\"a\":[");
-							 const uint8_t *address = pill->macAddress.getNative();
-							 for(int a=0;a<6;a++){
-									ret += address[a];
-									if(a<5) ret+=String(",");
-							 }
-							 ret+= String("],\"r\":")+ String(pill->rssi) +
-									String(",\"g\":")+ String(pill->gravity) +
-									String(",\"t\":")+ String(pill->temperature) +
-									((i==devices.size()-1)? String("}"): String("},"));
-						 }
-					ret += "]}";
-					tiltScanResult(ret);
-				 });
-				 request->send(200);
+				DBG_PRINTF(" pill scan:%d\n",request->getParam("scan")->value().toInt());
+				if(request->getParam("scan")->value().toInt() ==1){
+					DBG_PRINTF("scan for Pills...\n");
+					pillScanner.scan([](PillHydrometerInfo* pill){
+						String ret=String("{\"pill\":{\"a\":[");
+								const uint8_t *address = pill->macAddress.getNative();
+								for(int a=0;a<6;a++){
+										ret += address[a];
+										if(a<5) ret+=String(",");
+								}
+								ret+= String("],\"r\":")+ String(pill->rssi) +
+										String(",\"g\":")+ String(pill->gravity) +
+										String(",\"t\":")+ String(pill->temperature) +
+										String("}}");
+						bleDeviceScanResult(ret);
+					});
+					request->send(200);
+				}else{
+					// stop
+					pillScanner.stopScan();
+					request->send(200);
+				}
+			 }else{
+				request->send(404);
 			 }
 			 return;
 		 }
@@ -1629,12 +1636,8 @@ void wiFiEvent(const char* msg){
 	#endif
 }
 
-void tiltScanResult(String& result){
+void bleDeviceScanResult(String& result){
 	String report="T:" + result;
-	stringAvailable(report.c_str());
-}
-void pillScanResult(String& result){
-	String report="P:" + result;
 	stringAvailable(report.c_str());
 }
 

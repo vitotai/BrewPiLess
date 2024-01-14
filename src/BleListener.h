@@ -4,12 +4,12 @@
 #include <functional>
 
 #include "Config.h"
-#define DefaultScanPeriod 5000
 #include <NimBLEDevice.h>
 #include <NimBLEAdvertisedDevice.h>
 #include "NimBLEEddystoneURL.h"
 #include "NimBLEEddystoneTLM.h"
 #include "NimBLEBeacon.h"
+
 
 
 class BleHydrometerDevice{
@@ -26,43 +26,27 @@ typedef std::function<void(std::vector<BleHydrometerDevice*>)> BleHydrometerScan
 
 class BleDeviceListener{
 public:
-    BleDeviceListener(void){}
+    BleDeviceListener(void):_listening(false){}
     // start to scan periodic
     void startListen(void);
     void stopListen(void);
     // 
-    virtual bool identifyDevice(NimBLEAdvertisedDevice*)=0;
-};
-
-
-class BleDeviceScanner{
-public:
-    BleDeviceScanner(void);
-    // request to scan now
-    void scan(BleHydrometerScanResultHandler resultHandler); // callback result.
-
-    virtual BleHydrometerDevice* checkDevice(NimBLEAdvertisedDevice*)=0;
-    // call back for BLE scanner
-    void scanComplete(NimBLEScanResults&);
+    virtual bool onDeviceFound(NimBLEAdvertisedDevice*)=0;
 protected:
-    std::vector<BleHydrometerDevice*> _scannedDevices;
-    BleHydrometerScanResultHandler _scanResultHandler;
-    void _clearResult(void);
+    bool _listening;
 };
 
 class BleListener :public BLEAdvertisedDeviceCallbacks{
 public:
-    BleListener():_scanning(false),_commandScan(false),_enabled(false),_scanPeriod(DefaultScanPeriod){
+    BleListener():_scanning(false),_commandScan(false),_enabled(false){
         _clearData();
     }
     // 
     void begin(void);
     void loop(void);
-    void scanForDevices(BleDeviceScanner* scanner); 
     void startListen(BleDeviceListener* listener);
-    void stopListen(void);
+    void stopListen(BleDeviceListener* listener);
     // callbacks
-    void scanComplete(NimBLEScanResults& result);
     virtual void onResult(NimBLEAdvertisedDevice* advertisedDevice);
 protected:
     void _startScan(void);
@@ -72,11 +56,10 @@ protected:
     bool _commandScan;
     bool _enabled;
     
-    BleDeviceScanner*  _bleDeviceScanner;
-    BleDeviceListener* _bleDeviceListener;
+    std::list<BleDeviceListener*> _bleDeviceListeners;
 
     BLEScan* _pBLEScan;
-    uint32_t _scanPeriod;
+    uint32_t _retryCount;
     uint32_t _lastScanTime;
 };
 

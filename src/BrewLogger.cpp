@@ -761,7 +761,7 @@ BrewLogger::BrewLogger(void){
 	void BrewLogger::addAuxTemp(float temp)
 	{
 		_extTemp = _convertTemperature(temp);
-		DBG_PRINTF("AuxTemp:%d\n",_extTemp);
+		//DBG_PRINTF("AuxTemp:%d\n",_extTemp);
 	}
 	void BrewLogger::addTiltAngle(float tilt)
 	{

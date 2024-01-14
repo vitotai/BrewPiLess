@@ -79,7 +79,7 @@ void TiltListener::listen(TiltColor color,TiltDataHandler onData){
     startListen();
 }
 
-bool TiltListener::identifyDevice(NimBLEAdvertisedDevice* device){
+bool TiltListener::onDeviceFound(NimBLEAdvertisedDevice* device){
     if(_parseTiltInfoFromAdvertise(device,_tiltInfo)){
         if(_tiltInfo.color == _targetColor){
             if(_dataAvailableHandler) _dataAvailableHandler(&_tiltInfo);
@@ -91,14 +91,23 @@ bool TiltListener::identifyDevice(NimBLEAdvertisedDevice* device){
 
 TiltScanner tiltScanner;
 
-BleHydrometerDevice* TiltScanner::checkDevice(NimBLEAdvertisedDevice* device){
-    TiltHydrometerInfo info;
-    if(_parseTiltInfoFromAdvertise(device,info)){
-        return info.duplicate(); 
-    }else{
-        return NULL;
-    }
+
+void TiltScanner::scan(TiltDataHandler onData){
+    _dataAvailableHandler=onData;
+    startListen();
 }
 
+void TiltScanner::stopScan(void){
+    stopListen();
+}
+
+bool TiltScanner::onDeviceFound(NimBLEAdvertisedDevice* device){
+    TiltHydrometerInfo info;
+    if(_parseTiltInfoFromAdvertise(device,info)){
+        if(_dataAvailableHandler) _dataAvailableHandler(&info);
+        return true;
+    }
+    return false;
+}
 
 #endif
