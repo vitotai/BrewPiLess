@@ -526,7 +526,7 @@ void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t p
     PhysicalLcdDriver *lcd=getLcd();
     lcd->setCursor(col,row);
 
-    char buffer[32];
+    char buffer[64];
     /*
     int digitNum=sprintFloat((char*)buffer,value,precision);
     DBG_PRINTF("_printFloatAt %d,%d,%s\n",space,digitNum,buffer);
@@ -542,7 +542,7 @@ void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t p
         lcd->print(buffer[i]);
 
     */
-    char fmt[8];
+    char fmt[16];
     sprintf(fmt,"%%%d.%df",space,precision);
     sprintf(buffer,fmt,value);
 //    DBG_PRINTF("_printFloatAt fmt:%s res:%s\n",fmt,buffer);

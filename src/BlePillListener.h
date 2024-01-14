@@ -27,9 +27,9 @@ public:
     }
     float gravity;
     float temperature;
-    uint16_t accX;
-    uint16_t accY;
-    uint16_t accZ;
+    int16_t accX;
+    int16_t accY;
+    int16_t accZ;
     float battery;
 };
 
@@ -39,19 +39,22 @@ typedef std::function<void(PillHydrometerInfo*)> PillDataHandler;
 
 class PillListener:public BleDeviceListener {
 public:
-    PillListener(uint8_t mac[6]):_dataAvailableHandler(NULL),_mac(mac){}
+    PillListener(uint8_t mac[6]):_dataAvailableHandler(NULL){memcpy(_macAddress,mac,6);}
 
     void listen(PillDataHandler onData);
     // callbacks
     bool identifyDevice(NimBLEAdvertisedDevice*);
     void setMac(uint8_t mac[6]){
-            NimBLEAddress nmac(mac);
-            _mac = nmac;
+            //NimBLEAddress nmac(mac);
+            //_mac = nmac;
+            memcpy(_macAddress,mac,6);
         }
 protected:
     PillDataHandler _dataAvailableHandler;
     PillHydrometerInfo _info;
-    NimBLEAddress _mac;
+    //NimBLEAddress _mac;
+    //onstructor NimBleAddress(uint8_t[6]) will reverse the order of the byte
+    uint8_t _macAddress[6];
 };
 
 class PillScanner:public BleDeviceScanner {

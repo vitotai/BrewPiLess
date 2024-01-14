@@ -4,7 +4,7 @@
 #include <functional>
 
 #include "Config.h"
-#define DefaultScanPeriod 10000
+#define DefaultScanPeriod 5000
 #include <NimBLEDevice.h>
 #include <NimBLEAdvertisedDevice.h>
 #include "NimBLEEddystoneURL.h"

@@ -1,5 +1,6 @@
 #include "BlePillListener.h"
 #include <string>
+#include "TimeKeeper.h"
 #if SupportPillHydrometer
 
 
@@ -30,6 +31,11 @@ ex:
 const uint8_t PillIdentifier[]={0x52,0x41,0x50,0x54};
 #define BigEndianU16(a0,a1) ( ((a0)<<8) | (a1))
 
+union FloatRaw{
+    float fval;
+    uint32_t ival;
+};
+
 
 bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHydrometerInfo& info){
 
@@ -45,19 +51,19 @@ bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHy
     uint8_t cManufacturerData[100];
     strManufacturerData.copy((char *)cManufacturerData, macDataLength > 100 ? 100:macDataLength, 0);
 
-    if(memcmp(cManufacturerData,PillIdentifier,sizeof(PillIdentifier))!=0) return false;
+    // RAPT
+    if(memcmp(cManufacturerData,PillIdentifier,4)!=0) return false;
     
-    uint8_t *ptr = cManufacturerData+sizeof(PillIdentifier);
+    uint8_t *ptr = cManufacturerData+4;
     if(*ptr == 0x01 || *ptr == 0x02){
+         // v1: 0x01 mm mm mm mm mm mm
+         // v2: 0x02 0x00 cc vv vv vv vv
     } else{
         // unknown version
         return false;
     }
-    // get mac address anyway
-    info.macAddress=advertisedDevice->getAddress();
-    info.rssi = advertisedDevice->getRSSI();
-
     ptr += 7; // skip version, mac addr or gravity velocity
+
     // temperature in Kelvin, multiplied by 128
     uint16_t temp = BigEndianU16(*ptr,*(ptr+1));
     // convert to C
@@ -65,16 +71,13 @@ bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHy
     ptr += 2; 
 
     // gravity in float, big endian
-    uint32_t raw_data;
     uint8_t *bytes= ptr;
-   #if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-    // Little-endian system, reverse the byte order
-    raw_data = ((uint32_t)bytes[3] << 24) | ((uint32_t)bytes[2] << 16) | ((uint32_t)bytes[1] << 8) | bytes[0];
-    #else
-    // Big-endian system, no need to reverse the byte order
-    raw_data = ((uint32_t)bytes[0] << 24) | ((uint32_t)bytes[1] << 16) | ((uint32_t)bytes[2] << 8) | bytes[3];
-    #endif
-    memcpy(& info.gravity, &raw_data,sizeof(float));
+    FloatRaw gravity;
+    //FloatRaw gravity2;
+    gravity.ival = (bytes[0] << 24) | (bytes[1] << 16)  | (bytes[2] << 8)  | (bytes[3]);
+    //gravity2.ival = (bytes[3] << 24) | (bytes[2] << 16)  | (bytes[1] << 8)  | (bytes[0]);
+    // it's x1000
+    info.gravity=gravity.fval/1000.0;
     ptr +=4;
 
     // keep acc value as is
@@ -90,8 +93,13 @@ bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHy
 
     // battery state-of-charge, percentage * 256,
     info.battery= ((float)BigEndianU16(*ptr,*(ptr+1))) /256.0;
-    
-    #if SerialDebug
+
+    // get mac address anyway
+    info.macAddress=advertisedDevice->getAddress();
+    info.rssi = advertisedDevice->getRSSI();
+
+
+    #if 0
     DBG_PRINTF("\t RAW:");
     for(int i=0;i< strManufacturerData.length();i++){
         if(i>0) DBG_PRINT(",");
@@ -100,9 +108,12 @@ bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHy
     DBG_PRINTF("\n");
 
     DBG_PRINT(" SG:");
-    DBG_PRINT(info.gravity,4);
+    DBG_PRINT(info.gravity);
+//    DBG_PRINT(" SG2:");
+//    DBG_PRINT(gravity2.fval);
     DBG_PRINT(" Temp:");
     DBG_PRINT(info.temperature);
+    DBG_PRINTF(" Acc:%X,%X,%X ",info.accX,info.accY,info.accZ);
     DBG_PRINT(" Battery:");
     DBG_PRINT(info.battery);
     DBG_PRINT("%\n");
@@ -119,11 +130,20 @@ void PillListener::listen(PillDataHandler onData){
 }
 
 bool PillListener::identifyDevice(NimBLEAdvertisedDevice* device){
-    if(_parsePillInfoFromAdvertise(device,_info)){
-        if(_mac == _info.macAddress){
+    
+    const uint8_t *amac=device->getAddress().getNative();
+//    DBG_PRINTF("Target:%x:%x:%x:%x:%x:%x rcv: %x:%x:%x:%x:%x:%x\n",_macAddress[0],_macAddress[1],_macAddress[2],_macAddress[3],_macAddress[4],_macAddress[5],amac[0],amac[1],amac[2],amac[3],amac[4],amac[5]);
+        //if(_mac == device->getAddress()){ 
+        //  There might be tow issues here
+        //  first, we don't know if the address is public  or not
+        //  second, constructor NimBleAddress(uint8_t[6]) will reverse the order of the bytes
+        //  however, getNative() return internal byte array.???
+
+    if(memcmp(_macAddress,amac,6) ==0 
+        && _parsePillInfoFromAdvertise(device,_info)){
+            DBG_PRINTF("Pill found @%ld\n",TimeKeeper.getTimeSeconds());
             if(_dataAvailableHandler) _dataAvailableHandler(&_info);
-            return true;
-        }
+            return true;        
     }
     return NULL;
 }

@@ -122,11 +122,12 @@ void ExternalData::_gotTiltInfo(TiltHydrometerInfo* info){
 
 #if SupportPillHydrometer
 
-float calcTilt(uint16_t x, uint16_t y, uint16_t z){
+float calcTilt(int16_t x, int16_t y, int16_t z){
 	if (x == 0 && y == 0 && z == 0) return 0.f;
 	float ax=(float)x;
 	float ay=(float)y;
 	float az=(float)z;
+	
 	return acos(abs(az) / (sqrt(ax * ax + ay * ay + az * az))) * 180.0 / M_PI;
 }
 
@@ -138,7 +139,9 @@ void ExternalData::_gotPillInfo(PillHydrometerInfo* info){
 	_setDeviceRssi(info->rssi);
 	_deviceVoltage=info->battery;
 
-	_tiltAngle = calcTilt(info->accX,info->accY,info->accZ);
+	// Pill seems to calculate tilt by using X in place of Z.
+	//_tiltAngle = calcTilt(info->accX,info->accY,info->accZ);
+	_tiltAngle = calcTilt(info->accZ,info->accY,info->accX);
 	DBG_PRINTF(" Pill Tilt:");
 	DBG_PRINT(_tiltAngle);
 	DBG_PRINT("\n");
@@ -293,6 +296,7 @@ void ExternalData::_setGravity(float sg, time_t now,bool log){
     float old_sg=_gravity;
 	
     DBG_PRINTF("_setGravity:%d, saved:%d\n",(int)(sg*10000.0),log);
+	if((_cfg->usePlato && (sg > 99.0 || sg < -1.0) ) || (!_cfg->usePlato && (sg > 2.0 || sg < 0.5))) return;
     // verfiy sg, even invalid value will be reported to web interface
 	//if(!IsGravityInValidRange(sg)) return;
 	_gravity = sg;

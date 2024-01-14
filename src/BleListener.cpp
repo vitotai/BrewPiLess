@@ -3,36 +3,41 @@
 #include <string>
 #if SupportBleHydrometer
 
-#define  BLEScanTime  2 //In seconds
+#define  BLEScanTime  10 //In seconds
 
 #define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
 
 BleListener bleListener;
 
 void BleListener::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
-    //DBG_PRINTF("OnResult:%s\n",advertisedDevice->getAddress().toString().c_str());
+
     if(_bleDeviceListener){
-           _bleDeviceListener->identifyDevice(advertisedDevice);
+        
+        if(_bleDeviceListener->identifyDevice(advertisedDevice)){
+            //DBG_PRINTF("***OnResult:\n");
+        }
     }
+
 }
 
 void BleListener::begin(void) {
   BLEDevice::init("");
   _pBLEScan = BLEDevice::getScan(); //create new scan
   _pBLEScan->setAdvertisedDeviceCallbacks(this);
-  _pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
+  _pBLEScan->setActiveScan(false); //active scan uses more power, but get results faster
   _pBLEScan->setInterval(100); // in msecs
-  _pBLEScan->setWindow(100);  // less or equal setInterval value
+  _pBLEScan->setWindow(99);  // less or equal setInterval value
 }
 
 void BleListener::scanComplete(NimBLEScanResults& result){
-    DBG_PRINTF("Time:%ld BLE found:%d\n",result.getCount(),millis()-_lastScanTime);
-/*    if(_bleDeviceListener){
+ #if 0
+    DBG_PRINTF("BLE found:%d Time:%ld\n",result.getCount(),millis()-_lastScanTime);
+    if(_bleDeviceListener){
         for(auto it = result.begin(); it != result.end(); ++it) {
            if(_bleDeviceListener->identifyDevice(*it)) break;
         }
     }
-*/
+#endif
     if (_bleDeviceScanner) {
         _bleDeviceScanner->scanComplete(result);
         _bleDeviceScanner=NULL;
