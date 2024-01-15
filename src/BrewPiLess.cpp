@@ -239,7 +239,7 @@ void initTime(bool apmode)
 		TimeKeeper.begin((char*)"time.google.com",(char*)"pool.ntp.org",(char*)"time.windows.com");
 	}
 */
-	TimeKeeper.begin((char*)"time.google.com",(char*)"pool.ntp.org",(char*)"time.windows.com");
+	TimeKeeper.begin((char*)"pool.ntp.org",(char*)"time.google.com",(char*)"time.windows.com");
 
 }
 #if AUTO_CAP
@@ -1239,7 +1239,7 @@ public:
 						DBG_PRINTF("Start BrweNCal log\n");
 					}
 
-					brewLogger.addCorrectionTemperature(externalData.hydrometerCalibrationTemp());
+					//brewLogger.addCorrectionTemperature(externalData.hydrometerCalibrationTemp());
 
 					request->send(200,"application/json","{}");
 					notifyLogStatus();

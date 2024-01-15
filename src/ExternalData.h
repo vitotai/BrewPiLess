@@ -125,7 +125,7 @@ public:
 	//configuration reading
 //    bool iSpindelEnabled(void);
 
-	float hydrometerCalibrationTemp(void);
+//	float hydrometerCalibrationTemp(void);
 
     void gravityDeviceSetting(char *buf);
 	//configuration processs

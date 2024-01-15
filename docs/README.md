@@ -24,6 +24,7 @@
   * [Brew and Calibrate](C1.BrewNCalibrate.md)
   * [iSpindel as Beer Sensor](C2.iSpindelAsSensor.md)
 * [Tilt Hydrometer Support on ESP32](D0.TiltHydrometerSupport.md)
+* [Rapt Pill wireless Hydrometer Support](D1.RaptPillHydrometerSupport.md)
 * [Manual Gravity Logging](E0.ManualGravityInput.md)
 * [Use with Glycol](F0.glycol.md)
   * [Parasite Temperature Control](F1.ParasiteTemperatureControl.md)

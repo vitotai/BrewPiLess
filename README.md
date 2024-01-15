@@ -19,7 +19,8 @@
  * Save and resuse of beer profiles.
  * Static IP setting.
  * Export saved data to csv format by offline log viewer.
- * Brew and calibrate iSpindel. **new!**
+ * Brew and calibrate.
+ * Tilt & Rapt Pill support(ESP32)
    
 # Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
@@ -42,6 +43,12 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
 
 ## Version History
+ * 4.4
+   * (ESP32) Rapt Pill support
+   * Revise Gravity Device Setting
+   * Removing confusing calibration temperature of wireless hydrometer
+   * Code revise
+   * update ESP32 framework to 6.3.2
  * 4.3.1 
    * Auto list device list on page open
    * Advanced settings for control constants.

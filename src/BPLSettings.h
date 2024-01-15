@@ -46,9 +46,9 @@ typedef struct _GravityDeviceConfiguration{
 	uint32_t  numberCalPoints;
     
     uint8_t  gravityDeviceType;
-    uint8_t  ispindelTempCal;
+    uint8_t  _unused;
     uint8_t  calculateGravity;
-    uint8_t  ispindelCalibrationBaseTemp;
+    uint8_t  _unused2;
 
 	uint8_t  stableThreshold;
 	uint8_t  usePlato;

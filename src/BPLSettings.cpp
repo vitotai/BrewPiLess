@@ -367,18 +367,18 @@ bool BPLSettings::dejsonGravityConfig(char* json)
 		gdc->gravityDeviceType=root[KeyGravityDeviceType];
 		gdc->stableThreshold=root[KeyStableGravityThreshold];
 		gdc->usePlato = root.containsKey(KeyUsePlato)? root[KeyUsePlato]:0;
+		gdc->lpfBeta =root[KeyLPFBeta];
 
 		if(gdc->gravityDeviceType == GravityDeviceIspindel){
-			gdc->ispindelTempCal = root[KeyTempCorrection];
+			//gdc->ispindelTempCal = root[KeyTempCorrection];
 
-			gdc->ispindelCalibrationBaseTemp =
-					(root.containsKey(KeyCorrectionTemp))? root[KeyCorrectionTemp]:20;
+			/*gdc->ispindelCalibrationBaseTemp =
+					(root.containsKey(KeyCorrectionTemp))? root[KeyCorrectionTemp]:20;*/
 			gdc->calculateGravity=root[KeyCalculateGravity];
 			gdc->ispindelCoefficients[0]=root[KeyCoefficientA0];
 			gdc->ispindelCoefficients[1]=root[KeyCoefficientA1];
 			gdc->ispindelCoefficients[2]=root[KeyCoefficientA2];
 			gdc->ispindelCoefficients[3]=root[KeyCoefficientA3];
-			gdc->lpfBeta =root[KeyLPFBeta];
 			gdc->numberCalPoints=root[KeyNumberCalPoints];
 		}
 		
@@ -448,13 +448,13 @@ String BPLSettings::jsonGravityConfig(void){
 		root[KeyGravityDeviceType] = gdc->gravityDeviceType;
 		root[KeyStableGravityThreshold] = gdc->stableThreshold;
 		root[KeyUsePlato] = gdc->usePlato;
+		root[KeyLPFBeta] =gdc->lpfBeta;
 
 		if(gdc->calculateGravity == GravityDeviceIspindel){
-			root[KeyTempCorrection] = gdc->ispindelTempCal;
+			//root[KeyTempCorrection] = gdc->ispindelTempCal;
 
-			root[KeyCorrectionTemp] = gdc->ispindelCalibrationBaseTemp;
+			//root[KeyCorrectionTemp] = gdc->ispindelCalibrationBaseTemp;
 			root[KeyCalculateGravity] = gdc->calculateGravity;
-			root[KeyLPFBeta] =gdc->lpfBeta;
 
 			root[KeyCoefficientA0]=gdc->ispindelCoefficients[0];
 			root[KeyCoefficientA1]=gdc->ispindelCoefficients[1];

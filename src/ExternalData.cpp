@@ -62,11 +62,11 @@ bool ExternalData::gravityDeviceEnabled(void){
     return _cfg->gravityDeviceType != GravityDeviceNone;
 }
 
-
+/*
 float ExternalData::hydrometerCalibrationTemp(void){ 
     return _cfg->ispindelCalibrationBaseTemp;
 }
-
+*/
 // Provide information when greeting.
 void ExternalData::gravityDeviceSetting(char *buf){
 
@@ -76,7 +76,7 @@ void ExternalData::gravityDeviceSetting(char *buf){
 
 	doc["lpf"] = filter.beta();
 	doc["stpt"] = _cfg->stableThreshold;
-	doc["ctemp"] = _cfg->ispindelCalibrationBaseTemp;
+	//doc["ctemp"] = _cfg->ispindelCalibrationBaseTemp;
 	doc["plato"] = _cfg->usePlato;
 
 	doc["fpt"] = _cfg->numberCalPoints;
@@ -142,9 +142,9 @@ void ExternalData::_gotPillInfo(PillHydrometerInfo* info){
 	// Pill seems to calculate tilt by using X in place of Z.
 	//_tiltAngle = calcTilt(info->accX,info->accY,info->accZ);
 	_tiltAngle = calcTilt(info->accZ,info->accY,info->accX);
-	DBG_PRINTF(" Pill Tilt:");
-	DBG_PRINT(_tiltAngle);
-	DBG_PRINT("\n");
+	//DBG_PRINTF(" Pill Tilt:");
+	//DBG_PRINT(_tiltAngle);
+	//DBG_PRINT("\n");
 
 	brewLogger.addTiltAngle(_tiltAngle);
 	float fgravity;
@@ -277,12 +277,12 @@ float ExternalData::_calculateGravitybyAngle(float tilt,float temp){
             +  _cfg->ispindelCoefficients[3] * tilt * tilt * tilt;
 
 	// temp. correction
-	if(_cfg->ispindelTempCal){
+	//if(_cfg->ispindelTempCal){
 		if(_cfg->usePlato){
-			sg =SG2Brix(temperatureCorrection(Brix2SG(sg),C2F(temp),C2F((float)_cfg->ispindelCalibrationBaseTemp)));
+			sg =SG2Brix(temperatureCorrection(Brix2SG(sg),C2F(temp),68));
 		}else
-	    	sg = temperatureCorrection(sg,C2F(temp),C2F((float)_cfg->ispindelCalibrationBaseTemp));
-	}
+	    	sg = temperatureCorrection(sg,C2F(temp),68);
+	//}
 	return sg;
 }
 /*
