@@ -923,7 +923,7 @@ void greeting(std::function<void(const char*)> sendFunc)
 	char buf[512];
 	// gravity related info., starting from "G"
 	if(externalData.gravityDeviceEnabled()){
-		externalData.sseNotify(buf);
+		externalData.gravityDeviceSetting(buf);
 		sendFunc(buf);
 	} 
 
@@ -1139,11 +1139,18 @@ void reportRssi(void)
 
 
 	JsonObject G = doc.createNestedObject("G");
+	// last update
 	G["u"] = externalData.lastUpdate();
-	G["t"] = (int)(externalData.auxTemp() * 100);
-	G["r"] = externalData.rssi();
+	// gravity
 	G["g"] = (int)(externalData.gravity() * 1000);
+	// temperature
+	G["t"] = (int)(externalData.auxTemp() * 100);
+	// RSSI, for all devices
+	G["r"] = externalData.rssi();
+	// angle, only for iSpindel & Pill
 	G["a"] = externalData.tiltValue();
+	// battery, for iSPindel & Pill
+	G["b"] = externalData.deviceVoltage();
 
 	String out="A:";
 	serializeJson(doc,out);
@@ -1418,7 +1425,7 @@ public:
 			stringAvailable(_buffer); // send to brower to log on Javascript Console
 			processGravity(request,_data,_dataLength);
 			// Process the name
-			externalData.sseNotify(_data);
+			externalData.gravityDeviceSetting(_data);
 			stringAvailable(_data);
 			return;
 		}

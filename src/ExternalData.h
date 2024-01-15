@@ -127,7 +127,7 @@ public:
 
 	float hydrometerCalibrationTemp(void);
 
-    void sseNotify(char *buf);
+    void gravityDeviceSetting(char *buf);
 	//configuration processs
     bool processconfig(char* configdata);
 	void loadConfig(void);

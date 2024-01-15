@@ -68,28 +68,28 @@ float ExternalData::hydrometerCalibrationTemp(void){
 }
 
 // Provide information when greeting.
-void ExternalData::sseNotify(char *buf){
+void ExternalData::gravityDeviceSetting(char *buf){
 
 	DynamicJsonDocument doc(1024);
 
 	doc["dev"] = _cfg->gravityDeviceType;
-	// shared values: sg, last update, rssi, temp
-	doc["sg"] =_gravity;
-	doc["lu"] = _lastUpdate;
 
 	doc["lpf"] = filter.beta();
 	doc["stpt"] = _cfg->stableThreshold;
-	doc["fpt"] = _cfg->numberCalPoints;
 	doc["ctemp"] = _cfg->ispindelCalibrationBaseTemp;
 	doc["plato"] = _cfg->usePlato;
-
-	doc["angle"] = _tiltAngle;
+	
+	doc["fpt"] = _cfg->numberCalPoints;
 	doc["name"] = (_ispindelName)? _ispindelName:"Unknown";
-	doc["battery"] =_deviceVoltage;
 
-	#if SupportTiltHydrometer
-	doc["tiltraw"] = _tiltRawGravity;
-	#endif
+//	doc["angle"] = _tiltAngle;
+//	doc["battery"] =_deviceVoltage;
+	// shared values: sg, last update, rssi, temp
+//	doc["sg"] =_gravity;
+//	doc["lu"] = _lastUpdate;
+//	#if SupportTiltHydrometer
+//	doc["tiltraw"] = _tiltRawGravity;
+//	#endif
 
 	buf[0]='G';
 	buf[1]=':';
