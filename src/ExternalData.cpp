@@ -78,7 +78,7 @@ void ExternalData::gravityDeviceSetting(char *buf){
 	doc["stpt"] = _cfg->stableThreshold;
 	doc["ctemp"] = _cfg->ispindelCalibrationBaseTemp;
 	doc["plato"] = _cfg->usePlato;
-	
+
 	doc["fpt"] = _cfg->numberCalPoints;
 	doc["name"] = (_ispindelName)? _ispindelName:"Unknown";
 
@@ -316,9 +316,8 @@ void ExternalData::_setGravity(float sg, time_t now,bool log){
 	if(log) brewLogger.addGravity(sg,false);
 
 	#if SMART_DISPLAY
-			char unit;
+			char unit = brewPi.getUnit();
 			float max,min;
-    		brewPi.getTemperatureSetting(&unit,&min,&max);			
 			smartDisplay.gravityDeviceData(sg,_auxTemp,_lastUpdate,unit,_cfg->usePlato,_deviceVoltage,_tiltAngle,_rssi);
 	#endif
 
@@ -326,10 +325,7 @@ void ExternalData::_setGravity(float sg, time_t now,bool log){
 
 
 void ExternalData::_setAuxTemperatureCelsius(float temp){
-	char unit;
-	float max,min;
-
-    brewPi.getTemperatureSetting(&unit,&min,&max);
+	char unit = brewPi.getUnit();
 	
     if(unit == 'C'){
 		_auxTemp= temp;

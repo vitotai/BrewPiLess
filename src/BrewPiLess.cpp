@@ -607,7 +607,16 @@ public:
 		}else if(request->method() == HTTP_GET && request->url() == GETSTATUS_PATH){
 			uint8_t mode, state;
 			float beerSet, beerTemp, fridgeTemp, fridgeSet, roomTemp;
-			brewPi.getAllStatus(&state, &mode, &beerTemp, &beerSet, &fridgeTemp, &fridgeSet, &roomTemp);
+
+	        state = brewPi.getState();
+        	mode = brewPi.getMode();
+    	    beerTemp = brewPi.getBeerTemp();
+        	beerSet = brewPi.getBeerSet();
+        	fridgeTemp = brewPi.getFridgeTemp();
+        	fridgeSet = brewPi.getFridgeSet();
+        	roomTemp = brewPi.getRoomTemp();
+
+			mode = brewPi.getMode();
 			#define TEMPorNull(a) (IS_FLOAT_TEMP_VALID(a)?  String(a):String("null"))
 			String json=String("{\"mode\":\"") + String((char) mode)
 			+ String("\",\"state\":") + String(state)
@@ -1096,10 +1105,15 @@ void reportRssi(void)
 	char unit;
 	float beerSet, beerTemp, fridgeTemp, fridgeSet, roomTemp;
 	float min,max;
-	char statusLine[21];
-	brewPi.getTemperatureSetting(&unit,&min,&max);
-	brewPi.getAllStatus(&state, &mode, &beerTemp, &beerSet, &fridgeTemp, &fridgeSet, &roomTemp);
-	display.getLine(3,statusLine);
+	
+	mode = brewPi.getMode();
+	state = brewPi.getState();
+	unit = brewPi.getUnit();
+	beerSet = brewPi.getBeerSet();
+	beerTemp = brewPi.getBeerTemp();
+	fridgeTemp=brewPi.getFridgeTemp();
+	fridgeSet = brewPi.getFridgeSet();
+	roomTemp = brewPi.getRoomTemp();
 
 	DynamicJsonDocument doc(1024);
 	doc["rssi"]= WiFi.RSSI();
@@ -1110,7 +1124,7 @@ void reportRssi(void)
 	doc["ft"] = (int)(fridgeTemp*100);
 	doc["fs"] = (int)(fridgeSet*100);
 	doc["rt"] = (int)(roomTemp*100);
-	doc["sl"] = statusLine;
+	doc["sl"] = brewPi.getStatusTime();
 	doc["tu"] = String(unit);
 
 

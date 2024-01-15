@@ -120,8 +120,13 @@ void MqttRemoteControl::_reportData(void){
         uint8_t state, mode;
 	    float beerSet,fridgeSet;
 	    float beerTemp,fridgeTemp,roomTemp;
-
-	    brewPi.getAllStatus(&state,&mode,& beerTemp,& beerSet,& fridgeTemp,& fridgeSet,& roomTemp);
+        state = brewPi.getState();
+        mode = brewPi.getMode();
+        beerTemp = brewPi.getBeerTemp();
+        beerSet = brewPi.getBeerSet();
+        fridgeTemp = brewPi.getFridgeTemp();
+        fridgeSet = brewPi.getFridgeSet();
+        roomTemp = brewPi.getRoomTemp();
         
         lastID=_publish(KeyState, (char)('0'+state));
 

@@ -271,8 +271,6 @@ BrewLogger::BrewLogger(void){
 		_lastTempLog=0;
 		_recording = true;
 
-		char unit;
-		brewPi.getLogInfo(&unit,&_mode,&_state);
 
 		// add resume tag
 		_chartTime = _addResumeTag();
@@ -331,8 +329,9 @@ BrewLogger::BrewLogger(void){
 		_recording = true;
 		_savedLength=0;
 
-		char unit;
-		brewPi.getLogInfo(&unit,&_mode,&_state);
+		char unit= brewPi.getUnit();
+		_mode = brewPi.getMode();
+		_state = brewPi.getState();
 
 		_startLog(unit == 'F',calibrating);
 		_calibrating = calibrating;
@@ -435,9 +434,13 @@ BrewLogger::BrewLogger(void){
 		uint8_t state, mode;
 		float fTemps[5];
 
-		//brewPi.getAllStatus(&state,&mode,& beerTemp,& beerSet,& fridgeTemp,& fridgeSet,& roomTemp);
-		brewPi.getAllStatus(&state,&mode,&fTemps[OrderBeerTemp],& fTemps[OrderBeerSet],
-				& fTemps[OrderFridgeTemp],& fTemps[OrderFridgeSet],& fTemps[OrderRoomTemp]);
+        state = brewPi.getState();
+        mode = brewPi.getMode();
+        fTemps[OrderBeerTemp] = brewPi.getBeerTemp();
+        fTemps[OrderBeerSet] = brewPi.getBeerSet();
+        fTemps[OrderFridgeTemp] = brewPi.getFridgeTemp();
+        fTemps[OrderFridgeSet] = brewPi.getFridgeSet();
+        fTemps[OrderRoomTemp] = brewPi.getRoomTemp();
 
 
 		uint16_t iTemp;
@@ -852,10 +855,11 @@ BrewLogger::BrewLogger(void){
 
 	void BrewLogger::_volatileHeader(char *buf)
 	{
-		char unit;
+		char unit=brewPi.getUnit();
 		uint8_t mode,state;
-
-		brewPi.getLogInfo(&unit,&mode,&state);
+		mode = brewPi.getMode();
+		state = brewPi.getState();
+		
 		bool fahrenheit=(unit == 'F');
 
 		char* ptr=buf;
@@ -995,7 +999,7 @@ BrewLogger::BrewLogger(void){
 		}
 
 
-		DBG_PRINTF("before tag %d, mask=%x\n",dataDrop,mask);
+		//DBG_PRINTF("before tag %d, mask=%x\n",dataDrop,mask);
 
 
 		for(int i=0;i<NumberDataBitMask;i++){
@@ -1005,7 +1009,7 @@ BrewLogger::BrewLogger(void){
 				byte d1=_logBuffer[idx++];
 				dataDrop +=2;
 				_headData[i] = (d0<<8) | d1;
-				DBG_PRINTF("update idx:%d to %d\n",i,_headData[i]);
+				//DBG_PRINTF("update idx:%d to %d\n",i,_headData[i]);
 			}
 		}
 		// drop any F tag
@@ -1041,7 +1045,7 @@ BrewLogger::BrewLogger(void){
 		if(timeCorrected) _headTime = time;
 		else _headTime += LoggingPeriod/1000;
 		interrupts();
-		DBG_PRINTF("Drop %d\n",dataDrop);
+		//DBG_PRINTF("Drop %d\n",dataDrop);
 	}
 
 	int BrewLogger::_volatileLoggingAlloc(int size){
