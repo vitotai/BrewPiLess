@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="BrewPiLess">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script type="text/javascript" src="/dygraph.min.js" ignore></script>
-    <script type="text/javascript" src="js/vendor/synchronizer.js"></script>
+    <script type="text/javascript" src="js/dygraph-2.2.1/extras/synchronizer.js"></script>
 
     <script type="text/javascript" src="js/vendor/bwf.js"></script>
     <script type="text/javascript" src="js/vendor/chart.js"></script>
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="js/script.js"></script>
 
 
-    <link rel="stylesheet" href="js/vendor/dygraph.css">
+    <link rel="stylesheet" href="js/dygraph-2.2.1/dygraph.min.css">
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -74,9 +74,11 @@
 
             </ul>
             <ul class="data-pane gravity-device-pane">
-                <li class="heading"><strong><span class="ispindel-info"> <%= ispindel_data %></span><span class="tilt-info">Tilt</span> </strong></li>
-                <li class="ispindel-info" layout horizontal main-justified><span class="descriptor"><%= ispindel_tilt %></span> <span id="iSpindel-tilt">--</span></li>
-                <li class="ispindel-info" layout horizontal main-justified><span class="descriptor"><%= ispindel_battery %></span> <span id="iSpindel-battery">--</span></li>
+                <li class="heading"><strong><span class="gd-option ispindel-info"> <%= ispindel_data %></span>
+                                            <span class="gd-option tilt-info">Tilt</span> 
+                                            <span class="gd-option pill-info">Pill</span></strong></li>
+                <li class="gd-option ispindel-info pill-info" layout horizontal main-justified><span class="descriptor"><%= ispindel_tilt %></span> <span id="gdevice-angle">--</span></li>
+                <li class="gd-option ispindel-info pill-info" layout horizontal main-justified><span class="descriptor"><%= ispindel_battery %></span> <span id="gdevice-battery">--</span></li>
 
                 <li layout horizontal main-justified><span class="descriptor">Temperature</span> <span id="gravity-device-temp">--</span></li>
 
@@ -197,29 +199,29 @@
 
                     <li layout horizontal main-justified class="chart-legend-row pressure-set pressure-group forced-hidden">
                         <input type="checkbox" id="pressure-set" name="set-name" class="switch-input" checked>
-                        <label onclick="BChart.toggle(PressureSetLine,1)" for="pressure-set" class="switch-label"><%= legend_pressure_set %></label>
+                        <label onclick="BChart.toggle(PressureSetLine)" for="pressure-set" class="switch-label"><%= legend_pressure_set %></label>
                         <div class="legend-value">--</div>
                     </li>
 
                     <li layout horizontal main-justified class="chart-legend-row carbonation pressure-group forced-hidden">
                         <input type="checkbox" id="carbonation" name="set-name" class="switch-input" checked>
-                        <label onclick="BChart.toggle(CarbonationLine,1)" for="carbonation" class="switch-label"><%= legend_carbonation %></label>
+                        <label onclick="BChart.toggle(CarbonationLine)" for="carbonation" class="switch-label"><%= legend_carbonation %></label>
                         <div class="legend-value">--</div>
                     </li>
 
                     <li layout horizontal main-justified class="chart-legend-row humidity humidity-group forced-hidden">
                         <input type="checkbox" id="humidity" name="set-name" class="switch-input" checked>
-                        <label onclick="BChart.toggle(ChamberHumidityLine,2)" for="humidity" class="switch-label"> <%= label_humidity %> </label>
+                        <label onclick="BChart.toggle(ChamberHumidityLine)" for="humidity" class="switch-label"> <%= label_humidity %> </label>
                         <div class="legend-value">--</div>
                     </li>
                     <li layout horizontal main-justified class="chart-legend-row set-humidity humidity-group forced-hidden">
                         <input type="checkbox" id="humidity-set" name="set-name" class="switch-input" checked>
-                        <label onclick="BChart.toggle(SetHumidityLine,2)" for="humidity-set" class="switch-label"> <%= label_humidity_set %> </label>
+                        <label onclick="BChart.toggle(SetHumidityLine)" for="humidity-set" class="switch-label"> <%= label_humidity_set %> </label>
                         <div class="legend-value">--</div>
                     </li>
                     <li layout horizontal main-justified class="chart-legend-row room-humidity humidity-group forced-hidden">
                         <input type="checkbox" id="room-humidity" name="set-name" class="switch-input" checked>
-                        <label onclick="BChart.toggle(RoomHumidityLine,2)" for="room-humidity" class="switch-label"> <%= label_room_humidity %> </label>
+                        <label onclick="BChart.toggle(RoomHumidityLine)" for="room-humidity" class="switch-label"> <%= label_room_humidity %> </label>
                         <div class="legend-value">--</div>
                     </li>
 
@@ -270,13 +272,7 @@
             </p>
             <ul style="list-style-type: none">
                 <li>
-                    <input class=sginput type="text" size="6" onchange=inputsg_change()><span class=platounit>&deg;P</span> @
-                    <input class=tempinput type="text" size="6" value="20" onchange=inputsg_change()>
-                    <sapn class=temp-unit>&deg;C</sapn>
-                </li>
-                <li>
-                    ~ <span id="sginput-hmc"></span> @ <span id="sginput-hm-cal-temp"></span>
-                    <sapn class=temp-unit>&deg;C</sapn>
+                    <input class=sginput type="text" size="6" onchange=inputsg_change()><span class=platounit>&deg;P</span>
                 </li>
                 <li>
                     ~ <span id="sginput-sg-ispindel"></span><span class=platounit>&deg;P</span> @ <span id="sginput-ispindel-temp"></span>
@@ -334,11 +330,9 @@
                     </td>
                 </tr>
             </table>
-
             <div class="dialog-buttons">
                 <button class="btn btn--rise" onclick="closepolynomialpane()"><%= dlg_ok %></button>
             </div>
-
         </div>
     </div>
 

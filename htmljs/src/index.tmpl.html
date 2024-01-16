@@ -74,9 +74,11 @@
 
             </ul>
             <ul class="data-pane gravity-device-pane">
-                <li class="heading"><strong><span class="ispindel-info"> <%= ispindel_data %></span><span class="tilt-info">Tilt</span> </strong></li>
-                <li class="ispindel-info" layout horizontal main-justified><span class="descriptor"><%= ispindel_tilt %></span> <span id="iSpindel-tilt">--</span></li>
-                <li class="ispindel-info" layout horizontal main-justified><span class="descriptor"><%= ispindel_battery %></span> <span id="iSpindel-battery">--</span></li>
+                <li class="heading"><strong><span class="gd-option ispindel-info"> <%= ispindel_data %></span>
+                                            <span class="gd-option tilt-info">Tilt</span> 
+                                            <span class="gd-option pill-info">Pill</span></strong></li>
+                <li class="gd-option ispindel-info pill-info" layout horizontal main-justified><span class="descriptor"><%= ispindel_tilt %></span> <span id="gdevice-angle">--</span></li>
+                <li class="gd-option ispindel-info pill-info" layout horizontal main-justified><span class="descriptor"><%= ispindel_battery %></span> <span id="gdevice-battery">--</span></li>
 
                 <li layout horizontal main-justified><span class="descriptor">Temperature</span> <span id="gravity-device-temp">--</span></li>
 
@@ -270,13 +272,7 @@
             </p>
             <ul style="list-style-type: none">
                 <li>
-                    <input class=sginput type="text" size="6" onchange=inputsg_change()><span class=platounit>&deg;P</span> @
-                    <input class=tempinput type="text" size="6" value="20" onchange=inputsg_change()>
-                    <sapn class=temp-unit>&deg;C</sapn>
-                </li>
-                <li>
-                    ~ <span id="sginput-hmc"></span> @ <span id="sginput-hm-cal-temp"></span>
-                    <sapn class=temp-unit>&deg;C</sapn>
+                    <input class=sginput type="text" size="6" onchange=inputsg_change()><span class=platounit>&deg;P</span>
                 </li>
                 <li>
                     ~ <span id="sginput-sg-ispindel"></span><span class=platounit>&deg;P</span> @ <span id="sginput-ispindel-temp"></span>

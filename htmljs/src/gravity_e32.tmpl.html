@@ -49,7 +49,19 @@ table.caltable {
 }
 table.caltable thead {
   border-bottom: 1px solid rgba(0, 0, 0, 0.87);
-}    
+} 
+
+#dlg_sel_dev th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+#dlg_sel_dev tr:hover {
+            background-color: #f5f5f5;
+        }
+#dlg_sel_dev tr.selected {
+            background-color: #a0d3f5; /* Highlight color for selected rows */
+        }
 </style>
 </head>
 
@@ -62,19 +74,53 @@ table.caltable thead {
         <div main>
             <div class="card">
                 <form action="" method="post">
+                    <div layout horizontal cross-center class="tiltsub">
+                        <h5>
+                            Wireless Hydrometer:
+                        </h5>
+                        <div>
+                            <select id="device-type" name="color" class="slot-select" style="margin-left: 2em;">
+                                <option value="0"> None</option>
+                                <option value="1"> iSpindel</option>
+                                <option value="2"> Tilt</option>
+                                <option value="3"> Rapt Pill</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Pill section  -->
+                    <div  id="pill-pane">
+                        <div layout horizontal cross-center>
+                            <h5>
+                                Rapt Pill Hydrometer
+                            </h5>
+                        </div>
 
-                    <div layout horizontal main-justified cross-center>
+                        <div layout horizontal  cross-center >
+                            <h6 class="inline-header">
+                                MAC Address
+                            </h6>
+                            <div>
+                                <span id="pilladdr"></span>
+                            </div>
+                            <div>
+                                <button onclick="DevSelect.scan(); return false;" class="btn btn--raised" style="margin-left:1em;">Scan</button>
+                            </div>
+    
+                        </div>
+    
+    
+                        
+                    </div> <!-- Pill pane -->
+                    <!-- Tilt section  -->
+                    <div  id="tilt-pane">
+                    <div layout horizontal cross-center>
                         <h5>
                             Tilt Hydrometer
                         </h5>
-                        <div>
-                            <input type="checkbox" id="tilthydrometer" name="tilthydrometer" class="switch-input" checked>
-                            <label for="tilthydrometer" class="switch-label" style="min-width: 0;"></label>
-                        </div>
                     </div>
 
-                    <div layout horizontal cross-center class="tiltsub">
-                        <h6>
+                    <div layout horizontal class="tiltsub">
+                        <h6 class="inline-header">
                             Tilt Hydrometer Color
                         </h6>
                         <div>
@@ -89,21 +135,27 @@ table.caltable thead {
                                 <option value="7"> Pink</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div layout horizontal cross-center class="tiltsub">
-                            <button id="addbutton" onclick="tiltcal(); return false;" class="btn btn--raised">Calibration</button>
-                    </div>
-
-                    <div layout horizontal main-justified cross-center>
-                        <h5>iSpindel</h5>
                         <div>
-                            <input type="checkbox" id="ispindel" name="ispindel" class="switch-input" checked>
-                            <label for="ispindel" class="switch-label" style="min-width: 0;"></label>
+                            <button onclick="DevSelect.scan(); return false;" class="btn btn--raised" style="margin-left:1em;">Scan</button>
                         </div>
                     </div>
 
-                    <div layout horizontal main-justified cross-center class="ispindelsub">
+                    <div layout horizontal class="tiltsub">
+                        <h6 class="inline-header">
+                        Calibration
+                        </h6>
+                        <div>
+                            <button id="addbutton" onclick="tiltcal(); return false;" class="btn btn--raised">...</button>
+                        </div>
+                    </div>
+                    </div> <!-- Tilt Pane-->
+                    <!-- iSpindel section  -->
+                    <div id="ispindel-pane">
+
+                    <div layout horizontal cross-center>
+                        <h5>iSpindel</h5>
+                    </div>
+                    <div layout horizontal cross-center class="ispindelsub">
                         <h6 class="inline-header">
                             <%= gravity_calculated_bpl %>
                         </h6>
@@ -113,23 +165,8 @@ table.caltable thead {
                         </div>
                     </div>
 
-                    <div layout horizontal cross-center class="ispindelsub">
-                        <h6 class="inline-header">
-                            <%= gravity_temp_correction %>
-                        </h6>
-                        <div layout horizontal main-justified cross-center flex>
-                            <div layout horizontal cross-center>
-                                <input type="text" name="ctemp" size=4>
-                                <span>&deg;C</span>
-                            </div>
-                            <div>
-                                <input type="checkbox" id="tc" name="tc" class="switch-input" checked>
-                                <label for="tc" class="switch-label" style="min-width: 0;"></label>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div layout horizontal cross-center class="ispindelsub">
+                    <div layout horizontal class="ispindelsub">
                         <h6 class="inline-header">
                             <%= gravity_coefficients %>
                         </h6>
@@ -142,22 +179,25 @@ table.caltable thead {
                         <input type="text" name="a0" size=15>
                         <div class="coefficient" layout horizontal main-center></div>
                     </div>
+    
+                    </div><!-- ispindel pane -->
 
-                    <div layout horizontal cross-center class="ispindelsub">
+                    <div layout horizontal cross-center>
                         <h6 class="inline-header">
-                            <%= gravity_lpf_coefficient %>
-                        </h6>
-                        <input type="text" name="lpc" size=4>
-                    </div>
-
-                    <div layout horizontal main-justified cross-center>
-                        <h6>
                             <%= gravity_useplato %>
                         </h6>
                         <div>
                             <input type="checkbox" id="plato" name="plato" class="switch-input" checked>
                             <label for="plato" class="switch-label" style="min-width: 0;"></label>
                         </div>
+                    </div>
+
+                    <!-- common section-->
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= gravity_lpf_coefficient %>
+                        </h6>
+                        <input type="text" name="lpc" size=4>
                     </div>
 
                     <div layout horizontal cross-center>
@@ -178,7 +218,7 @@ table.caltable thead {
 
 
     <div id="dlg_addcalpoint" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="padding-bottom: 4em;">
             <h5><span class="modal-title">
                 Tilt Calibration
             </span>
@@ -190,11 +230,7 @@ table.caltable thead {
                     <input id="calvalue" type="number" style="max-width: 6em;">
                     <button class="btn btn--raised" onclick="TCEditor.add();"><%= control_add %></button>
              </div>
-
-             <div layout horizontal main-justified cross-center>
-                <span id="scanreading"></span>
-             </div>
-             <hr style="margin:1.5em">
+             <hr style="margin:0.5em">
 
              <div layout horizontal cross-center class="tiltsub" style="max-width:320px">
                 <table class="caltable" id="tiltcalpoints">
@@ -218,11 +254,57 @@ table.caltable thead {
                     </tr>
                     </tbody>
                     </table>
-            </div>
+                </div>
+                <div class="dialog-buttons" style="float:right">
+                    <button class="btn btn--raised" onclick="return closeTiltCal();"><%= dlg_ok %></button>
+                </div>
 
-            <div class="dialog-buttons" style="float:right">
-                <button class="btn btn--raised" onclick="return closeTiltCal();"><%= dlg_ok %></button>
+        </div>
+    </div>
+
+
+    <div id="dlg_sel_dev" class="modal">
+        <div class="modal-content" style="padding-bottom: 4em;">
+            <h5><span class="modal-title">
+                Select Device
+            </span>
+            </h5>
+            <div>
+                <span id="neterror"></span>
             </div>
+             <hr style="margin:1em">
+
+             <div layout horizontal cross-center class="tiltsub" style="max-width:320px;border-bottom:2em">
+                <table class="" id="devseltable">
+                 <thead>
+                    <tr>
+                    <th>Device</th>
+                    <th>Gravity</th>
+                    <th>Temperature</th>
+                    <th>RSSI</th>
+                    </tr>
+                 </thead>
+                <tbody>
+                    <tr class="device-list-row">
+                        <td class="did"></td>
+                        <td class="sg"></td>
+                        <td class="temp"></td>
+                        <td class="rssi"></td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+            <div class="dialog-buttons" style="float:left">
+                <button class="btn btn--raised" onclick="return DevSelect.close();"><%= dlg_cancel %></button>
+            </div>
+            <div class="dialog-buttons" style="float:right">
+                <button id="devsel-done" class="btn  btn--raised" onclick="return DevSelect.done();"><%= dlg_ok %></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="blockscreen" class="modal">
+        <div id="blockscreencontent" class="modal-content">
         </div>
     </div>
 

@@ -1,7 +1,7 @@
     var T_CHART_REQUEST = 20000;
     var T_CHART_RETRYTO = 6000;
     var T_CHART_ZERODATA = 10000;
-    var T_CHART_REFRESH = 2500;
+    var T_CHART_REFRESH = 1500;
     var T_CHART_RETRY = 10000;
     var T_LOAD_CHART = 150;
     var T_BWF_RECONNECT = 10000;
@@ -214,44 +214,7 @@
             }*/
     };
     /* LCD information */
-/*
-    function parseStatusLine(line) {
-        var status = {};
-        var i = 0;
-        var statePatterns = [
-            /Idling\s+for\s+(\S+)\s*$/i,
-            /control\s+OFF/i,
-            /Door\s+Open/i,
-            /Heating\s+for\s+(\S+)\s*$/i,
-            /Cooling\s+for\s+(\S+)\s*$/i,
-            /Wait\s+to\s+Cool\s+(\S+)\s*$/i,
-            /Wait\s+to\s+Heat\s+(\S+)\s*$/i,
-            /Waiting\s+for\s+Peak/i,
-            /Cool\s+Time\s+left\s+(\S+)\s*$/i,
-            /Heat\s+Time\s+left\s+(\S+)\s*$/i
-        ];
-        status.ControlStateSince = "";
-        for (i = 0; i < statePatterns.length; i++) {
-            var match = statePatterns[i].exec(line);
-            if (match) {
-                if (typeof match[1] !== "undefined") status.ControlStateSince = match[1];
-                break;
-            }
-        }
-        status.ControlState = i;
-        status.StatusLine = line;
-        return status;
-    }
-*/
-function parseStateSince(line) {
-    var match;
-    if(match = /(\d+h\d\dm\d\d)/.exec(line)){
-        return match[1];
-    } else if (match = /(\d+m\d\d)/.exec(line)) {
-        return match[1];
-    }
-    return "";    
-}
+
 
 
     function renderLcdText(info) {
@@ -263,8 +226,7 @@ function parseStateSince(line) {
             return (temp / 100).toFixed(1) + "&deg;" + info.tu;
         }
         var status = {};
-        status.ControlStateSince = parseStateSince(info.sl);
-        status.StatusLine = info.sl;
+        status.ControlStateSince = info.sl;
         status.ControlState = info.st;
         status.ControlMode = info.md;
         status.unit = info.tu;
@@ -296,15 +258,23 @@ function parseStateSince(line) {
         ];
 
         function genStateText(state, duration) {
-            if (typeof duration == "undefined") return StateText[state];
+            if (state == 1 || state == 2 || state == 10 || state == 7) return StateText[state];
 
-            var match;
             var timestr = "";
-            if (match = /(\d+)h(\d\d)m(\d\d)/.exec(duration)) {
-                timestr = "<%= time_format_long %>".replace("{SS}", match[3]).replace("{MM}", match[2]).replace("{HH}", match[1]);
-            } else if (match = /(\d+)m(\d\d)/.exec(duration)) {
+            var mm = Math.floor(duration / 60);
+            var hh = Math.floor(mm / 60);
+            var ss = duration % 60;
+            mm = mm - hh * 60;
+
+            function zeropad(n){
+                return n>9? ""+n:"0"+n;
+            }
+
+            if (hh > 0) {
+                timestr = "<%= time_format_long %>".replace("{SS}", zeropad(ss)).replace("{MM}", zeropad(mm)).replace("{HH}", zeropad(hh));
+            } else{
                 // short
-                timestr = "<%= time_format_short %>".replace("{SS}", match[2]).replace("{MM}", match[1]);
+                timestr = "<%= time_format_short %>".replace("{SS}", zeropad(ss)).replace("{MM}", zeropad(mm));
             }
             return StateText[state].replace("{time}", timestr);
         }
@@ -319,11 +289,7 @@ function parseStateSince(line) {
         });
         // keep the info for other usage
         if (typeof status["unit"] != "undefined") window.tempUnit = status.unit;
-        if (typeof status["BeerTemp"] != "undefined") {
-            var tempRE = /([\d\.]+)/;
-            var temp = tempRE.exec(status.BeerTemp);
-            if (temp.length > 0) window.beerTemp = temp[0];
-        }
+        if (typeof status["BeerTemp"] != "undefined")  window.beerTemp = (info.bt> -100)? (info.bt/ 100):NaN;
     }
 
     var roomOfridge = false;
@@ -416,37 +382,35 @@ function parseStateSince(line) {
         }
     }
 
-    function gravityDevice(msg) {
+    function GDSetting(msg) {
+        function gdevice(){
+            Q(".gravity-device-pane").style.display="block";
+            doAll(".gd-option",function(d){
+                d.classList.add("no-display");
+            });
+        }
 
         if(typeof msg["dev"] != "undefined"){
+            window.GravityDevice=msg.dev;
             if(msg.dev ==1){ //ispindel
-                Q(".gravity-device-pane").style.display="block";
+                gdevice();
                 doAll(".ispindel-info",function(d){
-                    //d.style.display="block";
                     d.classList.remove("no-display");
-                });
-
-                doAll(".tilt-info",function(d){
-                    //d.style.display="none";
-                    d.classList.add("no-display");
-
                 });
 
             }else if(msg.dev ==2){
-                Q(".gravity-device-pane").style.display="block";
-                doAll(".ispindel-info",function(d){
-                    //d.style.display="none";
-                    d.classList.add("no-display");
-
-                });
+                gdevice();
                 doAll(".tilt-info",function(d){
-                    //d.style.display="block";
                     d.classList.remove("no-display");
-
                 });
-
+            }else if(msg.dev ==3){ //pill
+                gdevice();
+                doAll(".pill-info",function(d){
+                    d.classList.remove("no-display");
+                });
             }else{
                 Q(".gravity-device-pane").style.display="none";
+                return;
             }
         }
         //if (typeof msg["name"] == "undefined") return;
@@ -462,50 +426,18 @@ function parseStateSince(line) {
         if (typeof msg["name"] == "undefined") return
             //The first report will be "unknown" if (msg.name.startsWith("iSpindel")) {
             // iSpindel
+        
         if (typeof msg["lu"] == "undefined") {
             console.log("iSpindel:" + JSON.stringify(msg));
             return;
-        }
-        if (msg.name.startsWith("iSpindel"))
-            if (typeof window.iSpindel == "undefined") {
-                window.iSpindel = true;
-                if (Q("#iSpindel-pane"))
-                    Q("#iSpindel-pane").style.display = "block";
-            }
+        } 
         var ndiv = Q("#iSpindel-name");
         if (ndiv) ndiv.innerHTML = msg.name;
 
-        if (typeof msg["battery"] != "undefined" && Q("#iSpindel-battery")
-            && msg.battery > 0)
-            Q("#iSpindel-battery").innerHTML ="" + parseFloat(msg.battery).toFixed(2) +"V";
-
-        if(msg.lu > 84879460){
-          var lu = (typeof msg["lu"] != "undefined")? new Date(msg.lu * 1000):new Date();
-            if (Q("#gravity-device-last"))
-                Q("#gravity-device-last").innerHTML = lu.shortLocalizedString();
-        }
-
-        if (!BChart.chart.calibrating && typeof msg["sg"] != "undefined" &&
-            msg.sg > 0){
-                updateGravity(msg.sg);
-                gravityChangeUpdate(msg.sg);
-            }
-        if (typeof msg["angle"] != "undefined") {
-            if (Q("#iSpindel-tilt"))
-                Q("#iSpindel-tilt").innerHTML = "" + msg["angle"];
-        }
-        if (typeof msg["rssi"] != "undefined"){
-            if(Q("#gravity-device-rssi")){
-                Q("#gravity-device-rssi").classList.remove("no-display");
-                wifibar("#gravity-device-rssi",msg.rssi);
-            }
-        }
-        //}
+    
         if (typeof msg["lpf"] != "undefined")
             GravityFilter.setBeta(msg["lpf"]);
 
-        if (typeof msg["ctemp"] != "undefined")
-            window.caltemp = msg["ctemp"];
     }
 
 
@@ -558,7 +490,6 @@ function parseStateSince(line) {
                 window.celsius = true;
                 defaultTemp = 20;
             }
-            Q("#dlg_addgravity .tempinput").value = defaultTemp;
 
             var tus = document.querySelectorAll("#dlg_addgravity .temp-unit");
             for (var i = 0; i < tus.length; i++)
@@ -572,36 +503,29 @@ function parseStateSince(line) {
 
     function inputsg_change() {
         var gravity = parseFloat(Q("#dlg_addgravity .sginput").value);
-        var temp = parseFloat(Q("#dlg_addgravity .tempinput").value);
-        if (isNaN(gravity) || isNaN(temp)) return;
-        // if calibration info is avilable
-        var caltemp = (typeof window.caltemp != "undefined") ? window.caltemp : 20;
-        caltemp = window.celsius ? caltemp : C2F(caltemp);
-        // calibration temperature always use celsius.
-        Q("#sginput-hm-cal-temp").innerHTML = caltemp;
-        if (window.plato) {
-            var correctedSg = BrewMath.pTempCorrection(window.celsius, gravity, temp, caltemp);
-            Q("#sginput-hmc").innerHTML = correctedSg.toFixed(2);
-
-        } else {
-            var correctedSg = BrewMath.tempCorrection(window.celsius, gravity, temp, caltemp);
-            Q("#sginput-hmc").innerHTML = correctedSg.toFixed(3);
-        }
+        if (isNaN(gravity)) return;
         // if iSpindel info is available, or beer temp is available.
-        if (typeof window.beerTemp != "undefined") {
-            Q("#sginput-ispindel-temp").innerHTML = window.beerTemp;
+        var currentBeerTemp=NaN;
+        if(typeof window.gdtemp !="undefined") currentBeerTemp= window.gdtemp;
+        else if ((typeof window.beerTemp != "undefined")&& !isNaN(window.beerTemp)){
+            currentBeerTemp = window.beerTemp;
+        }
+        if(!isNaN(currentBeerTemp)){
+            Q("#sginput-ispindel-temp").innerHTML =currentBeerTemp;
+            var temp =  window.celsius ? 20 : 68;
             if (window.plato) {
-                var sgc = BrewMath.pTempCorrection(window.celsius, gravity, temp, window.beerTemp);
+                var sgc = BrewMath.pTempCorrection(window.celsius, gravity, temp, currentBeerTemp);
                 Q("#sginput-sg-ispindel").innerHTML = sgc.toFixed(2);
             } else {
-                var sgc = BrewMath.tempCorrection(window.celsius, gravity, temp, window.beerTemp);
+                var sgc = BrewMath.tempCorrection(window.celsius, gravity, temp, currentBeerTemp);
                 Q("#sginput-sg-ispindel").innerHTML = sgc.toFixed(3);
             }
         }
+
     }
 
     function inputgravity() {
-        var gravity = parseFloat(Q("#sginput-hmc").innerHTML);
+        var gravity = parseFloat(Q("#dlg_addgravity .sginput").value);
 
         if (!window.plato && (gravity < 0.8 || gravity > 1.25)) return;
 
@@ -737,17 +661,32 @@ function parseStateSince(line) {
         }
     }
     
-    function gravityInfo(info){
-        // gravity, rssi, 
-        if(Q("#gravity-device-rssi")) wifibar("#gravity-device-rssi",info.r);
+    function gDeviceInfo(info){
+
         // last update
         if(info.u> 84879460){
             var lu = new Date(info.u * 1000);
             if (Q("#gravity-device-last")) Q("#gravity-device-last").innerHTML = lu.shortLocalizedString();
         }
-        // gravity reported from controller, whitch is resulted by reported from iSpindel
-        if(!BChart.calibrating && info.g > 0) updateGravity(window.plato? BrewMath.sg2pla(info.g/1000.0):info.g/1000.0);
-        if(info.t > -20000) Q("#gravity-device-temp").innerHTML= info.t/100 + "&deg;" + window.tempUnit;
+        // gravity 
+        if(!BChart.calibrating) updateGravity(window.plato? BrewMath.sg2pla(info.g/1000.0):info.g/1000.0);
+
+        // temperature
+        if(info.t > -20000){
+            Q("#gravity-device-temp").innerHTML= info.t/100 + "&deg;" + window.tempUnit;
+            window.gdtemp = info.t/100;
+        }
+        // rssi, 
+        if(Q("#gravity-device-rssi")){
+            if(window.GravityDevice ==1) wifibar("#gravity-device-rssi",info.r);
+            else wifibar("#gravity-device-rssi",info.r);("#gravity-device-rssi",info.r,true);
+        }
+        // angle
+        if (Q("#gdevice-angle")) Q("#gdevice-angle").innerHTML = ""  + info.a.toFixed(3) +"&deg;";
+        //battery
+        if (Q("#gdevice-battery")) Q("#gdevice-battery").innerHTML = "" +((window.GravityDevice == 1)? 
+                    (parseFloat(info.b).toFixed(2) +"V"):(""+parseInt(info.b) +"%"));
+
     }
 
     function BPLMsg(c) {
@@ -792,7 +731,7 @@ function parseStateSince(line) {
                 Q("#pressure-psi").innerHTML = c.psi;
             }
         }
-        if(typeof c["G"] != "undefined") gravityInfo(c.G);
+        if(typeof c["G"] != "undefined") gDeviceInfo(c.G);
 
         ptcshow(c);
         if(typeof c["h"] != "undefined") {
@@ -860,7 +799,7 @@ function parseStateSince(line) {
                             },*/
                 A: BPLMsg,
                 G: function(c) {
-                    gravityDevice(c);
+                    GDSetting(c);
                 },
                 // for control page. 
                 C: function(c) { if (typeof ccparameter != "undefined") ccparameter(c); },
