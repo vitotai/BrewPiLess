@@ -110,8 +110,8 @@ protected:
 
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),
-	_lastUpdate(0),_deviceVoltage(INVALID_VOLTAGE)
-	,_ispindelName(NULL),_calibrating(false),_rssiValid(false){
+	_lastUpdate(0),_rssiValid(false),_deviceVoltage(INVALID_VOLTAGE)
+	,_ispindelName(NULL),_calibrating(false){
 		_filteredGravity = INVALID_GRAVITY;
 		#if SupportTiltHydrometer || SupportPillHydrometer		
 		_bleHydrometerType = GravityDeviceNone;

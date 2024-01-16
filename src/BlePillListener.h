@@ -4,7 +4,7 @@
 #include <functional>
 
 #include "Config.h"
-
+#if SupportPillHydrometer
 #include "BleListener.h"
 
 class PillHydrometerInfo: public BleHydrometerDevice{
@@ -70,4 +70,5 @@ protected:
 };
 
 extern PillScanner pillScanner;
+#endif
 #endif

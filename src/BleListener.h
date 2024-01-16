@@ -4,6 +4,7 @@
 #include <functional>
 
 #include "Config.h"
+#if ESP32
 #include <NimBLEDevice.h>
 #include <NimBLEAdvertisedDevice.h>
 #include "NimBLEEddystoneURL.h"
@@ -66,4 +67,5 @@ protected:
 extern BleListener bleListener;
 
 
+#endif
 #endif

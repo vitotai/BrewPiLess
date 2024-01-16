@@ -161,8 +161,8 @@ void ExternalData::_gotPillInfo(PillHydrometerInfo* info){
 #endif
 
 void ExternalData::_reconfig(void){
-	DBG_PRINTF("refoncig: devicetype:%d, %d\n",_cfg->gravityDeviceType,_bleHydrometerType);
 	#if SupportTiltHydrometer || SupportPillHydrometer
+	DBG_PRINTF("refoncig: devicetype:%d, %d\n",_cfg->gravityDeviceType,_bleHydrometerType);
 	if(_cfg->gravityDeviceType != _bleHydrometerType){
 		if((_bleHydrometerType == GravityDeviceTilt) || (_bleHydrometerType == GravityDevicePill) ){
 			if(_bleHydrometer){
@@ -218,8 +218,9 @@ void ExternalData::_reconfig(void){
 		}
 	}
 	#endif
-
+#if SupportTiltHydrometer || SupportPillHydrometer
 	_bleHydrometerType = _cfg->gravityDeviceType;
+	#endif
 }
 
 void ExternalData::loadConfig(void){
@@ -317,7 +318,6 @@ void ExternalData::_setGravity(float sg, time_t now,bool log){
 
 	#if SMART_DISPLAY
 			char unit = brewPi.getUnit();
-			float max,min;
 			smartDisplay.gravityDeviceData(sg,_auxTemp,_lastUpdate,unit,_cfg->usePlato,_deviceVoltage,_tiltAngle,_rssi);
 	#endif
 

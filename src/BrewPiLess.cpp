@@ -1104,7 +1104,6 @@ void reportRssi(void)
 	uint8_t mode, state;
 	char unit;
 	float beerSet, beerTemp, fridgeTemp, fridgeSet, roomTemp;
-	float min,max;
 	
 	mode = brewPi.getMode();
 	state = brewPi.getState();
