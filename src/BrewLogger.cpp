@@ -384,10 +384,8 @@ BrewLogger::BrewLogger(void){
 				if(wlen != _logIndex){
 					DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
 				}
-				#if ESP32
 				#if UseLittleFS
 				_logFile.flush();
-				#endif
 				#endif
 			}
 		}
@@ -1082,11 +1080,8 @@ BrewLogger::BrewLogger(void){
 				if(wlen != _logIndex){
 					DBG_PRINTF("!!!write failed @ %d\n",_logIndex);
 				}
-				#if ESP32
 				#if UseLittleFS
 				_logFile.flush();
-				#endif
-
 				#endif
 			}
 
@@ -1137,13 +1132,10 @@ BrewLogger::BrewLogger(void){
 				int nlen = len  + idx -LogBufferSize;
 				wlen += _logFile.write((const uint8_t*)buf,nlen);
 			}
-			#if ESP32
 			#if UseLittleFS
 			_logFile.flush();
 			#endif
-			#endif
 		}
-		
 	}
 
 	void BrewLogger::_addGravityRecord(bool isOg, uint16_t gravity){
