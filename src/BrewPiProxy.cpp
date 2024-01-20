@@ -124,7 +124,7 @@ bool BrewPiProxy::ambientSensorConnected(void)
 
 uint32_t BrewPiProxy::getStatusTime(void){
 	uint16_t time = UINT16_MAX; // init to max
-	uint8_t state = tempControl.getDisplayState();
+	uint8_t state = tempControl.getState();
 	uint16_t sinceIdleTime = tempControl.timeSinceIdle();
 	if(state==IDLE){
 		time = 	min(tempControl.timeSinceCooling(), tempControl.timeSinceHeating());
