@@ -48,7 +48,7 @@ time_t TimeKeeperClass::_queryServer(void){
 	time_t secs=0;
 
 	int trial;
-	for(trial=0;trial< 25;trial++)
+	for(trial=0;trial< 20;trial++)
   	{
 		#ifdef ESP32
 		time(&secs);
@@ -60,7 +60,7 @@ time_t TimeKeeperClass::_queryServer(void){
 			_ntpSynced=true;
 			break;
 		}
-    	delay(200);
+    	delay(750);
   	}
 	return secs;
 }
