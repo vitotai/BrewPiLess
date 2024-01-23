@@ -188,12 +188,12 @@ public:
     void redraw();
     void loop();
     
-    void gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlate,float battery,float tilt,int8_t rssi);
+    void gravityDeviceData(uint8_t type,float gravity,float temperature, uint32_t update,char tunit,bool usePlate,float battery,float tilt,int8_t rssi);
     void pressureData(float pressure);
     void humidityData(bool chamberValid,uint8_t chamber,bool roomValid, uint8_t room);
     void setIp(IPAddress ip);
 protected:
-    uint8_t _layout;
+    char _layout;
     IPAddress _ip;
 
     char   _tempUnit;
@@ -201,6 +201,8 @@ protected:
     float   _gravity;
     float   _temperature;
     float _battery;
+    uint8_t _batteryUnit;
+
     float _tilt;
     uint32_t _lastSeen;
     int8_t _rssi;
@@ -222,6 +224,8 @@ protected:
     void _drawIp();
 
     void _printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t precision,float value);
+    void _printIntegerAt(uint8_t col,uint8_t row,uint8_t space,int value);
+    
     void _printGravityTimeAt(uint8_t col,uint8_t row);
     void _printHumidityValueAt(uint8_t col,uint8_t row,uint8_t value);
     bool _updatePartial(uint8_t mask);
@@ -244,6 +248,8 @@ protected:
     void _showLastSeen();
     void _showIp();
     void _showFloatAt(int16_t x, int16_t y, float value, uint8_t space, uint8_t precision, uint16_t fontWidth,uint16_t fontHeight);
+    void _showIntegerAt(int16_t x, int16_t y, int value, uint8_t space, uint16_t fontWidth,uint16_t fontHeight);
+
     void _showSignalAt(int16_t x, int16_t y,int8_t strength);
 
 #endif

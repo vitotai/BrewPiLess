@@ -6,9 +6,9 @@
 #include "BrewpiStrings.h"
 #include "Display.h"
 #include "DisplayLcd.h"
-#include "mystrlib.h"
+//#include "mystrlib.h"
 #include "TimeKeeper.h"
-
+#include "BPLSettings.h"
 #if ISPINDEL_DISPLAY
 #include "IicOledLcd.h"
 #include "font_cousine_10.h"
@@ -170,7 +170,7 @@ Updated      99m ago
                 lcd->write(CharBattery);
                 lcd->write(':');
                 lcd->setCursor(6,1);
-                lcd->write('V');
+                lcd->write(_batteryUnit);
                 lcd->setCursor(10,1);
                 lcd->write(CharTilt);
                 lcd->write(':');
@@ -225,7 +225,7 @@ RH C 56%      R  75%
             }
 
             lcd->setCursor(6,1);
-            lcd->write('V');
+            lcd->write(_batteryUnit);
             lcd->setCursor(17,1);
             lcd->print_P(STR_ago);
             break;
@@ -273,7 +273,7 @@ Pressure    13.5 psi
                 lcd->write(_tempUnit);
             }else{
                 lcd->setCursor(14,0);
-                lcd->write('V');
+                lcd->write(_batteryUnit);
             }
 
             if(_plato){
@@ -339,7 +339,11 @@ Updated      99m ago
 
             _printFloatAt(12,0,5,1,_temperature);
             _printGravityTimeAt(13,2);
-            _printFloatAt(2,1,4,2,_battery);
+            if(_batteryUnit == '%'){
+                _printIntegerAt(2,1,4,(int)_battery);
+            }else{
+                _printFloatAt(2,1,4,2,_battery);
+            }
             _printFloatAt(12,1,5,2,_tilt);
             _printGravityTimeAt(13,2);
             _drawSignalAt(19,1,_rssi);
@@ -366,7 +370,12 @@ RH C 56%      R  75%
             else _printFloatAt(2,0,5,3,_gravity);
             _printFloatAt(13,0,5,1,_temperature);
             _printGravityTimeAt(13,1);
-            _printFloatAt(2,1,4,2,_battery);
+            if(_batteryUnit == '%'){
+                _printIntegerAt(2,1,4,(int)_battery);
+            }else{
+                _printFloatAt(2,1,4,2,_battery);
+            }
+
             break;
 
 /*
@@ -381,7 +390,13 @@ Pressure    13.5 psi
             else _printFloatAt(2,0,5,3,_gravity);
             // ignore temperature if _battery is valid(not zero)
             if(_battery ==0.0) _printFloatAt(9,0,5,1,_temperature);
-            else _printFloatAt(10,0,4,2,_battery);
+            else{
+                if(_batteryUnit == '%'){
+                _printIntegerAt(10,0,4,(int)_battery);
+                }else{
+                _printFloatAt(10,0,4,2,_battery);
+                }
+            }
             _printGravityTimeAt(17,1);
             break;
 
@@ -520,6 +535,18 @@ Pressure    13.5 psi
 
 }
 
+void SmartDisplay::_printIntegerAt(uint8_t col,uint8_t row,uint8_t space,int value){
+    PhysicalLcdDriver *lcd=getLcd();
+    lcd->setCursor(col,row);
+
+    char buffer[64];
+    sprintf(buffer,"%d",value);
+    size_t len=strlen(buffer);
+    if(len > space) return;
+
+    for(int i=0;i< len-space;i++) lcd->write(' ');
+    lcd->print(buffer);
+}
 
 
 void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t precision,float value){
@@ -527,21 +554,6 @@ void SmartDisplay::_printFloatAt(uint8_t col,uint8_t row,uint8_t space,uint8_t p
     lcd->setCursor(col,row);
 
     char buffer[64];
-    /*
-    int digitNum=sprintFloat((char*)buffer,value,precision);
-    DBG_PRINTF("_printFloatAt %d,%d,%s\n",space,digitNum,buffer);
-
-    if(space > digitNum){
-        uint8_t i=space - (uint8_t)digitNum;
-        while( i-- > 0) lcd->write(' ');
-    }else{
-        digitNum = space;
-    }
-    buffer[digitNum]='\0';
-    for( uint8_t i=0;i< digitNum;i++)
-        lcd->print(buffer[i]);
-
-    */
     char fmt[16];
     sprintf(fmt,"%%%d.%df",space,precision);
     sprintf(buffer,fmt,value);
@@ -617,7 +629,10 @@ bool SmartDisplay::_updatePartial(uint8_t mask){
     }
 }
 
-void SmartDisplay::gravityDeviceData(float gravity,float temperature, uint32_t update,char tunit,bool usePlato,float battery,float tilt,int8_t rssi){
+void SmartDisplay::gravityDeviceData(uint8_t type,float gravity,float temperature, uint32_t update,char tunit,bool usePlato,float battery,float tilt,int8_t rssi){
+    if (type == GravityDevicePill) _batteryUnit = '%';
+    else _batteryUnit = 'V';
+
     _gravity = gravity;
     _temperature = temperature;
     _lastSeen = update;
@@ -816,7 +831,8 @@ void SmartDisplay::_showGravityFixedParts(){
     _display->drawString(LB_IP_POS,"IP");
     _display->drawString(LB_LASTSEEN_POS,"Last seen");
     _display->drawString(LB_AGO_POS,"ago");
-    _display->drawString(LB_VOLT_POS,"V");
+    char unit[2]; unit[0]=_batteryUnit; unit[1]='\0';
+    _display->drawString(LB_VOLT_POS,unit);
 
     _display->drawRect(0,0,128,64);
 }
@@ -827,9 +843,23 @@ void SmartDisplay::_showFloatAt(int16_t x, int16_t y, float value, uint8_t space
     _display->setColor(BackgroundColor);
     _display->fillRect(x,y,fontWidth * space,fontHeight);
     _display->setColor(TextColor);
-    // 1.xxx
-    sprintFloat((char*)buffer,value,precision);
-    int dig=sprintFloat((char*)buffer,value,precision);
+
+    char fmt[16];
+    sprintf(fmt,"%%%d.%df",space,precision);
+    sprintf(buffer,fmt,value);
+
+    _display->drawString(x,y,buffer);
+}
+void SmartDisplay::_showIntegerAt(int16_t x, int16_t y, int value, uint8_t space, uint16_t fontWidth,uint16_t fontHeight){
+    char buffer[32];
+    
+    _display->setColor(BackgroundColor);
+    _display->fillRect(x,y,fontWidth * space,fontHeight);
+    _display->setColor(TextColor);
+    // 1.xxx    
+    sprintf(buffer,"%d",value);
+    
+    int dig=strlen(buffer);
     _display->drawString(x + (space - dig) * fontWidth,y,buffer);
 }
 
@@ -852,8 +882,12 @@ void SmartDisplay::_showTemperature(){
 }
 
 void SmartDisplay::_showBattery(){
-    // 4.20 ~ 3.30
-    _showFloatAt(BAT_POS,_battery,4,2,SmallFontWidth,SmallFontHeight);
+    // 4.20 ~ 3.30, 
+    if(_batteryUnit  == '%'){
+         _showIntegerAt(BAT_POS,(int)_battery,4,SmallFontWidth,SmallFontHeight);
+    }else{
+        _showFloatAt(BAT_POS,_battery,4,2,SmallFontWidth,SmallFontHeight);
+    }
 }
 
 void SmartDisplay::_showTilt(){

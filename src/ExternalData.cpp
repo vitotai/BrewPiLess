@@ -318,7 +318,7 @@ void ExternalData::_setGravity(float sg, time_t now,bool log){
 
 	#if SMART_DISPLAY
 			char unit = brewPi.getUnit();
-			smartDisplay.gravityDeviceData(sg,_auxTemp,_lastUpdate,unit,_cfg->usePlato,_deviceVoltage,_tiltAngle,_rssi);
+			smartDisplay.gravityDeviceData(_cfg->gravityDeviceType, sg,_auxTemp,_lastUpdate,unit,_cfg->usePlato,_deviceVoltage,_tiltAngle,_rssi);
 	#endif
 
 }
