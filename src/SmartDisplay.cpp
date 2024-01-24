@@ -544,7 +544,7 @@ void SmartDisplay::_printIntegerAt(uint8_t col,uint8_t row,uint8_t space,int val
     size_t len=strlen(buffer);
     if(len > space) return;
 
-    for(int i=0;i< len-space;i++) lcd->write(' ');
+    for(int i=0;i< (space-len);i++) lcd->write(' ');
     lcd->print(buffer);
 }
 

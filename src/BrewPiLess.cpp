@@ -2104,7 +2104,6 @@ void setup(void){
 
 uint32_t _periodicReportTime;
 #define PeriodicalReportTime 5
-
 void loop(void){
 //{brewpi
 #if BREWPI_SIMULATE
@@ -2124,7 +2123,6 @@ void loop(void){
 	ESPUpdateServer_loop();
 #endif
 	time_t now=TimeKeeper.getTimeSeconds();
-
 #ifdef EMIWorkaround
 	if( (millis() - _lcdReinitTime) > LCDReInitPeriod){
 		_lcdReinitTime=millis();
@@ -2141,7 +2139,7 @@ void loop(void){
 	if( (now - _periodicReportTime) > PeriodicalReportTime){
 		_periodicReportTime =now;
 		periodicalReport();
-		DBG_PRINTF("Periodical report:%d\n",_periodicReportTime);
+//		DBG_PRINTF("Periodical report:%d\n",_periodicReportTime);
 	}
 
   	brewKeeper.keep(now);
