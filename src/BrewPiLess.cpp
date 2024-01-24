@@ -1097,7 +1097,7 @@ void notifyLogStatus(void)
 	stringAvailable(status.c_str());
 }
 
-void reportRssi(void)
+void periodicalReport(void)
 {
 //	char buf[512];
 
@@ -2102,8 +2102,8 @@ void setup(void){
 	#endif
 }
 
-uint32_t _rssiReportTime;
-#define RssiReportPeriod 5
+uint32_t _periodicReportTime;
+#define PeriodicalReportTime 5
 
 void loop(void){
 //{brewpi
@@ -2138,9 +2138,10 @@ void loop(void){
 	sharedDisplayManager.loop();
 #endif
 
-	if( (now - _rssiReportTime) > RssiReportPeriod){
-		_rssiReportTime =now;
-		reportRssi();
+	if( (now - _periodicReportTime) > PeriodicalReportTime){
+		_periodicReportTime =now;
+		periodicalReport();
+		DBG_PRINTF("Periodical report:%d\n",_periodicReportTime);
 	}
 
   	brewKeeper.keep(now);
