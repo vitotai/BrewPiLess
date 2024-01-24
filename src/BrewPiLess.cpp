@@ -1090,7 +1090,7 @@ void stringAvailable(const char *str)
 
 void notifyLogStatus(void)
 {
-	externalData.waitFormula();
+	//externalData.waitFormula();
 	const char *logname= brewLogger.currentLog();
 	String logstr=(logname)? String(logname):String("");
 	String status=String("A:{\"reload\":\"chart\", \"log\":\"") +  logstr + String("\"}");
@@ -1235,6 +1235,8 @@ public:
 					if(cal){
 						brewLogger.addTiltInWater(tiltwater,hydroreading);
 						externalData.setCalibrating(true);
+						externalData.setTiltFromLog(tiltwater,TimeKeeper.getTimeSeconds());
+						externalData.setGravityFromLog(hydroreading);
 						DBG_PRINTF("Start BrweNCal log\n");
 					}
 
@@ -1452,7 +1454,7 @@ public:
 				coeff[2]=request->getParam("a2")->value().toFloat();
 				coeff[3]=request->getParam("a3")->value().toFloat();
 				uint32_t npt=(uint32_t) request->getParam("pt")->value().toInt();
-				externalData.setFormula(coeff,npt);
+				//externalData.setFormula(coeff,npt);
 
 				brewLogger.addIgnoredCalPointMask(npt & 0xFFFFFF);
   				

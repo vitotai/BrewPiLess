@@ -73,6 +73,7 @@
 #define NumberDataBitMask 8
 
 #define TiltEncode(g) (uint16_t)(100.0 * (g) + 0.5)
+#define TiltDecode(d) (float)((d)/100.0)
 #define INVALID_TILT_ANGLE 0x7FFF
 
 #define GravityEncode(g) (uint16_t)(10000.0 * (g) + 0.5)

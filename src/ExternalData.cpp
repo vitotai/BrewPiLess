@@ -1,5 +1,4 @@
 #include <ArduinoJson.h>
-#include <math.h>
 #include "ExternalData.h"
 #if SupportTiltHydrometer
 #include "BleTiltListener.h"
@@ -48,10 +47,11 @@ float ExternalData::gravity(bool filtered){
 	float sg= filtered? _filteredGravity:_gravity;
 	return _cfg->usePlato? Brix2SG(sg):sg;
 }
-
+/*
 void ExternalData::waitFormula(){
     _cfg->numberCalPoints =0;
 }
+*/
 /*
 bool ExternalData::iSpindelEnabled(void){
     return _cfg->gravityDeviceType == GravityDeviceIspindel;
@@ -152,6 +152,7 @@ void ExternalData::_gotPillInfo(PillHydrometerInfo* info){
 		// calculate SG by polynomial
 		fgravity=_calculateGravitybyAngle(_tiltAngle, info->temperature);
 		_setGravity(fgravity, TimeKeeper.getTimeSeconds(),false);
+		_gotAngle();
 	}else{
 		fgravity =(_cfg->usePlato)? SG2Brix(csg):csg;
 		_setGravity(fgravity, TimeKeeper.getTimeSeconds());
@@ -243,7 +244,7 @@ bool ExternalData::processconfig(char* configdata){
    }
    return ret;
 }
-
+/*
 void ExternalData::setFormula(float coeff[4],uint32_t npt){
     if(_cfg->numberCalPoints == npt){ 
 		DBG_PRINTF("formula nochanged\n");
@@ -256,7 +257,7 @@ void ExternalData::setFormula(float coeff[4],uint32_t npt){
 	}
 	 theSettings.save();
 }
-
+*/
 void ExternalData::_setOriginalGravity(float og){
 //		_og = og;
 		brewLogger.addGravity(og,true);
@@ -387,10 +388,10 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 		} 
 
 		if(root.containsKey("og")){
-				_setOriginalGravity(gravity);
+			_setOriginalGravity(gravity);
 		}else{
-				// gravity data from user
-			_setGravity(gravity,TimeKeeper.getTimeSeconds());
+			// gravity data from user
+			userSetGravity(gravity);
 		}
 	}else //if(name.startsWith("iSpindel")){
 		if(root.containsKey("name") && root.containsKey("temperature") && root.containsKey("angle") && root.containsKey("battery")){
@@ -443,6 +444,7 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 			_tiltAngle=root["angle"];
 			// add tilt anyway
 			brewLogger.addTiltAngle(_tiltAngle);
+			if(_calibrating) _gotAngle();
 		}
 
 		if(root.containsKey("angle") && (_cfg->calculateGravity ||  _calibrating ) ){
@@ -470,3 +472,75 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 	return true;
 }
 
+void  ExternalData::userSetGravity(float sg){
+	_setGravity(sg, TimeKeeper.getTimeSeconds());
+	if(_calibrating){
+		if(_formulaKeeper.addGravity(sg)){
+			// update formula
+			_deriveFormula();
+		}
+	}
+}
+
+void  ExternalData::_gotAngle(void){
+	if(_formulaKeeper.setTilt(_tiltAngle,TimeKeeper.getTimeSeconds())){
+		// update formula
+		_deriveFormula();
+	}
+}
+
+void  ExternalData::_deriveFormula(void){
+	if(_formulaKeeper.getFormula(_cfg->ispindelCoefficients)){
+		_cfg->numberCalPoints= _formulaKeeper.numberOfPoints();
+		theSettings.save();
+		DBG_PRINTF("New Formula from %d points:",_cfg->numberCalPoints);
+			DBG_PRINT(_cfg->ispindelCoefficients[0],8);
+			DBG_PRINT(",");
+			DBG_PRINT(_cfg->ispindelCoefficients[1],8);
+			DBG_PRINT(",");
+			DBG_PRINT(_cfg->ispindelCoefficients[2],8);
+			DBG_PRINT(",");
+			DBG_PRINT(_cfg->ispindelCoefficients[3],8);
+		DBG_PRINTF("\n");
+	}
+}
+
+void  ExternalData::setGravityFromLog(float sg){
+	_formulaKeeper.addGravity(sg);
+}
+
+void  ExternalData::setTiltFromLog(float tilt,uint32_t update){
+	_formulaKeeper.setTilt(_tiltAngle,update);
+}
+
+#if 0
+void ExternalData::testPolynomialRegression(void){
+	_formulaKeeper.setTilt(18.9,0);
+	_formulaKeeper.addGravity(1);
+
+	_formulaKeeper.setTilt(29.3,0);
+	_formulaKeeper.addGravity(1.016);
+
+	_formulaKeeper.setTilt(47.85,0);
+	_formulaKeeper.addGravity(1.042);
+
+	_formulaKeeper.setTilt(62.83,0);
+	_formulaKeeper.addGravity(1.074);
+
+	float coeff[4];
+
+	uint32_t pre = millis();
+	_formulaKeeper.getFormula(coeff);
+	uint32_t post = millis();
+
+	DBG_PRINTF("Poly Regression Time:%ld\n Coeff",post-pre);
+	DBG_PRINT(coeff[0],8);
+	DBG_PRINT(",");
+	DBG_PRINT(coeff[1],8);
+	DBG_PRINT(",");
+	DBG_PRINT(coeff[2],8);
+	DBG_PRINT(",");
+	DBG_PRINT(coeff[3],8);
+	DBG_PRINTF("\n");
+}
+#endif

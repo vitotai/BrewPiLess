@@ -242,6 +242,7 @@ static void handleDirCreate(void){
     server.send(500, "text/plain", "CREATE FAILED");
   }
 }
+#if 0
 static void handleFileCreate(void){
   if(server.args() == 0)
     return server.send(500, "text/plain", "BAD ARGS");
@@ -259,7 +260,7 @@ static void handleFileCreate(void){
   server.send(200, "text/plain", "");
   path = String();
 }
-
+#endif
 static void handleFileList(void) {
   if(!server.hasArg("dir")) {server.send(500, "text/plain", "BAD ARGS"); return;}
 

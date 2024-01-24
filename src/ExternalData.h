@@ -44,6 +44,8 @@ extern BrewPiProxy brewPi;
 #define ErrorMissingField 3
 #define ErrorUnknownSource 4
 
+#define MaxCalibrationPoints 16
+
 #define C2F(t) ((t)*1.8+32)
 
 class SimpleFilter
@@ -60,6 +62,29 @@ public:
 		_y = _y + _b * (x - _y);
 		return _y;
 	}
+};
+
+#define INVALID_TILT -1
+#define INVALID_SG -1
+
+class FormulaKeeper{
+protected:
+	float _calTilts[MaxCalibrationPoints];
+	float _calGravities[MaxCalibrationPoints];
+	uint8_t _numberOfPoints;
+	float _lastTilt;
+	float _lastGravity;
+	uint32_t _lastTiltTime;
+	uint32_t _ignoredMask;
+	void _addPoint(float tilt,float sg);
+public:
+	FormulaKeeper():_numberOfPoints(0),_lastTilt(INVALID_TILT),_lastGravity(INVALID_SG),_ignoredMask(0){}
+	
+	bool setTilt(float tilt,uint32_t time);
+	bool addGravity(float sg);
+	bool getFormula(float coeff[4]);
+	void setIgnoredMask(uint32_t m){ _ignoredMask = m; }
+	uint8_t numberOfPoints(void){ return _numberOfPoints;}
 };
 
 class ExternalData
@@ -107,7 +132,11 @@ protected:
 	#if SupportPillHydrometer
 	void _gotPillInfo(PillHydrometerInfo* info);
 	#endif
-
+	
+	FormulaKeeper _formulaKeeper;
+	
+	void _gotAngle(void);
+	void _deriveFormula(void);
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),
 	_lastUpdate(0),_rssiValid(false),_deviceVoltage(INVALID_VOLTAGE)
@@ -120,7 +149,7 @@ public:
 
 
 	// to prevent from calculate gravity when no valid formula available.
-	void waitFormula();
+	//void waitFormula();
 	void setCalibrating(bool cal){ _calibrating=cal;}
 	//configuration reading
 //    bool iSpindelEnabled(void);
@@ -132,7 +161,7 @@ public:
     bool processconfig(char* configdata);
 	void loadConfig(void);
 	//update formula
-	void setFormula(float coeff[4],uint32_t npt);
+	//we don't need it any more void setFormula(float coeff[4],uint32_t npt);
 
 	void setUpdateTime(time_t update){ _lastUpdate=update;}
 
@@ -148,6 +177,15 @@ public:
 	
 	// to process web request
 	bool processGravityReport(char data[],size_t length, bool authenticated, uint8_t& error);
+
+	void userSetGravity(float sg);
+	// data from logs.
+	void setTiltFromLog(float tilt,uint32_t update);
+	void setGravityFromLog(float sg);
+	void setIgnoredMask(uint32_t mask){ _formulaKeeper.setIgnoredMask(mask); }
+#if 0
+	void testPolynomialRegression(void);
+	#endif
 };
 
 extern ExternalData externalData;

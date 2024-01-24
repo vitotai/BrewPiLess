@@ -8,10 +8,20 @@
 #if EnableHumidityControlSupport
 #include "HumidityControl.h"
 #endif
+#include "ExternalData.h"
 
 #define LoggingPeriod 60000  //in ms
 #define MinimumGapToSync  600  // in seconds
 
+		// the readings of water is suppose to be in a very small ranges
+		// around 1.000
+		// for example, 0.959 @ 100C -> corrected to 15
+		// for example, 1.002 @ 0C -> corrected to 20
+		// to save space, pack the data into ONE byte by simply 
+		// subtract 0.9 to make it ranges from 0.059 - 0.102
+
+#define CompressedGravity(r) (uint8_t)((int)((r) * 1000.0) - 900)
+#define DecompressGravity(g) (float)(((g) +900) /1000.0)
 
 BrewLogger brewLogger;
 
@@ -212,9 +222,12 @@ BrewLogger::BrewLogger(void){
 	        			if(mask & bitmask){
 							// get gravity data that we need							
 		    				if(i == OrderGravityInfo){
-								//uint8_t D0 =_logBuffer[processIndex];
-								//uint8_t D1 =_logBuffer[processIndex+1];
 								_lastGravityDeviceUpdate  = _resumeLastLogTime;
+								if(_calibrating){
+									uint16_t D0 =(uint16_t)_logBuffer[processIndex];
+									uint16_t D1 =(uint16_t)_logBuffer[processIndex+1];
+									externalData.setTiltFromLog(TiltDecode((D0<<8) | D1),_resumeLastLogTime);
+								}
 							}
 
 							processIndex +=2;			        		
@@ -230,6 +243,25 @@ BrewLogger::BrewLogger(void){
 						size_t tdiff= (mask <<16) + (d1 << 8) + d0;
 			    		_resumeLastLogTime = _pFileInfo->starttime + tdiff;
 				}else if(tag == CalibrationPointTag  || tag == OriginGravityTag  || tag == SpecificGravityTag || tag == IgnoredCalPointMaskTag) {
+					if(tag == CalibrationPointTag){						
+						// tilt in water
+						uint16_t D0 =(uint16_t)_logBuffer[processIndex];
+						uint16_t D1 =(uint16_t)_logBuffer[processIndex+1];
+						externalData.setTiltFromLog(TiltDecode( ((D0<<8) | D1) ),_resumeLastLogTime);
+						externalData.setGravityFromLog(DecompressGravity(mask));
+					} else if(tag == SpecificGravityTag){
+							uint16_t D0 =(uint16_t)_logBuffer[processIndex];
+							uint16_t D1 =(uint16_t)_logBuffer[processIndex+1];
+
+							uint16_t gravity = (D0<<8) | D1;
+							// user input gravity
+							externalData.setGravityFromLog(_usePlato?  PlatoDecode(gravity): GravityDecode(gravity));
+					}else if (tag == IgnoredCalPointMaskTag){
+						uint32_t d1 =(uint32_t)_logBuffer[processIndex++];
+		   	 			uint32_t d0 =(uint32_t)_logBuffer[processIndex++];
+						uint32_t ignored= ((uint32_t)mask << 24) | (d1 << 16) | d0;
+						externalData.setIgnoredMask(ignored);						
+					}
 					if (dataRead-processIndex<2 ){
 						processIndex -=2;
 						break;
@@ -806,7 +838,7 @@ BrewLogger::BrewLogger(void){
 		// for example, 1.002 @ 0C -> corrected to 20
 		// to save space, pack the data into ONE byte by simply 
 		// subtract 0.9 to make it ranges from 0.059 - 0.102
-		uint8_t compressed_reading =(uint8_t)((int)(reading * 1000.0) - 900);
+		uint8_t compressed_reading =CompressedGravity(reading);
 		uint16_t angle=TiltEncode(tilt);		
 		_writeBuffer(idx,CalibrationPointTag);
 		_writeBuffer(idx+1,compressed_reading);
