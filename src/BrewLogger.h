@@ -77,9 +77,9 @@
 #define INVALID_TILT_ANGLE 0x7FFF
 
 #define GravityEncode(g) (uint16_t)(10000.0 * (g) + 0.5)
-#define GravityDecode(a) (float)(a)/10000.0
+#define GravityDecode(a) ((float) ((a) & 0x7FFF)/10000.0)
 #define PlatoEncode(g) (uint16_t)(100.0 * (g) + 0.5)
-#define PlatoDecode(a) (float)(a)/100.0
+#define PlatoDecode(a) ((float)((a) & 0x7FFF)/100.0)
 
 #define HighOctect(a) (uint8_t)((a)>>8) 
 #define LowOctect(a) (uint8_t)((a)&0xFF)

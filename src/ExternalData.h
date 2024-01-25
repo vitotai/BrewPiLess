@@ -85,6 +85,12 @@ public:
 	bool getFormula(float coeff[4]);
 	void setIgnoredMask(uint32_t m){ _ignoredMask = m; }
 	uint8_t numberOfPoints(void){ return _numberOfPoints;}
+	void reset(void){
+		_numberOfPoints=0;
+		_lastTilt=INVALID_TILT;
+		_lastGravity=INVALID_SG;
+		_ignoredMask=0;
+	}
 };
 
 class ExternalData
@@ -183,6 +189,10 @@ public:
 	void setTiltFromLog(float tilt,uint32_t update);
 	void setGravityFromLog(float sg);
 	void setIgnoredMask(uint32_t mask){ _formulaKeeper.setIgnoredMask(mask); }
+	void clearFormula(void){
+		_cfg->numberCalPoints=0;
+		_formulaKeeper.reset(); 
+	}
 #if 0
 	void testPolynomialRegression(void);
 	#endif

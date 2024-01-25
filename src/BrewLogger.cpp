@@ -226,6 +226,7 @@ BrewLogger::BrewLogger(void){
 								if(_calibrating){
 									uint16_t D0 =(uint16_t)_logBuffer[processIndex];
 									uint16_t D1 =(uint16_t)_logBuffer[processIndex+1];
+									DBG_PRINTF("log: setTiltFromLog: %d, %x, %x\n",processIndex,D0,D1);
 									externalData.setTiltFromLog(TiltDecode((D0<<8) | D1),_resumeLastLogTime);
 								}
 							}
@@ -256,9 +257,10 @@ BrewLogger::BrewLogger(void){
 							uint16_t gravity = (D0<<8) | D1;
 							// user input gravity
 							externalData.setGravityFromLog(_usePlato?  PlatoDecode(gravity): GravityDecode(gravity));
+							DBG_PRINTF("log: setGravityFromLog: %X, %X, %X\n",processIndex,D0,D1);
 					}else if (tag == IgnoredCalPointMaskTag){
-						uint32_t d1 =(uint32_t)_logBuffer[processIndex++];
-		   	 			uint32_t d0 =(uint32_t)_logBuffer[processIndex++];
+						uint32_t d1 =(uint32_t)_logBuffer[processIndex];
+		   	 			uint32_t d0 =(uint32_t)_logBuffer[processIndex+1];
 						uint32_t ignored= ((uint32_t)mask << 24) | (d1 << 16) | d0;
 						externalData.setIgnoredMask(ignored);						
 					}
@@ -276,7 +278,7 @@ BrewLogger::BrewLogger(void){
 					}
 					processIndex +=4;
 				}else{
-					DBG_PRINTF("Unknown tag %d,%d @%u\n",tag,mask,offset+processIndex);
+					DBG_PRINTF("Unknown tag %X,%X @%X\n",tag,mask,offset+processIndex);
 				}
 			}//while() processing data in buffer
 			int dataLeft=0;
@@ -631,12 +633,12 @@ BrewLogger::BrewLogger(void){
 		//                        that is,  total size = _savedLength + _logIndex
 		// in abnormal cases, the file size is total size since all data are "written".
 
-		DBG_PRINTF("beginCopyAfter:%d, _logIndex=%u, saved=%u, return:%u, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
+		//DBG_PRINTF("beginCopyAfter:%d, _logIndex=%u, saved=%u, return:%u, last >= (_logIndex +_savedLength)=%c\n",last,_logIndex,_savedLength,( _logIndex+_savedLength - last), (last >= (_logIndex +_savedLength))? 'Y':'N' );
 		if(last >= (_logIndex +_savedLength)){
-            DBG_PRINTF(" return:0\n");
+            //DBG_PRINTF(" return:0\n");
             return 0;
         }
-        DBG_PRINTF(" return:%u\n",_logIndex+_savedLength - last);
+        //DBG_PRINTF(" return:%u\n",_logIndex+_savedLength - last);
 		return ( _logIndex+_savedLength - last);
 	}
 
@@ -644,7 +646,7 @@ BrewLogger::BrewLogger(void){
 	{
 		size_t sizeRead ;
 
-		DBG_PRINTF("read index:%u, max:%u\n",index,maxLen);
+		//DBG_PRINTF("read index:%u, max:%u\n",index,maxLen);
 
 		// the reqeust data index is more than what we have.
 		if(index > (_savedLength +_logIndex)) return 0; // return whatever it wants.
@@ -701,7 +703,7 @@ BrewLogger::BrewLogger(void){
 			sizeRead = _logIndex - mIndex;
 			if(sizeRead > maxLen) sizeRead=maxLen;
 			memcpy(buffer,_logBuffer+mIndex,sizeRead);
-			DBG_PRINTF("read buffer:%u\n",sizeRead);
+			//DBG_PRINTF("read buffer:%u\n",sizeRead);
 		}
 		
 		return sizeRead;
@@ -791,6 +793,7 @@ BrewLogger::BrewLogger(void){
 	}
 	void BrewLogger::_addSgRecord(uint16_t sg){
 		_addGravityRecord(false,sg);
+		DBG_PRINTF("_addSgRecord:%x\n",sg);
 	}
 
 	void BrewLogger::addAuxTemp(float temp)

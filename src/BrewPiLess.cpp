@@ -1235,9 +1235,10 @@ public:
 					if(cal){
 						brewLogger.addTiltInWater(tiltwater,hydroreading);
 						externalData.setCalibrating(true);
+						externalData.clearFormula();
 						externalData.setTiltFromLog(tiltwater,TimeKeeper.getTimeSeconds());
 						externalData.setGravityFromLog(hydroreading);
-						DBG_PRINTF("Start BrweNCal log\n");
+						DBG_PRINTF("Start BrweNCal log, tilt:%f, sg:%.4f\n",tiltwater,hydroreading);
 					}
 
 					//brewLogger.addCorrectionTemperature(externalData.hydrometerCalibrationTemp());

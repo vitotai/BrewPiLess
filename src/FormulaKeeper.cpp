@@ -15,6 +15,7 @@ bool FormulaKeeper::getFormula(float coeff[4]){
         if((_ignoredMask & (1 << xx)) ==0){
             x.push_back(_calTilts[xx]);
             y.push_back(_calGravities[xx]);
+            DBG_PRINTF("Regresson: %.3f, %4f\n",_calTilts[xx],_calGravities[xx]);
         }
     }
     int validcount = x.size();
@@ -43,6 +44,8 @@ bool FormulaKeeper::getFormula(float coeff[4]){
 bool FormulaKeeper::setTilt(float tilt,uint32_t time){
     _lastTiltTime = time;
     _lastTilt = tilt;
+    
+    DBG_PRINTF(" setTilt:%.4f\n",tilt);
     if(_lastGravity != INVALID_SG && _numberOfPoints < MaxCalibrationPoints){
         _addPoint(_lastTilt,_lastGravity);
         _lastGravity = INVALID_SG;
@@ -52,6 +55,8 @@ bool FormulaKeeper::setTilt(float tilt,uint32_t time){
 }
 
 bool FormulaKeeper::addGravity(float sg){
+
+	DBG_PRINTF(" addGravity:%.4f\n",sg);
 
     if(_lastTilt != INVALID_TILT && _numberOfPoints < MaxCalibrationPoints){
         _addPoint(_lastTilt,sg);
@@ -64,6 +69,7 @@ bool FormulaKeeper::addGravity(float sg){
 }
 
 void FormulaKeeper::_addPoint(float tilt,float sg){
+        DBG_PRINTF("*** addPoint:%.4f,%f.4f\n",tilt,sg);
         _calTilts[_numberOfPoints]= tilt;
         _calGravities[_numberOfPoints] = sg;
         _numberOfPoints ++;        

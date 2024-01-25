@@ -145,17 +145,19 @@ void ExternalData::_gotPillInfo(PillHydrometerInfo* info){
 	//DBG_PRINTF(" Pill Tilt:");
 	//DBG_PRINT(_tiltAngle);
 	//DBG_PRINT("\n");
-
+	_lastUpdate = TimeKeeper.getTimeSeconds();
 	brewLogger.addTiltAngle(_tiltAngle);
 	float fgravity;
 	if(_calibrating){
 		// calculate SG by polynomial
-		fgravity=_calculateGravitybyAngle(_tiltAngle, info->temperature);
-		_setGravity(fgravity, TimeKeeper.getTimeSeconds(),false);
 		_gotAngle();
+		if( _cfg->numberCalPoints >1){
+			fgravity=_calculateGravitybyAngle(_tiltAngle, info->temperature);
+			_setGravity(fgravity, _lastUpdate,false);
+		}
 	}else{
 		fgravity =(_cfg->usePlato)? SG2Brix(csg):csg;
-		_setGravity(fgravity, TimeKeeper.getTimeSeconds());
+		_setGravity(fgravity,_lastUpdate);
 	}
 
 }
@@ -267,11 +269,6 @@ void ExternalData::_setOriginalGravity(float og){
 }
 
 float ExternalData::_calculateGravitybyAngle(float tilt,float temp){
-
-	if(_calibrating && _cfg->numberCalPoints ==0){
-		DBG_PRINTF("No valid formula!\n");
-		return 0; // don't calculate if formula is not available.
-	}
 		// calculate plato
 	float sg = _cfg->ispindelCoefficients[0]
             +  _cfg->ispindelCoefficients[1] * tilt
@@ -448,11 +445,13 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 		}
 
 		if(root.containsKey("angle") && (_cfg->calculateGravity ||  _calibrating ) ){
-	        float calculatedSg=_calculateGravitybyAngle(_tiltAngle,itemp);
-
-			// update, gravity data calculated
-			// in "brew N cal" mode, only tilt is logged.
-			_setGravity(calculatedSg,_lastUpdate,!_calibrating); // save only when not calibrating.
+			
+			if(_cfg->calculateGravity ||  (_calibrating && _cfg->numberCalPoints >1)){
+				float calculatedSg=calculatedSg=_calculateGravitybyAngle(_tiltAngle,itemp);
+				// update, gravity data calculated
+				// in "brew N cal" mode, only tilt is logged.
+				_setGravity(calculatedSg,_lastUpdate,!_calibrating); // save only when not calibrating.
+			}
 
 		}else if(root.containsKey("gravity")){
 			// gravity information directly from iSpindel
@@ -506,11 +505,13 @@ void  ExternalData::_deriveFormula(void){
 }
 
 void  ExternalData::setGravityFromLog(float sg){
+	DBG_PRINTF("setGravityFromLog:");
 	_formulaKeeper.addGravity(sg);
 }
 
 void  ExternalData::setTiltFromLog(float tilt,uint32_t update){
-	_formulaKeeper.setTilt(_tiltAngle,update);
+	DBG_PRINTF("setTiltFromLog:");
+	_formulaKeeper.setTilt(tilt,update);
 }
 
 #if 0
