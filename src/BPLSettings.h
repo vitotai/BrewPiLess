@@ -40,40 +40,49 @@ typedef struct _TimeInformation{
 #define GravityDeviceTilt 2
 #define GravityDevicePill 3
 #define MaxDeviceTypeNumber 3
+
+
+#define SGFromSetting(a)  ((float)(a) /10000.0)
+#define SGToSetting(a)   ((uint16_t)((a) * 10000.0))
+
+#define PlatoFromSetting(a)  ((float)(a) /100.0)
+#define PlatoToSetting(a)   ((uint16_t)((a) * 100.0))
+
+#define AngleFromSetting(a)  ((float)(a) /100.0)
+#define AngleToSetting(a)   ((uint16_t)((a) * 100.0))
+
+
+typedef  struct _CalibrationPoint{
+        uint16_t raw;
+        uint16_t calsg;
+} CalibrationPoint;
+
+
 typedef struct _GravityDeviceConfiguration{
-    float ispindelCoefficients[4];
+    float   coefficients[4];
     float   lpfBeta;
-	uint32_t  numberCalPoints;
+	float   offset;
     
     uint8_t  gravityDeviceType;
-    uint8_t  _unused;
-    uint8_t  calculateGravity;
-    uint8_t  _unused2;
+    uint8_t  calbybpl;
+    uint8_t  numCalPoints;
 
 	uint8_t  stableThreshold;
 	uint8_t  usePlato;
     uint8_t  _padding[6];
+    CalibrationPoint calPoints[10];
+    uint8_t  _unused2;
 }GravityDeviceConfiguration;
 
 
 #if SupportBleHydrometer
-typedef  struct _CalibrationPoint{
-        uint16_t rawsg;
-        uint16_t calsg;
-} CalibrationPoint;
 
 typedef struct _TiltConfiguratoin{
-    float coefficients[4];
-    CalibrationPoint  calibrationPoints[6];
-    uint8_t  numCalPoints;
     uint8_t  tiltColor;
     uint8_t  _padding[10];
 } TiltConfiguration;
 
 typedef struct _PillConfiguratoin{
-    float coefficients[4];
-    CalibrationPoint  calibrationPoints[6];
-    uint8_t  numCalPoints;
     uint8_t  macAddress[6];
     uint8_t  _padding[5];
 } PillConfiguration;

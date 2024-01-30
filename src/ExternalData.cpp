@@ -21,6 +21,7 @@ ExternalData externalData;
 #define TiltFilterParameter 0.15
 
 #define F2C(d) (((d)-32)/1.8)
+#define K2C(d) ((d) - 273.15)
 //#define C2F(d) (((d)*1.8)+32)
 
 
@@ -47,26 +48,12 @@ float ExternalData::gravity(bool filtered){
 	float sg= filtered? _filteredGravity:_gravity;
 	return _cfg->usePlato? Brix2SG(sg):sg;
 }
-/*
-void ExternalData::waitFormula(){
-    _cfg->numberCalPoints =0;
-}
-*/
-/*
-bool ExternalData::iSpindelEnabled(void){
-    return _cfg->gravityDeviceType == GravityDeviceIspindel;
-}
-*/
 
 bool ExternalData::gravityDeviceEnabled(void){
     return _cfg->gravityDeviceType != GravityDeviceNone;
 }
 
-/*
-float ExternalData::hydrometerCalibrationTemp(void){ 
-    return _cfg->ispindelCalibrationBaseTemp;
-}
-*/
+
 // Provide information when greeting.
 void ExternalData::gravityDeviceSetting(char *buf){
 
@@ -76,20 +63,10 @@ void ExternalData::gravityDeviceSetting(char *buf){
 
 	doc["lpf"] = filter.beta();
 	doc["stpt"] = _cfg->stableThreshold;
-	//doc["ctemp"] = _cfg->ispindelCalibrationBaseTemp;
 	doc["plato"] = _cfg->usePlato;
 
-	doc["fpt"] = _cfg->numberCalPoints;
+	doc["fpt"] = _cfg->numCalPoints;
 	doc["name"] = (_ispindelName)? _ispindelName:"Unknown";
-
-//	doc["angle"] = _tiltAngle;
-//	doc["battery"] =_deviceVoltage;
-	// shared values: sg, last update, rssi, temp
-//	doc["sg"] =_gravity;
-//	doc["lu"] = _lastUpdate;
-//	#if SupportTiltHydrometer
-//	doc["tiltraw"] = _tiltRawGravity;
-//	#endif
 
 	buf[0]='G';
 	buf[1]=':';
@@ -99,24 +76,14 @@ void ExternalData::gravityDeviceSetting(char *buf){
 #if SupportTiltHydrometer
 void ExternalData::_gotTiltInfo(TiltHydrometerInfo* info){
 	TiltConfiguration* tcfg=theSettings.tiltConfiguration();
-	_tiltRawGravity = info->gravity;
 	float sg =(float) info->gravity /1000.0;
-
-	float csg=sg;
-	
-	if(tcfg->numCalPoints > 0){
-	 	csg = tcfg->coefficients[0] 
-			 +  tcfg->coefficients[1] * sg 
-			 +  tcfg->coefficients[2] * sg * sg
-			 +  tcfg->coefficients[3] * sg * sg * sg; 
-	}
 	// Tilt temperature is in Farenheit
-	_setAuxTemperatureCelsius( F2C((float) info->temperature));
+	float temp = F2C((float) info->temperature);
+	_setAuxTemperatureCelsius( temp);
 	_setDeviceRssi(info->rssi);
-	float fgravity =(_cfg->usePlato)? SG2Brix(csg):csg;
-	_setGravity(fgravity, TimeKeeper.getTimeSeconds());
-	// display
 
+	// tilt always report SG.
+	_remoteHydrometerReport(_cfg->usePlato? SG2Brix(sg):sg,sg);
 }
 #endif
 
@@ -133,7 +100,7 @@ float calcTilt(int16_t x, int16_t y, int16_t z){
 
 void ExternalData::_gotPillInfo(PillHydrometerInfo* info){
 	PillConfiguration* pcfg=theSettings.pillConfiguration();
-	float csg = info->gravity;
+	float sg = info->gravity;
 
 	_setAuxTemperatureCelsius( info->temperature);
 	_setDeviceRssi(info->rssi);
@@ -141,31 +108,35 @@ void ExternalData::_gotPillInfo(PillHydrometerInfo* info){
 
 	// Pill seems to calculate tilt by using X in place of Z.
 	//_tiltAngle = calcTilt(info->accX,info->accY,info->accZ);
-	_tiltAngle = calcTilt(info->accZ,info->accY,info->accX);
-	//DBG_PRINTF(" Pill Tilt:");
-	//DBG_PRINT(_tiltAngle);
-	//DBG_PRINT("\n");
-	_lastUpdate = TimeKeeper.getTimeSeconds();
-	brewLogger.addTiltAngle(_tiltAngle);
-	float fgravity;
-	if(_calibrating){
-		// calculate SG by polynomial
-		_gotAngle();
-		if( _cfg->numberCalPoints >1){
-			fgravity=_calculateGravitybyAngle(_tiltAngle, info->temperature);
-			_setGravity(fgravity, _lastUpdate,false);
-		}
-	}else{
-		fgravity =(_cfg->usePlato)? SG2Brix(csg):csg;
-		_setGravity(fgravity,_lastUpdate);
-	}
+	float angle = calcTilt(info->accZ,info->accY,info->accX);
+	// PIll always reports SG
 
+	_remoteHydrometerReport(_cfg->usePlato? SG2Brix(sg):sg,angle);
 }
 #endif
 
-void ExternalData::_reconfig(void){
+void ExternalData::_reconfig(bool reformula){
+	// common parameters.
+	filter.setBeta(_cfg->lpfBeta);
+	// process calibration points
+
+	// maintaining the calibratin data even not calculated.
+		_formulaKeeper.reset();
+		for(uint i=0;i<_cfg->numCalPoints;i++){
+			float gravity= _cfg->usePlato?  PlatoFromSetting(_cfg->calPoints[i].calsg):SGFromSetting(_cfg->calPoints[i].calsg);
+			float raw= (_cfg->gravityDeviceType == GravityDeviceTilt)? SGFromSetting(_cfg->calPoints[i].raw):AngleFromSetting(_cfg->calPoints[i].raw);
+			_formulaKeeper.addPoint(raw,gravity);
+		}
+		// calibration points might be modified by users
+		if(reformula){
+			_deriveFormula();
+		}else{
+			// init. assume valid formula 
+			if(_cfg->numCalPoints > 1) _formulaValid=true;
+		}
 	#if SupportTiltHydrometer || SupportPillHydrometer
 	DBG_PRINTF("refoncig: devicetype:%d, %d\n",_cfg->gravityDeviceType,_bleHydrometerType);
+	// Remove old hydrometer when necessary.
 	if(_cfg->gravityDeviceType != _bleHydrometerType){
 		if((_bleHydrometerType == GravityDeviceTilt) || (_bleHydrometerType == GravityDevicePill) ){
 			if(_bleHydrometer){
@@ -177,11 +148,8 @@ void ExternalData::_reconfig(void){
 	}
 	#endif
 
-	if(_cfg->gravityDeviceType == GravityDeviceIspindel){	    
-		filter.setBeta(_cfg->lpfBeta);		
-	}
 	#if SupportTiltHydrometer 
-	else if(_cfg->gravityDeviceType == GravityDeviceTilt){
+	if(_cfg->gravityDeviceType == GravityDeviceTilt){
 		
 		TiltConfiguration* tcfg = theSettings.tiltConfiguration();
 		if(_bleHydrometerType == GravityDeviceTilt){
@@ -228,38 +196,26 @@ void ExternalData::_reconfig(void){
 
 void ExternalData::loadConfig(void){
     _cfg = theSettings.GravityConfig();
-	_reconfig();
+
+	_reconfig(false);
 }
 
 
 bool ExternalData::processconfig(char* configdata){
    bool ret= theSettings.dejsonGravityConfig(configdata);
    if(ret){
-	   #if !SupportTiltHydrometer
-	   if(_cfg->gravityDeviceType == GravityDeviceTilt){
+	   #if !SupportBleHydrometer
+	   if(_cfg->gravityDeviceType != GravityDeviceIspindel){
 		   return false;
 	   }
 	   #endif
 
 	   theSettings.save();
-	   _reconfig();
+	   _reconfig(true);
    }
    return ret;
 }
-/*
-void ExternalData::setFormula(float coeff[4],uint32_t npt){
-    if(_cfg->numberCalPoints == npt){ 
-		DBG_PRINTF("formula nochanged\n");
-		return;
-	}
-	_cfg->numberCalPoints =npt;
 
-	for(int i=0;i<4;i++){
-		_cfg->ispindelCoefficients[i] = coeff[i];
-	}
-	 theSettings.save();
-}
-*/
 void ExternalData::_setOriginalGravity(float og){
 //		_og = og;
 		brewLogger.addGravity(og,true);
@@ -268,12 +224,12 @@ void ExternalData::_setOriginalGravity(float og){
 #endif
 }
 
-float ExternalData::_calculateGravitybyAngle(float tilt,float temp){
-		// calculate plato
-	float sg = _cfg->ispindelCoefficients[0]
-            +  _cfg->ispindelCoefficients[1] * tilt
-            +  _cfg->ispindelCoefficients[2] * tilt * tilt
-            +  _cfg->ispindelCoefficients[3] * tilt * tilt * tilt;
+float ExternalData::_calculateGravity(float raw,float temp){
+		// calculate Gravity
+	float sg = _cfg->coefficients[0]
+            +  _cfg->coefficients[1] * raw
+            +  _cfg->coefficients[2] * raw * raw
+            +  _cfg->coefficients[3] * raw * raw * raw;
 
 	// temp. correction
 	//if(_cfg->ispindelTempCal){
@@ -290,33 +246,31 @@ float ExternalData::_calculateGravitybyAngle(float tilt,float temp){
  2. from gravity devices
  3. Derived from angles
 */
-void ExternalData::_setGravity(float sg, time_t now,bool log){
+void ExternalData::_setGravity(float sg){
         // copy these two for reporting to web interface
     float old_sg=_gravity;
 	
-    DBG_PRINTF("_setGravity:%d, saved:%d\n",(int)(sg*10000.0),log);
+    DBG_PRINTF("_setGravity:%d\n",(int)(sg*10000.0));
 	if((_cfg->usePlato && (sg > 99.0 || sg < -1.0) ) || (!_cfg->usePlato && (sg > 2.0 || sg < 0.5))) return;
     // verfiy sg, even invalid value will be reported to web interface
 	//if(!IsGravityInValidRange(sg)) return;
 	_gravity = sg;
-	_lastUpdate=now;
 
 	if(!IsGravityValid(old_sg)) filter.setInitial(sg);
 #if EnableGravitySchedule
     float _filteredGravity=filter.addData(sg);
 		// use filter data as input to tracker and beer profile.
 	brewKeeper.updateGravity(_filteredGravity);
+	uint32_t now=TimeKeeper.getTimeSeconds();
 	if(_cfg->usePlato)
 		gravityTracker.add(Plato2TrackingGravity(_filteredGravity),now);
 	else
 		gravityTracker.add(SG2TrackingGravity(_filteredGravity),now);
 #endif
-	// don't save it if it is cal&brew
-	if(log) brewLogger.addGravity(sg,false);
 
 	#if SMART_DISPLAY
-			char unit = brewPi.getUnit();
-			smartDisplay.gravityDeviceData(_cfg->gravityDeviceType, sg,_auxTemp,_lastUpdate,unit,_cfg->usePlato,_deviceVoltage,_tiltAngle,_rssi);
+		char unit = brewPi.getUnit();
+		smartDisplay.gravityDeviceData(_cfg->gravityDeviceType, sg,_auxTemp,_lastUpdate,unit,_cfg->usePlato,_deviceVoltage,_tiltAngle,_rssi);
 	#endif
 
 }
@@ -372,27 +326,18 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
   			DBG_PRINTF("No gravity\n");
   			error = ErrorMissingField;
   			return false;
-  		}
+  		}		
 		float  gravity = root["gravity"];
-
-		//if(!IsGravityInValidRange(gravity)) return true;
-		if(root.containsKey("plato")){
-			if(root["plato"] && !_cfg->usePlato){
-				gravity = Brix2SG(gravity);
-			}else if(!root["plato"] && _cfg->usePlato){
-				gravity = SG2Brix(gravity);
-			}
-		} 
 
 		if(root.containsKey("og")){
 			_setOriginalGravity(gravity);
+	
 		}else{
 			// gravity data from user
-			userSetGravity(gravity);
+			float tilt = -100;
+			userSetGravity(gravity,tilt);
 		}
-	}else //if(name.startsWith("iSpindel")){
-		if(root.containsKey("name") && root.containsKey("temperature") && root.containsKey("angle") && root.containsKey("battery")){
-		//{"name": "iSpindel01", "id": "XXXXX-XXXXXX", "temperature": 20.5, "angle": 89.5, "gravityP": 13.6, "battery": 3.87}
+	}else if(root.containsKey("name") && root.containsKey("temperature") && root.containsKey("angle") && root.containsKey("battery")&& root.containsKey("RSSI")){
 		DBG_PRINTF("%s\n",name.c_str());
 		// force to set to iSpindel.
 		#if SupportTiltHydrometer || SupportPillHydrometer
@@ -406,64 +351,21 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 			if(_ispindelName) strcpy(_ispindelName,name.c_str());
 		}
 
-		if(! root.containsKey("temperature")){
-		    DBG_PRINTF("iSpindel report no temperature!\n");
-		    return false;
-		}
-		_lastUpdate=TimeKeeper.getTimeSeconds();
-
         float itemp=root["temperature"];
 		float tempC=itemp;
-		char iTU='C';
 		if(root.containsKey("temp_units")){
 			const char *TU=root["temp_units"];
-			if(*TU == 'F') tempC = (itemp-32)/1.8;
-			else if(*TU == 'K') tempC = itemp- 273.15;
-			iTU = TU[0];
+			if(*TU == 'F') tempC = F2C(itemp);
+			else if(*TU == 'K') tempC = K2C(itemp);
 		}
-
 		_setAuxTemperatureCelsius(tempC);
-		float battery=0;
+		_deviceVoltage=root["battery"];
+		int8_t rssi=root["RSSI"];
+    	_setDeviceRssi(rssi);
+		float angle = root["angle"];
+		float sg=root["gravity"];
+		_remoteHydrometerReport(sg,angle);
 
-        if(root.containsKey("battery")){
-			battery=root["battery"];
-    	    _deviceVoltage = battery;
-		}
-		int8_t rssi=-120;
-        if(root.containsKey("RSSI")){
-			rssi=root["RSSI"];
-    	    _setDeviceRssi(rssi);
-		}
-		//Serial.print("temperature:");
-		//Serial.println(itemp);
-
-		if(root.containsKey("angle")){
-			_tiltAngle=root["angle"];
-			// add tilt anyway
-			brewLogger.addTiltAngle(_tiltAngle);
-			if(_calibrating) _gotAngle();
-		}
-
-		if(root.containsKey("angle") && (_cfg->calculateGravity ||  _calibrating ) ){
-			
-			if(_cfg->calculateGravity ||  (_calibrating && _cfg->numberCalPoints >1)){
-				float calculatedSg=calculatedSg=_calculateGravitybyAngle(_tiltAngle,itemp);
-				// update, gravity data calculated
-				// in "brew N cal" mode, only tilt is logged.
-				_setGravity(calculatedSg,_lastUpdate,!_calibrating); // save only when not calibrating.
-			}
-
-		}else if(root.containsKey("gravity")){
-			// gravity information directly from iSpindel
-			float sgreading=root["gravity"];
-			
-			if((_cfg->usePlato && sgreading >0 && sgreading <90)
-			  ||(!_cfg->usePlato && sgreading >0.8 && sgreading <1.3) ){ 
-
-				_setGravity(sgreading, TimeKeeper.getTimeSeconds());
-			}
-
-        }
 	}else{
 		    error = ErrorUnknownSource;
 		    return false;
@@ -471,77 +373,84 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
 	return true;
 }
 
-void  ExternalData::userSetGravity(float sg){
-	_setGravity(sg, TimeKeeper.getTimeSeconds());
-	if(_calibrating){
-		if(_formulaKeeper.addGravity(sg)){
-			// update formula
+void  ExternalData::userSetGravity(float gravity,float tilt){
+	
+	if(tilt < 0){
+		if(_formulaKeeper.addGravity(gravity)){
 			_deriveFormula();
 		}
+	}else{
+		_formulaKeeper.addPoint(tilt,gravity);			// update formula
+		_deriveFormula();
 	}
+
+	_setGravity(gravity);
+	
+	if(! _cfg->calbybpl){
+		brewLogger.addGravity(gravity);
+	}
+
 }
 
-void  ExternalData::_gotAngle(void){
-	if(_formulaKeeper.setTilt(_tiltAngle,TimeKeeper.getTimeSeconds())){
-		// update formula
-		_deriveFormula();
+void  ExternalData::_remoteHydrometerReport(float gravity,float tilt){
+	//gravit might be plato or SG.
+	// 
+	_lastUpdate = TimeKeeper.getTimeSeconds();
+	_tiltAngle = tilt;
+
+		// calculate SG by polynomial
+		// problem here, "tilt angle" stored as multiplied by 16 to be stored as an uint16_t
+		// the "tilt" values of "Tilt" is in fact SG, like 1.001. The least 2 digits will be truncated.	
+	if(_cfg->gravityDeviceType == GravityDeviceTilt) brewLogger.addTiltAngle(tilt * 100);
+	else brewLogger.addTiltAngle(tilt);
+
+	_formulaKeeper.setTilt(tilt,TimeKeeper.getLocalTimeSeconds());
+
+	if(_cfg->calbybpl){
+		if( _formulaValid){
+			float calculated=_calculateGravity(tilt, _auxTemp);
+			brewLogger.addGravity(calculated);
+			_setGravity(calculated);
+		}
+	}else{
+		float corrected = gravity + _cfg->offset;
+		brewLogger.addGravity(corrected);
+		_setGravity(corrected);
 	}
 }
 
 void  ExternalData::_deriveFormula(void){
-	if(_formulaKeeper.getFormula(_cfg->ispindelCoefficients)){
-		_cfg->numberCalPoints= _formulaKeeper.numberOfPoints();
+	// only Tilt can have one point calibration.
+	//
+
+	// if there are 2+ pairs of data, we can run regression
+	// however, if there is ONLY one. It's just offset.
+	// What if User set to use Plato when Tilt and Pill reports SG(1.001)?
+	// Seconds, the "saved" data from iSpindel and Pill is tilt angle, which can't be used directly
+	if(_formulaKeeper.getFormula(_cfg->coefficients)){
+
+		_formulaValid = true;
+
+		for(int i=0;i< _formulaKeeper.numberOfPoints();i++){
+			_cfg->calPoints[i].calsg =_cfg->usePlato? PlatoToSetting(_formulaKeeper._calGravities[i]):SGToSetting(_formulaKeeper._calGravities[i]);
+			_cfg->calPoints[i].raw =(_cfg->gravityDeviceType == GravityDeviceTilt)?
+				SGToSetting(_formulaKeeper._calTilts[i]):AngleToSetting(_formulaKeeper._calTilts[i]);
+
+		}
+		_cfg->numCalPoints = _formulaKeeper.numberOfPoints();
+
 		theSettings.save();
-		DBG_PRINTF("New Formula from %d points:",_cfg->numberCalPoints);
-			DBG_PRINT(_cfg->ispindelCoefficients[0],8);
+
+		brewLogger.addCalibrateData();
+
+		DBG_PRINTF("New Formula from %d points:",_cfg->numCalPoints);
+			DBG_PRINT(_cfg->coefficients[0],8);
 			DBG_PRINT(",");
-			DBG_PRINT(_cfg->ispindelCoefficients[1],8);
+			DBG_PRINT(_cfg->coefficients[1],8);
 			DBG_PRINT(",");
-			DBG_PRINT(_cfg->ispindelCoefficients[2],8);
+			DBG_PRINT(_cfg->coefficients[2],8);
 			DBG_PRINT(",");
-			DBG_PRINT(_cfg->ispindelCoefficients[3],8);
+			DBG_PRINT(_cfg->coefficients[3],8);
 		DBG_PRINTF("\n");
 	}
 }
-
-void  ExternalData::setGravityFromLog(float sg){
-	DBG_PRINTF("setGravityFromLog:");
-	_formulaKeeper.addGravity(sg);
-}
-
-void  ExternalData::setTiltFromLog(float tilt,uint32_t update){
-	DBG_PRINTF("setTiltFromLog:");
-	_formulaKeeper.setTilt(tilt,update);
-}
-
-#if 0
-void ExternalData::testPolynomialRegression(void){
-	_formulaKeeper.setTilt(18.9,0);
-	_formulaKeeper.addGravity(1);
-
-	_formulaKeeper.setTilt(29.3,0);
-	_formulaKeeper.addGravity(1.016);
-
-	_formulaKeeper.setTilt(47.85,0);
-	_formulaKeeper.addGravity(1.042);
-
-	_formulaKeeper.setTilt(62.83,0);
-	_formulaKeeper.addGravity(1.074);
-
-	float coeff[4];
-
-	uint32_t pre = millis();
-	_formulaKeeper.getFormula(coeff);
-	uint32_t post = millis();
-
-	DBG_PRINTF("Poly Regression Time:%ld\n Coeff",post-pre);
-	DBG_PRINT(coeff[0],8);
-	DBG_PRINT(",");
-	DBG_PRINT(coeff[1],8);
-	DBG_PRINT(",");
-	DBG_PRINT(coeff[2],8);
-	DBG_PRINT(",");
-	DBG_PRINT(coeff[3],8);
-	DBG_PRINTF("\n");
-}
-#endif

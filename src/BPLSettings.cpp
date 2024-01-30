@@ -314,9 +314,9 @@ String BPLSettings::jsonSystemConfiguration(void){
 // gravity device configuration
 
 #define KeyGravityDeviceType "dev"
-#define KeyTempCorrection "tc"
-#define KeyCorrectionTemp "ctemp"
-#define KeyCalculateGravity "cbpl"
+#define KeyCalibrateFormula "cal"
+#define KeyGravityOffset "off"
+
 #define KeyCoefficientA0 "a0"
 #define KeyCoefficientA1 "a1"
 #define KeyCoefficientA2 "a2"
@@ -325,13 +325,11 @@ String BPLSettings::jsonSystemConfiguration(void){
 #define KeyStableGravityThreshold "stpt"
 #define KeyNumberCalPoints "npt"
 #define KeyUsePlato "plato"
+
 #define KeyTiltColor "color"
-#define KeyTiltCalibrationPoints "tcpts"
-#define KeyTiltCoefficients "tiltcoe"
+#define KeyCalibrationPoints "calpts"
 
 #define KeyPillMacAddress "mac"
-#define KeyPillCalibrationPoints "cpts"
-#define KeyPillCoefficients "coe"
 
 
 bool BPLSettings::gravityConfigSantiy(){
@@ -369,36 +367,30 @@ bool BPLSettings::dejsonGravityConfig(char* json)
 		gdc->usePlato = root.containsKey(KeyUsePlato)? root[KeyUsePlato]:0;
 		gdc->lpfBeta =root[KeyLPFBeta];
 
-		if(gdc->gravityDeviceType == GravityDeviceIspindel){
-			//gdc->ispindelTempCal = root[KeyTempCorrection];
+		gdc->calbybpl = root[KeyCalibrateFormula];
+		gdc->offset = root[KeyGravityOffset];
 
-			/*gdc->ispindelCalibrationBaseTemp =
-					(root.containsKey(KeyCorrectionTemp))? root[KeyCorrectionTemp]:20;*/
-			gdc->calculateGravity=root[KeyCalculateGravity];
-			gdc->ispindelCoefficients[0]=root[KeyCoefficientA0];
-			gdc->ispindelCoefficients[1]=root[KeyCoefficientA1];
-			gdc->ispindelCoefficients[2]=root[KeyCoefficientA2];
-			gdc->ispindelCoefficients[3]=root[KeyCoefficientA3];
-			gdc->numberCalPoints=root[KeyNumberCalPoints];
+		if(gdc->gravityDeviceType == GravityDeviceIspindel){
 		}
-		
+
+		JsonArray calpts = root[KeyCalibrationPoints].as<JsonArray>();
+		int i=0;
+		for(JsonVariant v : calpts) {
+				JsonArray point=v.as<JsonArray>();
+				float raw =  point[0].as<float>();
+				float sg =  point[1].as<float>();
+				gdc->calPoints[i].raw=(gdc->gravityDeviceType == GravityDeviceTilt)? 
+					SGToSetting(raw):AngleToSetting(raw);
+				gdc->calPoints[i].calsg=gdc->usePlato? PlatoToSetting(sg):SGToSetting(sg);
+				i++;
+		}
+		gdc->numCalPoints = calpts.size();
+
 
 		#if SupportTiltHydrometer
 		if(gdc->gravityDeviceType == GravityDeviceTilt){
 			TiltConfiguration *tcfg = & _data.bleHydrometerConfiguration.tilt;
 			tcfg->tiltColor = root[KeyTiltColor];
-		
-			JsonArray calpts = root[KeyTiltCalibrationPoints].as<JsonArray>();
-			int i=0;
-			for(JsonVariant v : calpts) {
-				JsonArray point=v.as<JsonArray>();
-				tcfg->calibrationPoints[i].rawsg= point[0].as<int>();
-				tcfg->calibrationPoints[i].calsg= point[1].as<int>();
-				i++;
-			}
-			tcfg->numCalPoints = calpts.size();
-			JsonArray tcoe= root[KeyTiltCoefficients].as<JsonArray>();
-			for(i=0;i<4;i++) tcfg->coefficients[i] = tcoe[i];
 		}
 		#endif
 
@@ -412,19 +404,6 @@ bool BPLSettings::dejsonGravityConfig(char* json)
 				pcfg->macAddress[a]=(uint8_t) v.as<int>();
 				a++;
 			}
-			/*
-			JsonArray calpts = root[KeyPillCalibrationPoints].as<JsonArray>();
-			int i=0;
-			for(JsonVariant v : calpts) {
-				JsonArray point=v.as<JsonArray>();
-				pcfg->calibrationPoints[i].rawsg= point[0].as<int>();
-				pcfg->calibrationPoints[i].calsg= point[1].as<int>();
-				i++;
-			}
-			pcfg->numCalPoints = calpts.size();
-			JsonArray tcoe= root[KeyPillCoefficients].as<JsonArray>();
-			for(i=0;i<4;i++) pcfg->coefficients[i] = tcoe[i];
-			*/
 		}
 		#endif
 
@@ -450,33 +429,34 @@ String BPLSettings::jsonGravityConfig(void){
 		root[KeyUsePlato] = gdc->usePlato;
 		root[KeyLPFBeta] =gdc->lpfBeta;
 
-		if(gdc->calculateGravity == GravityDeviceIspindel){
-			//root[KeyTempCorrection] = gdc->ispindelTempCal;
+		root[KeyCalibrateFormula] = gdc->calbybpl;
 
-			//root[KeyCorrectionTemp] = gdc->ispindelCalibrationBaseTemp;
-			root[KeyCalculateGravity] = gdc->calculateGravity;
-
-			root[KeyCoefficientA0]=gdc->ispindelCoefficients[0];
-			root[KeyCoefficientA1]=gdc->ispindelCoefficients[1];
-			root[KeyCoefficientA2]=gdc->ispindelCoefficients[2];
-			root[KeyCoefficientA3]=gdc->ispindelCoefficients[3];
-			root[KeyNumberCalPoints] = gdc->numberCalPoints;
-		}
+		root[KeyCoefficientA0]=gdc->coefficients[0];
+		root[KeyCoefficientA1]=gdc->coefficients[1];
+		root[KeyCoefficientA2]=gdc->coefficients[2];
+		root[KeyCoefficientA3]=gdc->coefficients[3];
 		
+		root[KeyNumberCalPoints] = gdc->numCalPoints;
+		root[KeyGravityOffset] = gdc->offset;		
+
+		if(gdc->numCalPoints > 0){
+			JsonArray points = root.createNestedArray(KeyCalibrationPoints);
+			for(int i=0;i< gdc->numCalPoints;i++){
+				JsonArray point= points.createNestedArray();
+				float raw=(gdc->gravityDeviceType == GravityDeviceTilt)? 
+						SGFromSetting(gdc->calPoints[i].raw):AngleFromSetting(gdc->calPoints[i].raw);
+				float gravity= gdc->usePlato? PlatoFromSetting(gdc->calPoints[i].calsg):SGFromSetting(gdc->calPoints[i].calsg);
+				point.add(raw);
+				point.add(gravity);
+			}
+		}
+
 
 		#if SupportTiltHydrometer
 		if(gdc->gravityDeviceType == GravityDeviceTilt){
 			TiltConfiguration *tcfg = & _data.bleHydrometerConfiguration.tilt;
 
 			root[KeyTiltColor]	=	tcfg->tiltColor;
-			if(tcfg->numCalPoints > 0){
-				JsonArray points = root.createNestedArray(KeyTiltCalibrationPoints);
-				for(int i=0;i< tcfg->numCalPoints;i++){
-					JsonArray point= points.createNestedArray();
-					point.add(tcfg->calibrationPoints[i].rawsg);
-					point.add(tcfg->calibrationPoints[i].calsg);
-				}
-			}
 		}
 		#endif
 		#if SupportPillHydrometer
@@ -486,15 +466,6 @@ String BPLSettings::jsonGravityConfig(void){
 			JsonArray macs = root.createNestedArray(KeyPillMacAddress);
 			for(int i=0;i< 6;i++){
 				macs.add(pcfg->macAddress[i]);
-			}
-
-			if(pcfg->numCalPoints > 0){
-				JsonArray points = root.createNestedArray(KeyPillCalibrationPoints);
-				for(int i=0;i< pcfg->numCalPoints;i++){
-					JsonArray point= points.createNestedArray();
-					point.add(pcfg->calibrationPoints[i].rawsg);
-					point.add(pcfg->calibrationPoints[i].calsg);
-				}
 			}
 		}
 		#endif

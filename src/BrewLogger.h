@@ -11,7 +11,7 @@
 #include "BPLSettings.h"
 #include "TimeKeeper.h"
 
-#define LOG_VERSION 0x6
+#define LOG_VERSION 0x7
 
 #define INVALID_RECOVERY_TIME 0xFF
 #define INVALID_TEMPERATURE -250
@@ -26,7 +26,7 @@
 #define PeriodTag 0xF0
 #define StateTag 0xF1
 #define EventTag 0xF2
-#define CorrectionTempTag 0xF3
+#define CalibrationDataTag 0xF3
 #define ModeTag 0xF4
 
 #define TargetPsiTag 0xF5
@@ -45,6 +45,9 @@
 #define ResumeBrewTag 0xFE
 #define StartLogTag 0xFF
 
+#define MaskPlato 0x40
+#define MaskCalibration 0x20
+#define MaskTemperatureUnit 0x10
 
 #define INVALID_TEMP_INT 0x7FFF
 #define INVALID_GRAVITY_INT 0x7FFF
@@ -124,13 +127,13 @@ public:
 	void addGravity(float gravity,bool isOg=false);
 	void addAuxTemp(float temp);
 	void addTiltAngle(float tilt);
-	void addCorrectionTemperature(float temp);
-	void addTiltInWater(float tilt,float reading);
 	bool isCalibrating(void){ return _calibrating;}
 	void addIgnoredCalPointMask(uint32_t mask);
 	//format file system
 	void onFormatFS(void);
 	uint32_t lastGravityDeviceUpdate(void){return _lastGravityDeviceUpdate;}
+
+	void addCalibrateData(void){ _newcalibratingdata =true; }
 private:
 	size_t _fsspace;
 	uint32_t  _chartTime;
@@ -157,7 +160,7 @@ private:
 	uint16_t  _extTemp;
 	uint16_t  _extGravity;
 	uint16_t  _extOriginGravity;
-	uint16_t  _extTileAngle;
+	uint16_t  _extTiltAngle;
 
 	int16_t  _lastPressureReading;
 
@@ -179,7 +182,7 @@ private:
 	uint8_t _lastHumidityTarget;
 	uint8_t _savedHumidityTarget;
 #endif
-
+	bool _newcalibratingdata;
 	uint16_t  _headData[VolatileDataHeaderSize];
 	bool _writeOnBufferFull;
 
@@ -215,6 +218,7 @@ private:
 
 	void _loadIdxFile(void);
 	void _saveIdxFile(void);
+	void _addCalibrationRecords(void);
 };
 
 extern BrewLogger brewLogger;

@@ -1232,17 +1232,6 @@ public:
 				}
 
 				if(brewLogger.startSession(filename.c_str(),cal,wobf)){
-					if(cal){
-						brewLogger.addTiltInWater(tiltwater,hydroreading);
-						externalData.setCalibrating(true);
-						externalData.clearFormula();
-						externalData.setTiltFromLog(tiltwater,TimeKeeper.getTimeSeconds());
-						externalData.setGravityFromLog(hydroreading);
-						DBG_PRINTF("Start BrweNCal log, tilt:%f, sg:%.4f\n",tiltwater,hydroreading);
-					}
-
-					//brewLogger.addCorrectionTemperature(externalData.hydrometerCalibrationTemp());
-
 					request->send(200,"application/json","{}");
 					notifyLogStatus();
 				}else
@@ -1250,7 +1239,6 @@ public:
 			}else if(request->hasParam("stop")){
 				DBG_PRINTF("Stop logging\n");
 				brewLogger.endSession();
-				externalData.setCalibrating(false);
 				request->send(200,"application/json","{}");
 				notifyLogStatus();
 			}else{
@@ -2057,8 +2045,6 @@ void setup(void){
 	//make sure externalData  is initialized.
 	if(brewLogger.begin()){
 		// resume, update calibrating information to external data
-		externalData.setCalibrating(brewLogger.isCalibrating());
-		externalData.setUpdateTime(brewLogger.lastGravityDeviceUpdate());
 		DBG_PRINTF("Start BrweNCal log:%d\n",brewLogger.isCalibrating());
 	}
 	
