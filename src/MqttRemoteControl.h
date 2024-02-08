@@ -89,6 +89,7 @@ protected:
     void _reportData();
     uint16_t _publish(const char* key,float value,int precision);
     uint16_t _publish(const char* key,char value);
+    uint16_t _publish(const char* key,const char* value);
     uint16_t _lastPacketId;
     bool     _publishing;
 public:

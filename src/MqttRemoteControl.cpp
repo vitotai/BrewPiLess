@@ -101,6 +101,18 @@ uint16_t MqttRemoteControl::_publish(const char* key,char value){
     }
     return packetid;
 }
+uint16_t MqttRemoteControl::_publish(const char* key,const char* value){
+    DBG_PRINTF("Publish %s\n",key);
+
+    // somwhow need to be optimized
+    char topic[256];
+    int baselength=strlen(_reportBasePath);
+    strncpy(topic,_reportBasePath,baselength);
+    topic[baselength]='/';
+    strcpy(topic + baselength +1, key);
+
+    return _client.publish(topic,DefaultLogginQoS,true,value);
+}
 
 void MqttRemoteControl::_reportData(void){
     _lastReportTime = millis();
@@ -154,15 +166,20 @@ void MqttRemoteControl::_reportData(void){
 
     	// iSpindel data
 	    float vol=externalData.deviceVoltage();
-	    if(IsVoltageValid(vol)){
-		    lastID=_publish(KeyVoltage, vol,2);
-		    float at=externalData.auxTemp();
-		    if(IS_FLOAT_TEMP_VALID(at)) lastID=_publish(KeyAuxTemp, at,1);
-		    float tilt=externalData.tiltValue();
-		    lastID=_publish(KeyTilt,tilt,2);
-            int16_t rssi=externalData.rssi();
-    		lastID=_publish(KeyIspindelRssi,(float)rssi,0);
-	    }
+	    if(IsVoltageValid(vol)) lastID=_publish(KeyVoltage, vol,2);
+		
+        float at=externalData.auxTemp();
+		if(IS_FLOAT_TEMP_VALID(at)) lastID=_publish(KeyAuxTemp, at,1);
+		    
+        float tilt=externalData.tiltValue();
+		if(tilt>0) lastID=_publish(KeyTilt,tilt,2);
+            
+        int16_t rssi=externalData.rssi();
+    	if(IsRssiValid(rssi)) lastID=_publish(KeyWirelessHydrometerRssi,(float)rssi,0);
+
+    	const char *hname=externalData.getDeviceName();
+	    if(hname) lastID=_publish(KeyWirelessHydrometerName, hname);
+
     }
     _lastPacketId = lastID;
     _publishing=true;
