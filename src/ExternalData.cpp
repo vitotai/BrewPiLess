@@ -66,7 +66,7 @@ void ExternalData::gravityDeviceSetting(char *buf){
 	doc["plato"] = _cfg->usePlato;
 
 	doc["fpt"] = _cfg->numCalPoints;
-	doc["name"] = (_ispindelName)? _ispindelName:"Unknown";
+	doc["name"] = getDeviceName();
 
 	buf[0]='G';
 	buf[1]=':';
@@ -452,5 +452,18 @@ void  ExternalData::_deriveFormula(void){
 			DBG_PRINT(",");
 			DBG_PRINT(_cfg->coefficients[3],8);
 		DBG_PRINTF("\n");
+	}
+}
+
+
+const char* ExternalData::getDeviceName(void){
+	if(_cfg->gravityDeviceType == GravityDeviceIspindel){
+		return (_ispindelName)? _ispindelName:"iSpindel";
+	}else if(_cfg->gravityDeviceType == GravityDeviceTilt){
+		return "Tilt";
+	}else if(_cfg->gravityDeviceType == GravityDevicePill){
+		return "Pill";
+	}else{
+		return "unkown";
 	}
 }

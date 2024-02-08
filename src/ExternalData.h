@@ -180,6 +180,8 @@ public:
 
 	// data from 
 	void setWaterTiltGravity(float tilt,float sg);
+
+	const char* getDeviceName(void);
 };
 
 extern ExternalData externalData;

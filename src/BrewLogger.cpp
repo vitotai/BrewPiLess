@@ -8,6 +8,7 @@
 #if EnableHumidityControlSupport
 #include "HumidityControl.h"
 #endif
+#include "ExternalData.h"
 
 #define LoggingPeriod 60000  //in ms
 #define MinimumGapToSync  600  // in seconds
@@ -859,8 +860,12 @@ BrewLogger::BrewLogger(void){
 		*ptr++ = (char) (_headTime >> 16);
 		*ptr++ = (char) (_headTime >> 8);
 		*ptr++ = (char) (_headTime & 0xFF); //8
+		// insert two bytes
+		*ptr++ = 1; // length
+		*ptr++ = theSettings.GravityConfig()->gravityDeviceType;
+
 		// a record full of all data = 2 + 7 * 2= 16
-		*ptr++ = (char) PeriodTag; //9
+		*ptr++ = (char) PeriodTag; //9 +2 ..
 		*ptr++ = (char) 0x7F; //10
 		for(int i=0;i<VolatileDataHeaderSize;i++){ // 10 + VolatileDataHeaderSize *2
 			*ptr++ = _headData[i] >> 8;
@@ -909,12 +914,59 @@ BrewLogger::BrewLogger(void){
 		*ptr++ = (char) (_pFileInfo->starttime >> 16);
 		*ptr++ = (char) (_pFileInfo->starttime >> 8);
 		*ptr++ = (char) (_pFileInfo->starttime & 0xFF);
+
+		// from V7, reserve a block for gravity device data
+		// starting from length of this block
+		// followed by the device type
+		// more information like names to be come
+		// b0: length of whole block
+		// b1 gravity device type
+		// TLV: type, length, value
+		GravityDeviceConfiguration *gdCfg=theSettings.GravityConfig();
+		if(gdCfg->gravityDeviceType == GravityDeviceIspindel){
+			// length is ??
+			const char *name = externalData.getDeviceName();
+			if(name){
+				uint8_t length =(uint8_t) strlen(name);
+				*ptr++ = 3 + length;
+				*ptr++ = GravityDeviceIspindel;
+
+				*ptr++  = GDIIdentity;
+				*ptr++  = length;
+				for(uint8_t n=0;n<length;n++){
+					*ptr++ = name[n];
+				}
+			}else{
+				*ptr++ = 1;
+				*ptr++ = GravityDeviceIspindel;
+			}
+
+		}else if(gdCfg->gravityDeviceType == GravityDeviceTilt){
+			// total length: 
+			*ptr++ = 4;
+			*ptr++ = GravityDeviceTilt; //1
+			*ptr++  = GDIIdentity;
+			*ptr++  = 1;
+			*ptr++  = theSettings.tiltConfiguration()->tiltColor;
+		}else if(gdCfg->gravityDeviceType == GravityDevicePill){
+			*ptr++ = 9;
+			*ptr++ = GravityDevicePill; //1
+			*ptr++  = GDIAddress;
+			*ptr++  = 6;
+			uint8_t *mac =theSettings.pillConfiguration()->macAddress;
+			for(int m=0;m<6;m++){
+				*ptr++ =mac[m];
+			}
+		}else{
+			// no device
+			*ptr++ = 1;  // length
+			*ptr++ = GravityDeviceNone;  // no device
+		}
 		_logIndex=0;
 		_savedLength=0;
 
 		_commitData(_logIndex,ptr - _logBuffer );
 
-		//DBG_PRINTF("*_startLog*\n");
 	}
 	void BrewLogger::_startVolatileLog(void)
 	{
@@ -1238,7 +1290,7 @@ BrewLogger::BrewLogger(void){
 		size_t gap=rtime - _pFileInfo->starttime;
 		if(rtime < 1545211593L || gap > 60*60*24*30){
 			// something wrong. just give it a minute, relying on following TimeSync Tag
-			DBG_PRINTF("abnormal resume, start:%lu, current:%u gap:%u\n",_pFileInfo->starttime,rtime,gap);
+			DBG_PRINTF("abnormal resume, start:%lu, current:%u gap:%u\n",_pFileInfo->starttime,rtime,gap);
 			gap =60;
 			rtime =  _pFileInfo->starttime + gap;
 		}

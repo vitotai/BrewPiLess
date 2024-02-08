@@ -52,11 +52,14 @@
 #define INVALID_TEMP_INT 0x7FFF
 #define INVALID_GRAVITY_INT 0x7FFF
 
+#define GDIAddress 1
+#define GDIIdentity 2
+
 #define VolatileDataHeaderSize 7
 #if EnableHumidityControlSupport
-#define VolatileHeaderSize ( VolatileDataHeaderSize*2 + 18)
+#define VolatileHeaderSize ( VolatileDataHeaderSize*2 + 20)
 #else
-#define VolatileHeaderSize ( VolatileDataHeaderSize*2 + 16)
+#define VolatileHeaderSize ( VolatileDataHeaderSize*2 + 18)
 #endif
 
 #define OrderBeerSet 0
