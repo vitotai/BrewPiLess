@@ -46,7 +46,7 @@ bool FormulaKeeper::setTilt(float tilt,uint32_t time){
     _lastTilt = tilt;
     
     DBG_PRINTF(" setTilt:%.4f\n",tilt);
-    if(_lastGravity != INVALID_SG && _numberOfPoints < MaxCalibrationPoints){
+    if(_lastGravity != INVALID_SG && _numberOfPoints < MaxNumberCalibrationPoints){
         addPoint(_lastTilt,_lastGravity);
         _lastGravity = INVALID_SG;
         return true;
@@ -58,7 +58,7 @@ bool FormulaKeeper::addGravity(float sg){
 
 	DBG_PRINTF(" addGravity:%.4f\n",sg);
 
-    if(_lastTilt != INVALID_TILT && _numberOfPoints < MaxCalibrationPoints){
+    if(_lastTilt != INVALID_TILT && _numberOfPoints < MaxNumberCalibrationPoints){
         addPoint(_lastTilt,sg);
         return true;
     }else{

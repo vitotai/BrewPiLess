@@ -34,7 +34,7 @@
 
 #define FillTag 0xF7
 #define OriginGravityTag 0xF8
-#define CalibrationPointTag 0xF9
+#define DeviceTypeTag 0xF9
 #define IgnoredCalPointMaskTag 0xFA
 
 #define SpecificGravityTag 0xFB

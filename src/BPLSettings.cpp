@@ -374,17 +374,15 @@ bool BPLSettings::dejsonGravityConfig(char* json)
 		}
 
 		JsonArray calpts = root[KeyCalibrationPoints].as<JsonArray>();
-		int i=0;
+		int numpt=0;
 		for(JsonVariant v : calpts) {
 				JsonArray point=v.as<JsonArray>();
-				float raw =  point[0].as<float>();
-				float sg =  point[1].as<float>();
-				gdc->calPoints[i].raw=(gdc->gravityDeviceType == GravityDeviceTilt)? 
-					SGToSetting(raw):AngleToSetting(raw);
-				gdc->calPoints[i].calsg=gdc->usePlato? PlatoToSetting(sg):SGToSetting(sg);
-				i++;
+				gdc->calPoints[numpt].raw=  point[0].as<int>();
+				gdc->calPoints[numpt].calsg= point[1].as<int>();
+				numpt++;
+				if(numpt >= MaxNumberCalibrationPoints) break;
 		}
-		gdc->numCalPoints = calpts.size();
+		gdc->numCalPoints = numpt;
 
 
 		#if SupportTiltHydrometer
@@ -443,11 +441,8 @@ String BPLSettings::jsonGravityConfig(void){
 			JsonArray points = root.createNestedArray(KeyCalibrationPoints);
 			for(int i=0;i< gdc->numCalPoints;i++){
 				JsonArray point= points.createNestedArray();
-				float raw=(gdc->gravityDeviceType == GravityDeviceTilt)? 
-						SGFromSetting(gdc->calPoints[i].raw):AngleFromSetting(gdc->calPoints[i].raw);
-				float gravity= gdc->usePlato? PlatoFromSetting(gdc->calPoints[i].calsg):SGFromSetting(gdc->calPoints[i].calsg);
-				point.add(raw);
-				point.add(gravity);
+				point.add(gdc->calPoints[i].raw);
+				point.add(gdc->calPoints[i].calsg);
 			}
 		}
 

@@ -50,7 +50,7 @@ typedef struct _TimeInformation{
 
 #define AngleFromSetting(a)  ((float)(a) /100.0)
 #define AngleToSetting(a)   ((uint16_t)((a) * 100.0))
-
+#define MaxNumberCalibrationPoints 10
 
 typedef  struct _CalibrationPoint{
         uint16_t raw;
@@ -70,7 +70,7 @@ typedef struct _GravityDeviceConfiguration{
 	uint8_t  stableThreshold;
 	uint8_t  usePlato;
     uint8_t  _padding[6];
-    CalibrationPoint calPoints[10];
+    CalibrationPoint calPoints[MaxNumberCalibrationPoints];
     uint8_t  _unused2;
 }GravityDeviceConfiguration;
 

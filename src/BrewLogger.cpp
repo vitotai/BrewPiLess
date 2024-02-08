@@ -1117,22 +1117,26 @@ BrewLogger::BrewLogger(void){
 
 		GravityDeviceConfiguration *gdc=theSettings.GravityConfig();
 
-		int idx = _allocByte(2 + 4 * gdc->numCalPoints);
-
-		if(idx < 0) return;
+		int start = _allocByte(2 + 4 * gdc->numCalPoints);
+		if(start < 0) return;
 
 			// 
-		_writeBuffer(idx++, CalibrationDataTag);
-		_writeBuffer(idx++,gdc->numCalPoints);
+		_writeBuffer(start, CalibrationDataTag);
+		_writeBuffer(start + 1,gdc->numCalPoints);
+		int idx=2;
 
 		for(int i=0;i<gdc->numCalPoints;i++){
-				_writeBuffer(idx++,(uint8_t) (gdc->calPoints[i].raw >>8));
-				_writeBuffer(idx++,(uint8_t) (gdc->calPoints[i].raw & 0xFF));
-				_writeBuffer(idx++,(uint8_t) (gdc->calPoints[i].calsg >>8));
-				_writeBuffer(idx++,(uint8_t) (gdc->calPoints[i].calsg &0xFF));
+				_writeBuffer(start + idx,(uint8_t) (gdc->calPoints[i].raw >>8));
+				idx++;
+				_writeBuffer(start + idx,(uint8_t) (gdc->calPoints[i].raw & 0xFF));
+				idx++;
+				_writeBuffer(start + idx,(uint8_t) (gdc->calPoints[i].calsg >>8));
+				idx++;
+				_writeBuffer(start + idx,(uint8_t) (gdc->calPoints[i].calsg &0xFF));
+				idx++;
 		}
 
-		_commitData(idx,2 + 4 * gdc->numCalPoints);
+		_commitData(start,idx);
 	}
 
 	void BrewLogger::_addGravityRecord(bool isOg, uint16_t gravity){

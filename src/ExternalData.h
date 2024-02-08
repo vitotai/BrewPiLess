@@ -44,8 +44,6 @@ extern BrewPiProxy brewPi;
 #define ErrorMissingField 3
 #define ErrorUnknownSource 4
 
-#define MaxCalibrationPoints 16
-
 #define C2F(t) ((t)*1.8+32)
 
 class SimpleFilter
@@ -70,8 +68,8 @@ class ExternalData;
 
 class FormulaKeeper{
 protected:
-	float _calTilts[MaxCalibrationPoints];
-	float _calGravities[MaxCalibrationPoints];
+	float _calTilts[MaxNumberCalibrationPoints];
+	float _calGravities[MaxNumberCalibrationPoints];
 	uint8_t _numberOfPoints;
 	float _lastTilt;
 	float _lastGravity;

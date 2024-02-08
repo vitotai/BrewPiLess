@@ -1155,7 +1155,7 @@ void periodicalReport(void)
 	// last update
 	G["u"] = externalData.lastUpdate();
 	// gravity
-	G["g"] = (int)(externalData.gravity() * 1000);
+	G["g"] = (int)((externalData.gravity() +0.0005) * 1000);
 	// temperature
 	G["t"] = (int)(externalData.auxTemp() * 100);
 	// RSSI, for all devices
@@ -1217,19 +1217,17 @@ public:
 				request->send(200,"application/json",brewLogger.fsinfo());
 			}else if(request->hasParam("start")){
 				String filename=request->getParam("start")->value();
-				DBG_PRINTF("start logging:%s\n",filename.c_str());
 				bool cal=false;
-				float tiltwater, hydroreading;
-				if(request->hasParam("tw") && request->hasParam("hr")){
+				if(request->hasParam("raw")){
 					cal=true;
-					tiltwater=request->getParam("tw")->value().toFloat();
-					hydroreading=request->getParam("hr")->value().toFloat();
 				}
 				bool wobf=false;
 				
 				if(request->hasParam("wobf")){
 					wobf = ( 0!= request->getParam("wobf")->value().toInt());
 				}
+
+				DBG_PRINTF("start logging:%s, cal:%d, wobf:%d\n",filename.c_str(),cal,wobf);
 
 				if(brewLogger.startSession(filename.c_str(),cal,wobf)){
 					request->send(200,"application/json","{}");
