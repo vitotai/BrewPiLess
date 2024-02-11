@@ -941,6 +941,7 @@ BrewLogger::BrewLogger(void){
 				*ptr++ = GravityDeviceIspindel;
 			}
 
+		#if SupportBleHydrometer
 		}else if(gdCfg->gravityDeviceType == GravityDeviceTilt){
 			// total length: 
 			*ptr++ = 4;
@@ -957,6 +958,7 @@ BrewLogger::BrewLogger(void){
 			for(int m=0;m<6;m++){
 				*ptr++ =mac[m];
 			}
+		#endif
 		}else{
 			// no device
 			*ptr++ = 1;  // length
