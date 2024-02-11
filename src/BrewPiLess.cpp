@@ -974,8 +974,8 @@ void greeting(std::function<void(const char*)> sendFunc)
 	sendFunc(out.c_str());
 
 	// beer profile:
-	String profile=String("B:") + theSettings.jsonBeerProfile();
-	sendFunc(profile.c_str());
+//	String profile=String("B:") + theSettings.jsonBeerProfile();
+//	sendFunc(profile.c_str());
 	//network status:
 
 	String nwstatus=String("W:") + WiFiSetup.status();

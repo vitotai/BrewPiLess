@@ -44,8 +44,9 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
 
 ## Version History
  * 4.4
+   * Settings might be reset, save it before updgrading.
    * (ESP32) Rapt Pill support
-   * Revise Gravity Device Setting
+   * Revise Gravity Device Setting.
    * Removing confusing calibration temperature of wireless hydrometer
    * Code revise
    * update ESP32 framework to 6.3.2

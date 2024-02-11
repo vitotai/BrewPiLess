@@ -650,29 +650,9 @@ bool BPLSettings::dejsonBeerProfile(String json)
 	}
 	BeerTempSchedule *tempSchedule = & _data.tempSchedule;
 	// get starting time
-	//ISO time:
-	//2016-07-01T05:22:33.351Z
-	//01234567890123456789
-	tm tmStart;
-	char buf[8];
-	const char* sdutc=root["s"];
 
-	#define GetValue(d,s,l) strncpy(buf,sdutc+s,l);buf[l]='\0';d=atoi(buf)
-	GetValue(tmStart.tm_year,0,4);
-	tmStart.tm_year -= 1970; //1900;
-	GetValue(tmStart.tm_mon,5,2);
-//	tmStart.tm_mon -= 1;
-	GetValue(tmStart.tm_mday,8,2);
-	GetValue(tmStart.tm_hour,11,2);
-	GetValue(tmStart.tm_min,14,2);
-	GetValue(tmStart.tm_sec,17,2);
+	tempSchedule->startDay=root["s"];
 
-	DBG_PRINTF("%d/%d/%d %d:%d:%d\n",tmStart.tm_year,tmStart.tm_mon,tmStart.tm_mday,
-		tmStart.tm_hour,tmStart.tm_min,tmStart.tm_sec);
-
-	//_startDay = mktime(&tmStart);
-
-	tempSchedule->startDay= tm_to_timet(&tmStart);
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	JsonArray schedule = root["t"];
 	#else
@@ -762,16 +742,13 @@ String BPLSettings::jsonBeerProfile(void)
 	//start date
 	//ISO time:
 	//2016-07-01T05:22:33.351Z
-	struct tm * ptm;
-	ptm = localtime(& tempSchedule->startDay);
-	char timeBuf[128];
-	sprintf(timeBuf,"%d-%02d-%02dT%02d:%02d:%02d.0Z",ptm->tm_year+1900,ptm->tm_mon+1,ptm->tm_mday,
-		ptm->tm_hour,ptm->tm_min,ptm->tm_sec);
-	root["s"]=timeBuf;
+
+	root["s"]=tempSchedule->startDay;
 	// unit, unfortunatly, no "char" type in JSON. "char" will be integer.
 	//root["u"]=(char)tempSchedule->unit;
-	char unitBuffer[4];
-	sprintf(unitBuffer,"%c",tempSchedule->unit);
+	char unitBuffer[2];
+	unitBuffer[0]=tempSchedule->unit;
+	unitBuffer[1]='\0';
 	root["u"]=unitBuffer;
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	JsonArray steps=root.createNestedArray("t");
@@ -783,6 +760,7 @@ String BPLSettings::jsonBeerProfile(void)
 	char pertages[MaximumSteps][16];
 	int  pertageIndex=0;
 
+	if(tempSchedule->numberOfSteps < MaximumSteps)
 	for(int i=0;i< tempSchedule->numberOfSteps;i++){
 		ScheduleStep *s_step= & tempSchedule->steps[i];
 		#if ARDUINOJSON_VERSION_MAJOR == 6
