@@ -10,7 +10,7 @@ UniBrewChart.prototype.constructor = UniBrewChart;
 UniBrewChart.testData = function(data) {
     if (data[0] != 0xFF) return false;
     var s = data[1] & 0x07;
-    if (s != 5 && s!=6) return false;
+    if (s != 5 && s!=6 && s!=7) return false;
 
     return {
         sensor: s,
@@ -21,7 +21,7 @@ UniBrewChart.testData = function(data) {
 UniBrewChart.prototype.process=function(data){
     var s = data[1] & 0x07;
     this.CV = s;
-    if (s ==6){
+    if (s ==6  || s==7){
         BrewChart.prototype.process.call(this,data);
     }else if (s ==5){
         this.psi = [];
