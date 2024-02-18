@@ -62,6 +62,14 @@ table.caltable thead {
 #dlg_sel_dev tr.selected {
             background-color: #a0d3f5; /* Highlight color for selected rows */
         }
+
+input[type="text"]{
+max-width: 140px;
+}
+#dlg_addcalpoint input{
+    margin-left: 2em;
+    margin-right: 2em;
+}
 </style>
 </head>
 
@@ -76,13 +84,13 @@ table.caltable thead {
                 <form action="" method="post">
                     <div layout horizontal cross-center class="tiltsub">
                         <h5>
-                            Wireless Hydrometer:
+                            <%= gravity_wireless_hydrometer %>
                         </h5>
                         <div>
                             <select id="device-type" name="color" class="slot-select" style="margin-left: 2em;">
-                                <option value="0"> None</option>
+                                <option value="0"> <%= gravity_none %></option>
                                 <option value="1"> iSpindel</option>
-                                <option value="2"> Tilt</option>
+                                <option value="2"> Tilt &trade;</option>
                                 <option value="3"> Rapt Pill</option>
                             </select>
                         </div>
@@ -121,7 +129,7 @@ table.caltable thead {
 
                     <div layout horizontal class="tiltsub">
                         <h6 class="inline-header">
-                            Tilt Hydrometer Color
+                            Tilt&trade; Color
                         </h6>
                         <div>
                             <select id="tiltcolor" name="color" class="slot-select" style="margin-left: 2em;">
@@ -140,14 +148,6 @@ table.caltable thead {
                         </div>
                     </div>
 
-                    <div layout horizontal class="tiltsub">
-                        <h6 class="inline-header">
-                        Calibration
-                        </h6>
-                        <div>
-                            <button id="addbutton" onclick="tiltcal(); return false;" class="btn btn--raised">...</button>
-                        </div>
-                    </div>
                     </div> <!-- Tilt Pane-->
                     <!-- iSpindel section  -->
                     <div id="ispindel-pane">
@@ -156,30 +156,8 @@ table.caltable thead {
                         <h5>iSpindel</h5>
                     </div>
                     <div layout horizontal cross-center class="ispindelsub">
-                        <h6 class="inline-header">
-                            <%= gravity_calculated_bpl %>
-                        </h6>
-                        <div>
-                            <input type="checkbox" id="cbpl" name="cbpl" class="switch-input" checked>
-                            <label for="cbpl" class="switch-label" style="min-width: 0;"></label>
-                        </div>
                     </div>
 
-
-                    <div layout horizontal class="ispindelsub">
-                        <h6 class="inline-header">
-                            <%= gravity_coefficients %>
-                        </h6>
-                        <input type="text" name="a3" size=15>
-                        <div class="coefficient" layout horizontal main-center>x³ +</div>
-                        <input type="text" name="a2" size=15>
-                        <div class="coefficient" layout horizontal main-center>x² +</div>
-                        <input type="text" name="a1" size=15>
-                        <div class="coefficient" layout horizontal main-center>x +</div>
-                        <input type="text" name="a0" size=15>
-                        <div class="coefficient" layout horizontal main-center></div>
-                    </div>
-    
                     </div><!-- ispindel pane -->
 
                     <div layout horizontal cross-center>
@@ -193,6 +171,46 @@ table.caltable thead {
                     </div>
 
                     <!-- common section-->
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= gravity_offset %>
+                        </h6>
+                        <input type="text" name="off" size=4>
+                    </div>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= gravity_calculated_bpl %>
+                        </h6>
+                        <div>
+                            <input type="checkbox" id="cal" name="cal" class="switch-input" checked>
+                            <label for="cal" class="switch-label" style="min-width: 0;"></label>
+                        </div>
+                    </div>
+
+                    <div layout horizontal>
+                        <h6 class="inline-header">
+                          <%= gravity_calibration %>
+                        </h6>
+                        <div>
+                            <button id="addbutton" onclick="tiltcal(); return false;" class="btn btn--raised">...</button>
+                        </div>
+                    </div>
+                    <div layout horizontal >
+                        <h6 class="inline-header">
+                            <%= gravity_coefficients %>
+                        </h6>
+                        <input class="notsave" type="text" name="a3" size=8 disabled="true">
+                        <div class="coefficient" layout horizontal main-center>x³ +</div>
+                        <input class="notsave" type="text" name="a2" size=8 disabled="true">
+                        <div class="coefficient" layout horizontal main-center>x² +</div>
+                        <input class="notsave" type="text" name="a1" size=8 disabled="true">
+                        <div class="coefficient" layout horizontal main-center>x +</div>
+                        <input class="notsave" type="text" name="a0" size=8 disabled="true">
+                        <div class="coefficient" layout horizontal main-center></div>
+                    </div>
+
+
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
                             <%= gravity_lpf_coefficient %>
@@ -209,7 +227,7 @@ table.caltable thead {
                     </div>
 
                     <div class="card-footer">
-                        <input type="submit" name="submit" class="btn btn--raised" onclick="save();return false;"></input>
+                        <input type="submit" name="submit" class="notesave btn btn--raised" onclick="save();return false;"></input>
                     </div>
                 </form>
             </div>
@@ -220,15 +238,15 @@ table.caltable thead {
     <div id="dlg_addcalpoint" class="modal">
         <div class="modal-content" style="padding-bottom: 4em;">
             <h5><span class="modal-title">
-                Tilt Calibration
+                <%= gravity_calibration %>
             </span>
             </h5>
              <div layout horizontal cross-center>
-                    <label for="uncalvalue"> uncalibrated reading </label>
-                    <input id=uncalvalue type="number" style="max-width: 6em;">
-                    <label for="calvalue"> real value </label>
-                    <input id="calvalue" type="number" style="max-width: 6em;">
-                    <button class="btn btn--raised" onclick="TCEditor.add();"><%= control_add %></button>
+                    <label for="uncalvalue"><span class="info-angle"><%= gravity_tilt_angle %></span> <span class="info-rawsg"><%= tilt_raw_sg %></span></label>
+                    <input  class="notsave" id=uncalvalue type="number" style="max-width: 6em; margin-left:1em; margin-right:1em">
+                    <label for="calvalue"> <%= gravity_gravity %> </label>
+                    <input  class="notsave" id="calvalue" type="number" style="max-width: 6em; margin-left:1em; margin-right:1em">
+                    <button class="btn btn--raised" id="btn-addcal"><%= control_add %></button>
              </div>
              <hr style="margin:0.5em">
 
@@ -239,10 +257,10 @@ table.caltable thead {
                             <th>
                             </th>
                         <th>
-                            uncalibrated
+                            <span class="info-angle"><%= gravity_tilt_angle %></span> <span class="info-rawsg"><%= tilt_raw_sg %></span>
                         </th>
                         <th>
-                            calibrated
+                            <%= gravity_gravity %>
                         </th>
                     </tr>
                 </thead>
@@ -266,7 +284,7 @@ table.caltable thead {
     <div id="dlg_sel_dev" class="modal">
         <div class="modal-content" style="padding-bottom: 4em;">
             <h5><span class="modal-title">
-                Select Device
+                <%= gravity_select_device %>
             </span>
             </h5>
             <div>
@@ -278,9 +296,9 @@ table.caltable thead {
                 <table class="" id="devseltable">
                  <thead>
                     <tr>
-                    <th>Device</th>
-                    <th>Gravity</th>
-                    <th>Temperature</th>
+                    <th><%= gravity_device %></th>
+                    <th><%= gravity_gravity %></th>
+                    <th><%= gravity_temperature %></th>
                     <th>RSSI</th>
                     </tr>
                  </thead>

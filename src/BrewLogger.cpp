@@ -39,6 +39,7 @@ BrewLogger::BrewLogger(void){
 	_lastRoomHumidity = INVALID_HUMIDITY_VALUE;
 	_lastHumidityTarget = INVALID_HUMIDITY_VALUE;
 #endif
+	_errorCode = ErrorNone;
 }
 
 	
@@ -302,6 +303,7 @@ BrewLogger::BrewLogger(void){
 
 		if(_fsspace < 100){
 			DBG_PRINTF("Not enough space:%d\n",_fsspace);
+			_errorCode  = ErrorNotEnoughSpace;
 			return false;
 		}
 		strcpy(_pFileInfo->logname,filename);
@@ -314,6 +316,7 @@ BrewLogger::BrewLogger(void){
 				DBG_PRINTF("*%s Created",LOG_PATH);
 			}else{
 				DBG_PRINTF("***%s failed to creat",LOG_PATH);
+				_errorCode = ErrorFailedToCreateDirectory;
 				return false;
 			}
 		}
@@ -328,6 +331,7 @@ BrewLogger::BrewLogger(void){
 
 		if(!_logFile){
 			DBG_PRINTF("***Error open temp file\n");
+			_errorCode = ErrorFailedOpenFile;
 			return false;
 		}
 

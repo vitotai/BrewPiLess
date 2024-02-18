@@ -84,20 +84,8 @@ var logs = {
                 alert("<%= script_logging_duplicated_name %>");
                 return;
             }
-            var arg = "";
-            var calispindel = Q("#calispindel").checked;
-            if (calispindel) {
-                var tilt = parseFloat(Q("#tiltinw").value.trim());
-                var reading = parseFloat(Q("#hydrometer").value.trim());
-                if (window.plato) reading = 0;
-                if (isNaN(tilt)) {
-                    alert("<%= script_logging_tilt_value_necessary %>");
-                } else if (!window.plato && (isNaN(tilt) || isNaN(reading))) {
-                    alert("<%= script_logging_tilt_value_and_hydrometer_necessary %>");
-                    return;
-                }
-                arg = "&tw=" + tilt + "&hr=" + reading;
-            }
+            var arg = (Q("#calispindel").checked)? "&raw=1":"";
+
             var wobf = Q("#wobf").checked;
             arg += "&wobf=" + (wobf? "1":"0");
 
@@ -531,22 +519,6 @@ function init(classic) {
         getActiveNavItem();
         Q("#verinfo").innerHTML = "v" + JSVERSION;
     }
-
-    function readingByTemp() {
-        var temp = parseFloat(Q("#watertemp").value);
-        var ctemp = parseFloat(Q("#caltemp").value);
-        var unit = Q("#tempunit").value;
-        if (isNaN(temp) || isNaN(ctemp)) return;
-        if (unit == 'C') {
-            ctemp = C2F(ctemp);
-            temp = C2F(temp);
-        }
-        var reading = BrewMath.tempCorrectionF(1.0, ctemp, temp);
-        Q("#hydrometer").value = reading.toFixed(3);
-    }
-    Q("#watertemp").onchange = readingByTemp;
-    Q("#caltemp").onchange = readingByTemp;
-    Q("#tempunit").onchange = readingByTemp;
 
     remote_init(classic);
     logs.init();

@@ -132,6 +132,8 @@
     "specific_gravity": "Špecifická hustota (SG)",
     "gravity_changed": "Zmenila sa hustota(48/24/12H):",
     "ispindel_data": "iSpindel údaje:",
+    "gravity_temperature":"teplota",
+    "tilt_raw_sg":"nespracované SG",
     "ispindel_lastupdate": "Posledná aktualizácia:",
     "glycol_temp_control": "Kontrola teploty glykolu:",
     "ptc_idle": "NEČINNÝ",
@@ -215,6 +217,14 @@
     "gravity_point": "bod, 1= 0.001 pre SG, alebo 0.1&deg;P pre Plato",
     "gravity_save_change": "Uložiť zmeny",
     "gravity_useplato": "Použiť Plato",
+    "gravity_wireless_hydrometer":"bezdrôtový hustomer",
+    "gravity_none":"žiadny",
+    "gravity_offset":"gravitačný posun",
+    "gravity_calibration":"Kalibrácia",
+    "gravity_gravity":"gravitácia",
+    "gravity_tilt_angle":"uhol sklonu",
+    "gravity_select_device":"vyberte zariadenie",
+    "gravity_device":"Devzariadenieice",
 
     "__log_html": "log.html",
 
@@ -235,7 +245,7 @@
     "log_start_logging": "Spustiť zaznamenávanie",
     "log_options": "Možnosti:",
     "log_write_on_buffer_full":"Write on Buffer Full",
-    "log_calibrate_ispindel": "Kalibrovať iSpindel",
+    "log_record_raw": "zaznamenávať nespracované údaje",
     "log_tilt_in_water": "Hodnota naklonenia vo vode",
     "log_hydrometer_reading": "Nameraná hustota:",
     "log_or_water_at": ", alebo voda @",
@@ -479,6 +489,10 @@
     "log_mode_in_integer": "režim v celých číslach",
     "log_mode_in_character": "režim v znakoch",
     "log_pressure_reading": "Tlak v PSI",
+    "gravity_change": "Gravity Change",
+    "gravity_change_6h": "Gravity Change 6H",
+    "gravity_change_12h": "Gravity Change 12H",
+    "gravity_change_24h": "Gravity Change 24H",
 
     "__end__": "END"
 }

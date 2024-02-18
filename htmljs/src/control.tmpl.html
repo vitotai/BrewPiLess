@@ -10,13 +10,13 @@
     </title>
     <meta name="apple-mobile-web-app-title" content="BrewPiLess">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <script type="text/javascript" src="js/vendor/dygraph.min.js"></script>
+    <script type="text/javascript" src="js/dygraph-2.2.1/dygraph.min.js"></script>
     <script type="text/javascript" src="js/vendor/bwf.js"></script>
     <script type="text/javascript" src="js/shared.js"></script>
     <script type="text/javascript" src="js/capper.js"></script>
     <script type="text/javascript" src="js/ptc.js"></script>
     <script type="text/javascript" src="js/script-control.js"></script>
-    <link rel="stylesheet" href="js/vendor/dygraph.css">
+    <link rel="stylesheet" href="js/dygraph-2.2.1/dygraph.min.css">
 
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="style-control.css">
@@ -291,13 +291,14 @@
             <h2 class="profile-load-heading">
                 <%= dlg_profilelist_load %>
             </h2>
-            <ul class="profile-list" style="margin: 16px 0;">
-                <li layout horizontal main-justified cross-center style="margin: 8px 0;">
+            <hr style="margin:4px">
+            <ul class="profile-list">
+                <li layout horizontal main-justified>
                     <a href="#" class="profile-name"></a>
-                    <span class="btn--delete rmbutton"></span>
+                    <button class="btn rmbutton" style="color:red">DEL</button>
                 </li>
             </ul>
-            <button class="btn" onclick="PL.toggle()"><%= dlg_cancel %></button>
+            <button class="btn btn--raised" onclick="PL.toggle()"><%= dlg_cancel %></button>
         </div>
     </div>
 
@@ -306,9 +307,9 @@
             <%= dlg_startprofile %>
                 <input type="text" size="6" value="1.0">
                 <div class="dialog-buttons">
-                    <button class="oknog"><%= dlg_startprofile_oknog %></button>
-                    <button class="ok"><%= dlg_startprofile_ok %></button>
-                    <button class="cancel"><%= dlg_cancel %></button>
+                    <button class="oknog btn"><%= dlg_startprofile_oknog %></button>
+                    <button class="ok btn btn--raised"><%= dlg_startprofile_ok %></button>
+                    <button class="cancel btn btn--raised"><%= dlg_cancel %></button>
                 </div>
         </div>
     </div>
@@ -319,8 +320,8 @@
             <br><input type="text" size="32">
             <br>
             <%= dlg_saveas_2 %>
-                <button onclick="PL.cancelSave()"><%= dlg_cancel %></button>
-                <button onclick="PL.doSave()"><%= dlg_ok %></button>
+                <button onclick="PL.cancelSave()" class="btn btn--raised"><%= dlg_cancel %></button>
+                <button onclick="PL.doSave()" class="btn"><%= dlg_ok %></button>
         </div>
     </div>
 

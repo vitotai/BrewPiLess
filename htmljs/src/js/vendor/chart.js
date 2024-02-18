@@ -1,5 +1,6 @@
 /* chart.js */
-var  CHART_VERSION = 6;
+var  CHART_VERSION = 7;
+var  CHART_V6 = 6;
 
 var GravityChangePeriod1 = 6 * 3600;
 var GravityChangePeriod2 = 12 * 3600;
@@ -593,7 +594,7 @@ var GravityChangePeriod3 =24 * 3600;
         BrewChart.testData = function(data) {
             if (data[0] != 0xFF) return false;
             var s = data[1] & 0x07;
-            if (s != CHART_VERSION) return false;
+            if (s != CHART_VERSION && s!= CHART_V6) return false;
 
             return {
                 sensor: s,
@@ -673,7 +674,8 @@ var GravityChangePeriod3 =24 * 3600;
         };
 
         BrewChart.prototype.getFormula = function() {
-            var points = this.getCalibration();
+            var points=(this.version == CHART_V6)? this.getCalibration(): this.calpoints;
+
             if (points.length < 2) return;
             var cpoints = this.filterPoints(points, this.cal_igmask);
             if (cpoints.length < 2) {
@@ -707,6 +709,28 @@ var GravityChangePeriod3 =24 * 3600;
                 ((cpoints.length > 2) ? [poly.equation[0], poly.equation[1], poly.equation[2], 0] : [poly.equation[0], poly.equation[1], 0, 0]);
             this.npt = points.length;
         };
+        BrewChart.prototype.deviceInfo=function(data){
+            // tlv.
+            var i=0;
+            while(i<data.length){
+                var type=data[i++];
+                var length=data[i++];
+                if(type == 1){ // address
+                    var address=[];
+                    for(var a=0;a<length;a++){
+                        address.push(data[i+a]);
+                    }
+                    this.address = address;
+                }else if (type ==2){ // name
+                    var devname="";
+                    for(var a=0;a<length;a++){
+                        devname = devname + String.fromCharCode(data[i+a]);
+                    }
+                    this.devName = devname;
+                }
+                i+= length;
+            }
+        };
         BrewChart.prototype.process = function(data) {
             var newchart = false;
             var sgPoint = false;
@@ -717,7 +741,8 @@ var GravityChangePeriod3 =24 * 3600;
                 var d0 = data[i++];
                 var d1 = data[i++];
                 if (d0 == 0xFF) { // header. 
-                    if ((d1 & 0xF) != CHART_VERSION) {
+                    t.version = d1 & 0xF; 
+                    if (t.version != CHART_VERSION && t.version != CHART_V6) {
                         alert("<%= script_log_version_mismatched %>");
                         return;
                     }
@@ -733,6 +758,16 @@ var GravityChangePeriod3 =24 * 3600;
                     t.starttime = (data[i] << 24) + (data[i + 1] << 16) + (data[i + 2] << 8) + data[i + 3];
                     t.ctime = t.starttime;
                     i += 4;
+
+                    t.devType = 0; // default to none
+                    if(t.version == 7){
+                        var bsize = data[i++];
+                        t.devType = data[i++];
+                        if(bsize > 1){
+                            t.deviceInfo(data.slice(i,i+bsize-1));
+                        }
+                        i+=  bsize - 1;
+                    }
                     t.data = [];
                     t.anno = [];
                     t.state = [];
@@ -755,11 +790,24 @@ var GravityChangePeriod3 =24 * 3600;
                     this.clearData();
                     newchart = true;
                     t.psiAvail = false;
+                    if(t.version == 7) t.calpoints=[];
                     // gravity tracking
                     GravityFilter.reset();
                     // gravity tracking
                 } else if (d0 == 0xF3) { // correction temperature
-                    t.coTemp = d1; // always celisus
+                    if(t.version == CHART_V6) t.coTemp = d1; // always celisus
+                    else{
+                        t.calpoints = [];
+                        for(var n=0;n<d1;n++){
+                            var traw = data[i++];
+                            traw = (traw << 8) | data[i++];
+                            var graw = data[i++];
+                            graw = (graw << 8) | data[i++];
+                            var gravity= t.plato ? graw/100:graw/10000;
+                            var raw = (t.devType == 2)? traw/10000:traw/100;               
+                            t.calpoints.push([raw,gravity]);
+                        }
+                    }
                 } else if (d0 == 0xF4) { // mode
                     //console.log(""+t.ctime/t.interval +" Stage:"+d1);
                     t.addMode(d1, t.ctime * 1000);
@@ -831,8 +879,13 @@ var GravityChangePeriod3 =24 * 3600;
                     }else{
                         t.specificGravity =  v / 10000;
                     }
-                    // setting sgPoint is useless in this version, because the data isnot yet push into array
-                    //sgPoint = true;
+                    // Gravity Data in calibration is out-of-band data
+                    // To get it processed as soon as possible. 
+                    // Insert into previous record
+                    if(t.calibrating){
+                        sgPoint = true;
+                        t.insertOOBGravity();
+                    }
                 } else if (d0 == 0xFA) { //Ignored mask
                     var b2 = data[i++];
                     var b3 = data[i++];
@@ -859,7 +912,7 @@ var GravityChangePeriod3 =24 * 3600;
                         // gravity or gravity
                         if(t.calibrating){
                             // tilt value
-                            tp = (tp == 0x7FFF) ? NaN : (tp / 100);
+                            tp = (tp == 0x7FFF) ? NaN :( (t.devType == 2)? (tp/10000):(tp / 100));
                         }else{
                             tp = (tp == 0x7FFF) ? NaN : (t.plato ? tp / 100 : ((tp > 8000) ? tp / 10000 : tp / 1000));
                             sgPoint = true;
@@ -970,6 +1023,15 @@ var GravityChangePeriod3 =24 * 3600;
             if(sync) t.synchronize();
 
         };
+
+        BrewChart.prototype.insertOOBGravity=function(){
+            var t=this;
+            if(t.rawSG.length > 0){
+                t.rawSG[t.rawSG.length-1]=t.specificGravity;
+                t.specificGravity=null;
+            }
+        };
+        
         BrewChart.prototype.processRecord = function() {
             var t = this;
             // fill blank/unchanged fileds by checking the change mask(t.chnages)

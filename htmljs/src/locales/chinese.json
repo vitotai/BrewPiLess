@@ -133,6 +133,8 @@
     "specific_gravity": "現在比重(SG)",
     "gravity_changed": "比重變化(48/24/12H):",
     "ispindel_data": "iSpindel資訊:",
+    "gravity_temperature":"溫度",
+    "tilt_raw_sg":"原始比重",
     "ispindel_lastupdate": "最後更新:",
     "glycol_temp_control": "Glycol Temp Control:",
     "ptc_idle": "IDLE",
@@ -216,6 +218,14 @@
     "gravity_point": "點數,1點= 0.001比重，或0.1&deg;P",
     "gravity_save_change": "儲存變更",
     "gravity_useplato": "單位使用Plato",
+    "gravity_wireless_hydrometer":"無線比重計",
+    "gravity_none":"無",
+    "gravity_offset":"比重誤差",
+    "gravity_calibration":"校正資料",
+    "gravity_gravity":"比重",
+    "gravity_tilt_angle":"傾斜角度",
+    "gravity_select_device":"選擇比重計",
+    "gravity_device":"比重計",
 
     "__log_html": "log.html",
 
@@ -236,7 +246,7 @@
     "log_start_logging": "開始記錄",
     "log_options": "選項:",
     "log_write_on_buffer_full":"Write on Buffer Full",
-    "log_calibrate_ispindel": "校正iSpindel",
+    "log_record_raw": "記錄原始資訊",
     "log_tilt_in_water": "在水中的Tilt值",
     "log_hydrometer_reading": "比重計讀數:",
     "log_or_water_at": ", 或是水溫 @",
@@ -479,6 +489,11 @@
     "log_mode_in_integer": "mode用整數表示",
     "log_mode_in_character": "mode用字元表示",
     "log_pressure_reading": "壓力PSI",
+
+    "gravity_change": "比重變化",
+    "gravity_change_6h": "比重變化 6H",
+    "gravity_change_12h": "比重變化 12H",
+    "gravity_change_24h": "比重變化 24H",
 
     "end": "***END***"
 }

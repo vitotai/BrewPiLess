@@ -125,7 +125,7 @@ protected:
 
 	GravityDeviceConfiguration *_cfg;
 
-	float _calculateGravity(float raw,float temp);
+	float _calculateGravity(float raw);
 	void _setGravity(float sg);
 	void _setAuxTemperatureCelsius(float temp);
 	void _setOriginalGravity(float og);	

@@ -10,7 +10,7 @@
     </title>
     <meta name="apple-mobile-web-app-title" content="BrewPiLess">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <script type="text/javascript" src="/dygraph.min.js" ignore></script>
+    <script type="text/javascript" src="js/dygraph-2.2.1/dygraph.min.js" ignored></script>
     <script type="text/javascript" src="js/dygraph-2.2.1/extras/synchronizer.js"></script>
 
     <script type="text/javascript" src="js/vendor/bwf.js"></script>
@@ -75,12 +75,12 @@
             </ul>
             <ul class="data-pane gravity-device-pane">
                 <li class="heading"><strong><span class="gd-option ispindel-info"> <%= ispindel_data %></span>
-                                            <span class="gd-option tilt-info">Tilt</span> 
-                                            <span class="gd-option pill-info">Pill</span></strong></li>
+                                            <span class="gd-option tilt-info">Tilt&trade; Hydrometer</span> 
+                                            <span class="gd-option pill-info">RAPT Pill Hydrometer</span></strong></li>
                 <li class="gd-option ispindel-info pill-info" layout horizontal main-justified><span class="descriptor"><%= ispindel_tilt %></span> <span id="gdevice-angle">--</span></li>
                 <li class="gd-option ispindel-info pill-info" layout horizontal main-justified><span class="descriptor"><%= ispindel_battery %></span> <span id="gdevice-battery">--</span></li>
-
-                <li layout horizontal main-justified><span class="descriptor">Temperature</span> <span id="gravity-device-temp">--</span></li>
+                <li class="gd-option tilt-info" layout horizontal main-justified><span class="descriptor"><%= tilt_raw_sg %></span> <span id="tilt-raw">--</span></li>
+                <li layout horizontal main-justified><span class="descriptor"><%= gravity_temperature %></span> <span id="gravity-device-temp">--</span></li>
 
                 <li layout horizontal main-justified id=ispindel-rssi-line>
                     <span class="descriptor">RSSI</span> <div id="gravity-device-rssi" class="wifi-bars">
@@ -276,7 +276,12 @@
                 </li>
                 <li>
                     ~ <span id="sginput-sg-ispindel"></span><span class=platounit>&deg;P</span> @ <span id="sginput-ispindel-temp"></span>
-                    <sapn class=temp-unit>&deg;C</sapn>
+                    &deg;<sapn class=temp-unit>C</sapn>
+                </li>
+                <li>
+                   <span class="gd-option ispindel-info pill-info"><%= ispindel_tilt %></span> 
+                   <span class="gd-option tilt-info"> <%= tilt_raw_sg %> </span>
+                   <input class=sginput type="text" size="6" id="tilt-angle" >
                 </li>
             </ul>
 

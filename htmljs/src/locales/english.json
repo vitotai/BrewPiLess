@@ -135,6 +135,8 @@
     "specific_gravity": "Specific Gravity",
     "gravity_changed": "SG Changed(48/24/12H):",
     "ispindel_data": "iSpindel data:",
+    "gravity_temperature":"Temperature",
+    "tilt_raw_sg":"Raw SG",
     "ispindel_lastupdate": "Last Update:",
     "glycol_temp_control": "Glycol Temp Control:",
     "ptc_idle": "IDLE",
@@ -218,6 +220,14 @@
     "gravity_point": "point, 1= 0.001 for SG, or 0.1&deg;P for Plato",
     "gravity_save_change": "Save Change",
     "gravity_useplato": "Use Plato",
+    "gravity_wireless_hydrometer":"Wireless Hydrometer",
+    "gravity_none":"None",
+    "gravity_offset":"Gravity Offset",
+    "gravity_calibration":"Calibration",
+    "gravity_gravity":"Gravity",
+    "gravity_tilt_angle":"Tilt Angle",
+    "gravity_select_device":"Select Device",
+    "gravity_device":"Device",
 
     "__log_html": "log.html",
 
@@ -238,7 +248,7 @@
     "log_start_logging": "Start Logging",
     "log_options": "Options:",
     "log_write_on_buffer_full":"Write on Buffer Full",
-    "log_calibrate_ispindel": "Calibrate iSpindel",
+    "log_record_raw": "Record Angle/Raw",
     "log_tilt_in_water": "Tilt value in water",
     "log_hydrometer_reading": "Hydrometer reading:",
     "log_or_water_at": ", or water @",
@@ -482,6 +492,11 @@
     "log_mode_in_integer": "mode in integer",
     "log_mode_in_character": "mode in character",
     "log_pressure_reading": "Pressure in PSI",
+
+    "gravity_change": "Gravity Change",
+    "gravity_change_6h": "Gravity Change 6H",
+    "gravity_change_12h": "Gravity Change 12H",
+    "gravity_change_24h": "Gravity Change 24H",
 
     "__end__": "END"
 }

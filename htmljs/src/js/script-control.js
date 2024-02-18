@@ -26,7 +26,6 @@ function formatDateForPicker(date) {
 /* profile.js */
 var profileEditor = {
     dirty: false,
-    TU: 'C',
     C_startday_Id: "#startdate",
     C_savebtn_Id: "savebtn",
     markdirty: function(d) {
@@ -252,7 +251,7 @@ var profileEditor = {
         var stage;
 
         if (rowlist.length == 0) {
-            var init = (this.TU == 'C') ? 20 : 68;
+            var init = (BrewPiSetting.tempUnit == 'C') ? 20 : 68;
             stage = {
                 c: 't',
                 t: init,
@@ -423,18 +422,18 @@ var profileEditor = {
 
             }
         }
-        var s = this.sd.toISOString();
+        var s =parseInt(this.sd.getTime()/1000);
         var ret = {
             s: s,
             v: 2,
-            u: this.TU,
+            u: BrewPiSetting.tempUnit,
             t: temps
         };
         //console.log(ret);
         return ret;
     },
     convertUnit:function(steps,unit){
-        if(unit == this.TU) return steps;
+        if(unit ==  BrewPiSetting.tempUnit) return steps;
 
         for(var i=0;i< steps.length;i++)
             steps[i].t = (unit == 'F')? F2C(steps[i].t):C2F(steps[i].t);
@@ -442,7 +441,7 @@ var profileEditor = {
         return steps;
     },
     loadProfile: function(a) {
-        this.sd = new Date(a.s);
+        this.sd = new Date(a.s * 1000);
         this.clear();
         this.renderRows(this.convertUnit(a.t,a.u));
         ControlChart.update(this.chartdata());
@@ -459,8 +458,7 @@ var profileEditor = {
         }
     },
     setTempUnit: function(u) {
-        if (u == this.TU) return;
-        this.TU = u;
+        if (u == BrewPiSetting.tempUnit) return;
         var rl = this.rowList();
         for (var i = 0; i < rl.length; i++) {
             var tcell = rl[i].querySelector('td.stage-temp');
@@ -488,7 +486,14 @@ var PL = {
         return "/" + this.pl_path + "/" + a
     },
     depath: function(a) {
-        return a.substring(this.pl_path.length + 1)
+        var dir;
+        if(a.startsWith("/")){
+           dir= "/" + this.pl_path + "/" ;
+        }else{
+            dir= this.pl_path + "/" ;
+        }
+        if(a.startsWith(dir)) return a.substring(dir.length);
+        else return a;
     },
     rm: function(e) {
         var f = this;
@@ -834,6 +839,14 @@ function updateTempUnit(u) {
     }
 }
 
+function rcvBeerProfile(p) {
+    closeDlgLoading();
+    updateTempUnit(p.u); // using profile temp before we get from controller
+    BrewPiSetting.tempUnit = p.u;
+    profileEditor.initProfile(p);
+    ControlChart.init("tc_chart", profileEditor.chartdata(), p.u);
+}
+
 function ccparameter(s) {
     var setting = {
         valid: true,
@@ -846,15 +859,15 @@ function ccparameter(s) {
         profileEditor.setTempUnit(setting.tempUnit);
     }
     BrewPiSetting = setting;
+    s_ajax({
+        url: BPURL,
+        m: "GET",
+        success: function(d) {
+            rcvBeerProfile(JSON.parse(d));
+        }
+    });
 }
 
-function rcvBeerProfile(p) {
-    closeDlgLoading();
-    updateTempUnit(p.u); // using profile temp before we get from controller
-    BrewPiSetting.tempUnit = p.u;
-    profileEditor.initProfile(p);
-    ControlChart.init("tc_chart", profileEditor.chartdata(), p.u);
-}
 
 function HC_init(){
     Q("#humidity-control").style.display="none";
@@ -932,8 +945,8 @@ function initctrl() {
                     HC_show(c.rh);
                 
             },
-            C: function(c) { ccparameter(c); },
-            B: rcvBeerProfile
+            C: function(c) { ccparameter(c); } //,
+            //B: rcvBeerProfile
         }
     });
 }

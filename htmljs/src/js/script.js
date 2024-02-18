@@ -215,6 +215,41 @@
     };
     /* LCD information */
 
+    var StateText = [
+        "<%= state_text_idle %>",
+        "<%= state_text_off %>",
+        "<%= state_text_door_Open %>",
+        "<%= state_text_heating %>",
+        "<%= state_text_cooling %>",
+        "<%= state_text_wait_to_cool %>",
+        "<%= state_text_wait_to_heat %>",
+        "<%= state_text_wait_for_peak %>",
+        "<%= state_text_cooling_min_time %>",
+        "<%= state_text_heating_min_time %>",
+        "<%= state_text_invalid %>"
+    ];
+
+    function genStateText(state, duration) {
+        if (state == 1 || state == 2 || state == 10 || state == 7) return StateText[state];
+
+        var timestr = "";
+        var mm = Math.floor(duration / 60);
+        var hh = Math.floor(mm / 60);
+        var ss = duration % 60;
+        mm = mm - hh * 60;
+
+        function zeropad(n){
+            return n>9? ""+n:"0"+n;
+        }
+
+        if (hh > 0) {
+            timestr = "<%= time_format_long %>".replace("{SS}", zeropad(ss)).replace("{MM}", zeropad(mm)).replace("{HH}", zeropad(hh));
+        } else{
+            // short
+            timestr = "<%= time_format_short %>".replace("{SS}", zeropad(ss)).replace("{MM}", zeropad(mm));
+        }
+        return StateText[state].replace("{time}", timestr);
+    }
 
 
     function renderLcdText(info) {
@@ -243,41 +278,6 @@
             p: "<%= mode_beer_profile %>",
             i: "Invalid"
         };
-        var StateText = [
-            "<%= state_text_idle %>",
-            "<%= state_text_off %>",
-            "<%= state_text_door_Open %>",
-            "<%= state_text_heating %>",
-            "<%= state_text_cooling %>",
-            "<%= state_text_wait_to_cool %>",
-            "<%= state_text_wait_to_heat %>",
-            "<%= state_text_wait_for_peak %>",
-            "<%= state_text_cooling_min_time %>",
-            "<%= state_text_heating_min_time %>",
-            "<%= state_text_invalid %>"
-        ];
-
-        function genStateText(state, duration) {
-            if (state == 1 || state == 2 || state == 10 || state == 7) return StateText[state];
-
-            var timestr = "";
-            var mm = Math.floor(duration / 60);
-            var hh = Math.floor(mm / 60);
-            var ss = duration % 60;
-            mm = mm - hh * 60;
-
-            function zeropad(n){
-                return n>9? ""+n:"0"+n;
-            }
-
-            if (hh > 0) {
-                timestr = "<%= time_format_long %>".replace("{SS}", zeropad(ss)).replace("{MM}", zeropad(mm)).replace("{HH}", zeropad(hh));
-            } else{
-                // short
-                timestr = "<%= time_format_short %>".replace("{SS}", zeropad(ss)).replace("{MM}", zeropad(mm));
-            }
-            return StateText[state].replace("{time}", timestr);
-        }
 
         Object.keys(status).map(function(key, i) {
             var div = Q("#lcd" + key);
@@ -322,7 +322,7 @@
         else
             lines[2] = "Fridge" + showTemp(info.ft) + " " + showTemp(info.fs) + " &deg;" + info.tu;
         roomOfridge = !roomOfridge;
-        lines[3] = info.sl;
+        lines[3] = genStateText(info.st, info.sl);
         return lines;
     }
 
@@ -481,6 +481,16 @@
         Q('#dlg_addgravity .sg').style.display = "none";
         Q('#dlg_addgravity .' + msg).style.display = "block";
         Q('#dlg_addgravity').style.display = "block";
+
+        var beertemp = parseFloat(Q("#gravity-device-temp").innerHTML);
+        if(isNaN(beertemp)){
+            beertemp = parseFloat(Q("#lcdBeerTemp").innerHTML);
+        }
+        if(!isNaN(beertemp)){
+            Q("#sginput-ispindel-temp").innerHTML =beertemp;
+        }
+        // show tilt
+        Q("#tilt-angle").value=(window.GravityDevice==2)? Q("#tilt-raw").textContent:Q("#gdevice-angle").textContent;
         // update temp.
         if (typeof window["tempUnit"] != "undefined") {
             window.celsius = false;
@@ -505,13 +515,8 @@
         var gravity = parseFloat(Q("#dlg_addgravity .sginput").value);
         if (isNaN(gravity)) return;
         // if iSpindel info is available, or beer temp is available.
-        var currentBeerTemp=NaN;
-        if(typeof window.gdtemp !="undefined") currentBeerTemp= window.gdtemp;
-        else if ((typeof window.beerTemp != "undefined")&& !isNaN(window.beerTemp)){
-            currentBeerTemp = window.beerTemp;
-        }
-        if(!isNaN(currentBeerTemp)){
-            Q("#sginput-ispindel-temp").innerHTML =currentBeerTemp;
+        var currentBeerTemp=parseFloat(Q("#sginput-ispindel-temp").innerHTML);
+        if(!isNaN(currentBeerTemp)){            
             var temp =  window.celsius ? 20 : 68;
             if (window.plato) {
                 var sgc = BrewMath.pTempCorrection(window.celsius, gravity, temp, currentBeerTemp);
@@ -525,9 +530,14 @@
     }
 
     function inputgravity() {
-        var gravity = parseFloat(Q("#dlg_addgravity .sginput").value);
+        var gravity =parseFloat(Q("#sginput-sg-ispindel").innerHTML);
+        
+        if(isNaN(gravity)) gravity=parseFloat(Q("#dlg_addgravity .sginput").value);
 
-        if (!window.plato && (gravity < 0.8 || gravity > 1.25)) return;
+        if (!window.plato && (gravity < 0.8 || gravity > 1.25) || isNaN(gravity)){
+            alert("invalid input");
+            return;
+        } 
 
         dismissgravity();
         openDlgLoading();
@@ -542,6 +552,10 @@
             name: "webjs",
             gravity: gravity
         };
+        var raw=parseFloat(Q("#tilt-angle").value);
+        if(!isNaN(raw)){
+            data.raw = raw;
+        }
         if (window.isog) data.og = 1;
         if (window.plato) data.plato = 1;
         s_ajax({
@@ -575,7 +589,7 @@
     }
 
     function wifibar(did,x,ble){
-        var strength =(typeof ble =="undefined")? [-1000, -90, -80, -70, -67]:[-1000,-80,-70,-60];
+        var strength =(typeof ble =="undefined")? [-1000, -90, -80, -70, -67]:[-1000,-100,-80,-55];
         var bar = 4;
         for (; bar >= 0; bar--) {
             if (strength[bar] < x) break;
@@ -584,7 +598,7 @@
         for (var i = 0; i < bars.length; i++) {
             bars[i].style.backgroundColor = (i < bar) ? window.rssiBarColor : "rgba(255,255,255,0.05)";
         }
-        Q(did).title = (x > 0) ? "?" : Math.min(Math.max(2 * (x + 100), 0), 100);
+        Q(did).title = (x > 0) ? "?" : ""+x;
 
     }
 
@@ -669,7 +683,7 @@
             if (Q("#gravity-device-last")) Q("#gravity-device-last").innerHTML = lu.shortLocalizedString();
         }
         // gravity 
-        if(!BChart.calibrating) updateGravity(window.plato? BrewMath.sg2pla(info.g/1000.0):info.g/1000.0);
+        updateGravity(window.plato? BrewMath.sg2pla(info.g/1000.0):info.g/1000.0);
 
         // temperature
         if(info.t > -20000){
@@ -679,10 +693,13 @@
         // rssi, 
         if(Q("#gravity-device-rssi")){
             if(window.GravityDevice ==1) wifibar("#gravity-device-rssi",info.r);
-            else wifibar("#gravity-device-rssi",info.r);("#gravity-device-rssi",info.r,true);
+            else wifibar("#gravity-device-rssi",info.r,true);
         }
         // angle
-        if (Q("#gdevice-angle")) Q("#gdevice-angle").innerHTML = ""  + info.a.toFixed(3) +"&deg;";
+        if(window.GravityDevice == 2){
+            if (Q("#tilt-raw")) Q("#tilt-raw").innerHTML =""  + info.a.toFixed(3);
+        }
+        else if (Q("#gdevice-angle")) Q("#gdevice-angle").innerHTML = ""  + info.a.toFixed(2) +"&deg;";
         //battery
         if (Q("#gdevice-battery")) Q("#gdevice-battery").innerHTML = "" +((window.GravityDevice == 1)? 
                     (parseFloat(info.b).toFixed(2) +"V"):(""+parseInt(info.b) +"%"));

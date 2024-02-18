@@ -1,4 +1,8 @@
 var gdcurl = "/gdc";
+const DTTilt = 2;
+const DTiSpindel=1;
+const DTPill = 3;
+const MaxCalPoint=10;
 
 function mac2str(macs) {
     if (macs.length !== 6) {
@@ -24,19 +28,31 @@ function toFixed() {
         };
     }
 }
-function ptcConvert(pts,enc){
-    var ret=[];
-    pts.forEach(function(pt){
-        if(enc) ret.push([pt[0]*1000,pt[1]*1000]);
-        else ret.push([pt[0]/1000,pt[1]/1000]);
-    });
-    return ret;
+
+function fromSetting(points){
+    var pts=[];
+    for(var i=0;i<points.length;i++){
+        var raw = (window.dev==DTTilt)? points[i][0]/10000:points[i][0]/100;
+        var gravity= window.plato? points[i][1]/100:points[i][1]/10000;
+        pts.push([raw,gravity]);
+    }
+    return pts;
+}
+
+function toSetting(points){
+    var pts=[];
+    for(var i=0;i<points.length;i++){
+        var raw = (window.dev==DTTilt)? points[i][0]*10000:points[i][0]*100;
+        var gravity= window.plato? points[i][1]*100:points[i][1]*10000;
+        pts.push([Math.round(raw),Math.round(gravity)]);
+    }
+    return pts;
 }
 
 function fill(setting) {
     Q("#device-type").value = setting.dev;
     window.device=setting.dev;
-
+    window.plato =setting.plato;
     for (var name in setting) {
         var ele = Q("input[name=" + name + "]");
         if (ele) {
@@ -45,8 +61,8 @@ function fill(setting) {
         }
     }
     if(typeof setting["color"] != "undefined") Q("#tiltcolor").value = setting.color;
-    if(typeof setting["tcpts"] != "undefined"){
-        TCEditor.setPoints(ptcConvert(setting.tcpts,false));
+    if(typeof setting["calpts"] != "undefined"){
+        TCEditor.setPoints(fromSetting(setting.calpts));
     }
     if(typeof setting["mac"]!= "undefined"){
         Q("#pilladdr").innerHTML = pillAddress(setting["mac"]);
@@ -54,22 +70,23 @@ function fill(setting) {
     }
 }
 
-function getTiltCals(pts){
-    if(pts.length ==0){
-        return [0,1,0,0];
-    } else if(pts.length ==1){
-        return [pts[0][1] - pts[0][0] ,1,0,0];
+function getFormula(){
+    var pts = TCEditor.getPoints();
+    var coes;
+    if(pts.length < 2){
+        coes= [0,1,0,0];
     } else {
         var poly = regression('polynomial', pts, (pts.length > 3) ? 3 : ((pts.length > 2) ? 2 : 1), {
             precision: 9
         });
-        return [
+        coes= [
             poly.equation[0],
             poly.equation[1],
             (pts.length > 2)? poly.equation[2]:0,
             (pts.length > 3)? poly.equation[3]:0,
         ];
     }
+    for(var i=0;i<4;i++) Q('input[name="a' + i +'"]').value = coes[i];
 }
 
 function save() {
@@ -77,18 +94,17 @@ function save() {
     var setting = {};
 
     setting.dev = window.device;
+    setting.calpts= toSetting(TCEditor.getPoints());
 
     for (var i = 0; i < inputs.length; i++) {
         var ele = inputs[i];
-        if(ele.name != "ispindel" && ele.name!="tilthydrometer"){
+        if(ele.name != "" && ! ele.classList.contains('notsave') ){
             if (ele.type == "checkbox") setting[ele.name] = ele.checked;
             else if (ele.type == "text") setting[ele.name] = ele.value;
         }
     }
     if(setting.dev ==2){
         setting.color =  Q("#tiltcolor").value;
-        setting.tcpts= ptcConvert(TCEditor.getPoints(),1);
-        setting.tiltcoe = getTiltCals(TCEditor.getPoints());        
     }else if(setting.dev ==3){
        if(typeof window.pMAC == "undefined"){
             alert("Invlid Pill selected");
@@ -131,6 +147,8 @@ init:function(){
     tr.parentNode.removeChild(tr);
     this.tr=tr;
     this.points=[];
+    Q("#btn-addcal").disabled=false;
+    Q("#btn-addcal").onclick=function(){ TCEditor.add();};
 },
 getPoints:function(){
     return this.points;
@@ -141,16 +159,20 @@ setPoints:function(points){
 },
 add:function(){
     var uncal = parseFloat(Q("#uncalvalue").value);
-    var cal = parseFloat(Q("#calvalue").value);
-    if(!validSG(uncal) || !validSG(cal)) return;
+    var cal = parseFloat(Q("#calvalue").value);    
+//    if(!validSG(uncal) || !validSG(cal)) return;
 
     this.points.push([uncal,cal]);
-    Q("#tiltcalpoints tbody").appendChild(this.newPoint(this.points.length-1 ,[uncal,cal]));
+    this.remove_all();
+    this.render();
 },
-clear:function(){
+remove_all:function(){
     doAll("#tiltcalpoints tr.calpoint",function(div){
         div.parentNode.removeChild(div);
     });
+},
+clear:function(){
+    this.removeall();
     this.points=[];
 },
 newPoint:function(idx,data){
@@ -160,9 +182,7 @@ newPoint:function(idx,data){
         e.preventDefault();
         console.log("del "+idx);
         t.points.splice(idx,1);
-        doAll("#tiltcalpoints tr.calpoint",function(div){
-            div.parentNode.removeChild(div);
-        });
+        t.remove_all();
         t.render();
         return false;
     };
@@ -174,18 +194,37 @@ newPoint:function(idx,data){
 },
 
 render:function(){
+    this.points.sort((a,b)=>{
+        if(a[0] < b[0]) return -1;
+        else if(a[0] > b[0]) return 1;
+        else{
+            if (a[1] < b[1]) return -1;
+            else if (a[1] > b[1]) return 1;
+            else return 0;
+        }
+    });
     for(var i=0;i< this.points.length;i++){
         var tr=this.newPoint(i,this.points[i]);
         Q("#tiltcalpoints tbody").appendChild(tr);
     }
+    Q("#btn-addcal").disabled =(this.points.length >= MaxCalPoint);
 }
 };
 
 function tiltcal(){
+    if(window.device == 2){
+        doAll(".info-angle",function(div){ div.style.display="none"});
+        doAll(".info-rawsg",function(div){div.style.display=""});
+        }else{
+            doAll(".info-angle",function(div){ div.style.display=""});
+            doAll(".info-rawsg",function(div){div.style.display="none"});    
+    }    
+    
     Q("#dlg_addcalpoint").style.display="block";
 }
 function closeTiltCal(){
     Q("#dlg_addcalpoint").style.display="none";
+    getFormula();
     return false;
 }
 

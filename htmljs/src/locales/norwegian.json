@@ -132,6 +132,8 @@
     "specific_gravity": "Egenvekt målt SG",
     "gravity_changed": "Tetthet endret(48/24/12T):",
     "ispindel_data": "iSpindel data:",
+    "gravity_temperature":"Temperatur",
+    "tilt_raw_sg":"Rå SG",
     "ispindel_lastupdate": "Siste oppdatering:",
     "glycol_temp_control": "Glycol Temp Control:",
     "ptc_idle": "PAUSE",
@@ -215,6 +217,14 @@
     "gravity_point": "verdi, 1 = 0,001 for SG, eller 0,1 og P; for Platon",
     "gravity_save_change": "Lagre endring",
     "gravity_useplato": "Bruk Platon",
+    "gravity_wireless_hydrometer":"Trådløst hydrometer",
+    "gravity_none":"Ingen",
+    "gravity_offset":"gravitasjonsforskyvning",
+    "gravity_calibration":"Kalibrering",
+    "gravity_gravity":"gravitasjon",
+    "gravity_tilt_angle":"ippevinkel",
+    "gravity_select_device":"velg enhet",
+    "gravity_device":"enhet",
 
     "__log_html": "log.html",
 
@@ -235,7 +245,7 @@
     "log_start_logging": "Start logging",
     "log_options": "Alternativer:",
     "log_write_on_buffer_full":"Write on Buffer Full",
-    "log_calibrate_ispindel": "Kalibrer iSpindel",
+    "log_record_raw": "Registrere rådata",
     "log_tilt_in_water": "Tiltverdi i vann",
     "log_hydrometer_reading": "Hydrometerlesning:",
     "log_or_water_at": ", eller vann @",
@@ -479,6 +489,10 @@
     "log_mode_in_integer": "modus i heltall",
     "log_mode_in_character": "modus i karakter",
     "log_pressure_reading": "Trykk i PSI",
+    "gravity_change": "Gravity Change",
+    "gravity_change_6h": "Gravity Change 6H",
+    "gravity_change_12h": "Gravity Change 12H",
+    "gravity_change_24h": "Gravity Change 24H",
 
     "__end__": "END"
 }
