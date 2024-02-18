@@ -9,6 +9,7 @@
 #include "HumidityControl.h"
 #endif
 #include "ExternalData.h"
+#include "ErrorCode.h"
 
 #define LoggingPeriod 60000  //in ms
 #define MinimumGapToSync  600  // in seconds
@@ -163,6 +164,7 @@ BrewLogger::BrewLogger(void){
 #endif
 		if(! _logFile){
             DBG_PRINTF("!!!! fail to open, resume failed\n");
+			_errorCode = ErrorLogFailedResumeOpenFile;
             return false;
 		}
 		DBG_PRINTF("resume file:%s size:%d\n",filename, _logFile.size());
@@ -178,6 +180,7 @@ BrewLogger::BrewLogger(void){
 		if(dataRead < 8){
             DBG_PRINTF("resume failed\n");
 			_logFile.close();
+			_errorCode = ErrorLogFailedResumeReadFile;
 			return false;
 		}
 
@@ -192,6 +195,7 @@ BrewLogger::BrewLogger(void){
 		}else{
 			DBG_PRINTF("resume failed, no start tag\n");
 			_logFile.close();
+			_errorCode = ErrorLogFailedResumeInvalidFormat;
 			return false;
 		}
 		do{
@@ -291,6 +295,7 @@ BrewLogger::BrewLogger(void){
 		_logFile=FileSystem.open(filename,"a+");
 		if(! _logFile){
             DBG_PRINTF("resume failed\n");
+			_errorCode = ErrorLogFailedResumeOpenForWrite;
             return false;
 		}
 #endif
@@ -303,7 +308,7 @@ BrewLogger::BrewLogger(void){
 
 		if(_fsspace < 100){
 			DBG_PRINTF("Not enough space:%d\n",_fsspace);
-			_errorCode  = ErrorNotEnoughSpace;
+			_errorCode  = ErrorLogNotEnoughSpace;
 			return false;
 		}
 		strcpy(_pFileInfo->logname,filename);
@@ -316,7 +321,7 @@ BrewLogger::BrewLogger(void){
 				DBG_PRINTF("*%s Created",LOG_PATH);
 			}else{
 				DBG_PRINTF("***%s failed to creat",LOG_PATH);
-				_errorCode = ErrorFailedToCreateDirectory;
+				_errorCode = ErrorLogFailedToCreateDirectory;
 				return false;
 			}
 		}
@@ -331,7 +336,7 @@ BrewLogger::BrewLogger(void){
 
 		if(!_logFile){
 			DBG_PRINTF("***Error open temp file\n");
-			_errorCode = ErrorFailedOpenFile;
+			_errorCode = ErrorLogFailedOpenFile;
 			return false;
 		}
 

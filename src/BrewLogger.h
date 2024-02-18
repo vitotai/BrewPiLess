@@ -97,11 +97,6 @@
 
 #define MaximumFileRead 1480
 
-#define ErrorNone 0
-#define ErrorNotEnoughSpace -1
-#define ErrorFailedToCreateDirectory -2
-#define ErrorFailedOpenFile -3
-
 class BrewLogger
 {
 
