@@ -1,10 +1,29 @@
+
+BrewChart.prototype.calInfo=function(){
+    var t=this;
+    var points=(t.version == CHART_V6)? t.getCalibration(): t.calpoints;
+
+    var cdata=new Uint8Array(2 + points.length * 4);
+    var idx=0;
+    cdata[idx++]=0xF3;
+    cdata[idx++]=points.length;
+    for(var i=0;i<points.length;i++){
+        var raw =Math.round((t.devType == 2)? points[i][0]*1000:points[i][0]*10);
+        var gravity =Math.round(t.plato? points[i][1]*100:points[i][1]*10000);
+        cdata[idx++]= (raw >> 8) & 0xFF;
+        cdata[idx++]= raw & 0xFF;
+        cdata[idx++]= (gravity >> 8) & 0xFF;
+        cdata[idx++]= gravity & 0xFF;
+    }
+    return cdata;
+}
 BrewChart.prototype.partial = function(start, end) {
     var me = this;
 
     var srow = me.findNearestRow(this.chart, start);
     var erow = me.findNearestRow(this.chart, end);
     var data = [];
-    var VERTAG = 6;
+    var VERTAG = 7;
     var st = Math.round(start / 1000);
 
     // create a header
@@ -19,6 +38,10 @@ BrewChart.prototype.partial = function(start, end) {
 
     //  Period Record x 2
     data.push(header);
+    if(typeof this["savedDevInfo"] != "undefined") data.push(this.savedDevInfo);
+    else data.push(new Uint8Array([1,1])); // default to iSpindel
+
+    data.push(this.calInfo());
     /*
     #define OrderBeerSet 0
     #define OrderBeerTemp 1

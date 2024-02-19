@@ -761,8 +761,12 @@ var GravityChangePeriod3 =24 * 3600;
 
                     t.devType = 0; // default to none
                     if(t.version == 7){
+                        var didx = i;
                         var bsize = data[i++];
                         t.devType = data[i++];
+                        // save this block for future used
+                        t.savedDevInfo=data.slice(didx,didx+bsize+1);
+
                         if(bsize > 1){
                             t.deviceInfo(data.slice(i,i+bsize-1));
                         }

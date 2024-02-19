@@ -301,9 +301,9 @@ class BrewPiWebHandler: public AsyncWebHandler
           	request->send(200, ApplicationJsonType, output);
           	output = String();
 			#endif
-        }
-        else
+        }else{
           request->send(400);
+		}
 	}
 
 	void handleFileDelete(AsyncWebServerRequest *request){
@@ -316,8 +316,9 @@ class BrewPiWebHandler: public AsyncWebHandler
 			ESP.wdtEnable(10);
 			#endif
             request->send(200, "", "DELETE: "+request->getParam("path", true)->value());
-        } else
-          request->send(404);
+        } else{
+          	request->send(400);
+		}
     }
 	#if UseLittleFS
 	void createDirectoryIfNeeded(String path){
@@ -362,8 +363,9 @@ class BrewPiWebHandler: public AsyncWebHandler
 			#endif
             request->send(200,ApplicationJsonType,"{}");
             DBG_PRINTF("fputs path=%s\n",file.c_str());
-        } else
-          request->send(404);
+        } else{
+          	request->send(400);
+		}
     }
 
     bool fileExists(String path)
@@ -505,7 +507,7 @@ public:
 					request->send(200,ApplicationJsonType,"{}");
 					mqttRemoteControl.reset();
 				}else{
-  					request->send(500);
+  					request->send(406);
 					DBG_PRINTF("json format error\n");
   					return;
 				}
@@ -548,7 +550,7 @@ public:
 						requestRestart(false);
 					}
 				}else{
-  					request->send(500);
+  					request->send(406);
 					DBG_PRINTF("json format error\n");
   					return;
   				}			
@@ -638,10 +640,10 @@ public:
 		    			request->send(200,ApplicationJsonType,"{}");
 						theSettings.save();
 					}else{
-						request->send(401);
+						request->send(406);
 					}
         		} else{
-        		  request->send(404);
+        		  request->send(400);
     			}
 	 		}else{
 				if(request->hasParam("data")){
@@ -657,12 +659,14 @@ public:
 			if(request->method() == HTTP_POST){
 				if(request->hasParam("c", true)){
 		    		String content=request->getParam("c", true)->value();
-					if(parasiteTempController.updateSettings(content))
+					if(parasiteTempController.updateSettings(content)){
 			            request->send(200,ApplicationJsonType,"{}");
-					else 
-						request->send(400);	
-        		} else
-          			request->send(404);
+					}else{ 
+						request->send(406);	
+					}
+        		} else{
+          			request->send(400);
+				}
 	 		}else{
 				String status=parasiteTempController.getSettings();
 				request->send(200,ApplicationJsonType,status);
@@ -725,11 +729,11 @@ public:
 						request->send(200,ApplicationJsonType,"{}");
 					}else{
 						DBG_PRINTF("invalid Json\n");
-						request->send(402);
+						request->send(406);
 					}
 				}else{
 					DBG_PRINTF("no data\n");
-					request->send(401);
+					request->send(400);
 				}
 			}
 		}
@@ -744,7 +748,7 @@ public:
 				theSettings.save();
 				request->send(200,ApplicationJsonType,"{}");
 			}else{
-				request->send(404);
+				request->send(400);
 				DBG_PRINTF("missing parameter:m =%d, t=%d\n",request->hasParam("m",true), request->hasParam("t",true) );
 			}
 		}
@@ -761,10 +765,11 @@ public:
 						theSettings.save();
 						brewKeeper.profileUpdated();
 						request->send(200,ApplicationJsonType,"{}");
-					}else
-						request->send(402);
+					}else{
+						request->send(406);
+					}
 				}else{
-					request->send(401);
+					request->send(400);
 				}
 			}
 		}else if(request->method() == HTTP_GET){
@@ -1197,7 +1202,7 @@ public:
 				brewLogger.addIgnoredCalPointMask(mask);
 				request->send(200,"application/json","{}");
 			}else{
-				request->send(404);
+				request->send(400);
 			}
 		}else */
 		if( request->url() == LOGLIST_PATH){
@@ -1324,14 +1329,14 @@ private:
 	bool   _error;
 
 	void processGravity(AsyncWebServerRequest *request,char data[],size_t length){
-		if(length ==0) return request->send(500);;
+		if(length ==0) return request->send(400);;
 		SystemConfiguration *syscfg=theSettings.systemConfiguration();
         uint8_t error;
 		if(externalData.processGravityReport(data,length,request->authenticate(syscfg->username,syscfg->password),error)){
     		request->send(200,ApplicationJsonType,"{}");
 		}else{
 		    if(error == ErrorAuthenticateNeeded) return request->requestAuthentication();
-		    else request->send(500);
+		    else request->send(400);
 		}
 	}
 
@@ -1383,7 +1388,7 @@ public:
 					request->send(200,ApplicationJsonType,"{}");
 				}
 			 }else{
-				request->send(404);
+				request->send(400);
 			 }
 			 return;
 		 }
@@ -1414,7 +1419,7 @@ public:
 					request->send(200,ApplicationJsonType,"{}");
 				}
 			 }else{
-				request->send(404);
+				request->send(400);
 			 }
 			 return;
 		 }
@@ -1533,10 +1538,11 @@ public:
 	}
 
 	void handleNetworkScan(AsyncWebServerRequest *request){
-		if(WiFiSetup.requestScanWifi())
+		if(WiFiSetup.requestScanWifi()){
 			request->send(200,ApplicationJsonType,"{}");
-		else 
-			request->send(403);
+		}else{ 
+			request->send(500);
+		}
 	}
 
 	void handleNetworkDisconnect(AsyncWebServerRequest *request){

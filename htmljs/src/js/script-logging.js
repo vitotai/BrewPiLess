@@ -97,8 +97,8 @@ var logs = {
                     success: function(d) {
                         location.reload();
                     },
-                    fail: function(d) {
-                        alert("<%= script_logging_failed_start_for %>" + d);
+                    fail: function(d,s) {
+                        alert("<%= script_logging_failed_start_for %> " + d +" "+s);
                     }
                 });
             }

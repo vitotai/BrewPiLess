@@ -490,7 +490,8 @@
             Q("#sginput-ispindel-temp").innerHTML =beertemp;
         }
         // show tilt
-        Q("#tilt-angle").value=(window.GravityDevice==2)? Q("#tilt-raw").textContent:Q("#gdevice-angle").textContent;
+        if(window.isog) Q("#tilt-angle").value="--";
+        else Q("#tilt-angle").value=(window.GravityDevice==2)? Q("#tilt-raw").textContent:Q("#gdevice-angle").textContent;
         // update temp.
         if (typeof window["tempUnit"] != "undefined") {
             window.celsius = false;
@@ -512,6 +513,7 @@
     }
 
     function inputsg_change() {
+        if(window.isog) return;
         var gravity = parseFloat(Q("#dlg_addgravity .sginput").value);
         if (isNaN(gravity)) return;
         // if iSpindel info is available, or beer temp is available.
@@ -530,7 +532,7 @@
     }
 
     function inputgravity() {
-        var gravity =parseFloat(Q("#sginput-sg-ispindel").innerHTML);
+        var gravity =window.isog?  parseFloat(Q("#dlg_addgravity .sginput").value):parseFloat(Q("#sginput-sg-ispindel").innerHTML);
         
         if(isNaN(gravity)) gravity=parseFloat(Q("#dlg_addgravity .sginput").value);
 
