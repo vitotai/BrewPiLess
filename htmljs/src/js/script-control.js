@@ -449,7 +449,7 @@ var profileEditor = {
     initProfile: function(p) {
         if (typeof p != "undefined") {
             // start date
-            var sd = new Date(p.s);
+            var sd = new Date(p.s * 1000);
             this.setStartDate(sd);
             this.initable(this.convertUnit(p.t,p.u));
         } else {
