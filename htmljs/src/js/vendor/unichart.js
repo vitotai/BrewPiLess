@@ -20,7 +20,7 @@ UniBrewChart.testData = function(data) {
 
 UniBrewChart.prototype.process=function(data){
     var s = data[1] & 0x07;
-    this.CV = s;
+    this.version = s;
     if (s ==6  || s==7){
         BrewChart.prototype.process.call(this,data);
     }else if (s ==5){

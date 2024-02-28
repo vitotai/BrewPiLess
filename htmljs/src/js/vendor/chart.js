@@ -674,7 +674,7 @@ var GravityChangePeriod3 =24 * 3600;
         };
 
         BrewChart.prototype.getFormula = function() {
-            var points=(this.version == CHART_V6)? this.getCalibration(): this.calpoints;
+            var points=(this.version <= CHART_V6)? this.getCalibration(): this.calpoints;
 
             if (points.length < 2) return;
             var cpoints = this.filterPoints(points, this.cal_igmask);
