@@ -94,7 +94,7 @@ module.exports = (grunt) ->
             { 'dist/BPLLogViewer.tmpl.htm': ['build/BPLLogViewer.tmpl.html'] },
             { 'dist/BPLogWebViewer.tmpl.htm': ['build/BPLogWebViewer.tmpl.html'] },
             { 'dist/lcd.htm': ['build/lcd.html']},
-            { 'dist/backup.htm': ['build/backup.html']}
+            # { 'dist/backup.htm': ['build/backup.html']}
         ]
 
     jshint:
@@ -188,7 +188,6 @@ module.exports = (grunt) ->
             'pressure.htm': ['pressure.tmpl.htm']
             'BPLogWebViewer.htm': ['BPLogWebViewer.tmpl.htm']
             'BPLLogViewer.htm': ['BPLLogViewer.tmpl.htm']
-            'backup.htm': ['backup.htm']
           ]
 
 
