@@ -811,6 +811,7 @@ var GravityChangePeriod3 =24 * 3600;
                             var raw = (t.devType == 2)? traw/10000:traw/100;               
                             t.calpoints.push([raw,gravity]);
                         }
+                        t.calpoints.sort(function(a,b){return a[0]-b[0];});
                     }
                 } else if (d0 == 0xF4) { // mode
                     //console.log(""+t.ctime/t.interval +" Stage:"+d1);

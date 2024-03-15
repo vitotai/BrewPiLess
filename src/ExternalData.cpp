@@ -329,13 +329,17 @@ bool ExternalData::processGravityReport(char data[],size_t length, bool authenti
   			return false;
   		}		
 		float  gravity = root["gravity"];
+		float tilt = -100;
+
+		if(root.containsKey("raw")){
+			tilt = root["raw"];
+		}
 
 		if(root.containsKey("og")){
 			_setOriginalGravity(gravity);
 	
 		}else{
 			// gravity data from user
-			float tilt = -100;
 			userSetGravity(gravity,tilt);
 		}
 	}else if(root.containsKey("name") && root.containsKey("temperature") && root.containsKey("angle") && root.containsKey("battery")&& root.containsKey("RSSI")){

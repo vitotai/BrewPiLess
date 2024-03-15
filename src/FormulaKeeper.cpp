@@ -69,10 +69,21 @@ bool FormulaKeeper::addGravity(float sg){
 }
 
 void FormulaKeeper::addPoint(float tilt,float sg){
-        DBG_PRINTF("*** addPoint:%.4f,%f.4f\n",tilt,sg);
-        _calTilts[_numberOfPoints]= tilt;
-        _calGravities[_numberOfPoints] = sg;
+        if(_numberOfPoints >= MaxNumberCalibrationPoints) return;
+        int pos=0;
+
+        while(pos<_numberOfPoints && _calTilts[pos]< tilt) pos++;
+
+        if(pos < _numberOfPoints){
+            for(int i=_numberOfPoints; i> pos;i--){
+                _calTilts[i]= _calTilts[i-1];
+                _calGravities[i] =_calGravities[i-1];
+            }
+        }
+        _calTilts[pos]= tilt;
+        _calGravities[pos] = sg;
         _numberOfPoints ++;        
+        DBG_PRINTF("*** addPoint:%.4f,%f.4f @%d\n",tilt,sg,pos);
 }
 
 #endif
