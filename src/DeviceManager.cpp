@@ -709,7 +709,8 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 	appendAttrib(deviceString, DEVICE_ATTRIB_DEACTIVATED, config.hw.deactivate);
 	appendAttrib(deviceString, DEVICE_ATTRIB_PIN, config.hw.pinNr);
 #if EnableDHTSensorSupport
-	if(config.deviceFunction == DEVICE_CHAMBER_HUMIDITY_SENSOR) //VTODO: PIN device: DHT serious, DEVICE_HARDWARE_BME280
+	if(config.deviceFunction == DEVICE_CHAMBER_HUMIDITY_SENSOR
+			|| config.deviceFunction == DEVICE_CHAMBER_ROOM_HUMIDITY_SENSOR) //VTODO: PIN device: DHT serious, DEVICE_HARDWARE_BME280
 		appendAttrib(deviceString,DEVICE_ATTRIB_HUMIDITY_SENSOR_TYPE,config.hw.humiditySensorType);
 #endif
 	if (value && *value) {
@@ -737,7 +738,8 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 #if EnableDHTSensorSupport
 
 		||  config.deviceFunction==DEVICE_CHAMBER_HUMIDITY_SENSOR //VTODO
-		||  config.deviceHardware==DEVICE_HARDWARE_ENVIRONMENT_TEMP
+		||  config.deviceFunction == DEVICE_CHAMBER_ROOM_HUMIDITY_SENSOR
+		||  config.deviceHardware == DEVICE_HARDWARE_ENVIRONMENT_TEMP
 #endif
 	) {
 		tempDiffToString(buf, temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION), 3, 8);

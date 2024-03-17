@@ -140,11 +140,11 @@ function cmdfrom(b) {
         c.n = a.n;
         c.x = parseInt(div.querySelector("select.device-pintype").value);
     } else if (c.h == HW_PIN) { // hardware pin
-        if( c.f ==8) c.s = parseInt(div.querySelector("select.device-humidity-sensor").value);
+        if( c.f == Func_ChamberHumSensor || c.f == Func_RoomHumSensor) c.s = parseInt(div.querySelector("select.device-humidity-sensor").value);
         else c.x = parseInt(div.querySelector("select.device-pintype").value);
     }
     if(c.h == HW_1W_SENSOR || c.h == HW_EXT_SENSOR ||  c.h == HW_ENV_SENSOR || c.f ==Func_ChamberHumSensor || c.f ==Func_RoomHumSensor){ // onewire temp &  external sensor
-        c.j = parseInt(div.querySelector("input.device-calibration").value);
+        c.j = parseFloat(div.querySelector("input.device-calibration").value);
         if(isNaN(c.j)) c.j=0;
     }
     return c
