@@ -8,7 +8,7 @@ BrewChart.prototype.calInfo=function(){
     cdata[idx++]=0xF3;
     cdata[idx++]=points.length;
     for(var i=0;i<points.length;i++){
-        var raw =Math.round((t.devType == 2)? points[i][0]*1000:points[i][0]*10);
+        var raw =Math.round((t.devType == 2)? points[i][0]*10000:points[i][0]*100);
         var gravity =Math.round(t.plato? points[i][1]*100:points[i][1]*10000);
         cdata[idx++]= (raw >> 8) & 0xFF;
         cdata[idx++]= raw & 0xFF;
