@@ -26,7 +26,7 @@
 #include "FastDigitalPin.h"
 #include "Pins.h"
 
-#ifndef ESP8266
+#if !defined(ESP8266) && !defined(ESP32)
 #include <util/delay.h>
 #include <util/atomic.h>
 #endif

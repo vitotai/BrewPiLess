@@ -65,3 +65,36 @@
 .switch-input:checked + label[for=filtersg].switch-label:after {
 	background-color: $filtersg-color;
 }
+
+.switch-input:checked + label[for=pressure].switch-label:after {
+	background-color: $pressure-color;
+}
+
+.switch-input:checked + label[for=pressure-set].switch-label:after {
+	background-color: $pressure-set-color;
+}
+
+.switch-input:checked + label[for=carbonation].switch-label:after {
+	background-color: $carbonation-color;
+}
+
+.switch-input:checked + label[for=humidity].switch-label:after {
+	background-color: $humidity-color;
+}
+
+.switch-input:checked + label[for=humidity-set].switch-label:after {
+	background-color: $humidity-set-color;
+}
+.switch-input:checked + label[for=room-humidity].switch-label:after {
+	background-color: $room-humidity-color;
+}
+
+.switch-input:checked + label[for=sgchange1].switch-label:after {
+	background-color: $gravity-change-1-color;
+}
+.switch-input:checked + label[for=sgchange2].switch-label:after {
+	background-color: $gravity-change-2-color;
+}
+.switch-input:checked + label[for=sgchange3].switch-label:after {
+	background-color: $gravity-change-3-color;
+}

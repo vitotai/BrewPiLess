@@ -48,9 +48,21 @@
                     </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
+                            <%= log_write_on_buffer_full %>
+                        </h6>
+                        <div>
+                            <input type="checkbox" id="wobf" name="cbpl" class="switch-input" checked="checked">
+                            <label for="wobf" class="switch-label" style="min-width: 0;"></label>
+                        </div>
+                    </div>
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
                             <%= log_calibrate_ispindel %>
                         </h6>
-                        <input type=checkbox id=calispindel>
+                        <div>
+                            <input type="checkbox" id="calispindel" name="cbpl" class="switch-input" checked="checked">
+                            <label for="calispindel" class="switch-label" style="min-width: 0;"></label>
+                        </div>
                     </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
@@ -62,7 +74,7 @@
                         <h6 class="inline-header">
                             <%= log_hydrometer_reading %>
                         </h6>
-                        <input type=text id=hydrometer size=6>
+                        <input type=text id=hydrometer size=6 value="1.0">
                     </div>
                     <div layout horizontal cross-center class=tiltwatercorrect>
                         <h6 class="inline-header">
@@ -157,9 +169,9 @@
                     <div id=brewersfriend class=service-options>
                         <div layout horizontal cross-center>
                             <h6 class="inline-header">
-                                <%= log_brewersfriend_stream_url %>
+                                <%= log_brewersfriend_stream_apikey %>
                             </h6>
-                            <input type="text" id="brewersfriend-url" size="42">
+                            <input type="text" id="brewersfriend-apikey" size="42">
                         </div>
                         <div layout horizontal cross-center>
                             <h6 class="inline-header">
@@ -690,6 +702,12 @@
                 <th>%P</th>
                 <td>
                     <%= log_pressure_reading %>
+                </td>
+            </tr>
+            <tr>
+                <th>%H</th>
+                <td>
+                   Hostname
                 </td>
             </tr>
 

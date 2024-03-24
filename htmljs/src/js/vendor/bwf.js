@@ -29,7 +29,7 @@ function invoke(arg) {
 }
 
 var BWF = {
-    BrewProfile: "/brewing.json",
+//    BrewProfile: "/brewing.json",
     process: function(msg) {
         if (this.raw != null) {
             this.raw(msg);
@@ -51,6 +51,11 @@ var BWF = {
         if (this.ws.readyState == 1) this.ws.send(data);
     },
     reconnecting: false,
+    status:function(){
+        if(typeof this.ws == "undefined") return -1; // not initialized
+        if(this.ws.readyState == 1) return 0;
+        return 1;  
+    },
     connect: function() {
         var me = this;
         if (typeof WebSocket !== "undefined") {

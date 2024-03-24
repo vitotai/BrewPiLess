@@ -10,10 +10,67 @@
     </title>
     <meta name="apple-mobile-web-app-title" content="BrewPiLess">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <script type="text/javascript" src="js/vendor/bwf.js"></script>
     <script type="text/javascript" src="js/shared.js"></script>
+    <script type="text/javascript" src="js/vendor/regression.js"></script>
     <script type="text/javascript" src="js/script-gravity.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="style-gravity.css">
+<style>
+.caltable td,
+th {
+  padding: 6px 4px;
+  text-align: center;
+}
+
+.caltable td:not(:last-child),
+th:not(:last-child) {
+  border-right: 1px solid rgba(0, 0, 0, 0.87);
+}
+
+.caltable tbody:empty:before {
+  content: "No data.";
+  padding: 16px;
+  display: block;
+}
+
+.caltable tbody tr.odd {
+  background: #EEE;
+}
+
+.caltable tbody tr.even {
+  background: #FFF;
+}
+
+table.caltable {
+  width: 100%;
+  border-collapse: collapse;
+  margin:2em;
+}
+table.caltable thead {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.87);
+} 
+
+#dlg_sel_dev th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+#dlg_sel_dev tr:hover {
+            background-color: #f5f5f5;
+        }
+#dlg_sel_dev tr.selected {
+            background-color: #a0d3f5; /* Highlight color for selected rows */
+        }
+
+input[type="text"]{
+max-width: 140px;
+}
+#dlg_addcalpoint input{
+    margin-left: 2em;
+    margin-right: 2em;
+}
+</style>
 </head>
 
 <body onload=init()>
@@ -25,64 +82,69 @@
         <div main>
             <div class="card">
                 <form action="" method="post">
+                    <!-- iSpindel section  -->
+                    <div id="ispindel-pane">
 
-                    <div layout horizontal main-justified cross-center>
-                        <h5>
+                    <div layout horizontal cross-center>
+                        <h5>iSpindel</h5>
+                    </div>
+                    <div layout horizontal cross-center class="ispindelsub">
+                    </div>
+
+
+    
+                    </div><!-- ispindel pane -->
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
                             <%= gravity_useplato %>
-                        </h5>
+                        </h6>
                         <div>
                             <input type="checkbox" id="plato" name="plato" class="switch-input" checked>
                             <label for="plato" class="switch-label" style="min-width: 0;"></label>
                         </div>
                     </div>
 
-                    <div layout horizontal main-justified cross-center>
-                        <h5>iSpindel</h5>
-                        <div>
-                            <input type="checkbox" id="ispindel" name="ispindel" class="switch-input" checked>
-                            <label for="ispindel" class="switch-label" style="min-width: 0;"></label>
-                        </div>
+                    <!-- common section-->
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= gravity_offset %>
+                        </h6>
+                        <input type="text" name="off" size=4>
                     </div>
 
-                    <div layout horizontal main-justified cross-center>
+                    <div layout horizontal cross-center>
                         <h6 class="inline-header">
                             <%= gravity_calculated_bpl %>
                         </h6>
                         <div>
-                            <input type="checkbox" id="cbpl" name="cbpl" class="switch-input" checked>
-                            <label for="cbpl" class="switch-label" style="min-width: 0;"></label>
+                            <input type="checkbox" id="cal" name="cal" class="switch-input" checked>
+                            <label for="cal" class="switch-label" style="min-width: 0;"></label>
                         </div>
                     </div>
 
-                    <div layout horizontal cross-center>
+                    <div layout horizontal>
                         <h6 class="inline-header">
-                            <%= gravity_temp_correction %>
+                            <%= gravity_calibration %>
                         </h6>
-                        <div layout horizontal main-justified cross-center flex>
-                            <div layout horizontal cross-center>
-                                <input type="text" name="ctemp" size=4>
-                                <span>&deg;C</span>
-                            </div>
-                            <div>
-                                <input type="checkbox" id="tc" name="tc" class="switch-input" checked>
-                                <label for="tc" class="switch-label" style="min-width: 0;"></label>
-                            </div>
+                        <div>
+                            <button id="addbutton" onclick="tiltcal(); return false;" class="btn btn--raised">...</button>
                         </div>
                     </div>
-
-                    <div layout horizontal cross-center>
+                    <div layout horizontal >
                         <h6 class="inline-header">
                             <%= gravity_coefficients %>
                         </h6>
-                        <input type="text" name="a3" size=15>
+                        <input class="notsave" type="text" name="a3" size=8 disabled="true">
                         <div class="coefficient" layout horizontal main-center>x³ +</div>
-                        <input type="text" name="a2" size=15>
+                        <input class="notsave" type="text" name="a2" size=8 disabled="true">
                         <div class="coefficient" layout horizontal main-center>x² +</div>
-                        <input type="text" name="a1" size=15>
+                        <input class="notsave" type="text" name="a1" size=8 disabled="true">
                         <div class="coefficient" layout horizontal main-center>x +</div>
-                        <input type="text" name="a0" size=15>
+                        <input class="notsave" type="text" name="a0" size=8 disabled="true">
                         <div class="coefficient" layout horizontal main-center></div>
                     </div>
+
 
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
@@ -100,12 +162,65 @@
                     </div>
 
                     <div class="card-footer">
-                        <input type="submit" name="submit" class="btn" onclick="save();return false;"></input>
+                        <input type="submit" name="submit" class="notesave btn btn--raised" onclick="save();return false;"></input>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+
+    <div id="dlg_addcalpoint" class="modal">
+        <div class="modal-content" style="padding-bottom: 4em;">
+            <h5><span class="modal-title">
+                <%= gravity_calibration %>
+            </span>
+            </h5>
+             <div layout horizontal cross-center>
+                    <label for="uncalvalue"><span class="info-angle"> <%= gravity_tilt_angle %> </span></label>
+                    <input  class="notsave" id=uncalvalue type="number" style="max-width: 6em;">
+                    <label for="calvalue">  <%= gravity_gravity %> </label>
+                    <input  class="notsave" id="calvalue" type="number" style="max-width: 6em;">
+                    <button class="btn btn--raised" id="btn-addcal"><%= control_add %></button>
+             </div>
+             <hr style="margin:0.5em">
+
+             <div layout horizontal cross-center class="tiltsub" style="max-width:320px">
+                <table class="caltable" id="tiltcalpoints">
+                    <thead>
+                        <tr>
+                            <th>
+                            </th>
+                        <th>
+                            <span class="info-angle"><%= gravity_tilt_angle %></span>
+                        </th>
+                        <th>
+                            <%= gravity_gravity %>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="calpoint">
+                        <td ><button class="delbutton btn" style="color: red;">X</button></td>
+                        <td class="uncaldata"></td>
+                        <td class="caldata"></td>
+                    </tr>
+                    </tbody>
+                    </table>
+                </div>
+                <div class="dialog-buttons" style="float:right">
+                    <button class="btn btn--raised" onclick="return closeTiltCal();"><%= dlg_ok %></button>
+                </div>
+
+        </div>
+    </div>
+
+
+    <div id="blockscreen" class="modal">
+        <div id="blockscreencontent" class="modal-content">
+        </div>
+    </div>
+
 
     <!-- build:include partials/footer.html -->
     <!-- /build -->

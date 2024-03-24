@@ -105,7 +105,7 @@ class OLEDFourBit : public Print {
 
 	size_t print_P(const char * str) { // print a string stored in PROGMEM
 		char buf[21]; // create buffer in RAM
-#if defined(ARDUINO_ARCH_ESP8266)
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ESP32)
 		strlcpy(buf, str, 20); // ESP8266 has no concept of PROGMEM - we're good
 #else
 		strlcpy_P(buf, str, 20); // copy string to RAM
