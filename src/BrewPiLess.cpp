@@ -965,7 +965,7 @@ void greeting(std::function<void(const char*)> sendFunc)
 #endif		 
 #if EanbleParasiteTempControl
 	
-	doc["ptc"]= serialized(parasiteTempController.getSettings());
+	doc["ptcs"]= serialized(parasiteTempController.getSettings());
 #endif
 
 #if EnableHumidityControlSupport
