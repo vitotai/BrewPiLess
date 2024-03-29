@@ -43,13 +43,13 @@ typedef struct _TimeInformation{
 
 
 #define SGFromSetting(a)  ((float)(a) /10000.0)
-#define SGToSetting(a)   ((uint16_t)((a) * 10000.0))
+#define SGToSetting(a)   ((uint16_t)(((a) * 10000.0) + 0.5))
 
 #define PlatoFromSetting(a)  ((float)(a) /100.0)
-#define PlatoToSetting(a)   ((uint16_t)((a) * 100.0))
+#define PlatoToSetting(a)   ((uint16_t)(((a) * 100.0)+0.5))
 
 #define AngleFromSetting(a)  ((float)(a) /100.0)
-#define AngleToSetting(a)   ((uint16_t)((a) * 100.0))
+#define AngleToSetting(a)   ((uint16_t)(((a) * 100.0) + 0.5))
 #define MaxNumberCalibrationPoints 10
 
 typedef  struct _CalibrationPoint{

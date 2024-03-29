@@ -41,6 +41,7 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  It rarely happens after HTTP caching is used, but it does happen especially when Javascript Console is opened. During developing and testing, I found corrupted html/javascript pages. Without the abliity and time to debug or develop the web server and or TCP/IP stack, I decide to live with it.
 * Incorrect temperature chart.
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
+* The gravity caluated by the controller is slightly different from that shown on chart. It is because the formula are derived speratedly. Due to different float precision, the formula is different. The difference should be small, though.
 
 ## Version History
  * 4.4

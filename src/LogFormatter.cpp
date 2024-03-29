@@ -206,7 +206,10 @@ size_t nonNullJson(char* buffer,size_t size)
 
 	#if EnableHumidityControlSupport
 	if(humidityControl.isHumidityValid()) root[KeyFridgeHumidity] = humidityControl.humidity();
-	if(humidityControl.isRoomSensorInstalled()) root[KeyRoomHumidity] = humidityControl.roomHumidity();
+	if(humidityControl.isRoomSensorInstalled()){
+		uint8_t rh = humidityControl.roomHumidity();
+		if(rh<100) root[KeyRoomHumidity] =rh;
+	}
 	#endif
 
 	float sg=externalData.gravity();

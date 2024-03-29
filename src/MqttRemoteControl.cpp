@@ -160,7 +160,10 @@ void MqttRemoteControl::_reportData(void){
 
     	#if EnableHumidityControlSupport
 	    if(humidityControl.isHumidityValid())  lastID=_publish(KeyFridgeHumidity,humidityControl.humidity());
-	    if(humidityControl.isRoomSensorInstalled())  lastID=_publish(KeyFridgeHumidity,humidityControl.roomHumidity());
+	    if(humidityControl.isRoomSensorInstalled()){
+            uint8_t rh=humidityControl.roomHumidity();
+            if(rh <= 100) lastID=_publish(KeyRoomHumidity,,rh);
+        }
 	    #endif
 
 
