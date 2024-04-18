@@ -34,7 +34,7 @@ input {
     width: 95%;
 }
 
-.modal button {
+#networkselection button {
     border: 0;
     border-radius: 0.3rem;
     background-color: #1fa3ec;
@@ -61,3 +61,19 @@ input {
     display: inline-block;
     min-width: 260px;
 }
+
+#advanced input {
+    width:4em;
+    margin-right: 1em;
+    margin-top: 2px;
+    padding: 0px;
+  }
+  
+  #advanced .inline-header {
+    width: 65%;
+  }
+
+  #advanced .modal-header{
+    border-bottom: #00635a 2px solid;
+  }
+  
