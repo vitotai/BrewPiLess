@@ -2062,7 +2062,7 @@ void setup(void){
 	#endif
 
 #if SupportBleHydrometer
-	bleListener.begin();
+	bleScanner.begin();
 #endif
 
 #if EanbleParasiteTempControl
@@ -2163,7 +2163,7 @@ void loop(void){
 	#endif
 	
 	#if SupportBleHydrometer
-	bleListener.loop();
+	bleScanner.loop();
 	#endif
 
 	#if EnableHumidityControlSupport

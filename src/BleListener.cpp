@@ -5,9 +5,9 @@
 #define RescanTimeout 5000
 #define MaxRetryCount 10
 
-BleListener bleListener;
+BleScanner bleScanner;
 
-void BleListener::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
+void BleScanner::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
 
     //DBG_PRINTF("***OnResult:%s\n",advertisedDevice->getAddress().toString().c_str());
 #if 0
@@ -29,7 +29,34 @@ void BleListener::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
             DBG_PRINTF("\n");
         }
 #endif
+#if 1
+    if(advertisedDevice->getServiceDataCount()>0){
+        NimBLEAddress address = advertisedDevice->getAddress();
 
+    // service data
+        NimBLEUUID BTHomeServiceUUID((uint16_t)0xFCD2);
+        std::string strSvrData=advertisedDevice->getServiceData(BTHomeServiceUUID);
+        if(strSvrData.length()>0){
+
+            std::string devName= advertisedDevice->getName();
+            DBG_PRINTF("  Dev: %s, %d ",devName.empty()? devName.c_str():"unknown",advertisedDevice->getRSSI());
+            DBG_PRINTF("\t  %s ",address.toString().c_str());   
+            DBG_PRINTF("Service data count:%d ",advertisedDevice->getServiceDataCount());
+            for(int si=0;si<advertisedDevice->getServiceDataCount();si++){
+                NimBLEUUID suuid=advertisedDevice->getServiceDataUUID(si);
+                DBG_PRINTF("\n\t %d: UUID:%s :\n",si,suuid.toString().c_str());
+            }
+            DBG_PRINTF("\t\t");
+            uint8_t rawdata[100];
+            strSvrData.copy((char *)rawdata, strSvrData.length(), 0);
+            for(int i=0;i< strSvrData.length();i++){
+                if(i>0) DBG_PRINT(",");
+                DBG_PRINTF("0x%x",rawdata[i]);
+            }
+            DBG_PRINTF("\n");
+        }
+    }
+#endif
 
     if(_bleDeviceListeners.size()){  
 
@@ -46,26 +73,51 @@ void BleListener::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
 
 }
 
-void BleListener::begin(void) {
+void BleScanner::begin(void) {
   BLEDevice::init("");
   _pBLEScan = BLEDevice::getScan(); //create new scan
+  _setupAsyncScan();
+//  _pBLEScan->setDuplicateFilter(false); // keep reporting, so the device/pill seen will be reported again.
+}
+
+void BleScanner::_setupAsyncScan(void){
   _pBLEScan->setAdvertisedDeviceCallbacks(this);
   _pBLEScan->setActiveScan(false); //active scan uses more power, but get results faster
   _pBLEScan->setInterval(100); // in msecs
   _pBLEScan->setWindow(99);  // less or equal setInterval value
 
   _pBLEScan->setMaxResults(0); // don't cache anything
-//  _pBLEScan->setDuplicateFilter(false); // keep reporting, so the device/pill seen will be reported again.
+
 }
 
+BLEScanResults BleScanner::scan(uint32_t scanTime){
+    if(_pBLEScan->isScanning()){
+        // currently running scanning
+        _pBLEScan->stop();
+    }    
+    _pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
+    _pBLEScan->setMaxResults(32); 
 
-void BleListener::_startScan(void) {
+    BLEScanResults foundDevices = _pBLEScan->start(scanTime, false);
+    Serial.print("Devices found: ");
+    Serial.println(foundDevices.getCount());
+    Serial.println("Scan done!");
+   return foundDevices;
+}
+
+void BleScanner::clearScanData(void){
+}
+
+void BleScanner::_startScan(void) {
     // put your main code here, to run repeatedly:
-    _scanning=true;
+    _pBLEScan->clearResults(); // delete results fromBLEScan buffer to release memory
+//    _scanning=true;
+    _pBLEScan->setActiveScan(false); //active scan uses more power, but get results faster
+    _pBLEScan->setMaxResults(0); // not cached.
     _lastScanTime=millis();
     if(!_pBLEScan->start(0, NULL,false)){
         //Serial.printf("Error starting scan\n");
-        _scanning=false;
+//        _scanning=false;
         _retryCount++;
         if(_retryCount > MaxRetryCount){
             BLEDevice::deinit(true);
@@ -78,36 +130,29 @@ void BleListener::_startScan(void) {
    //  Serial.printf("BLE scanning\n");
 }
 
-void BleListener::startListen(BleDeviceListener* listener){
+void BleScanner::startListen(BleDeviceListener* listener){
     _bleDeviceListeners.push_back(listener);
     if(!_enabled){
         _enabled=true;
     }else{
-        // enabled.
-        if(_scanning){
-            // cause crash: _pBLEScan->clearDuplicateCache();
-        }
     }
 }
 
-void BleListener::stopListen(BleDeviceListener* listener) {
+void BleScanner::stopListen(BleDeviceListener* listener) {
     _bleDeviceListeners.remove(listener);
     if(_bleDeviceListeners.size() ==0){
         _enabled=false;
         _pBLEScan->stop();
-        _scanning=false;
+        //_scanning=false;
     }
 }
 
-void BleListener::loop(void) {
-    if(_scanning || !_enabled) return;
+void BleScanner::loop(void) {
+    if(!_enabled || _pBLEScan->isScanning() ) return;
     // else, finish searching
-    if(_enabled && (!_scanning && ((millis() - _lastScanTime) > RescanTimeout ))){
+    if(_enabled && (!_pBLEScan->isScanning() && ((millis() - _lastScanTime) > RescanTimeout ))){
         _startScan();
     }
-}
-
-void BleListener::_clearData(void){
 }
 
 //***********************************************************************
@@ -116,11 +161,11 @@ void BleListener::_clearData(void){
 void BleDeviceListener::startListen(void){
     if(_listening) return;
     _listening=true;
-    bleListener.startListen(this);
+    bleScanner.startListen(this);
 }
 void BleDeviceListener::stopListen(void){
     if(!_listening) return;
     _listening=false;
-    bleListener.stopListen(this);
+    bleScanner.stopListen(this);
 }
 #endif

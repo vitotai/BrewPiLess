@@ -62,6 +62,9 @@ WirelessTempSensor* WirelessTempSensor::theWirelessTempSensor=NULL;
 
 #endif
 
+#if SupportBTHomeSensor
+#include "BleBTHomeListener.h"
+#endif
 /*
  * Defaults for sensors, actuators and temperature sensors when not defined in the eeprom.
  */
@@ -182,6 +185,13 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 		}
 #endif
 
+#if SupportBTHomeSensor
+		case DEVICE_HARDWARE_BTHOME:{
+			BTHomeEnvironmentSensor* bme=new BTHomeEnvironmentSensor(config.hw.address);
+			bme->setHumidityCalibration(tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));
+			return bme;
+		}
+#endif
 
 
 #if BREWPI_DS2413
@@ -719,8 +729,11 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 	}
 	if (hasInvert(config.deviceHardware))
 		appendAttrib(deviceString, DEVICE_ATTRIB_INVERT, config.hw.invert);
-
+#if SupportBTHomeSensor
+	if (hasOnewire(config.deviceHardware) || config.deviceHardware==DEVICE_HARDWARE_BTHOME) {
+#else
 	if (hasOnewire(config.deviceHardware)) {
+#endif
 		deviceString += ",\"a\":\"";
 		printBytes(config.hw.address, 8, buf);
 		deviceString += buf;
@@ -857,7 +870,11 @@ device_slot_t findHardwareDevice(DeviceConfig& find)
 					match &= true;
 					break;
 			#endif
-	
+			#if SupportBTHomeSensor
+				case DEVICE_HARDWARE_BTHOME:
+					match &= matchAddress(find.hw.address, config.hw.address, 6);
+					break;
+			#endif
 					default:	// this should not happen - if it does the device will be returned as matching.
 					break;
 			}
@@ -1065,6 +1082,23 @@ void DeviceManager::enumerateBME280(EnumerateHardware& h, EnumDevicesCallback ca
 	}
 }
 #endif
+#if SupportBTHomeSensor
+void DeviceManager::enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output){
+
+
+	DeviceConfig config;
+	clear((uint8_t*)&config, sizeof(config));
+	config.deviceHardware = DEVICE_HARDWARE_BTHOME;
+	config.chamber = 1; // chamber 1 is default
+
+	BTHomeEnvironmentSensor::scanForDevice([&](const uint8_t* address){
+		memcpy(config.hw.address , address,6);
+		handleEnumeratedDevice(config, h, callback, output);
+	});
+}
+
+
+#endif
 
 void DeviceManager::enumerateHardware()
 {
@@ -1104,8 +1138,14 @@ void DeviceManager::enumerateHardware()
 	if (spec.hardware==-1 || isBME280(DeviceHardware(spec.hardware))) {
 		enumerateBME280(spec, OutputEnumeratedDevices, out);
 	}
-
 	#endif
+
+	#if SupportBTHomeSensor
+	if (spec.hardware==-1 || isBTHomeSensor(DeviceHardware(spec.hardware))) {
+		enumerateBTHomeSensor(spec, OutputEnumeratedDevices, out);
+	}
+	#endif
+
 //	logDebug("Enumerating Hardware Complete");
 }
 

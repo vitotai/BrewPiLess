@@ -37,22 +37,24 @@ protected:
     bool _listening;
 };
 
-class BleListener :public BLEAdvertisedDeviceCallbacks{
+class BleScanner :public BLEAdvertisedDeviceCallbacks{
 public:
-    BleListener():_scanning(false),_commandScan(false),_enabled(false){
-        _clearData();
+    BleScanner():_scanning(false),_commandScan(false),_enabled(false){       
     }
     // 
     void begin(void);
     void loop(void);
     void startListen(BleDeviceListener* listener);
     void stopListen(BleDeviceListener* listener);
+    BLEScanResults scan(uint32_t scanTime);
+    void clearScanData(void);
     // callbacks
     virtual void onResult(NimBLEAdvertisedDevice* advertisedDevice);
 protected:
     void _startScan(void);
-    void _clearData(void);
-    
+
+    void _setupAsyncScan(void);
+
     bool _scanning;
     bool _commandScan;
     bool _enabled;
@@ -64,7 +66,7 @@ protected:
     uint32_t _lastScanTime;
 };
 
-extern BleListener bleListener;
+extern BleScanner bleScanner;
 
 
 #endif
