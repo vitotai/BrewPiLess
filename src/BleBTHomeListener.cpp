@@ -119,14 +119,11 @@ bool BTHomeEnvironmentSensor::onDeviceFound(NimBLEAdvertisedDevice* device){
 
 static uint8_t findTagStartFrom(int sidx,uint8_t objId){
     uint8_t idx;
-    DBG_PRINTF("\t findTag:%x from %d",objId,sidx);
     for(idx =sidx; idx< sizeof(BTHomeDataObjectMap)/sizeof(BTHomeDataObject); idx++){
         if(BTHomeDataObjectMap[idx].objectId == objId){
-            DBG_PRINTF("\t Found len:%d\n",BTHomeDataObjectMap[idx].length);
             return idx;
         }
     }
-    DBG_PRINTF("\t Not found\n");
     return 0xFF;
 }
 
@@ -137,7 +134,7 @@ static bool parseBTHomeSensorData(NimBLEAdvertisedDevice* device, float& tempera
 
     std::string strSvrData=device->getServiceData(BTHomeServiceUUID);
 
-    DBG_PRINTF("Scanned device found:%s sv data len:%d\n", device->getAddress().toString().c_str(),strSvrData.length());
+    //DBG_PRINTF("Scanned device found:%s sv data len:%d\n", device->getAddress().toString().c_str(),strSvrData.length());
 
     if(strSvrData.length()<=0) return false;
 
@@ -148,7 +145,7 @@ static bool parseBTHomeSensorData(NimBLEAdvertisedDevice* device, float& tempera
     strSvrData.copy((char *)rawdata,length, 0);
     // ONly V2, non-encried device supported for now
 
-    DBG_PRINTF("\t flag:%x", rawdata[0]);
+    //DBG_PRINTF("\t flag:%x\n", rawdata[0]);
     
     if(rawdata[0] != 0x40) return false;
     int lastId=0;
@@ -163,19 +160,19 @@ static bool parseBTHomeSensorData(NimBLEAdvertisedDevice* device, float& tempera
                 // litle endian
                 temperature =((float)( rawdata[idx +1] | (rawdata[idx +2]<<8))* 0.01);
                 gotData=true;
-                DBG_PRINTF("\t found temp:%d\n", (int)(temperature *100));
+                //DBG_PRINTF("\t found temp:%d\n", (int)(temperature *100));
         }else if(objId == ID_Temperature_1p){
                 temperature =( (float)(rawdata[idx +1] | (rawdata[idx +2] << 8))* 0.1);
                 gotData=true;
-                DBG_PRINTF("\t found temp:%d\n", (int)(temperature *100));
+                //DBG_PRINTF("\t found temp:%d\n", (int)(temperature *100));
         }else if(objId == ID_Humidity_2B){
                 humidity =(uint8_t)((float)(rawdata[idx +1] | (rawdata[idx +2]<< 8))* 0.01);
                 gotData=true;
-                DBG_PRINTF("\t found hum:%d\n", humidity);
+                //DBG_PRINTF("\t found hum:%d\n", humidity);
         }else if(objId == ID_Humidity_1B){
                 humidity = rawdata[idx +1];
                 gotData=true;
-                DBG_PRINTF("\t found hum:%d\n", humidity);
+                //DBG_PRINTF("\t found hum:%d\n", humidity);
         }    
 
         idx += BTHomeDataObjectMap[oidx].length;
@@ -189,6 +186,7 @@ bool BTHomeEnvironmentSensor::_getData(NimBLEAdvertisedDevice* device){
     // copy to "data" doesn't include length information?
     if(parseBTHomeSensorData(device,_temperature,_humidity)){
         _lastUpdate = millis();
+        DBG_PRINTF("\t humidity:%d, temperature:%d, seen @%lu\n", _humidity,(int)(_temperature*100),_lastUpdate);
         return true;
     }
     return false;
@@ -199,28 +197,32 @@ bool BTHomeEnvironmentSensor::isConnected(){
     if(millis() - _lastUpdate > MaximumReportPeriod) return false;
     return true;
 }
-    uint8_t BTHomeEnvironmentSensor::humidity(){
-        if(isConnected()) return _humidity;
-        return 0xFF;
-    }
-    float  BTHomeEnvironmentSensor::readTemperature(){
+
+unsigned char BTHomeEnvironmentSensor::humidity(){
+    if(!isConnected()) return 0xFF;
+    return (unsigned char)(_humidity + _hCal);
+}
+
+float  BTHomeEnvironmentSensor::readTemperature(){
         if(isConnected()) return _temperature;
         return -1000.0;
-    }
+}
 
 
 int BTHomeEnvironmentSensor::scanForDevice(BTHomeDevicdFoundFunc foundCb){
 
-    BLEScanResults result=bleScanner.scan(5);
+    BLEScanResults result=bleScanner.scan(ScanDeviceTime);
     int found=0;
     for(auto it = result.begin(); it != result.end(); it++){
         float temp;
         uint8_t humidity;
         
+        temp=-1000;
+        humidity=0xFF;
         
         if(parseBTHomeSensorData(*it,temp,humidity)){
             found++;
-            foundCb(((NimBLEAdvertisedDevice*)(*it))->getAddress().getNative());
+            foundCb(((NimBLEAdvertisedDevice*)(*it))->getAddress().getNative(),temp,humidity);
         }
     }
     DBG_PRINTF("BTHome device found:%d\n",found);

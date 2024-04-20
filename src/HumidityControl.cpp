@@ -1,7 +1,7 @@
 #include "HumidityControl.h"
 
 #if EnableHumidityControlSupport
-EnvironmentSensor nullEnvironmentSensor;
+NullEnvironmentSensor nullEnvironmentSensor;
 
 
 EnvironmentSensor* HumidityControl::chamberSensor= &nullEnvironmentSensor;

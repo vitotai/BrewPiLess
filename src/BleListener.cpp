@@ -29,7 +29,7 @@ void BleScanner::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
             DBG_PRINTF("\n");
         }
 #endif
-#if 1
+#if 0
     if(advertisedDevice->getServiceDataCount()>0){
         NimBLEAddress address = advertisedDevice->getAddress();
 

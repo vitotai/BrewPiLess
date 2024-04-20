@@ -8,20 +8,13 @@
 #include "EnvironmentSensor.h"
 
 #define MaximumReportPeriod 60000
+#define ScanDeviceTime 6
 
-class BTHomeSensorDefinition{
-public:
-    BTHomeSensorDefinition(){};
-    std::string name;
-    uint8_t address[6];
-    float   temperature;
-    uint8_t humidity;
-};
-typedef std::function<void(const uint8_t*)> BTHomeDevicdFoundFunc;
+typedef std::function<void(const uint8_t*,float,uint8_t)> BTHomeDevicdFoundFunc;
 
-class BTHomeEnvironmentSensor :public BleDeviceListener, EnvironmentSensor {
+class BTHomeEnvironmentSensor :public EnvironmentSensor, BleDeviceListener {
 public:
-    BTHomeEnvironmentSensor(uint8_t mac[6]){memcpy(_macAddress,mac,6);}
+    BTHomeEnvironmentSensor(uint8_t mac[6]):_hCal(0){memcpy(_macAddress,mac,6);}
     // callbacks
     
     void begin(void);
@@ -29,8 +22,8 @@ public:
     bool onDeviceFound(NimBLEAdvertisedDevice*);
 
     virtual bool isConnected();
-    uint8_t humidity();
-    float  readTemperature();
+    virtual unsigned char humidity() override;
+    virtual float  readTemperature () override;
 
     EnvironmentSensorType sensorType(){ return SensorType_BTHome;}
     void setHumidityCalibration(int8_t cal){

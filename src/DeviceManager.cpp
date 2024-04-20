@@ -189,6 +189,8 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 		case DEVICE_HARDWARE_BTHOME:{
 			BTHomeEnvironmentSensor* bme=new BTHomeEnvironmentSensor(config.hw.address);
 			bme->setHumidityCalibration(tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));
+			bme->begin();
+//			Serial.printf("create BTHome sensor\n");
 			return bme;
 		}
 #endif
@@ -501,7 +503,6 @@ void DeviceManager::parseDeviceDefinition()
 	fill((int8_t*)&dev, sizeof(dev));
 
 	piLink.parseJson(&handleDeviceDefinition, &dev);
-
 	if (!inRangeInt8(dev.id, 0, MAX_DEVICE_SLOT))			// no device id given, or it's out of range, can't do anything else.
 		return;
 
@@ -573,7 +574,6 @@ void DeviceManager::parseDeviceDefinition()
 	}
 	else {
 		logError(ERROR_DEVICE_DEFINITION_UPDATE_SPEC_INVALID);
-
 	}
 	piLink.printResponse('U');
 	deviceManager.beginDeviceOutput();
@@ -753,6 +753,9 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 		||  config.deviceFunction==DEVICE_CHAMBER_HUMIDITY_SENSOR //VTODO
 		||  config.deviceFunction == DEVICE_CHAMBER_ROOM_HUMIDITY_SENSOR
 		||  config.deviceHardware == DEVICE_HARDWARE_ENVIRONMENT_TEMP
+#endif
+#if SupportBTHomeSensor
+		||  config.deviceHardware == DEVICE_HARDWARE_BTHOME
 #endif
 	) {
 		tempDiffToString(buf, temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION), 3, 8);
@@ -1091,7 +1094,7 @@ void DeviceManager::enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallb
 	config.deviceHardware = DEVICE_HARDWARE_BTHOME;
 	config.chamber = 1; // chamber 1 is default
 
-	BTHomeEnvironmentSensor::scanForDevice([&](const uint8_t* address){
+	BTHomeEnvironmentSensor::scanForDevice([&](const uint8_t* address,float temp,uint8_t humidity){
 		memcpy(config.hw.address , address,6);
 		handleEnumeratedDevice(config, h, callback, output);
 	});
