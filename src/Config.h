@@ -96,7 +96,7 @@
 // Enable humidity sensor
 //
 #ifndef EnableBME280Support
-#define EnableBME280Support true
+#define EnableBME280Support false
 #endif
 //
 //////////////////////////////////////////////////////////////////////////

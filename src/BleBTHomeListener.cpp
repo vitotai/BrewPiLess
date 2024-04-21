@@ -3,6 +3,7 @@
 #include "BleBTHomeListener.h"
 #include <string>
 #include "TimeKeeper.h"
+#include "OneWireTempSensor.h"
 
 #define ENDIAN_CHANGE_U16(x) ((((x)&0xFF00) >> 8) + (((x)&0xFF) << 8))
 
@@ -185,8 +186,8 @@ bool BTHomeEnvironmentSensor::_getData(NimBLEAdvertisedDevice* device){
     // haveServieceData() doesn't work as expected
     // copy to "data" doesn't include length information?
     if(parseBTHomeSensorData(device,_temperature,_humidity)){
+        DBG_PRINTF("\t humidity:%d, temperature:%d, seen before %lu\n", _humidity,(int)(_temperature*100), (millis()-_lastUpdate)/1000);
         _lastUpdate = millis();
-        DBG_PRINTF("\t humidity:%d, temperature:%d, seen @%lu\n", _humidity,(int)(_temperature*100),_lastUpdate);
         return true;
     }
     return false;
@@ -207,7 +208,9 @@ float  BTHomeEnvironmentSensor::readTemperature(){
         if(isConnected()) return _temperature;
         return -1000.0;
 }
-
+bool BTHomeEnvironmentSensor::sameDevice(const uint8_t mac[6]){
+    return memcmp(mac,_macAddress,6) ==0;
+}
 
 int BTHomeEnvironmentSensor::scanForDevice(BTHomeDevicdFoundFunc foundCb){
 
@@ -228,4 +231,59 @@ int BTHomeEnvironmentSensor::scanForDevice(BTHomeDevicdFoundFunc foundCb){
     DBG_PRINTF("BTHome device found:%d\n",found);
     return found;
 }
+std::list<BTHomeEnvironmentSensor*> BTHomeEnvironmentSensor::allSensors;
+
+BTHomeEnvironmentSensor* BTHomeEnvironmentSensor::findBTHomeSensor(const uint8_t mac[6]){
+    for (auto ptr : allSensors) {
+        if(ptr->sameDevice(mac)){
+            return ptr;
+        }
+    }
+    return NULL;
+}
+BTHomeEnvironmentSensor* BTHomeEnvironmentSensor::getBTHomeSensor(const uint8_t mac[6]){
+     BTHomeEnvironmentSensor* bt=BTHomeEnvironmentSensor::findBTHomeSensor(mac);
+     if(bt != NULL){
+        bt->_count ++;
+        return bt;
+     }
+    // not found create a new one
+    bt=new BTHomeEnvironmentSensor(mac);
+    bt->_count =1;
+    allSensors.push_front(bt);
+    return bt;
+}
+
+void BTHomeEnvironmentSensor::releaseSensor(BTHomeEnvironmentSensor* sensor){
+    sensor->_count --;
+    if(sensor->_count ==0){
+        sensor->stop();
+        allSensors.remove(sensor);
+        delete sensor;
+    }
+}
+
+bool BTHomeEnvironmentSensor::init(){
+    return isConnected();
+}
+
+temperature BTHomeEnvironmentSensor::read(){
+		if (!isConnected()){
+			 return TEMP_SENSOR_DISCONNECTED;
+		}
+		if(_temperature<-99.0) {
+			return TEMP_SENSOR_DISCONNECTED;
+		}
+		temperature temp =  _tempOffset + doubleToTemp((double)_temperature);
+		return temp;
+
+}
+
+void BTHomeEnvironmentSensor::setTemperatureCalibration(fixed4_4 cal){
+	const uint8_t shift = TEMP_FIXED_POINT_BITS-ONEWIRE_TEMP_SENSOR_PRECISION; // difference in precision between DS18B20 format and temperature adt
+		//temperature i fixed7_9, calibration fixed4_4
+	_tempOffset =constrainTemp16(temperature(cal)<<shift);
+
+}
+
 #endif

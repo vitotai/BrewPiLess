@@ -105,9 +105,9 @@ bool DeviceManager::isDefaultTempSensor(BasicTempSensor* sensor) {
 	return sensor==&defaultTempSensor;
 }
 #if EnableHumidityControlSupport
-bool isEnvironmentSensorAvailable(){
-	return humidityControl.roomSensor != &nullEnvironmentSensor
-			|| humidityControl.chamberSensor != &nullEnvironmentSensor;
+bool isDHTEnvironmentSensorAvailable(){
+	return humidityControl.roomSensor->sensorType() == SensorType_DHT
+			|| humidityControl.chamberSensor->sensorType() == SensorType_DHT;
 }
 #endif
 
@@ -186,8 +186,8 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 #endif
 
 #if SupportBTHomeSensor
-		case DEVICE_HARDWARE_BTHOME:{
-			BTHomeEnvironmentSensor* bme=new BTHomeEnvironmentSensor(config.hw.address);
+		case DEVICE_HARDWARE_BTHOME_HUMIDITY:{
+			BTHomeEnvironmentSensor* bme=BTHomeEnvironmentSensor::getBTHomeSensor(config.hw.address);
 			bme->setHumidityCalibration(tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));
 			bme->begin();
 //			Serial.printf("create BTHome sensor\n");
@@ -333,6 +333,10 @@ void DeviceManager::uninstallDevice(DeviceConfig& config)
 				//#endif
 
 //				DEBUG_ONLY(logInfoInt(INFO_UNINSTALL_TEMP_SENSOR, config.deviceFunction));
+				#if SupportBTHomeSensor
+				if(config.deviceHardware == DEVICE_HARDWARE_BTHOME_THERMOMETER)  BTHomeEnvironmentSensor::releaseSensor((BTHomeEnvironmentSensor*)s);
+				else 
+				#endif
 				delete s;
 			}
 			break;
@@ -353,8 +357,16 @@ void DeviceManager::uninstallDevice(DeviceConfig& config)
 		#if EnableDHTSensorSupport	 
 		case DEVICETYPE_ENVIRONMENT_SENSOR:
 			if (*ppv!=&nullEnvironmentSensor) {
+				#if SupportBTHomeSensor
+				if( ((EnvironmentSensor*)*ppv)->sensorType() == SensorType_BTHome)  BTHomeEnvironmentSensor::releaseSensor((BTHomeEnvironmentSensor*)*ppv);
+				else 
+				#endif
+				#if EnableBME280Support
 				if( ((EnvironmentSensor*)*ppv)->sensorType() == SensorType_BME280)  delete (Bme280Sensor*)*ppv;
-				else delete (DHTSensor*)*ppv;
+				else 
+				#endif
+				delete (DHTSensor*)*ppv;
+
 				*ppv = &nullEnvironmentSensor;
 			}
 			break;
@@ -730,7 +742,7 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 	if (hasInvert(config.deviceHardware))
 		appendAttrib(deviceString, DEVICE_ATTRIB_INVERT, config.hw.invert);
 #if SupportBTHomeSensor
-	if (hasOnewire(config.deviceHardware) || config.deviceHardware==DEVICE_HARDWARE_BTHOME) {
+	if (hasOnewire(config.deviceHardware) || config.deviceHardware==DEVICE_HARDWARE_BTHOME_HUMIDITY || config.deviceHardware==DEVICE_HARDWARE_BTHOME_THERMOMETER) {
 #else
 	if (hasOnewire(config.deviceHardware)) {
 #endif
@@ -755,7 +767,8 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 		||  config.deviceHardware == DEVICE_HARDWARE_ENVIRONMENT_TEMP
 #endif
 #if SupportBTHomeSensor
-		||  config.deviceHardware == DEVICE_HARDWARE_BTHOME
+		||  config.deviceHardware == DEVICE_HARDWARE_BTHOME_HUMIDITY
+		||  config.deviceHardware == DEVICE_HARDWARE_BTHOME_THERMOMETER
 #endif
 	) {
 		tempDiffToString(buf, temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION), 3, 8);
@@ -864,7 +877,7 @@ device_slot_t findHardwareDevice(DeviceConfig& find)
 					break;
 			#if EnableDHTSensorSupport
 				case DEVICE_HARDWARE_ENVIRONMENT_TEMP:
-					match &= isEnvironmentSensorAvailable();
+					match &= isDHTEnvironmentSensorAvailable();
 					break;
 			#endif
 
@@ -874,7 +887,8 @@ device_slot_t findHardwareDevice(DeviceConfig& find)
 					break;
 			#endif
 			#if SupportBTHomeSensor
-				case DEVICE_HARDWARE_BTHOME:
+				case DEVICE_HARDWARE_BTHOME_HUMIDITY:
+				case DEVICE_HARDWARE_BTHOME_THERMOMETER:
 					match &= matchAddress(find.hw.address, config.hw.address, 6);
 					break;
 			#endif
@@ -1041,7 +1055,7 @@ void DeviceManager::enumerateEnvTempDevices(EnumerateHardware& h, EnumDevicesCal
 	};
 
 	for(int i=0; i< 2;i++){
-		if(sensors[i] != & nullEnvironmentSensor){
+		if(sensors[i]->sensorType() == SensorType_DHT){
 			clear((uint8_t*)&config, sizeof(config));
 			config.deviceHardware = DEVICE_HARDWARE_ENVIRONMENT_TEMP;
 			config.chamber = 1; // chamber 1 is default
@@ -1091,13 +1105,30 @@ void DeviceManager::enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallb
 
 	DeviceConfig config;
 	clear((uint8_t*)&config, sizeof(config));
-	config.deviceHardware = DEVICE_HARDWARE_BTHOME;
 	config.chamber = 1; // chamber 1 is default
 
 	BTHomeEnvironmentSensor::scanForDevice([&](const uint8_t* address,float temp,uint8_t humidity){
-		memcpy(config.hw.address , address,6);
-		handleEnumeratedDevice(config, h, callback, output);
+		if(BTHomeEnvironmentSensor::findBTHomeSensor(address) == NULL){
+			memcpy(config.hw.address , address,6);
+			if(humidity <=100){
+				config.deviceHardware = DEVICE_HARDWARE_BTHOME_HUMIDITY;
+				handleEnumeratedDevice(config, h, callback, output);
+			}
+			if(temp > 0){
+				config.deviceHardware = DEVICE_HARDWARE_BTHOME_THERMOMETER;
+				handleEnumeratedDevice(config, h, callback, output);
+			}
+		}
 	});
+	// list all devices "installed"
+	for (auto bth : BTHomeEnvironmentSensor::getAll()) {
+    		memcpy(config.hw.address , bth->macAddress(),6);
+			config.deviceHardware = DEVICE_HARDWARE_BTHOME_HUMIDITY;
+			handleEnumeratedDevice(config, h, callback, output);
+			config.deviceHardware = DEVICE_HARDWARE_BTHOME_THERMOMETER;
+			handleEnumeratedDevice(config, h, callback, output);
+    }
+
 }
 
 
@@ -1132,7 +1163,7 @@ void DeviceManager::enumerateHardware()
 	#endif
 
 	#if EnableDHTSensorSupport //vito: enumerate device
-	if (isEnvironmentSensorAvailable() &&( spec.hardware==-1 || isEnvTempSensor(DeviceHardware(spec.hardware))) ) {
+	if (isDHTEnvironmentSensorAvailable() &&( spec.hardware==-1 || isEnvTempSensor(DeviceHardware(spec.hardware))) ) {
 		enumerateEnvTempDevices(spec, OutputEnumeratedDevices, out);
 	}
 	#endif
@@ -1144,7 +1175,8 @@ void DeviceManager::enumerateHardware()
 	#endif
 
 	#if SupportBTHomeSensor
-	if (spec.hardware==-1 || isBTHomeSensor(DeviceHardware(spec.hardware))) {
+	if (spec.hardware==-1 || isBTHomeSensorHumidity(DeviceHardware(spec.hardware))
+		|| isBTHomeThermometer(DeviceHardware(spec.hardware))) {
 		enumerateBTHomeSensor(spec, OutputEnumeratedDevices, out);
 	}
 	#endif

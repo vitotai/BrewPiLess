@@ -92,8 +92,13 @@ inline bool isAssignable(DeviceType type, DeviceHardware hardware)
 #if EnableHumidityControlSupport	
 	|| (hardware==DEVICE_HARDWARE_PIN && type==DEVICETYPE_ENVIRONMENT_SENSOR)
 	|| (hardware==DEVICE_HARDWARE_ENVIRONMENT_TEMP && type==DEVICETYPE_TEMP_SENSOR)
+#if EnableBME280Support
 	|| (hardware==DEVICE_HARDWARE_BME280 && type == DEVICETYPE_ENVIRONMENT_SENSOR)
-	|| (hardware==DEVICE_HARDWARE_BTHOME && type == DEVICETYPE_ENVIRONMENT_SENSOR)
+#endif
+#if SupportBTHomeSensor	
+	|| (hardware==DEVICE_HARDWARE_BTHOME_HUMIDITY && type == DEVICETYPE_ENVIRONMENT_SENSOR)
+	|| (hardware==DEVICE_HARDWARE_BTHOME_THERMOMETER && type == DEVICETYPE_TEMP_SENSOR)
+#endif
 #endif
 	|| (hardware==DEVICE_HARDWARE_ONEWIRE_TEMP && type==DEVICETYPE_TEMP_SENSOR)
 	|| (hardware==DEVICE_HARDWARE_NONE && type==DEVICETYPE_NONE);
@@ -135,8 +140,11 @@ inline bool isBME280(DeviceHardware hardware) {
 #endif
 
 #if SupportBTHomeSensor
-inline bool isBTHomeSensor(DeviceHardware hardware) {
-	return hardware == DEVICE_HARDWARE_BTHOME;
+inline bool isBTHomeSensorHumidity(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_BTHOME_HUMIDITY;
+}
+inline bool isBTHomeThermometer(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_BTHOME_THERMOMETER;
 }
 #endif
 /**
