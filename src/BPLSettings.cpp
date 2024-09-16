@@ -143,6 +143,7 @@ bool BPLSettings::autoCapSettingsSanity(void){ return true;}
 #define  KeyGateway   "gw"
 #define  KeyNetmask    "mask"
 #define  KeyDNS "dns"
+#define  KeySecuredAP "eap"
 
 #define KeyFlashChipId "fid"
 #define KeyFlashRealSize "frsize"
@@ -201,6 +202,7 @@ void BPLSettings::defaultSystemConfiguration(void){
     syscfg->netmask = (uint32_t) IPAddress(0,0,0,0);
     syscfg->dns = (uint32_t) IPAddress(0,0,0,0);
     syscfg->glycolChilling = 0;
+	syscfg->securedAp = false;
 	#if TWOFACED_LCD
 	syscfg->displayMode = 0;
 	#endif
@@ -236,7 +238,8 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
         syscfg->passwordLcd = root[KeyProtect];
         syscfg->wifiMode = root[KeyWifi];
         syscfg->backlite = root[KeyLcdBackLight];
-		#if TWOFACED_LCD		
+		syscfg->securedAp = root[KeySecuredAP];
+		#if TWOFACED_LCD
 		syscfg->displayMode = root[KeyDisplayMode];
 		#endif
         syscfg->glycolChilling=root[KeyGlycol];
@@ -270,7 +273,7 @@ String BPLSettings::jsonSystemConfiguration(void){
     root[KeyNetmask]= IPAddress(syscfg->netmask).toString();
 	root[KeyDNS] = IPAddress(syscfg->dns).toString();
 	root[KeyGlycol] = syscfg->glycolChilling;
-
+	root[KeySecuredAP] = syscfg->securedAp;
 	#if TWOFACED_LCD		
 	root[KeyDisplayMode] = syscfg->displayMode;
 	#endif

@@ -60,12 +60,13 @@ void WiFiSetupClass::enterBackupApMode(void)
 }
 
 void WiFiSetupClass::createNetwork(){
-	if(strlen(_apPassword)>=8)
+	if(_apPassword != NULL && strlen(_apPassword)>=8){
 		WiFi.softAP(_apName, _apPassword);
-	else
+		DBG_PRINTF("\ncreate network:%s pass:%s\n",_apName, _apPassword);
+	}else{
 		WiFi.softAP(_apName);
-	
-	DBG_PRINTF("\ncreate network:%s pass:%s\n",_apName, _apPassword);
+		DBG_PRINTF("\ncreate network:%s without pass\n",_apName);
+	}
 }
 
 void WiFiSetupClass::setupApService(void)
@@ -95,19 +96,19 @@ void WiFiSetupClass::begin(WiFiMode mode, char const *ssid,const char *passwd,ch
 	_mode= mode;
 	WiFiMode mode2use = (_mode == WIFI_OFF)? WIFI_AP_STA:_mode;
 	
-	DBG_PRINTF("\nSaved SSID:\"%s\" targetSSID:%s\n",WiFi.SSID().c_str(),targetSSID? targetSSID:"NULL");
-	DBG_PRINTF("\nAP mode:%d, used;%d autoReconect:%d\n",mode,mode2use,WiFi.getAutoReconnect());
 
 	if( (mode2use == WIFI_STA || mode2use == WIFI_AP_STA) 
 		 && _targetSSID == NULL 
-		 && (WiFi.SSID() == "[Your SSID]" || WiFi.SSID() == "" || WiFi.SSID() == NULL)){
+		 /*&& (WiFi.SSID() == "[Your SSID]" || WiFi.SSID() == "" || WiFi.SSID() == NULL)*/){
 			DBG_PRINTF("Invalid SSID!");
 			mode2use = WIFI_AP;
 	}
 	_apName=(ssid == NULL || *ssid=='\0')? DEFAULT_HOSTNAME:ssid;	
 	_apPassword=(passwd !=NULL && *passwd=='\0')? NULL:passwd;
 
-	WiFi.setAutoConnect(true);
+	DBG_PRINTF("\nSaved SSID:\"%s\" targetSSID:%s\n",WiFi.SSID().c_str(),targetSSID? targetSSID:"NULL");
+	DBG_PRINTF("\nAP mode:%d, used;%d autoReconect:%d\n",mode,mode2use,WiFi.getAutoReconnect());
+
 	WiFi.mode(mode2use);
 	// start AP
 	if( mode2use == WIFI_AP || mode2use == WIFI_AP_STA){

@@ -17,6 +17,7 @@ var HW_1W_2413=3;
 var HW_EXT_SENSOR=5;
 var HW_ENV_SENSOR= 6;
 var HW_BME280=7;
+var HW_BTHOME=8;
 
 var devices = {
     pinlabel:function(pin){

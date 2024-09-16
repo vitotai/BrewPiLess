@@ -20,7 +20,8 @@ typedef struct _SystemConfiguration{
     uint32_t dns;
     uint8_t  displayMode;
     uint8_t glycolChilling;
-    uint8_t _padding[2];
+    uint8_t securedAp;
+    uint8_t _padding;
 }SystemConfiguration;
 
 //*****************************************************

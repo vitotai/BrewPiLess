@@ -536,6 +536,10 @@ public:
 					DBG_PRINTF("config saved: %s\n",theSettings.systemConfiguration()->hostnetworkname);
 					request->send(200,ApplicationJsonType,"{}");
 					display.setAutoOffPeriod(theSettings.systemConfiguration()->backlite);
+					if (theSettings.systemConfiguration()->securedAp){
+						WiFi.eraseAP();
+						// https://github.com/espressif/arduino-esp32/issues/8976
+					}
 
 					#if TWOFACED_LCD
 					sharedDisplayManager.setDisplayMode(theSettings.systemConfiguration()->displayMode);
@@ -1952,14 +1956,14 @@ void setup(void){
 	WiFiConfiguration *wifiCon=theSettings.getWifiConfiguration();
 
 	if(strlen(syscfg->hostnetworkname)>0)
-		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password,
+		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->securedAp? syscfg->password:NULL,
 					wifiCon->ssid[0]? wifiCon->ssid:NULL,
 					wifiCon->pass[0]? wifiCon->pass:NULL);
 	else // something wrong with the file
 		WiFiSetup.begin(wifiMode,DEFAULT_HOSTNAME,DEFAULT_PASSWORD);
 #else
 	if(strlen(syscfg->hostnetworkname)>0)
-		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->password);
+		WiFiSetup.begin(wifiMode,syscfg->hostnetworkname,syscfg->securedAp? syscfg->password:NULL);
 	else // something wrong with the file
 		WiFiSetup.begin(wifiMode,DEFAULT_HOSTNAME,DEFAULT_PASSWORD);
 #endif

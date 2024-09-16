@@ -207,6 +207,7 @@
     "config_save":"Save",
     "confg_restore_from":"Restore from",
     "config_restore":"Restore",
+    "config_ap_password":"Enable AP Password",
 
     "__gdc_html": "gdc.html",
     "gravity_title": "Dispositivo densità",

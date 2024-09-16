@@ -207,6 +207,7 @@
     "config_save":"儲存",
     "confg_restore_from":"從檔案中載入",
     "config_restore":"回復",
+    "config_ap_password":"AP模式使用密碼",
 
     "__gdc_html": "gdc.html",
     "gravity_title": "比重計",
