@@ -62,7 +62,7 @@ DelayImpl wait = DelayImpl(DELAY_IMPL_CONFIG);
 DisplayType realDisplay;
 DisplayType DISPLAY_REF display = realDisplay;
 
-ValueActuator alarm;*/
+ValueActuator alarmActuator;*/
 /*
 void setup()
 {
@@ -109,7 +109,7 @@ void brewpiLoop(void)
 		lastUpdate = ticks.millis();
 
 #if BREWPI_BUZZER
-		buzzer.setActive(alarm.isActive() && !buzzer.isActive());
+		buzzer.setActive(alarmActuator.isActive() && !buzzer.isActive());
 #endif
 
 		tempControl.updateTemperatures();

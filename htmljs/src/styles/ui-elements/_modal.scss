@@ -25,7 +25,8 @@
 	transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
 	max-width: 600px;
 	padding: 2rem;
-
+	margin-left: auto;
+	margin-right: auto;
 	h2.message {
 		font-size: 18px;
     font-weight: bold;

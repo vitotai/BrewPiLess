@@ -7,6 +7,7 @@
 
 #ifdef ESP32
 #include <AsyncTCP.h>
+#include <freertos/semphr.h>
 #elif defined(ESP8266)
 #include <ESPAsyncTCP.h>
 #else
@@ -36,6 +37,14 @@
 #include "AsyncMqttClient/Packets/PubAckPacket.hpp"
 #include "AsyncMqttClient/Packets/PubRecPacket.hpp"
 #include "AsyncMqttClient/Packets/PubCompPacket.hpp"
+
+#if ESP32
+#define SEMAPHORE_TAKE(X) if (xSemaphoreTake(_xSemaphore, 1000 / portTICK_PERIOD_MS) != pdTRUE) { return X; }  // Waits max 1000ms
+#define SEMAPHORE_GIVE() xSemaphoreGive(_xSemaphore);
+#elif defined(ESP8266)
+#define SEMAPHORE_TAKE(X) void()
+#define SEMAPHORE_GIVE() void()
+#endif
 
 class AsyncMqttClient {
  public:
@@ -69,18 +78,20 @@ class AsyncMqttClient {
   uint16_t unsubscribe(const char* topic);
   uint16_t publish(const char* topic, uint8_t qos, bool retain, const char* payload = nullptr, size_t length = 0, bool dup = false, uint16_t message_id = 0);
 
+  const char* getClientId();
+
  private:
   AsyncClient _client;
 
   bool _connected;
   bool _connectPacketNotEnoughSpace;
-  bool _disconnectFlagged;
+  bool _disconnectOnPoll;
   bool _tlsBadFingerprint;
   uint32_t _lastClientActivity;
   uint32_t _lastServerActivity;
   uint32_t _lastPingRequestTime;
 
-  char _generatedClientId[13 + 1];  // esp8266abc123
+  char _generatedClientId[18 + 1];  // esp8266-abc123 and esp32-abcdef123456 
   IPAddress _ip;
   const char* _host;
   bool _useIp;
@@ -120,6 +131,10 @@ class AsyncMqttClient {
   std::vector<AsyncMqttClientInternals::PendingPubRel> _pendingPubRels;
 
   std::vector<AsyncMqttClientInternals::PendingAck> _toSendAcks;
+
+#ifdef ESP32
+  SemaphoreHandle_t _xSemaphore = nullptr;
+#endif
 
   void _clear();
   void _freeCurrentParsedPacket();

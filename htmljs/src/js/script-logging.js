@@ -84,20 +84,10 @@ var logs = {
                 alert("<%= script_logging_duplicated_name %>");
                 return;
             }
-            var arg = "";
-            var calispindel = Q("#calispindel").checked;
-            if (calispindel) {
-                var tilt = parseFloat(Q("#tiltinw").value.trim());
-                var reading = parseFloat(Q("#hydrometer").value.trim());
-                if (window.plato) reading = 0;
-                if (isNaN(tilt)) {
-                    alert("<%= script_logging_tilt_value_necessary %>");
-                } else if (!window.plato && (isNaN(tilt) || isNaN(reading))) {
-                    alert("<%= script_logging_tilt_value_and_hydrometer_necessary %>");
-                    return;
-                }
-                arg = "&tw=" + tilt + "&hr=" + reading;
-            }
+            var arg = (Q("#calispindel").checked)? "&raw=1":"";
+
+            var wobf = Q("#wobf").checked;
+            arg += "&wobf=" + (wobf? "1":"0");
 
             if (confirm("<%= script_logging_start_new_log %>")) {
                 //console.log("Start logging");
@@ -107,8 +97,8 @@ var logs = {
                     success: function(d) {
                         location.reload();
                     },
-                    fail: function(d) {
-                        alert("<%= script_logging_failed_start_for %>" + d);
+                    fail: function(d,s) {
+                        alert("<%= script_logging_failed_start_for %> " + d +" "+s);
                     }
                 });
             }
@@ -202,6 +192,9 @@ var logs = {
                 t.ll = r.list;
                 t.list(r.list);
                 t.fsinfo(r.fs.size, r.fs.used);
+
+                Q("#wobf").checked = (r.wobf !=0);
+
                 if (typeof r["plato"] != "undefined" && r.plato) {
                     window.plato = true;
                     var th = document.querySelectorAll(".tiltwatercorrect");
@@ -260,7 +253,7 @@ function generichttp_get() {
     r.format = encodeURIComponent(format.escapeJSON());
     r.method = (Q("#m_post").checked) ? "POST" : "GET";
     r.type = Q("#data-type").value.trim();
-    r.service = 0;
+    r.service = 3;
     return r;
 }
 
@@ -362,7 +355,7 @@ function brewfather_get(r) {
     info.url = "http://log.brewfather.net/brewpiless?id=" + uid;
 
     var format = "{\"id\":\"" + device +
-        "\",\"beerTemp\":%b,\"beerSet\":%B,\"fridgeTemp\":%f,\"fridgeSet\":%F,\"roomTemp\":%r,\"gravity\":%g,\"tiltValue\":%t,\"auxTemp\":%a,\"extVolt\":%v,\"timestamp\":%u,\"tempUnit\":\"%U\",\"pressure\":%P,\"mode\":\"%M\"}";
+        "\",\"beerTemp\":%b,\"beerSet\":%B,\"fridgeTemp\":%f,\"fridgeSet\":%F,\"roomTemp\":%r,\"gravity\":%g,\"tiltValue\":%t,\"auxTemp\":%a,\"extVolt\":%v,\"timestamp\":%u,\"tempUnit\":\"%U\",\"pressure\":%P,\"mode\":\"%M\",\"humidity\":%h}";
 
     info.format = encodeURIComponent(format.escapeJSON());;
 
@@ -377,7 +370,10 @@ function brewersfriend_set(r) {
     Q("#service-type").value = "brewersfriend";
     serviceOption("brewersfriend");
 
-    Q("#brewersfriend-url").value = r.url;
+    var match = /\/\/log\.brewersfriend\.com\/stream\/(\w+)$/.exec(r.url);
+
+
+    Q("#brewersfriend-apikey").value = match[1];
 
     var beermatch = /"beer":"([^"]+)"/.exec(r.format);
     Q("#brewersfriend-beer").value = beermatch[1];
@@ -400,14 +396,14 @@ function brewersfriend_get(r) {
         var gu = "P";
     }
     //http://log.brewersfriend.com/stream/[API KEY]
-    var url = Q("#brewersfriend-url").value.trim();
+    var apikey = Q("#brewersfriend-apikey").value.trim();
     var beer = Q("#brewersfriend-beer").value.trim();
 
-    var format = "{\"name\":\"BrewPiLess\",\"temp\": %b,\"temp_unit\": \"%U\",\"gravity\":" + gf +
+    var format = "{\"name\":\"%H\",\"temp\": %b,\"temp_unit\": \"%U\",\"gravity\":" + gf +
         ",\"gravity_unit\":\"" + gu + "\",\"ph\": \"\",\"comment\": \"\",\"beer\":\"" + beer + "\",\"battery\":%v,\"RSSI\": \"\",\"angle\": %t}";
 
     var info = {};
-    info.url = url;
+    info.url = 'http://log.brewersfriend.com/stream/' + apikey;
 
     info.format = encodeURIComponent(format.escapeJSON());;
 
@@ -420,16 +416,15 @@ function brewersfriend_get(r) {
 function service_set(r) {
     if (r.service == 1) { // ubidots.com 
         ubidots_set(r);
-    } else {
+    } if (r.service == 0){ // generic http, auto
         if (/http:\/\/api\.thingspeak\.com\//.exec(r.url))
             thingspeak_set(r);
         else if (/http:\/\/log\.brewfather\.net\//.exec(r.url))
             brewfather_set(r);
         else if (/http:\/\/log\.brewersfriend\.com\//.exec(r.url))
             brewersfriend_set(r);
-        else
-            generichttp_set(r);
-    }
+    } else
+        generichttp_set(r);
 }
 
 function update() {
@@ -445,11 +440,13 @@ function update() {
     if (enabled && !r) return;
     if (!r) {
         // default
-        r = { url: "", format: "", method: "POST", type: "", service: 0 };
+        r = { url: "", format: "", method: "POST", type: "", service:3 };
     }
     r.enabled = enabled;
     r.period = Q("#period").value;
     if (r.period < 60) r.period = 60;
+    if (r.period < 900 && (service == "brewfather" || service == "brewersfriend")) r.period=900;
+
     s_ajax({
         url: logurl,
         m: "POST",
@@ -465,7 +462,7 @@ function update() {
 }
 
 function remote_init(classic) {
-    var MinPeriod = { generichttp: 1, thingspeak: 15, brewfather: 900, ubidots: 1 };
+    var MinPeriod = { generichttp: 60, thingspeak: 15, brewfather: 900, ubidots: 60,brewersfriend:900 };
     Q("#period").onchange = function() {
         var min = MinPeriod[Q("#service-type").value];
         if (Q("#period").value < min) Q("#period").value = min;
@@ -522,22 +519,6 @@ function init(classic) {
         getActiveNavItem();
         Q("#verinfo").innerHTML = "v" + JSVERSION;
     }
-
-    function readingByTemp() {
-        var temp = parseFloat(Q("#watertemp").value);
-        var ctemp = parseFloat(Q("#caltemp").value);
-        var unit = Q("#tempunit").value;
-        if (isNaN(temp) || isNaN(ctemp)) return;
-        if (unit == 'C') {
-            ctemp = C2F(ctemp);
-            temp = C2F(temp);
-        }
-        var reading = BrewMath.tempCorrectionF(1.0, ctemp, temp);
-        Q("#hydrometer").value = reading.toFixed(3);
-    }
-    Q("#watertemp").onchange = readingByTemp;
-    Q("#caltemp").onchange = readingByTemp;
-    Q("#tempunit").onchange = readingByTemp;
 
     remote_init(classic);
     logs.init();

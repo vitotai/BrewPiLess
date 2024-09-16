@@ -257,7 +257,7 @@ void TempControl::updateState(void){
 			}
 			resetWaitTime();
 			if(fridgeFast > (cs.fridgeSetting+cc.idleRangeHigh) ){  // fridge temperature is too high
-				#if SettableMinimumCoolTime
+				#if 1 //SettableMinimumCoolTime
 				tempControl.updateWaitTime(cc.mutexDeadTime, sinceHeating);
 				#else
 				tempControl.updateWaitTime(MIN_SWITCH_TIME, sinceHeating);
@@ -270,7 +270,7 @@ void TempControl::updateState(void){
 						state = IDLE; // beer is already colder than setting, stay in or go to idle
 						break;
 					}
-					#if SettableMinimumCoolTime
+					#if 1 // SettableMinimumCoolTime
 					tempControl.updateWaitTime(cc.minCoolIdleTime, sinceCooling);
 					#else
 					tempControl.updateWaitTime(MIN_COOL_OFF_TIME, sinceCooling);
@@ -286,7 +286,7 @@ void TempControl::updateState(void){
 				}
 			}
 			else if(fridgeFast < (cs.fridgeSetting+cc.idleRangeLow)){  // fridge temperature is too low
-				#if SettableMinimumCoolTime
+				#if 1 // SettableMinimumCoolTime
 				tempControl.updateWaitTime(cc.mutexDeadTime, sinceCooling);
 				tempControl.updateWaitTime(cc.minHeatIdleTime, sinceHeating);
 				#else
@@ -332,7 +332,7 @@ void TempControl::updateState(void){
 
 			// stop cooling when estimated fridge temp peak lands on target or if beer is already too cold (1/2 sensor bit idle zone)
 			if(cv.estimatedPeak <= cs.fridgeSetting || (cs.mode != MODE_FRIDGE_CONSTANT && beerFast < (cs.beerSetting - 16))){
-				#if SettableMinimumCoolTime
+				#if 1 //SettableMinimumCoolTime
 				if(sinceIdle > cc.minCoolTime){
 				#else
 				if(sinceIdle > MIN_COOL_ON_TIME){
@@ -358,7 +358,7 @@ void TempControl::updateState(void){
 
 			// stop heating when estimated fridge temp peak lands on target or if beer is already too warm (1/2 sensor bit idle zone)
 			if(cv.estimatedPeak >= cs.fridgeSetting || (cs.mode != MODE_FRIDGE_CONSTANT && beerFast > (cs.beerSetting + 16))){
-				#if SettableMinimumCoolTime
+				#if 1 //SettableMinimumCoolTime
 				if(sinceIdle > cc.minHeatTime){
 				#else
 				if(sinceIdle > MIN_HEAT_ON_TIME){
@@ -497,7 +497,7 @@ void TempControl::detectPeaks(void){
 
 // Increase estimator at least 20%, max 50%s
 void TempControl::increaseEstimator(temperature * estimator, temperature error){
-	temperature factor = 614 + constrainTemp(abs(error)>>5, 0, 154); // 1.2 + 3.1% of error, limit between 1.2 and 1.5
+	temperature factor = 614 + constrainTemp(abs((int)error)>>5, 0, 154); // 1.2 + 3.1% of error, limit between 1.2 and 1.5
 	*estimator = multiplyFactorTemperatureDiff(factor, *estimator);
 	if(*estimator < 25){
 		*estimator = intToTempDiff(5)/100; // make estimator at least 0.05
@@ -507,7 +507,7 @@ void TempControl::increaseEstimator(temperature * estimator, temperature error){
 
 // Decrease estimator at least 16.7% (1/1.2), max 33.3% (1/1.5)
 void TempControl::decreaseEstimator(temperature * estimator, temperature error){
-	temperature factor = 426 - constrainTemp(abs(error)>>5, 0, 85); // 0.833 - 3.1% of error, limit between 0.667 and 0.833
+	temperature factor = 426 - constrainTemp(abs((int)error)>>5, 0, 85); // 0.833 - 3.1% of error, limit between 0.667 and 0.833
 	*estimator = multiplyFactorTemperatureDiff(factor, *estimator);
 	eepromManager.storeTempSettings();
 }
@@ -689,7 +689,7 @@ const ControlConstants TempControl::ccDefaults PROGMEM =
 	/* rotaryHalfSteps */ 0,
 
 	/* pidMax */ intToTempDiff(10),	// +/- 10 deg Celsius
-#if SettableMinimumCoolTime
+#if 1 //SettableMinimumCoolTime
     /* minCoolTime */ 180,
     /* minCoolIdleTime */ 300,
     /* minHeatTime */  180,

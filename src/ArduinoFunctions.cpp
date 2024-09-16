@@ -20,7 +20,7 @@
 // Include all cpp files that are used from Arduino in this single cpp file.
 // This way we don't have to add them to the project manually.
 // A bit dirty, but it works
-#ifndef ESP8266
+#if !defined(ESP8266) && !defined(ESP32)
 #define ARDUINO_MAIN
 
 // Disable some warnings for the Arduino files
