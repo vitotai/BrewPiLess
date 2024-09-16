@@ -1,6 +1,6 @@
 #if SupportBTHomeSensor
 
-#include "BleBTHomeListener.h"
+#include "BleSensorListener.h"
 #include <string>
 #include "TimeKeeper.h"
 #include "OneWireTempSensor.h"
@@ -12,6 +12,7 @@ https://bthome.io/format/
 */
 
 static const  NimBLEUUID BTHomeServiceUUID((uint16_t)0xFCD2);
+static const  NimBLEUUID ATCServiceUUID((uint16_t)0x181A);
 
 typedef struct _BTHomeDataObject{
     uint8_t objectId;
@@ -99,16 +100,14 @@ static const BTHomeDataObject BTHomeDataObjectMap[]={
     {0x53, 255} //"text","string",
 };
 
-
-void BTHomeEnvironmentSensor::begin(void){
+void BleSensorListener::begin(void){
     startListen();
 }
-
-void BTHomeEnvironmentSensor::stop(void){
+void BleSensorListener::stop(void){
     stopListen();
 }
 
-bool BTHomeEnvironmentSensor::onDeviceFound(NimBLEAdvertisedDevice* device){
+bool BleSensorListener::onDeviceFound(NimBLEAdvertisedDevice* device){
     //device->isAdvertisingService() doesn't work?
     const uint8_t *amac=device->getAddress().getNative();
     if(memcmp(_macAddress,amac,6) ==0 ){
@@ -182,10 +181,65 @@ static bool parseBTHomeSensorData(NimBLEAdvertisedDevice* device, float& tempera
     return gotData;
 }
 
-bool BTHomeEnvironmentSensor::_getData(NimBLEAdvertisedDevice* device){
+//ATC1441 :length 13
+// 00 00 00 00 00 00 TT TT HH BB VV VV C
+// 0                 6   7 8  9  10 11 12
+//  MAC(6)              Temp  Hum Bat Volt Count
+// Temp * 0.1, volt in mV
+// PvvX Custom: length 15
+// 00 00 00 00 00 00 TT TT HH HH VV VV LL C F
+// 0                 6   7  8  9 10 11 12 13 14
+//   MAC(6)          Temp  Humidity Volt Levl Count Flgs
+//  Temp * 0.01  humidity * 0.01% mV, level: 0-100%, 
+//  flags:
+//   bit 0: read swith
+//    1: GPIO_TR
+//    2: GPIO_TRG
+//    3: Temp trigger event
+//    4: Humidity trigger event
+
+#define ATC_TEMP_POS 6
+#define ATC_HUM_POS  8
+
+
+
+static bool parseAtcData(NimBLEAdvertisedDevice* device, float& temperature,uint8_t& humidity,BleSensorType& type){
+    std::string strSvrData=device->getServiceData(ATCServiceUUID);
+    uint8_t data[16];
+
+    if(strSvrData.length()==13){
+        strSvrData.copy((char *)data,13, 0);
+        // ATC
+        type = BleSensorTypeAtc;
+        temperature = ((data[ATC_TEMP_POS] << 8) | data[ATC_TEMP_POS +1]) * 0.1;
+        humidity = data[ATC_HUM_POS];
+        DBG_PRINTF("ATC temp: %d, humidity:%d\n",(int16_t)(temperature*100),humidity);
+        return true;
+    }
+
+    if(strSvrData.length()==15){
+        // pvvx
+        type = BleSensorTypePvvx;
+        strSvrData.copy((char *)data,15, 0);        
+        temperature = ((data[ATC_TEMP_POS+1] << 8) | data[ATC_TEMP_POS ]) * 0.01;
+        humidity = (uint8_t)(((data[ATC_HUM_POS +1] << 8) | data[ATC_HUM_POS]) * 0.01);
+        DBG_PRINTF("Pvvx temp: %d, humidity:%d\n",(int16_t)(temperature*100),humidity);
+
+        return true;
+    }
+    return false;
+}
+
+bool BleSensorListener::_getData(NimBLEAdvertisedDevice* device){
     // haveServieceData() doesn't work as expected
     // copy to "data" doesn't include length information?
+
+    BleSensorType type;
     if(parseBTHomeSensorData(device,_temperature,_humidity)){
+        DBG_PRINTF("\t humidity:%d, temperature:%d, seen before %lu\n", _humidity,(int)(_temperature*100), (millis()-_lastUpdate)/1000);
+        _lastUpdate = millis();
+        return true;
+    }else if(parseAtcData(device,_temperature,_humidity,type)){
         DBG_PRINTF("\t humidity:%d, temperature:%d, seen before %lu\n", _humidity,(int)(_temperature*100), (millis()-_lastUpdate)/1000);
         _lastUpdate = millis();
         return true;
@@ -194,25 +248,16 @@ bool BTHomeEnvironmentSensor::_getData(NimBLEAdvertisedDevice* device){
 }
 
 
-bool BTHomeEnvironmentSensor::isConnected(){
+bool BleSensorListener::isConnected(){
     if(millis() - _lastUpdate > MaximumReportPeriod) return false;
     return true;
 }
 
-unsigned char BTHomeEnvironmentSensor::humidity(){
-    if(!isConnected()) return 0xFF;
-    return (unsigned char)(_humidity + _hCal);
-}
-
-float  BTHomeEnvironmentSensor::readTemperature(){
-        if(isConnected()) return _temperature;
-        return -1000.0;
-}
-bool BTHomeEnvironmentSensor::sameDevice(const uint8_t mac[6]){
+bool BleSensorListener::sameDevice(const uint8_t mac[6]){
     return memcmp(mac,_macAddress,6) ==0;
 }
 
-int BTHomeEnvironmentSensor::scanForDevice(BTHomeDevicdFoundFunc foundCb){
+int BleSensorListener::scanForDevice(BTHomeDevicdFoundFunc foundCb){
 
     BLEScanResults result=bleScanner.scan(ScanDeviceTime);
     int found=0;
@@ -222,18 +267,21 @@ int BTHomeEnvironmentSensor::scanForDevice(BTHomeDevicdFoundFunc foundCb){
         
         temp=-1000;
         humidity=0xFF;
-        
+        BleSensorType type;        
         if(parseBTHomeSensorData(*it,temp,humidity)){
             found++;
-            foundCb(((NimBLEAdvertisedDevice*)(*it))->getAddress().getNative(),temp,humidity);
+            foundCb(BleSensorTypeBTHome,((NimBLEAdvertisedDevice*)(*it))->getAddress().getNative(),temp,humidity);
+        }else if(parseAtcData(*it,temp,humidity,type)){
+            found++;
+            foundCb(type,((NimBLEAdvertisedDevice*)(*it))->getAddress().getNative(),temp,humidity);
         }
     }
     DBG_PRINTF("BTHome device found:%d\n",found);
     return found;
 }
-std::list<BTHomeEnvironmentSensor*> BTHomeEnvironmentSensor::allSensors;
+std::list<BleSensorListener*> BleSensorListener::allSensors;
 
-BTHomeEnvironmentSensor* BTHomeEnvironmentSensor::findBTHomeSensor(const uint8_t mac[6]){
+BleSensorListener* BleSensorListener::findBleSensor(const uint8_t mac[6]){
     for (auto ptr : allSensors) {
         if(ptr->sameDevice(mac)){
             return ptr;
@@ -241,20 +289,21 @@ BTHomeEnvironmentSensor* BTHomeEnvironmentSensor::findBTHomeSensor(const uint8_t
     }
     return NULL;
 }
-BTHomeEnvironmentSensor* BTHomeEnvironmentSensor::getBTHomeSensor(const uint8_t mac[6]){
-     BTHomeEnvironmentSensor* bt=BTHomeEnvironmentSensor::findBTHomeSensor(mac);
+BleSensorListener* BleSensorListener::getBleSensor(const uint8_t mac[6],uint8_t format){
+     BleSensorListener* bt=BleSensorListener::findBleSensor(mac);
      if(bt != NULL){
         bt->_count ++;
         return bt;
      }
     // not found create a new one
-    bt=new BTHomeEnvironmentSensor(mac);
+    bt=new BleSensorListener(mac,format);
     bt->_count =1;
+    bt->begin();
     allSensors.push_front(bt);
     return bt;
 }
 
-void BTHomeEnvironmentSensor::releaseSensor(BTHomeEnvironmentSensor* sensor){
+void BleSensorListener::releaseSensor(BleSensorListener* sensor){
     sensor->_count --;
     if(sensor->_count ==0){
         sensor->stop();
@@ -262,24 +311,44 @@ void BTHomeEnvironmentSensor::releaseSensor(BTHomeEnvironmentSensor* sensor){
         delete sensor;
     }
 }
+// BleHumiditySensor
+BleHumiditySensor::BleHumiditySensor(const uint8_t mac[6],uint8_t format){
+    _listener = BleSensorListener::getBleSensor(mac,format);
+}
 
-bool BTHomeEnvironmentSensor::init(){
+BleHumiditySensor::~BleHumiditySensor(void){
+    BleSensorListener::releaseSensor(_listener);
+}
+ unsigned char BleHumiditySensor::humidity(){
+    if(! _listener->isConnected()) return 0xFF;
+    return _listener->humidity() + _hCal;
+ }
+// BleThermometer
+BleThermometer::BleThermometer(const uint8_t mac[6],uint8_t format){
+    _listener = BleSensorListener::getBleSensor(mac,format);
+}
+
+BleThermometer::~BleThermometer(void){
+    BleSensorListener::releaseSensor(_listener);
+}
+bool BleThermometer::init(){
     return isConnected();
 }
 
-temperature BTHomeEnvironmentSensor::read(){
+temperature BleThermometer::read(){
 		if (!isConnected()){
 			 return TEMP_SENSOR_DISCONNECTED;
 		}
-		if(_temperature<-99.0) {
+        float t = _listener->temperature();
+		if(t <-99.0) {
 			return TEMP_SENSOR_DISCONNECTED;
 		}
-		temperature temp =  _tempOffset + doubleToTemp((double)_temperature);
+		temperature temp =  _tempOffset + doubleToTemp((double)t);
 		return temp;
 
 }
 
-void BTHomeEnvironmentSensor::setTemperatureCalibration(fixed4_4 cal){
+void BleThermometer::setTemperatureCalibration(fixed4_4 cal){
 	const uint8_t shift = TEMP_FIXED_POINT_BITS-ONEWIRE_TEMP_SENSOR_PRECISION; // difference in precision between DS18B20 format and temperature adt
 		//temperature i fixed7_9, calibration fixed4_4
 	_tempOffset =constrainTemp16(temperature(cal)<<shift);

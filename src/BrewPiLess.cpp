@@ -547,6 +547,7 @@ public:
 					}
 
 					if(!request->hasParam("nb")){
+						WiFi.eraseAP(); // https://github.com/espressif/arduino-esp32/issues/8976
 						requestRestart(false);
 					}
 				}else{

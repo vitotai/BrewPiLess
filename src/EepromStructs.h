@@ -109,7 +109,6 @@ enum DeviceHardware {
 	DEVICE_HARDWARE_BTHOME_THERMOMETER = 9
 };
 
-
 /*
 * A union of all device types.
 */

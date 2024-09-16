@@ -5,7 +5,7 @@ typedef enum _EnvironmentSensorType{
 SensorType_None,
 SensorType_BME280,
 SensorType_DHT,
-SensorType_BTHome
+SensorType_BleSensor
 } EnvironmentSensorType;
 
 class EnvironmentSensor

@@ -63,7 +63,7 @@ WirelessTempSensor* WirelessTempSensor::theWirelessTempSensor=NULL;
 #endif
 
 #if SupportBTHomeSensor
-#include "BleBTHomeListener.h"
+#include "BleSensorListener.h"
 #endif
 /*
  * Defaults for sensors, actuators and temperature sensors when not defined in the eeprom.
@@ -187,10 +187,14 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 
 #if SupportBTHomeSensor
 		case DEVICE_HARDWARE_BTHOME_HUMIDITY:{
-			BTHomeEnvironmentSensor* bme=BTHomeEnvironmentSensor::getBTHomeSensor(config.hw.address);
+			BleHumiditySensor* bme=new BleHumiditySensor(config.hw.address,config.hw.humiditySensorType);
 			bme->setHumidityCalibration(tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));
-			bme->begin();
-//			Serial.printf("create BTHome sensor\n");
+			return bme;
+		}
+
+		case DEVICE_HARDWARE_BTHOME_THERMOMETER:{
+			BleThermometer* bme=new BleThermometer(config.hw.address,config.hw.humiditySensorType);
+			bme->setTemperatureCalibration(config.hw.calibration);
 			return bme;
 		}
 #endif
@@ -334,7 +338,7 @@ void DeviceManager::uninstallDevice(DeviceConfig& config)
 
 //				DEBUG_ONLY(logInfoInt(INFO_UNINSTALL_TEMP_SENSOR, config.deviceFunction));
 				#if SupportBTHomeSensor
-				if(config.deviceHardware == DEVICE_HARDWARE_BTHOME_THERMOMETER)  BTHomeEnvironmentSensor::releaseSensor((BTHomeEnvironmentSensor*)s);
+				if(config.deviceHardware == DEVICE_HARDWARE_BTHOME_THERMOMETER)  delete (BleThermometer*)s;
 				else 
 				#endif
 				delete s;
@@ -358,7 +362,7 @@ void DeviceManager::uninstallDevice(DeviceConfig& config)
 		case DEVICETYPE_ENVIRONMENT_SENSOR:
 			if (*ppv!=&nullEnvironmentSensor) {
 				#if SupportBTHomeSensor
-				if( ((EnvironmentSensor*)*ppv)->sensorType() == SensorType_BTHome)  BTHomeEnvironmentSensor::releaseSensor((BTHomeEnvironmentSensor*)*ppv);
+				if( ((EnvironmentSensor*)*ppv)->sensorType() == SensorType_BleSensor)  delete (BleHumiditySensor*)*ppv;
 				else 
 				#endif
 				#if EnableBME280Support
@@ -732,7 +736,9 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 	appendAttrib(deviceString, DEVICE_ATTRIB_PIN, config.hw.pinNr);
 #if EnableDHTSensorSupport
 	if(config.deviceFunction == DEVICE_CHAMBER_HUMIDITY_SENSOR
-			|| config.deviceFunction == DEVICE_CHAMBER_ROOM_HUMIDITY_SENSOR) //VTODO: PIN device: DHT serious, DEVICE_HARDWARE_BME280
+			|| config.deviceFunction == DEVICE_CHAMBER_ROOM_HUMIDITY_SENSOR
+			|| config.deviceHardware == DEVICE_HARDWARE_BTHOME_HUMIDITY
+			|| config.deviceHardware == DEVICE_HARDWARE_BTHOME_THERMOMETER) //VTODO: PIN device: DHT serious, DEVICE_HARDWARE_BME280
 		appendAttrib(deviceString,DEVICE_ATTRIB_HUMIDITY_SENSOR_TYPE,config.hw.humiditySensorType);
 #endif
 	if (value && *value) {
@@ -1107,9 +1113,10 @@ void DeviceManager::enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallb
 	clear((uint8_t*)&config, sizeof(config));
 	config.chamber = 1; // chamber 1 is default
 
-	BTHomeEnvironmentSensor::scanForDevice([&](const uint8_t* address,float temp,uint8_t humidity){
-		if(BTHomeEnvironmentSensor::findBTHomeSensor(address) == NULL){
+	BleSensorListener::scanForDevice([&](uint8_t type,const uint8_t* address,float temp,uint8_t humidity){
+		if(BleSensorListener::findBleSensor(address) == NULL){
 			memcpy(config.hw.address , address,6);
+			config.hw.humiditySensorType = type;
 			if(humidity <=100){
 				config.deviceHardware = DEVICE_HARDWARE_BTHOME_HUMIDITY;
 				handleEnumeratedDevice(config, h, callback, output);
@@ -1121,8 +1128,9 @@ void DeviceManager::enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallb
 		}
 	});
 	// list all devices "installed"
-	for (auto bth : BTHomeEnvironmentSensor::getAll()) {
+	for (auto bth : BleSensorListener::getAll()) {
     		memcpy(config.hw.address , bth->macAddress(),6);
+			config.hw.humiditySensorType = bth->broadcastFormat();
 			config.deviceHardware = DEVICE_HARDWARE_BTHOME_HUMIDITY;
 			handleEnumeratedDevice(config, h, callback, output);
 			config.deviceHardware = DEVICE_HARDWARE_BTHOME_THERMOMETER;

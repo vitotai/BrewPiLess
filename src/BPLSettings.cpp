@@ -191,8 +191,8 @@ void BPLSettings::defaultSystemConfiguration(void){
     stringNcopy(syscfg->hostnetworkname,DEFAULT_HOSTNAME,32);
     stringNcopy(syscfg->username,DEFAULT_USERNAME,32);
     stringNcopy(syscfg->password,DEFAULT_PASSWORD,32);
-
-    syscfg->port = 80;
+    
+	syscfg->port = 80;
     syscfg->passwordLcd = false;
     syscfg->wifiMode = WIFI_AP_STA;
     syscfg->backlite = 0;

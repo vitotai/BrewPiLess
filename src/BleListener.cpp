@@ -7,6 +7,7 @@
 
 BleScanner bleScanner;
 
+
 void BleScanner::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
 
     //DBG_PRINTF("***OnResult:%s\n",advertisedDevice->getAddress().toString().c_str());
@@ -34,14 +35,15 @@ void BleScanner::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
         NimBLEAddress address = advertisedDevice->getAddress();
 
     // service data
-        NimBLEUUID BTHomeServiceUUID((uint16_t)0xFCD2);
-        std::string strSvrData=advertisedDevice->getServiceData(BTHomeServiceUUID);
+        for(int si=0;si<advertisedDevice->getServiceDataCount();si++){
+        NimBLEUUID uuid =advertisedDevice->getServiceDataUUID(si);
+        std::string strSvrData=advertisedDevice->getServiceData(uuid);
         if(strSvrData.length()>0){
 
             std::string devName= advertisedDevice->getName();
             DBG_PRINTF("  Dev: %s, %d ",devName.empty()? devName.c_str():"unknown",advertisedDevice->getRSSI());
             DBG_PRINTF("\t  %s ",address.toString().c_str());   
-            DBG_PRINTF("Service data count:%d ",advertisedDevice->getServiceDataCount());
+            DBG_PRINTF(" UUID:%s ",uuid.toString().c_str());
             for(int si=0;si<advertisedDevice->getServiceDataCount();si++){
                 NimBLEUUID suuid=advertisedDevice->getServiceDataUUID(si);
                 DBG_PRINTF("\n\t %d: UUID:%s :\n",si,suuid.toString().c_str());
@@ -55,6 +57,7 @@ void BleScanner::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
             }
             DBG_PRINTF("\n");
         }
+    }
     }
 #endif
 
