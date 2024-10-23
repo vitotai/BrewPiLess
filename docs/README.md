@@ -1,6 +1,6 @@
 * [Hardware Setup](10.HardwareGeneral.md)
   * [Example#1](11.HardwareExample1.md)
-  * [SONOFF](12.HarddwareSONOFF.md)
+  * [SONOFF](12.HardwareSONOFF.md)
   * [Thorrax’s Board](https://github.com/thorrak/brewpi-esp8266)
   * [ESP32](13.ESP32Pins.md)
     * [ESP32 Build](14.ESP32BuildInstructions.md)
