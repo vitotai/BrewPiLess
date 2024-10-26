@@ -98,6 +98,6 @@ int sprintFloat(char *buff,float value,int precision)
 
    	number = number * base;
    	len+=sprintIntDigit(buff+len,(int)number,base/10);
-
+	buff[len]='\0';
    	return len;
 }

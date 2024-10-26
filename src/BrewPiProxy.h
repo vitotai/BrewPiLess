@@ -20,15 +20,23 @@ public:
 	void putLine(const char* str);
 
 	char* getLastLine(void){return _lastLineBuff;}
-
-	void getTemperature(float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet);
-	void getTemperatureSetting(char *pUnit,float *pMinSetTemp,float *pMaxSetTemp);
-	void getControlParameter(char *pUnit,char *pMode,float *pBeerSet, float *pFridgeSet);
-	void getLogInfo(char *pUnit,uint8_t *pMode,uint8_t *pState);
-	void getAllStatus(uint8_t *pState,uint8_t *pMode,float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet, float *pRoomTemp);
+	float getBeerTemp(void);
+	float getBeerSet(void);
+	float getFridgeTemp(void);
+	float getFridgeSet(void);
+	char  getUnit(void);
+	float getMinSetTemp(void);
+	float getMaxSetTemp(void);
+	char  getMode(void);
+	uint8_t getState(void);
+	float getRoomTemp(void);
+	uint32_t getStatusTime(void);
 
 	bool ambientSensorConnected(void);
 
+	void setMode(char mode);
+	void setBeerSet(float temp);
+	void setFridgetSet(float temp);
 protected:
 	char _unit;
 	char _lastLineBuff[BUFF_SIZE];

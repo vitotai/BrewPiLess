@@ -33,6 +33,14 @@
 #include "IicOledLcd.h"
 #endif
 
+#if TWOFACED_LCD
+#include "SharedLcd.h"
+#endif
+
+#if TWOFACED_LCD
+typedef BrewPiLcd LcdDriver;
+#else //#if TWOFACED_LCD
+
 #if BREWPI_OLED128x64_LCD
 	typedef IICOledLcd	LcdDriver;
 #else // BREWPI_OLED128x64_LCD
@@ -50,6 +58,9 @@ typedef OLEDFourBit LcdDriver;
 #endif
 #endif //BREWPI_OLED128x64_LCD
 
+#endif //#if TWOFACED_LCD
+
+
 class LcdDisplay DISPLAY_SUPERCLASS
 {
 	public:
@@ -57,9 +68,7 @@ class LcdDisplay DISPLAY_SUPERCLASS
 	DISPLAY_METHOD void init(void);
 #ifdef EMIWorkaround
 	DISPLAY_METHOD void refresh(void){
-		lcd.begin(20, 4);
-		lcd.clear();
-		printAll();
+		lcd.refresh();
 	}
 #endif
 	DISPLAY_METHOD void printAll() {
@@ -125,6 +134,11 @@ class LcdDisplay DISPLAY_SUPERCLASS
 #ifdef STATUS_LINE
 	DISPLAY_METHOD void printStatus(char* text){ lcd.printStatus(text);}
 #endif
+
+#if BREWPI_IIC_LCD
+	DISPLAY_FIELD uint8_t i2cLcdAddr;
+#endif
+
 	private:
 	DISPLAY_FIELD LcdDriver lcd;
 	DISPLAY_FIELD uint8_t stateOnDisplay;

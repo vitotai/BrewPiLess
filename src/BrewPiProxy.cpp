@@ -23,6 +23,22 @@
 QueueBuffer brewPiRxBuffer(2048);
 QueueBuffer brewPiTxBuffer(2048);
 
+static temperature float2InternalTemp(float ftemp){
+	// internal temperature is a 7-9 fixed poiont.
+	// upper 7 bits is interal parts, while lower 9 bits is fraction parts.
+	bool negative=false;
+	if(ftemp < 0){
+		negative = true;
+		ftemp = - ftemp;
+	}
+
+	long_temperature iparts =(long_temperature) floor(ftemp);
+	long_temperature fraction =(long_temperature) round(1000.0 *(ftemp - (float) iparts));
+	long_temperature absval = (iparts << TEMP_FIXED_POINT_BITS) + fraction;
+	long_temperature val = negative? (- absval):absval;
+	val = convertToInternalTemp(val);
+	return constrainTemp16(val);
+}
 
 void BrewPiProxy::write(char ch)
 {
@@ -64,49 +80,80 @@ void BrewPiProxy::loop(void)
 	}
 }
 
-void BrewPiProxy::getTemperature(float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet)
-{
-	*pBeerTemp=temperatureFloatValue(tempControl.getBeerTemp());
-	*pBeerSet=temperatureFloatValue(tempControl.getBeerSetting());
-	*pFridgeTemp = temperatureFloatValue(tempControl.getFridgeTemp());
-	*pFridgeSet = temperatureFloatValue(tempControl.getFridgeSetting());
+
+float BrewPiProxy::getBeerTemp(void){
+	return temperatureFloatValue(tempControl.getBeerTemp());
 }
 
-void BrewPiProxy::getControlParameter(char *pUnit,char *pMode,float *pBeerSet, float *pFridgeSet)
-{
-	*pUnit=tempControl.cc.tempFormat;
-	*pMode=tempControl.cs.mode;
-	*pBeerSet=temperatureFloatValue(tempControl.getBeerSetting());
-	*pFridgeSet=temperatureFloatValue(tempControl.getFridgeSetting());
-
+float BrewPiProxy::getBeerSet(void){
+	return temperatureFloatValue(tempControl.getBeerSetting());	
+}
+float BrewPiProxy::getFridgeTemp(void){
+	return temperatureFloatValue(tempControl.getFridgeTemp());
+}
+float BrewPiProxy::getFridgeSet(void){
+	float t=temperatureFloatValue(tempControl.getFridgeSetting());
+	return t;
 }
 
-void BrewPiProxy::getTemperatureSetting(char *pUnit,float *pMinSetTemp,float *pMaxSetTemp)
-{
-	*pUnit=tempControl.cc.tempFormat;
-	*pMinSetTemp=temperatureFloatValue(tempControl.cc.tempSettingMin);
-	*pMaxSetTemp=temperatureFloatValue(tempControl.cc.tempSettingMax);
+char BrewPiProxy::getUnit(void){
+	return tempControl.cc.tempFormat;
+}
+float BrewPiProxy::getMinSetTemp(void){
+	return temperatureFloatValue(tempControl.cc.tempSettingMin);
 }
 
-void BrewPiProxy::getLogInfo(char *pUnit,uint8_t *pMode,uint8_t *pState)
-{
-	*pUnit=tempControl.cc.tempFormat;
-	*pState = (uint8_t) tempControl.getState();
-	*pMode = (uint8_t) tempControl.getMode();
+float BrewPiProxy::getMaxSetTemp(void){
+	return temperatureFloatValue(tempControl.cc.tempSettingMax);
+}
+char  BrewPiProxy::getMode(void){
+	return tempControl.cs.mode;	
+}
+uint8_t BrewPiProxy::getState(void){
+	return (uint8_t) tempControl.getState();
 }
 
-void BrewPiProxy::getAllStatus(uint8_t *pState,uint8_t *pMode,float *pBeerTemp,float *pBeerSet,float *pFridgeTemp, float *pFridgeSet, float *pRoomTemp)
-{
-	*pBeerTemp=temperatureFloatValue(tempControl.getBeerTemp());
-	*pBeerSet=temperatureFloatValue(tempControl.getBeerSetting());
-	*pFridgeTemp = temperatureFloatValue(tempControl.getFridgeTemp());
-	*pFridgeSet = temperatureFloatValue(tempControl.getFridgeSetting());
-	*pRoomTemp =temperatureFloatValue(tempControl.getRoomTemp());
-	*pState = (uint8_t) tempControl.getState();
-	*pMode = (uint8_t) tempControl.getMode();
+float BrewPiProxy::getRoomTemp(void){
+	return temperatureFloatValue(tempControl.getRoomTemp());
 }
 
 bool BrewPiProxy::ambientSensorConnected(void)
 {
 	return tempControl.ambientSensor->isConnected();
 }
+
+uint32_t BrewPiProxy::getStatusTime(void){
+	uint16_t time = UINT16_MAX; // init to max
+	uint8_t state = tempControl.getState();
+	uint16_t sinceIdleTime = tempControl.timeSinceIdle();
+	if(state==IDLE){
+		time = 	min(tempControl.timeSinceCooling(), tempControl.timeSinceHeating());
+	}
+	else if(state==COOLING || state==HEATING){
+		time = sinceIdleTime;
+	}
+	else if(state==COOLING_MIN_TIME){
+		time =(tempControl.cc.minCoolTime > sinceIdleTime)? (tempControl.cc.minCoolTime -sinceIdleTime):0;
+	}
+	else if(state==HEATING_MIN_TIME){
+		time = (tempControl.cc.minHeatTime > sinceIdleTime)? (tempControl.cc.minHeatTime-sinceIdleTime):0;
+	}
+	else if(state == WAITING_TO_COOL || state == WAITING_TO_HEAT){
+		time = tempControl.getWaitTime();
+	}
+	return (uint32_t) time;
+}
+
+
+void BrewPiProxy::setMode(char mode){
+	tempControl.setMode(mode);
+}
+
+void BrewPiProxy::setBeerSet(float temp){
+	tempControl.setBeerTemp(float2InternalTemp(temp));
+}
+
+void BrewPiProxy::setFridgetSet(float temp){
+	tempControl.setFridgeTemp(float2InternalTemp(temp));
+}
+

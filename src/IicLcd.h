@@ -59,10 +59,10 @@
 
 class IIClcd : public Print {
 public:
-  IIClcd(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows);
+  IIClcd(uint8_t lcd_cols,uint8_t lcd_rows);
   ~IIClcd() {};
 
-  void init();
+  void init(uint8_t lcd_Addr);
 
   void begin(uint8_t cols, uint8_t rows, uint8_t charsize = LCD_5x8DOTS );
 
@@ -131,6 +131,9 @@ public:
   using Print::write;
 
   void setAutoOffPeriod(uint32 period){ backlightAutoOffPeriod = period; }
+#ifdef EMIWorkaround
+  void refresh();
+#endif
 
 private:
   void init_priv();
@@ -154,10 +157,6 @@ private:
   bool _bufferOnly;
 
   char content[4][21]; // always keep a copy of the display content in this variable
-
-#if LCD_AUTO_ADDRESSING == true
-  void scanForAddress(void);
-#endif
 
 };
 
