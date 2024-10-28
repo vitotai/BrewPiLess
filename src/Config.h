@@ -359,8 +359,8 @@
 #define actuatorPin1  21  // Relay 1 in 16A versions
 #define actuatorPin2  23  // TM1621 RD
 #define actuatorPin3  5   // TM1621 DAT
-#define actuatorPin4  19  // Relay 1 in 20A versions
-#define actuatorPin5  22  // Relay 2 in 20A versions
+#define actuatorPin4  19  // Relay 1 in 20A versions. Latching relay needs 2 pins
+#define actuatorPin5  22  // Relay 1 in 20A versions
 #else // SONOFF_NEWGEN ends
 
 #define PIN_SDA 21
