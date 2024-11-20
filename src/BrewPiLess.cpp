@@ -1702,12 +1702,12 @@ void handleReset()
 
 void brewpi_setup()
 {
-	if (SONOFF_NEWGEN) {
+#if SONOFF_NEWGEN	
 		pinMode(sensorPowerPin, OUTPUT);  // Power for sonoff temp sensor
 		digitalWrite(sensorPowerPin, HIGH);
 		pinMode(powerIndicatorPin, OUTPUT); 
 		digitalWrite(powerIndicatorPin, LOW); // Red power led	
-	}
+#endif	
 #if defined(ESP8266)
 	// We need to initialize the EEPROM on ESP8266
 	EEPROM.begin(MAX_EEPROM_SIZE_LIMIT);
