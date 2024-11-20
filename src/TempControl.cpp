@@ -78,9 +78,9 @@ uint16_t TempControl::waitTime;
 #endif
 
 void TempControl::init(void){
-	if (SONOFF_NEWGEN) {
+#if SONOFF_NEWGEN
 		pinMode(relayIndicatorPin, OUTPUT);
-	}
+#endif	
 	state=IDLE;
 	cs.mode = MODE_OFF;
 
@@ -402,12 +402,14 @@ void TempControl::updateOutputs(void) {
 	heater->setActive(!cc.lightAsHeater && heating);
 	light->setActive(isDoorOpen() || (cc.lightAsHeater && heating) || cameraLightState.isActive());
 	fan->setActive(heating || cooling);
-	if (SONOFF_NEWGEN && (heating || cooling)) {
+#if SONOFF_NEWGEN
+	if (heating || cooling) {
   		digitalWrite(relayIndicatorPin, LOW);
 	}
 	else {
 		digitalWrite(relayIndicatorPin, HIGH);
 	}
+#endif	
 }
 
 
