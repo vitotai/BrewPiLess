@@ -490,6 +490,7 @@
     "log_mode_in_integer": "režim v celých číslach",
     "log_mode_in_character": "režim v znakoch",
     "log_pressure_reading": "Tlak v PSI",
+	"log_batch_name": "Názov záznamu",
     "gravity_change": "Gravity Change",
     "gravity_change_6h": "Gravity Change 6H",
     "gravity_change_12h": "Gravity Change 12H",
