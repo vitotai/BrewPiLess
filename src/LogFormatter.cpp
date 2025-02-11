@@ -13,7 +13,9 @@
 #if EnableHumidityControlSupport
 #include "HumidityControl.h"
 #endif
+#include <BrewLogger.h>
 extern BrewPiProxy brewPi;
+extern BrewLogger brewLogger;
 
 
 
@@ -120,6 +122,15 @@ size_t dataSprintf(char *buffer,const char *format,const char* invalid)
 		        strcpy(buffer+d,invalid);
         		d+= strlen(invalid);
 				#endif
+			}else if(ch == 'n'){
+				const char *logname;
+				if (brewLogger.currentLog() == NULL){
+					logname = "Unnamed";
+				}else{
+					logname = brewLogger.currentLog();
+				}
+				strcpy(buffer+d, logname);
+				d += strlen(logname);
 			}else{				
 				// wrong format
 				//return 0; ignored

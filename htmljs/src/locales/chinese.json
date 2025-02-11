@@ -490,6 +490,7 @@
     "log_mode_in_integer": "mode用整數表示",
     "log_mode_in_character": "mode用字元表示",
     "log_pressure_reading": "壓力PSI",
+	"log_batch_name": "記錄檔名",
 
     "gravity_change": "比重變化",
     "gravity_change_6h": "比重變化 6H",

@@ -493,6 +493,8 @@
     "log_mode_in_integer": "mode in integer",
     "log_mode_in_character": "mode in character",
     "log_pressure_reading": "Pressure in PSI",
+	"log_batch_name": "current log name",
+	
 
     "gravity_change": "Gravity Change",
     "gravity_change_6h": "Gravity Change 6H",
