@@ -29,19 +29,41 @@
 PressureMonitorClass PressureMonitor;
 
 // for esp32
+// for esp32
 #if ESP32
+#if CONFIG_IDF_TARGET_ESP32S3
+
+#define ADC1_GPIO1_CHANNEL ADC1_CHANNEL_0
+#define ADC1_GPIO2_CHANNEL ADC1_CHANNEL_1
+#define ADC1_GPIO3_CHANNEL ADC1_CHANNEL_2
+#define ADC1_GPIO4_CHANNEL ADC1_CHANNEL_3
+#define ADC1_GPIO5_CHANNEL ADC1_CHANNEL_4
+#define ADC1_GPIO6_CHANNEL ADC1_CHANNEL_5
+#define ADC1_GPIO7_CHANNEL ADC1_CHANNEL_6
+#define ADC1_GPIO8_CHANNEL ADC1_CHANNEL_7
+#define ADC1_GPIO9_CHANNEL ADC1_CHANNEL_8
+#define ADC1_GPIO10_CHANNEL ADC1_CHANNEL_9
+
+#else // ESP32S3
 
 #ifndef ADC1_GPIO36_CHANNEL
 #define ADC1_GPIO36_CHANNEL ADC1_CHANNEL_0
 #endif
 
-#define ConcateChanel(pin) ADC1_GPIO ## pin ## _CHANNEL
-#define AdcChannelFromPinNr(pin) ConcateChanel(pin)
+#ifndef ADC1_GPIO35_CHANNEL
+#define ADC1_GPIO35_CHANNEL ADC1_CHANNEL_7
+#endif
 
 // Only ADC1 (pin 32~39) is allowed 
 #if PressureAdcPin > 39 || PressureAdcPin < 32
 #error "Only GPIO32 - GPIO 39 can be used as ADC Pin"
 #endif
+
+#endif // ESP32S3
+
+#define ConcateChanel(pin) ADC1_GPIO ## pin ## _CHANNEL
+#define AdcChannelFromPinNr(pin) ConcateChanel(pin)
+
 
 #endif
 
@@ -122,7 +144,7 @@ void PressureMonitorClass::_initInternalAdc(void){
     if(_adcCharacter) return;
     //Characterize ADC at particular atten
     _adcCharacter =(esp_adc_cal_characteristics_t*) calloc(1, sizeof(esp_adc_cal_characteristics_t));
-    esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, DEFAULT_VREF, _adcCharacter);
+    esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, DEFAULT_VREF, _adcCharacter);
     //Check type of calibration value used to characterize ADC
     if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
         DBG_PRINTF("ESP32 ADC CAL:eFuse Vref");
@@ -133,8 +155,8 @@ void PressureMonitorClass::_initInternalAdc(void){
     }
     pinMode(PressureAdcPin, INPUT);
 
-    adc1_config_width(ADC_WIDTH_BIT_11); // 12 bits seems too jittery, 11 bits work just fine.
-    adc1_config_channel_atten(AdcChannelFromPinNr(PressureAdcPin),ADC_ATTEN_DB_11); // 3.9v scale
+    adc1_config_width(ADC_WIDTH_BIT_12); // 12 bits seems too jittery, 11 bits work just fine.
+    adc1_config_channel_atten(AdcChannelFromPinNr(PressureAdcPin),ADC_ATTEN_DB_12); // 3.9v scale
 #endif
 
 }

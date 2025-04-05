@@ -638,8 +638,11 @@ const uint8_t PROGMEM ttable[7][4] = {
 #endif
 
 #ifdef ESP32
-
+#if CONFIG_IDF_TARGET_ESP32S3
+#define GPIO_READ(pin) digitalRead(pin)
+#else
 #define GPIO_READ(pin) (((pin)>31)? (gpio_input_get_high() & (1<<(pin-32))):(gpio_input_get() & (1<<pin)))
+#endif
 
 static void IRAM_ATTR isr_rotary(void) { 
 	rotaryEncoder.process(); 

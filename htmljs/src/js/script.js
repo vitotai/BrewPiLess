@@ -753,13 +753,38 @@
         if(typeof c["G"] != "undefined") gDeviceInfo(c.G);
 
         ptcshow(c);
+        // humidity related
+        var show_h=false;
         if(typeof c["h"] != "undefined") {
             Q("#humidity-info").classList.remove("no-display");
             Q("#humidity").innerHTML= (c.h <=100)?  (c.h + "%"):"--";
+            show_h=true;
         }
+
         if(typeof c["hr"] != "undefined") {
             Q("#room-humidity-info").classList.remove("no-display");
             Q("#room-humidity").innerHTML= (c.hr <=100)?  (c.hr + "%"):"--";
+            show_h=true;
+        }
+
+        if(typeof c["ht"] != "undefined") {
+            Q("#humidity-set-info").classList.remove("no-display");
+            Q("#humidity-set").innerHTML= (c.h <=100)?  (c.ht + "%"):"--";
+            show_h=true;
+        }else{
+            Q("#humidity-set-info").classList.add("no-display");
+        }
+
+        if(typeof c["hs"] != "undefined") {
+            var hstate=["Idle","Dehumidifying","Humidifying","Wait to Dehumidify","Wait to Humidify","Humidify min Time","Dehumidify min Time"];
+            Q("#hc-state-info").classList.remove("no-display");
+            Q("#hc-state").innerHTML= hstate[c.hs];
+            show_h=true;
+        }else{
+            Q("#hc-state-info").classList.add("no-display");
+        }
+        if(show_h){            
+            Q("#humidity-pan").classList.remove("no-display");
         }
 
     }
@@ -825,17 +850,6 @@
                 B: function(c) { if (typeof rcvBeerProfile != "undefined") rcvBeerProfile(c); }
             }
         });
-    }
-
-    function init_classic() {
-        window.plato = false;
-        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
-        initRssi();
-        Capper.init();
-        BWF.gotMsg = true;
-        initctrl_C();
-        connBWF();
-        setTimeout(function() { BChart.start(); }, T_LOAD_CHART);
     }
 
     function init() {

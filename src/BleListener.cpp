@@ -12,7 +12,8 @@ void BleScanner::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
 
     //DBG_PRINTF("***OnResult:%s\n",advertisedDevice->getAddress().toString().c_str());
 #if 0
-        // printout data
+    if(advertisedDevice->getRSSI() > -60){
+            // printout data
         std::string strManufacturerData = advertisedDevice->getManufacturerData();
         NimBLEAddress address = advertisedDevice->getAddress();
 
@@ -29,8 +30,6 @@ void BleScanner::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
             }
             DBG_PRINTF("\n");
         }
-#endif
-#if 0
     if(advertisedDevice->getServiceDataCount()>0){
         NimBLEAddress address = advertisedDevice->getAddress();
 
@@ -57,10 +56,10 @@ void BleScanner::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
             }
             DBG_PRINTF("\n");
         }
+        }
     }
-    }
+}
 #endif
-
     if(_bleDeviceListeners.size()){  
 
         for (auto it=_bleDeviceListeners.begin(); it != _bleDeviceListeners.end(); ++it){

@@ -976,6 +976,7 @@ void greeting(std::function<void(const char*)> sendFunc)
 #if EnableHumidityControlSupport
 	JsonObject hum = doc.createNestedObject("rh");
 	hum["m"] = humidityControl.mode();
+	hum["s"] = humidityControl.state();
 	hum["t"] = humidityControl.targetRH();
 #endif
 
@@ -1158,6 +1159,12 @@ void periodicalReport(void)
 	if (humidityControl.isRoomSensorInstalled()){
 		doc["hr"]= humidityControl.roomHumidity();
 	}
+
+	if(humidityControl.mode() == HC_ModeControl){
+		doc["ht"] = humidityControl.targetRH();
+	}
+
+	doc["hs"] = humidityControl.state();
 
 #endif
 
@@ -1702,12 +1709,7 @@ void handleReset()
 
 void brewpi_setup()
 {
-	if (SONOFF_NEWGEN) {
-		pinMode(sensorPowerPin, OUTPUT);  // Power for sonoff temp sensor
-		digitalWrite(sensorPowerPin, HIGH);
-		pinMode(powerIndicatorPin, OUTPUT); 
-		digitalWrite(powerIndicatorPin, LOW); // Red power led	
-	}
+
 #if defined(ESP8266)
 	// We need to initialize the EEPROM on ESP8266
 	EEPROM.begin(MAX_EEPROM_SIZE_LIMIT);

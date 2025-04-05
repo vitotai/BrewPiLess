@@ -52,11 +52,19 @@
                     <li layout horizontal main-justified><span class="descriptor"><%= status_fridgetemp %></span><span id="lcdFridgeTemp"></span></li>
                     <li layout horizontal main-justified><span class="descriptor"><%= status_fridgeset %></span><span id="lcdFridgeSet"></span></li>
                     <li layout horizontal main-justified><span class="descriptor"><%= status_roomtemp %></span><span id="lcdRoomTemp"></span></li>
-                    <li layout horizontal main-justified class="no-display" id="humidity-info"><span class="descriptor"><%= status_humidity %></span><span id="humidity"></span></li>
-                    <li layout horizontal main-justified class="no-display" id="room-humidity-info"><span class="descriptor"><%= room_humidity %></span><span id="room-humidity"></span></li>
-
                 </ul>
             </div>
+
+            <ul id="humidity-pan" class="data-pane humidity-pane no-display">
+                <li class="heading"><strong><%= label_humidity %></strong></li>
+                </li>
+
+                <li layout horizontal main-justified class="no-display" id="hc-state-info"><span class="descriptor">State</span><span id="hc-state"></span></li>
+
+                <li layout horizontal main-justified class="no-display" id="humidity-info"><span class="descriptor"><%= status_humidity %></span><span id="humidity"></span></li>
+                <li layout horizontal main-justified class="no-display" id="humidity-set-info"><span class="descriptor"><%=  label_humidity_set %></span><span id="humidity-set"></span></li>
+                <li layout horizontal main-justified class="no-display" id="room-humidity-info"><span class="descriptor"><%= room_humidity %></span><span id="room-humidity"></span></li>
+            </ul>
 
             <ul id="gravity-pane" class="data-pane gravity-pane">
                 <li class="heading"><strong><%= gravity_data %></strong></li>

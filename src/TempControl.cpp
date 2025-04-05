@@ -31,7 +31,6 @@
 #include "EepromManager.h"
 #include "TempSensorDisconnected.h"
 #include "RotaryEncoder.h"
-#include "Config.h"
 
 TempControl tempControl;
 
@@ -78,9 +77,6 @@ uint16_t TempControl::waitTime;
 #endif
 
 void TempControl::init(void){
-	if (SONOFF_NEWGEN) {
-		pinMode(relayIndicatorPin, OUTPUT);
-	}
 	state=IDLE;
 	cs.mode = MODE_OFF;
 
@@ -402,12 +398,6 @@ void TempControl::updateOutputs(void) {
 	heater->setActive(!cc.lightAsHeater && heating);
 	light->setActive(isDoorOpen() || (cc.lightAsHeater && heating) || cameraLightState.isActive());
 	fan->setActive(heating || cooling);
-	if (SONOFF_NEWGEN && (heating || cooling)) {
-  		digitalWrite(relayIndicatorPin, LOW);
-	}
-	else {
-		digitalWrite(relayIndicatorPin, HIGH);
-	}
 }
 
 

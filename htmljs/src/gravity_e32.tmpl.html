@@ -13,6 +13,7 @@
     <script type="text/javascript" src="js/vendor/bwf.js"></script>
     <script type="text/javascript" src="js/shared.js"></script>
     <script type="text/javascript" src="js/vendor/regression.js"></script>
+    <script type="text/javascript" src="js/polyutil.js"></script>
     <script type="text/javascript" src="js/script-gravity-e32.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="style-gravity.css">
@@ -185,6 +186,25 @@ max-width: 140px;
                         <div>
                             <input type="checkbox" id="cal" name="cal" class="switch-input" checked>
                             <label for="cal" class="switch-label" style="min-width: 0;"></label>
+                        </div>
+                    </div>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            <%= gravity_calculated_bpl %>
+                        </h6>
+                        <div>
+                            <input type="checkbox" id="cal" name="cal" class="switch-input" checked>
+                            <label for="cal" class="switch-label" style="min-width: 0;"></label>
+                        </div>
+                    </div>
+
+                    <div layout horizontal cross-center>
+                        <h6 class="inline-header">
+                            Tilt Temp. Correction
+                        </h6>
+                        <div>
+                            <input class="notsave" type="text" name="tilt-correction-formula">
                         </div>
                     </div>
 

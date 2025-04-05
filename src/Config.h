@@ -313,10 +313,6 @@
 
 #endif
 
-#ifndef SONOFF_NEWGEN
-#define SONOFF_NEWGEN false
-#endif
-
 #if ESP32
 #define FS_EEPROM true
 #endif
@@ -348,21 +344,6 @@
 // pins
 #ifdef ESP32
 
-#if SONOFF_NEWGEN
-
-#define PIN_SCL 17 // TM1621 CS
-#define PIN_SDA 18 // TM1621 WR
-
-
-#define oneWirePin 25
-
-#define actuatorPin1  21  // This is relay 1
-#define actuatorPin2  23  // TM1621 RD
-#define actuatorPin3  5   // TM1621 DAT
-#define actuatorPin4  24  
-#define actuatorPin5  26
-#else // SONOFF_NEWGEN ends
-
 #define PIN_SDA 21
 #define PIN_SCL 22
 
@@ -374,8 +355,6 @@
 #define actuatorPin3  19
 #define actuatorPin4  27
 #define actuatorPin5  26
-
-#endif 
 
 #if MORE_PINS_CONFIGURATION
 
@@ -389,19 +368,17 @@
 #else
 #define BuzzPin       18
 #endif
-
 // 34,35,66,39 input only
 #define rotaryAPin      32
 #define rotaryBPin      33
-#if SONOFF_NEWGEN
-#define rotarySwitchPin 35
-#else
 #define rotarySwitchPin 25
-#endif
 
 // Only ADC1 (pin 32~39) is allowed 
+#if CONFIG_IDF_TARGET_ESP32S3
+#define PressureAdcPin  4
+#else
 #define PressureAdcPin  36
-
+#endif
 
 #else // #ifdef ESP32
 #define NODEMCU_PIN_A0 17	// Analog

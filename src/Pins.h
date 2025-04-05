@@ -97,21 +97,6 @@
 #define fridgeSensorPin  11
 #endif
 #endif
-
-#if SONOFF_NEWGEN
-#ifndef powerIndicatorPin
-#define powerIndicatorPin 16
-#endif
-#ifndef relayIndicatorPin
-#define relayIndicatorPin 13
-#endif
-#ifndef wifiIndicatorPin
-#define wifiIndicatorPin 15
-#endif
-#ifndef sensorPowerPin
-#define sensorPowerPin 27
-#endif
-#endif
 // Pay attention when changing the pins for the rotary encoder.
 // They should be connected to external interrupt INT0, INT1 and INT3
 
