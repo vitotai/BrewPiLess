@@ -11,6 +11,9 @@
 #include "PressureMonitor.h"
 #endif
 
+#if EnableHumidityControlSupport
+#include "HumidityControl.h"
+#endif
 
 extern BrewPiProxy brewpi;
 
@@ -20,8 +23,8 @@ extern BrewPiProxy brewpi;
 #include "ParasiteTempController.h"
 #endif
 
-#if Auto_CAP
-#include "AutoCapContro.h"
+#if AUTO_CAP
+#include "AutoCapControl.h"
 #endif
 
 
@@ -40,7 +43,7 @@ MqttRemoteControl::MqttRemoteControl(){
         this->_onConnect();
     });
     _client.onDisconnect([this](AsyncMqttClientDisconnectReason reason){
-        DBG_PRINTF("\n***MQTT:disc:%d\n",reason);
+        DBG_PRINTF("\n***MQTT:disc:%d\n",(int)reason);
         this->_onDisconnect();
     });
     _client.onMessage([this](char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total){
@@ -91,7 +94,24 @@ uint16_t MqttRemoteControl::_publish(const char* key,char value){
     char data[4];
     data[0]=value;
     data[1]='\0';
-    return _client.publish(topic,DefaultLogginQoS,true,data,1);
+    uint16_t packetid=_client.publish(topic,DefaultLogginQoS,true,data,1);
+    if(packetid ==0){
+        // error
+        _client.disconnect();
+    }
+    return packetid;
+}
+uint16_t MqttRemoteControl::_publish(const char* key,const char* value){
+    DBG_PRINTF("Publish %s\n",key);
+
+    // somwhow need to be optimized
+    char topic[256];
+    int baselength=strlen(_reportBasePath);
+    strncpy(topic,_reportBasePath,baselength);
+    topic[baselength]='/';
+    strcpy(topic + baselength +1, key);
+
+    return _client.publish(topic,DefaultLogginQoS,true,value);
 }
 
 void MqttRemoteControl::_reportData(void){
@@ -112,8 +132,15 @@ void MqttRemoteControl::_reportData(void){
         uint8_t state, mode;
 	    float beerSet,fridgeSet;
 	    float beerTemp,fridgeTemp,roomTemp;
-
-	    brewPi.getAllStatus(&state,&mode,& beerTemp,& beerSet,& fridgeTemp,& fridgeSet,& roomTemp);
+        state = brewPi.getState();
+        mode = brewPi.getMode();
+        beerTemp = brewPi.getBeerTemp();
+        beerSet = brewPi.getBeerSet();
+        fridgeTemp = brewPi.getFridgeTemp();
+        fridgeSet = brewPi.getFridgeSet();
+        roomTemp = brewPi.getRoomTemp();
+        
+        lastID=_publish(KeyState, (char)('0'+state));
 
 	    if(IS_FLOAT_TEMP_VALID(beerTemp)) lastID=_publish(KeyBeerTemp, beerTemp,1);
 	    if(IS_FLOAT_TEMP_VALID(beerSet)) lastID=_publish(KeyBeerSet, beerSet,1);
@@ -131,15 +158,31 @@ void MqttRemoteControl::_reportData(void){
 		    lastID=_publish(KeyPlato, externalData.plato(),1);
 	    }
 
+    	#if EnableHumidityControlSupport
+	    if(humidityControl.isHumidityValid())  lastID=_publish(KeyFridgeHumidity,humidityControl.humidity());
+	    if(humidityControl.isRoomSensorInstalled()){
+            uint8_t rh=humidityControl.roomHumidity();
+            if(rh <= 100) lastID=_publish(KeyRoomHumidity,rh);
+        }
+	    #endif
+
+
     	// iSpindel data
 	    float vol=externalData.deviceVoltage();
-	    if(IsVoltageValid(vol)){
-		    lastID=_publish(KeyVoltage, vol,2);
-		    float at=externalData.auxTemp();
-		    if(IS_FLOAT_TEMP_VALID(at)) lastID=_publish(KeyAuxTemp, at,1);
-		    float tilt=externalData.tiltValue();
-		    lastID=_publish(KeyTilt,tilt,2);
-	    }
+	    if(IsVoltageValid(vol)) lastID=_publish(KeyVoltage, vol,2);
+		
+        float at=externalData.auxTemp();
+		if(IS_FLOAT_TEMP_VALID(at)) lastID=_publish(KeyAuxTemp, at,1);
+		    
+        float tilt=externalData.tiltValue();
+		if(tilt>0) lastID=_publish(KeyTilt,tilt,2);
+            
+        int16_t rssi=externalData.rssi();
+    	if(IsRssiValid(rssi)) lastID=_publish(KeyWirelessHydrometerRssi,(float)rssi,0);
+
+    	const char *hname=externalData.getDeviceName();
+	    if(hname) lastID=_publish(KeyWirelessHydrometerName, hname);
+
     }
     _lastPacketId = lastID;
     _publishing=true;
@@ -176,9 +219,12 @@ bool MqttRemoteControl::loop(){
             || (now - _connectTime > ReconnectTimerLong)
             ){
             DBG_PRINTF("MQTT:reconnect..\n");
-
+            
             _connectTime = now;
-            _client.connect();
+            if(WiFi.status() == WL_CONNECTED) _client.connect();
+            else{
+                DBG_PRINTF("MQTT:no WiFi\n");                
+            }
         }
     }else{
         // connected
@@ -246,7 +292,7 @@ void MqttRemoteControl::_loadConfig()
         _ptcPath = settings->ptcPathOffset? (char*)settings->_strings + settings->ptcPathOffset:NULL;
 #endif
 
-#if Auto_CAP
+#if AUTO_CAP
         _capPath = settings->capControlPathOffset? (char*)settings->_strings + settings->capControlPathOffset:NULL;
 #endif
 
@@ -261,7 +307,7 @@ void MqttRemoteControl::_loadConfig()
         if(_ptcPath) DBG_PRINTF("_ptcPath:%s\n",_ptcPath);
         #endif
 
-        #if Auto_CAP
+        #if AUTO_CAP
         if(_capPath) DBG_PRINTF("_capPath:%s\n",_capPath);
         #endif        
         #endif
@@ -330,7 +376,7 @@ void MqttRemoteControl::_onConnect(void){
     }
     #endif
 
-    #if Auto_CAP
+    #if AUTO_CAP
     if(_capPath){
         if(_client.subscribe(_capPath, 1)){
             DBG_PRINTF("MQTT:Subscribing %s\n",_capPath);
@@ -363,7 +409,7 @@ void MqttRemoteControl::_onMessage(char* topic, uint8_t* payload, size_t len) {
         this->_onPtcChange((char*)payload,len);
     }
 #endif 
-#if Auto_CAP
+#if AUTO_CAP
     else if(strcmp(topic, _capPath) ==0){
         this->_onCapChange((char*)payload,len);
     }
@@ -378,7 +424,7 @@ void MqttRemoteControl::_onModeChange(char* payload,size_t len){
  
     #if SerialDebug
     DBG_PRINTF("MQTT:mode path value:");
-    for(int i=0;i<len;i++)
+    for(size_t i=0;i<len;i++)
         DBG_PRINTF("%c",payload[i]);
     DBG_PRINTF("\n");
     #endif
@@ -445,12 +491,16 @@ void MqttRemoteControl::_onPtcChange(char* payload, size_t len){
 #endif
 
 
-#if Auto_CAP
+#if AUTO_CAP
 void MqttRemoteControl::_onCapChange(char* payload,size_t len){
     bool mode;
 
-    if(*payload >='0' && *payload <= '1'){
+    if(*payload >='0' && *payload <= '9'){
+        // number
         mode = *payload != '0';
+        uint8_t psi =(uint8_t) atoi(payload);
+        if(psi > 0)
+            PressureMonitor.setTargetPsi(psi);
     }else{
         // char. check if it is valid
         if(strncmp(payload,"ON",2) ==0 || strncmp(payload,"on",2) ==0){

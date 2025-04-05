@@ -36,6 +36,9 @@ public:
 	void setStableThreshold(uint8_t threshold){ _stableThreshold=threshold; }
 	void profileUpdated();
 	void setScheduleStartDate(time_t time);
+	#if VERIFY_BEER_PROFILE
+	String currentStatus();
+	#endif
 };
 
 
@@ -65,6 +68,11 @@ public:
 	void setModeFromRemote(char mode);
 	void setBeerSet(char *tempStr);
 	void setFridgeSet(char *tempStr);
+
+	#if VERIFY_BEER_PROFILE
+	String currentStatus();
+	#endif
+
 };
 
 extern BrewKeeper brewKeeper;

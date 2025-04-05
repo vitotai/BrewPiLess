@@ -5,15 +5,15 @@ function s_ajax(b) {
             if (c.status == 200) {
                 b.success(c.responseText)
             } else {
-                c.onerror(c.status)
+                c.onerror(c.status,c.responseText)
             }
         }
     };
     c.ontimeout = function() {
         if (typeof b["timeout"] != "undefined") b.timeout();
-        else c.onerror(-1)
-    }, c.onerror = function(a) {
-        if (typeof b["fail"] != "undefined") b.fail(a)
+        else c.onerror(-1,"timeout")
+    }, c.onerror = function(a,r) {
+        if (typeof b["fail"] != "undefined") b.fail(a,r)
     };
     c.open(b.m, b.url, true);
     if (typeof b["data"] != "undefined") {
