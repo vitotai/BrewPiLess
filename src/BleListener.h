@@ -25,30 +25,38 @@ public:
 typedef std::function<void(BleHydrometerDevice*)> BleHydrometerDataHandler;
 typedef std::function<void(std::vector<BleHydrometerDevice*>)> BleHydrometerScanResultHandler;
 
+// Device specific interace.
+// when a device found, the Device is passed to the BleDeviceListener
+//  - Note: MAC address could have been used to identify the device instead of passing all data
+//          However, for Tilt, ONLY UUID is used to identify the color.
 class BleDeviceListener{
 public:
     BleDeviceListener(void):_listening(false){}
-    // start to scan periodic
+    // start to listen to information periodically
     void startListen(void);
     void stopListen(void);
-    // 
+    // called when a device found
     virtual bool onDeviceFound(NimBLEAdvertisedDevice*)=0;
 protected:
     bool _listening;
 };
 
+// BleScanner handles BLEScan, including periodical scanning and scanning for devices.
 class BleScanner :public BLEAdvertisedDeviceCallbacks{
 public:
     BleScanner():_scanning(false),_commandScan(false),_enabled(false){       
     }
-    // 
+    // begin() and loop() are called in setup() and loop(), to handle periodical scanning
     void begin(void);
     void loop(void);
-    void startListen(BleDeviceListener* listener);
-    void stopListen(BleDeviceListener* listener);
+
+    void addListener(BleDeviceListener* listener);
+    void removeListener(BleDeviceListener* listener);
     BLEScanResults scan(uint32_t scanTime);
+
     void clearScanData(void);
-    // callbacks
+
+    // callbacks of BLEAdvertisedDeviceCallbacks
     virtual void onResult(NimBLEAdvertisedDevice* advertisedDevice);
 protected:
     void _startScan(void);

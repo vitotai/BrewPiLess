@@ -132,7 +132,7 @@ void BleScanner::_startScan(void) {
    //  Serial.printf("BLE scanning\n");
 }
 
-void BleScanner::startListen(BleDeviceListener* listener){
+void BleScanner::addListener(BleDeviceListener* listener){
     _bleDeviceListeners.push_back(listener);
     if(!_enabled){
         _enabled=true;
@@ -140,7 +140,7 @@ void BleScanner::startListen(BleDeviceListener* listener){
     }
 }
 
-void BleScanner::stopListen(BleDeviceListener* listener) {
+void BleScanner::removeListener(BleDeviceListener* listener) {
     _bleDeviceListeners.remove(listener);
     if(_bleDeviceListeners.size() ==0){
         _enabled=false;
@@ -163,11 +163,11 @@ void BleScanner::loop(void) {
 void BleDeviceListener::startListen(void){
     if(_listening) return;
     _listening=true;
-    bleScanner.startListen(this);
+    bleScanner.addListener(this);
 }
 void BleDeviceListener::stopListen(void){
     if(!_listening) return;
     _listening=false;
-    bleScanner.stopListen(this);
+    bleScanner.removeListener(this);
 }
 #endif
