@@ -98,6 +98,7 @@ inline bool isAssignable(DeviceType type, DeviceHardware hardware)
 #if SupportBTHomeSensor	
 	|| (hardware==DEVICE_HARDWARE_BTHOME_HUMIDITY && type == DEVICETYPE_ENVIRONMENT_SENSOR)
 	|| (hardware==DEVICE_HARDWARE_BTHOME_THERMOMETER && type == DEVICETYPE_TEMP_SENSOR)
+	|| (hardware==DEVICE_HARDWARE_RAPT_THERMOMETER && type == DEVICETYPE_TEMP_SENSOR)
 #endif
 #endif
 	|| (hardware==DEVICE_HARDWARE_ONEWIRE_TEMP && type==DEVICETYPE_TEMP_SENSOR)
@@ -146,7 +147,13 @@ inline bool isBTHomeSensorHumidity(DeviceHardware hardware) {
 inline bool isBTHomeThermometer(DeviceHardware hardware) {
 	return hardware == DEVICE_HARDWARE_BTHOME_THERMOMETER;
 }
+inline bool isRaptThermometer(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_RAPT_THERMOMETER;
+}
+
 #endif
+
+
 /**
  * Determines where this devices belongs.
  */

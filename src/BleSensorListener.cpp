@@ -256,7 +256,7 @@ bool BleSensorListener::isConnected(){
 bool BleSensorListener::sameDevice(const uint8_t mac[6]){
     return memcmp(mac,_macAddress,6) ==0;
 }
-
+/*
 int BleSensorListener::scanForDevice(BTHomeDevicdFoundFunc foundCb){
 
     BLEScanResults result=bleScanner.scan(ScanDeviceTime);
@@ -279,6 +279,20 @@ int BleSensorListener::scanForDevice(BTHomeDevicdFoundFunc foundCb){
     DBG_PRINTF("BTHome device found:%d\n",found);
     return found;
 }
+*/
+
+bool BleSensorListener::isBleSensorDevice(NimBLEAdvertisedDevice* device,BleSensorType& type,float& temp,uint8_t& humidity){
+        
+    if(parseBTHomeSensorData(device,temp,humidity)){
+        type = BleSensorTypeBTHome;
+        return true;
+    }else if(parseAtcData(device,temp,humidity,type)){
+        return true;
+    }
+    return false;
+}
+
+
 std::list<BleSensorListener*> BleSensorListener::allSensors;
 
 BleSensorListener* BleSensorListener::findBleSensor(const uint8_t mac[6]){

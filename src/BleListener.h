@@ -12,6 +12,7 @@
 #include "NimBLEBeacon.h"
 
 
+typedef std::function<void(NimBLEAdvertisedDevice*)> ScannedDevicdFoundFunc;
 
 class BleHydrometerDevice{
 public:
@@ -50,9 +51,13 @@ public:
     void begin(void);
     void loop(void);
 
+    // periodical scanning
     void addListener(BleDeviceListener* listener);
     void removeListener(BleDeviceListener* listener);
-    BLEScanResults scan(uint32_t scanTime);
+
+    // Active scan, for finding devices.
+    // BLEScanResults scan(uint32_t scanTime);
+    void scanForDevices(uint32_t scanTime,ScannedDevicdFoundFunc);
 
     void clearScanData(void);
 

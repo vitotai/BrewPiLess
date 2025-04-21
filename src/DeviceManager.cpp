@@ -65,6 +65,7 @@ WirelessTempSensor* WirelessTempSensor::theWirelessTempSensor=NULL;
 #if SupportBTHomeSensor
 #include "BleSensorListener.h"
 #endif
+#include "BleRaptThermometer.h"
 /*
  * Defaults for sensors, actuators and temperature sensors when not defined in the eeprom.
  */
@@ -196,6 +197,12 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 			BleThermometer* bme=new BleThermometer(config.hw.address,config.hw.humiditySensorType);
 			bme->setTemperatureCalibration(config.hw.calibration);
 			return bme;
+		}
+
+		case DEVICE_HARDWARE_RAPT_THERMOMETER:{
+			Serial.printf("***Create BleRaptThermometer.\n");
+			BleRaptThermometer* raptThermometer=new BleRaptThermometer(config.hw.address,config.hw.calibration);
+			return raptThermometer;
 		}
 #endif
 
@@ -338,9 +345,16 @@ void DeviceManager::uninstallDevice(DeviceConfig& config)
 
 //				DEBUG_ONLY(logInfoInt(INFO_UNINSTALL_TEMP_SENSOR, config.deviceFunction));
 				#if SupportBTHomeSensor
+
 				if(config.deviceHardware == DEVICE_HARDWARE_BTHOME_THERMOMETER)  delete (BleThermometer*)s;
-				else 
+				else if(config.deviceHardware == DEVICE_HARDWARE_RAPT_THERMOMETER){
+					Serial.printf("*** Delete BleRaptThermometer.\n");
+					delete (BleRaptThermometer*)s;
+				}
+				else
+				
 				#endif
+				
 				delete s;
 			}
 			break;
@@ -748,7 +762,8 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 	if (hasInvert(config.deviceHardware))
 		appendAttrib(deviceString, DEVICE_ATTRIB_INVERT, config.hw.invert);
 #if SupportBTHomeSensor
-	if (hasOnewire(config.deviceHardware) || config.deviceHardware==DEVICE_HARDWARE_BTHOME_HUMIDITY || config.deviceHardware==DEVICE_HARDWARE_BTHOME_THERMOMETER) {
+	if (hasOnewire(config.deviceHardware) || config.deviceHardware==DEVICE_HARDWARE_BTHOME_HUMIDITY || config.deviceHardware==DEVICE_HARDWARE_BTHOME_THERMOMETER
+	|| config.deviceHardware==DEVICE_HARDWARE_RAPT_THERMOMETER ) {
 #else
 	if (hasOnewire(config.deviceHardware)) {
 #endif
@@ -775,6 +790,7 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 #if SupportBTHomeSensor
 		||  config.deviceHardware == DEVICE_HARDWARE_BTHOME_HUMIDITY
 		||  config.deviceHardware == DEVICE_HARDWARE_BTHOME_THERMOMETER
+		||  config.deviceHardware == DEVICE_HARDWARE_RAPT_THERMOMETER
 #endif
 	) {
 		tempDiffToString(buf, temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION), 3, 8);
@@ -895,6 +911,7 @@ device_slot_t findHardwareDevice(DeviceConfig& find)
 			#if SupportBTHomeSensor
 				case DEVICE_HARDWARE_BTHOME_HUMIDITY:
 				case DEVICE_HARDWARE_BTHOME_THERMOMETER:
+				case DEVICE_HARDWARE_RAPT_THERMOMETER:
 					match &= matchAddress(find.hw.address, config.hw.address, 6);
 					break;
 			#endif
@@ -1113,6 +1130,7 @@ void DeviceManager::enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallb
 	clear((uint8_t*)&config, sizeof(config));
 	config.chamber = 1; // chamber 1 is default
 
+	/*
 	BleSensorListener::scanForDevice([&](uint8_t type,const uint8_t* address,float temp,uint8_t humidity){
 		if(BleSensorListener::findBleSensor(address) == NULL){
 			memcpy(config.hw.address , address,6);
@@ -1127,6 +1145,31 @@ void DeviceManager::enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallb
 			}
 		}
 	});
+	*/
+	bleScanner.scanForDevices(ScanDeviceTime,[&](NimBLEAdvertisedDevice* device){
+		BleSensorType type;
+		float temp=-1000;
+		uint8_t humidity=0xFF;
+		if(BleSensorListener::isBleSensorDevice(device,type,temp,humidity)){
+			// found BLE sensor
+			memcpy(config.hw.address , device->getAddress().getNative(),6);
+			config.hw.humiditySensorType = type;
+
+			if(humidity <=100){
+				config.deviceHardware = DEVICE_HARDWARE_BTHOME_HUMIDITY;
+				handleEnumeratedDevice(config, h, callback, output);
+			}
+			if(temp != -1000){
+				config.deviceHardware = DEVICE_HARDWARE_BTHOME_THERMOMETER;
+				handleEnumeratedDevice(config, h, callback, output);
+			}
+		}else if(BleRaptThermometer::isRaptThermemoter(device)){
+			memcpy(config.hw.address , device->getAddress().getNative(),6);
+			config.deviceHardware = DEVICE_HARDWARE_RAPT_THERMOMETER;
+			handleEnumeratedDevice(config, h, callback, output);
+		}
+	});
+
 	// list all devices "installed"
 	for (auto bth : BleSensorListener::getAll()) {
     		memcpy(config.hw.address , bth->macAddress(),6);
@@ -1184,7 +1227,8 @@ void DeviceManager::enumerateHardware()
 
 	#if SupportBTHomeSensor
 	if (spec.hardware==-1 || isBTHomeSensorHumidity(DeviceHardware(spec.hardware))
-		|| isBTHomeThermometer(DeviceHardware(spec.hardware))) {
+		|| isBTHomeThermometer(DeviceHardware(spec.hardware))
+		|| isRaptThermometer(DeviceHardware(spec.hardware))) {
 		enumerateBTHomeSensor(spec, OutputEnumeratedDevices, out);
 	}
 	#endif

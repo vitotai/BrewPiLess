@@ -91,7 +91,7 @@ void BleScanner::_setupAsyncScan(void){
   _pBLEScan->setMaxResults(0); // don't cache anything
 
 }
-
+/*
 BLEScanResults BleScanner::scan(uint32_t scanTime){
     if(_pBLEScan->isScanning()){
         // currently running scanning
@@ -101,11 +101,29 @@ BLEScanResults BleScanner::scan(uint32_t scanTime){
     _pBLEScan->setMaxResults(32); 
 
     BLEScanResults foundDevices = _pBLEScan->start(scanTime, false);
-    Serial.print("Devices found: ");
-    Serial.println(foundDevices.getCount());
-    Serial.println("Scan done!");
+    
+    DBG_PRINTF("Devices found: %d\n",foundDevices.getCount());    
    return foundDevices;
 }
+*/
+
+void BleScanner::scanForDevices(uint32_t scanTime,ScannedDevicdFoundFunc foundCB){
+    if(_pBLEScan->isScanning()){
+        // currently running scanning
+        _pBLEScan->stop();
+    }    
+    _pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
+    _pBLEScan->setMaxResults(32); 
+
+    BLEScanResults result = _pBLEScan->start(scanTime, false);
+    
+    DBG_PRINTF("Devices found: %d\n",result.getCount());    
+
+    for(auto it = result.begin(); it != result.end(); it++){
+        foundCB((NimBLEAdvertisedDevice*)(*it));
+    }
+}
+
 
 void BleScanner::clearScanData(void){
 }

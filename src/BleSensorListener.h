@@ -33,7 +33,8 @@ public:
     uint8_t humidity(void){ return _humidity;}
     uint8_t broadcastFormat(){ return _broadcastFormat;}
     
-    static int scanForDevice(BTHomeDevicdFoundFunc foundCb);
+    //static int scanForDevice(BTHomeDevicdFoundFunc foundCb);
+    static bool isBleSensorDevice(NimBLEAdvertisedDevice* device,BleSensorType& type,float& temp,uint8_t& humidity);
     static BleSensorListener* findBleSensor(const uint8_t mac[6]);
     static BleSensorListener* getBleSensor(const uint8_t mac[6],uint8_t format);
     static void releaseSensor(BleSensorListener* sensor);
