@@ -17,14 +17,11 @@ bool BleRaptThermometerLisener::onDeviceFound(NimBLEAdvertisedDevice* device){
 
     int battery;
     double temp;
-    // 
-    //DBG_PRINTF("***BleRaptThermometerLiseneron::DeviceFound: %s vs %s ***\n", device->getAddress().toString().c_str(),_macAddress.toString().c_str());
-    //if( (device->getAddress() == _macAddress) && _parseAdvertisedData(device,temp,battery)){
     if( memcmp(device->getAddress().getNative(),_macAddress,6)==0 && _parseAdvertisedData(device,temp,battery)){
         _temp = temp;
         _battery = battery;
         _rssi = device->getRSSI();
-        //DBG_PRINTF("Rapt T- tempx10:%d bat:%d, rssi:%d, last seen:%ds\n",(int)(_temp*10), battery,_rssi,(millis()-_lastUpdate)/1000); 
+        DBG_PRINTF("Rapt T- tempx10:%d bat:%d, rssi:%d, last seen:%ds\n",(int)(_temp*10), battery,_rssi,(millis()-_lastUpdate)/1000); 
         _lastUpdate= millis();
     }
     return false;

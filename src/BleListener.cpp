@@ -132,8 +132,10 @@ void BleScanner::_startScan(void) {
     // put your main code here, to run repeatedly:
     _pBLEScan->clearResults(); // delete results fromBLEScan buffer to release memory
 //    _scanning=true;
-    _pBLEScan->setActiveScan(false); //active scan uses more power, but get results faster
+    _pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
     _pBLEScan->setMaxResults(0); // not cached.
+    _pBLEScan->setInterval(100); // 100 ms
+    _pBLEScan->setWindow(50);   // 50 ms
     _lastScanTime=millis();
     if(!_pBLEScan->start(0, NULL,false)){
         //Serial.printf("Error starting scan\n");
@@ -171,6 +173,7 @@ void BleScanner::loop(void) {
     if(!_enabled || _pBLEScan->isScanning() ) return;
     // else, finish searching
     if(_enabled && (!_pBLEScan->isScanning() && ((millis() - _lastScanTime) > RescanTimeout ))){
+        DBG_PRINTF("Restart scanning\n");
         _startScan();
     }
 }
