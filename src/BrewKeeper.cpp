@@ -81,25 +81,32 @@ void BrewKeeper::keep(time_t now)
 void BrewKeeper::setModeFromRemote(char mode){
 	char ori_mode;
 	ori_mode = brewPi.getMode();
-	if(mode == 'p' && ori_mode != 'p') _profile.setScheduleStartDate(TimeKeeper.getTimeSeconds());
-	char buff[36];
+	if(mode == BrewPiModeBeerProfile && ori_mode != BrewPiModeBeerProfile) _profile.setScheduleStartDate(TimeKeeper.getTimeSeconds());
+/*	char buff[36];
 	sprintf(buff,"j{mode:%c}",mode);
 	DBG_PRINTF("write:%s\n",buff);
 	_write(buff);
+*/
+	brewPi.setMode(mode);
 }
 
 void BrewKeeper::setBeerSet(char* tempStr){
-	char buff[36];
+/*	char buff[36];
 	sprintf(buff,"j{beerSet:%s}",tempStr);
 	DBG_PRINTF("*write:%s\n",buff);
 	_write(buff);
+*/
+	brewPi.setBeerSet(String(tempStr).toFloat());
 }
 
 void BrewKeeper::setFridgeSet(char* tempStr){
+	/*
 	char buff[36];
 	sprintf(buff,"j{fridgeSet:%s}",tempStr);
 	DBG_PRINTF("write:%s\n",buff);
 	_write(buff);
+	*/
+	brewPi.setFridgetSet(String(tempStr).toFloat());
 }
 
 //**********************************************************************************

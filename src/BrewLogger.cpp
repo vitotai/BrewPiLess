@@ -192,6 +192,7 @@ BrewLogger::BrewLogger(void){
 			_usePlato = (mask & MaskPlato) != MaskPlato;
 			DBG_PRINTF("resume cal:%d\n",_calibrating);
 			processIndex += 6;
+			processIndex += _logBuffer[processIndex++];
 		}else{
 			DBG_PRINTF("resume failed, no start tag\n");
 			_logFile.close();
@@ -414,7 +415,7 @@ BrewLogger::BrewLogger(void){
 		// exceptional case.
 		if(index == MAX_LOG_FILE_NUMBER){
 			rmLog(0);
-			index = -1;
+			index = MAX_LOG_FILE_NUMBER-1;
 		}
 		strcpy(_pFileInfo->files[index].name,_pFileInfo->logname);
 		_pFileInfo->files[index].time = _pFileInfo->starttime;
@@ -897,6 +898,18 @@ BrewLogger::BrewLogger(void){
 		*ptr++ = _savedHumidityValue;  // 18
 		#endif
  	}
+	static void packFloat(char* ptr,float value){
+		union pfloat{
+			float f;
+			uint32_t u;
+		} pack;
+		pack.f=value;
+		*ptr++ =(char)(pack.u >> 24);
+		*ptr++ =(char)(pack.u >> 16);
+		*ptr++ =(char)(pack.u >> 8);
+		*ptr++ =(char)(pack.u & 0xFF);
+	}
+
 	void BrewLogger::_startLog(bool fahrenheit,bool calibrating)
 	{
 		char *ptr=_logBuffer;
@@ -932,12 +945,13 @@ BrewLogger::BrewLogger(void){
 		// b1 gravity device type
 		// TLV: type, length, value
 		GravityDeviceConfiguration *gdCfg=theSettings.GravityConfig();
+		const int tiltCorrectionBlokLength= 4 * 4+2;
 		if(gdCfg->gravityDeviceType == GravityDeviceIspindel){
 			// length is ??
 			const char *name = externalData.getDeviceName();
 			if(name){
 				uint8_t length =(uint8_t) strlen(name);
-				*ptr++ = 3 + length;
+				*ptr++ = tiltCorrectionBlokLength +3 + length;
 				*ptr++ = GravityDeviceIspindel;
 
 				*ptr++  = GDIIdentity;
@@ -953,16 +967,16 @@ BrewLogger::BrewLogger(void){
 		#if SupportBleHydrometer
 		}else if(gdCfg->gravityDeviceType == GravityDeviceTilt){
 			// total length: 
-			*ptr++ = 4;
+			*ptr++ = tiltCorrectionBlokLength+ 4; // total length
 			*ptr++ = GravityDeviceTilt; //1
 			*ptr++  = GDIIdentity;
-			*ptr++  = 1;
+			*ptr++  = 1;  // length
 			*ptr++  = theSettings.tiltConfiguration()->tiltColor;
 		}else if(gdCfg->gravityDeviceType == GravityDevicePill){
-			*ptr++ = 9;
+			*ptr++ = tiltCorrectionBlokLength + 9; //total length
 			*ptr++ = GravityDevicePill; //1
 			*ptr++  = GDIAddress;
-			*ptr++  = 6;
+			*ptr++  = 6; // length
 			uint8_t *mac =theSettings.pillConfiguration()->macAddress;
 			for(int m=0;m<6;m++){
 				*ptr++ =mac[m];
@@ -970,9 +984,19 @@ BrewLogger::BrewLogger(void){
 		#endif
 		}else{
 			// no device
-			*ptr++ = 1;  // length
+			*ptr++ = 1;  // total length
 			*ptr++ = GravityDeviceNone;  // no device
 		}
+		
+		if(gdCfg->gravityDeviceType !=0){
+			*ptr++ = GDITiltTemperatureCorrection;
+			*ptr++ = 4*4;
+			for(int idx=0;idx<4;idx++){
+				packFloat(ptr,gdCfg->tiltCorrectionCoeff[idx]);
+				ptr += 4;
+			}
+		}
+
 		_logIndex=0;
 		_savedLength=0;
 

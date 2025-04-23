@@ -20,6 +20,7 @@
 
 #define INVALID_VOLTAGE -1
 #define INVALID_GRAVITY -1
+#define INVALID_RSSI -1000
 #ifdef INVALID_TEMP
 #undef INVALID_TEMP
 #endif
@@ -108,13 +109,15 @@ protected:
 
 	// iSpindel and Pill: battery, tilt Angle
 
-	float  _deviceVoltage;
+	float _deviceVoltage;
 	float _tiltAngle;
 	
 	// iSpindel specific: name
     char *_ispindelName;
+	float _og;
 
 	bool _formulaValid;
+
 	float _filteredGravity;
 	SimpleFilter filter;
 
@@ -131,7 +134,7 @@ protected:
 	void _setOriginalGravity(float og);	
 	void _setDeviceRssi(int16_t rssi){_rssi = rssi;  _rssiValid=true;}
 
-	void _reconfig(bool reformula);
+	void _reconfig(void);
 	#if SupportTiltHydrometer
 	void _gotTiltInfo(TiltHydrometerInfo* info);
 	#endif
@@ -182,6 +185,10 @@ public:
 	void setWaterTiltGravity(float tilt,float sg);
 
 	const char* getDeviceName(void);
+	char deviceBatteryUnit(void);
+	float getOriginalGravity(void){ return _og; }
+	void setOriginalGravity(float og){ _setOriginalGravity(og); }
+	void setGravity(float gravity);
 };
 
 extern ExternalData externalData;

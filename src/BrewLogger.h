@@ -20,6 +20,7 @@
 #define LOG_PATH "/log"
 #ifndef LogBufferSize
 #define LogBufferSize 1024
+
 #endif
 // Log tags
 
@@ -54,6 +55,7 @@
 
 #define GDIAddress 1
 #define GDIIdentity 2
+#define GDITiltTemperatureCorrection 3
 
 #define VolatileDataHeaderSize 7
 #if EnableHumidityControlSupport

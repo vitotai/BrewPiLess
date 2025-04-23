@@ -320,10 +320,6 @@ String BPLSettings::jsonSystemConfiguration(void){
 #define KeyCalibrateFormula "cal"
 #define KeyGravityOffset "off"
 
-#define KeyCoefficientA0 "a0"
-#define KeyCoefficientA1 "a1"
-#define KeyCoefficientA2 "a2"
-#define KeyCoefficientA3 "a3"
 #define KeyLPFBeta "lpc"
 #define KeyStableGravityThreshold "stpt"
 #define KeyNumberCalPoints "npt"
@@ -333,7 +329,9 @@ String BPLSettings::jsonSystemConfiguration(void){
 #define KeyCalibrationPoints "calpts"
 
 #define KeyPillMacAddress "mac"
-
+#define KeyTemperatureCorrection "tc"
+#define KeyTiltCorrectionCoefficient "ttce"
+#define KeyGravtyCalibrationCoefficient "gcce"
 
 bool BPLSettings::gravityConfigSantiy(){
 	GravityDeviceConfiguration *gdc = &_data.gdc;
@@ -349,7 +347,8 @@ bool BPLSettings::gravityConfigSantiy(){
 bool BPLSettings::dejsonGravityConfig(char* json)
 {
 		#if ARDUINOJSON_VERSION_MAJOR == 6
-		StaticJsonDocument<JSON_OBJECT_SIZE(16) + 256> root;
+//		StaticJsonDocument<JSON_OBJECT_SIZE(16) + 256> root;
+		StaticJsonDocument<2048> root;
 		auto error = deserializeJson(root,json);
 		if (error)
 
@@ -372,7 +371,7 @@ bool BPLSettings::dejsonGravityConfig(char* json)
 
 		gdc->calbybpl = root[KeyCalibrateFormula];
 		gdc->offset = root[KeyGravityOffset];
-
+		gdc->tempCorrection = root[KeyTemperatureCorrection];
 		if(gdc->gravityDeviceType == GravityDeviceIspindel){
 		}
 
@@ -387,6 +386,25 @@ bool BPLSettings::dejsonGravityConfig(char* json)
 		}
 		gdc->numCalPoints = numpt;
 
+		if(root.containsKey(KeyGravtyCalibrationCoefficient)){
+			JsonArray gcce = root[KeyGravtyCalibrationCoefficient].as<JsonArray>();
+			int t=0;
+			for(JsonVariant v : gcce) {
+				gdc->gravityFormulaCoeff[t]=(float) v.as<float>();
+				t++;
+				if(t>=4) break;
+			}
+		}
+		if(root.containsKey(KeyTiltCorrectionCoefficient)){
+
+			JsonArray ttce = root[KeyTiltCorrectionCoefficient].as<JsonArray>();
+			int t=0;
+			for(JsonVariant v : ttce) {
+				gdc->tiltCorrectionCoeff[t]=(float) v.as<float>();
+				t++;
+				if(t>=4) break;
+			}
+		}
 
 		#if SupportTiltHydrometer
 		if(gdc->gravityDeviceType == GravityDeviceTilt){
@@ -432,13 +450,10 @@ String BPLSettings::jsonGravityConfig(void){
 
 		root[KeyCalibrateFormula] = gdc->calbybpl;
 
-		root[KeyCoefficientA0]=gdc->coefficients[0];
-		root[KeyCoefficientA1]=gdc->coefficients[1];
-		root[KeyCoefficientA2]=gdc->coefficients[2];
-		root[KeyCoefficientA3]=gdc->coefficients[3];
 		
 		root[KeyNumberCalPoints] = gdc->numCalPoints;
 		root[KeyGravityOffset] = gdc->offset;		
+		root[KeyTemperatureCorrection] = gdc->tempCorrection;
 
 		if(gdc->numCalPoints > 0){
 			JsonArray points = root.createNestedArray(KeyCalibrationPoints);
@@ -447,6 +462,17 @@ String BPLSettings::jsonGravityConfig(void){
 				point.add(gdc->calPoints[i].raw);
 				point.add(gdc->calPoints[i].calsg);
 			}
+		}
+
+		JsonArray gcce = root.createNestedArray(KeyGravtyCalibrationCoefficient);
+		for(int i=0;i< 4;i++){
+				gcce.add(gdc->gravityFormulaCoeff[i]);
+		}
+
+		
+		JsonArray ttce = root.createNestedArray(KeyTiltCorrectionCoefficient);
+		for(int i=0;i< 4;i++){
+				ttce.add(gdc->tiltCorrectionCoeff[i]);
 		}
 
 
@@ -481,15 +507,23 @@ String BPLSettings::jsonGravityConfig(void){
 void BPLSettings::defaultGravityConfig(void)
 {
 	GravityDeviceConfiguration *gdc = &_data.gdc;
+	for(int i=0;i<4;i++){
+	    gdc->tiltCorrectionCoeff[i]=0;
+		gdc->gravityFormulaCoeff[i]=0;
+	}
+    gdc->gravityFormulaCoeff[1]=1;
 
-	//gdc->gravityDeviceType=GravityDeviceNone;
-	//gdc->ispindelTempCal =0;
-
-	//gdc->calculateGravity= 0;
-	gdc->gravityDeviceType  =0;
     gdc->lpfBeta = 0.1;
+	gdc->offset =0;
+
+	gdc->gravityDeviceType  =0;
+
+    gdc->calbybpl=0;
+	gdc->numCalPoints=0;
     gdc->stableThreshold=1;
-	//gdc->numberCalPoints=0;
+
+	gdc->usePlato=0;
+    gdc->tempCorrection=0;
 }
   
 //***************************************************************

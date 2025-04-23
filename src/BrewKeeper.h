@@ -6,6 +6,11 @@
 #include "BPLSettings.h"
 // always enabled #if EnableGravitySchedule
 
+#define BrewPiModeOff 'o'
+#define BrewPiModeBeerConstant 'b'
+#define BrewPiModeFridgeConstant 'f'
+#define BrewPiModeBeerProfile 'p'
+
 
 class BrewProfile
 {
