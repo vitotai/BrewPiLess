@@ -29,12 +29,13 @@ const uint8_t UUIDPink[]={0xA4,0x95,0xBB,0x80,0xC5,0xB1,0x4B,0x44,0xB5,0x12,0x13
 #define UUID_SIZE sizeof(UUIDPink)
 
 
-bool _parseTiltInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,TiltHydrometerInfo& tiltInfo){
+bool _parseTiltInfoFromAdvertise(const NimBLEAdvertisedDevice* advertisedDevice,TiltHydrometerInfo& tiltInfo){
 
+
+    if(!advertisedDevice->haveManufacturerData()) return false;
 
     std::string strManufacturerData = advertisedDevice->getManufacturerData();
     
-    if(!advertisedDevice->haveManufacturerData()) return false;
     if (strManufacturerData.length() != 25) return false;
 
     uint8_t cManufacturerData[100];
@@ -44,7 +45,7 @@ bool _parseTiltInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,TiltHy
     
     
     BLEBeacon oBeacon = BLEBeacon();
-    oBeacon.setData(strManufacturerData);
+    oBeacon.setData(reinterpret_cast<const uint8_t*>(strManufacturerData.data()), strManufacturerData.length());
     
     uint8_t* uuid= cManufacturerData + 4;
     
@@ -79,7 +80,7 @@ void TiltListener::listen(TiltColor color,TiltDataHandler onData){
     startListen();
 }
 
-bool TiltListener::onDeviceFound(NimBLEAdvertisedDevice* device){
+bool TiltListener::onDeviceFound(const NimBLEAdvertisedDevice* device){
     if(_parseTiltInfoFromAdvertise(device,_tiltInfo)){
         if(_tiltInfo.color == _targetColor){
             if(_dataAvailableHandler) _dataAvailableHandler(&_tiltInfo);
@@ -101,7 +102,7 @@ void TiltScanner::stopScan(void){
     stopListen();
 }
 
-bool TiltScanner::onDeviceFound(NimBLEAdvertisedDevice* device){
+bool TiltScanner::onDeviceFound(const NimBLEAdvertisedDevice* device){
     TiltHydrometerInfo info;
     if(_parseTiltInfoFromAdvertise(device,info)){
         if(_dataAvailableHandler) _dataAvailableHandler(&info);

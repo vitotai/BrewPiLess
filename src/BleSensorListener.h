@@ -26,7 +26,7 @@ public:
     uint8_t *macAddress(void){ return _macAddress; }
     void begin(void);
     void stop(void);
-    bool onDeviceFound(NimBLEAdvertisedDevice*);
+    bool onDeviceFound(const NimBLEAdvertisedDevice*);
     bool isConnected();
 
     float temperature(void){ return _temperature;}
@@ -34,7 +34,7 @@ public:
     uint8_t broadcastFormat(){ return _broadcastFormat;}
     
     //static int scanForDevice(BTHomeDevicdFoundFunc foundCb);
-    static bool isBleSensorDevice(NimBLEAdvertisedDevice* device,BleSensorType& type,float& temp,uint8_t& humidity);
+    static bool isBleSensorDevice(const NimBLEAdvertisedDevice* device,BleSensorType& type,float& temp,uint8_t& humidity);
     static BleSensorListener* findBleSensor(const uint8_t mac[6]);
     static BleSensorListener* getBleSensor(const uint8_t mac[6],uint8_t format);
     static void releaseSensor(BleSensorListener* sensor);
@@ -47,7 +47,7 @@ protected:
     uint8_t _humidity;
     uint8_t _broadcastFormat;
 
-    bool _getData(NimBLEAdvertisedDevice*);
+    bool _getData(const NimBLEAdvertisedDevice*);
     static std::list<BleSensorListener*> allSensors;
 };
 

@@ -1413,7 +1413,7 @@ public:
 					DBG_PRINTF("scan for Pills...\n");
 					pillScanner.scan([](PillHydrometerInfo* pill){
 						String ret=String("{\"pill\":{\"a\":[");
-								const uint8_t *address = pill->macAddress.getNative();
+								const uint8_t *address = pill->macAddress.getBase()->val;
 								for(int a=0;a<6;a++){
 										ret += address[a];
 										if(a<5) ret+=String(",");

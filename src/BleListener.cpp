@@ -7,8 +7,11 @@
 
 BleScanner bleScanner;
 
+void BleScanner::onDiscovered(const NimBLEAdvertisedDevice* advertisedDevice) {
 
-void BleScanner::onResult(NimBLEAdvertisedDevice* advertisedDevice) {
+    //DBG_PRINTF("***onDiscovered:%s\n",advertisedDevice->getAddress().toString().c_str());
+}
+void BleScanner::onResult(const NimBLEAdvertisedDevice* advertisedDevice) {
 
     //DBG_PRINTF("***OnResult:%s\n",advertisedDevice->getAddress().toString().c_str());
 #if 0
@@ -83,12 +86,12 @@ void BleScanner::begin(void) {
 }
 
 void BleScanner::_setupAsyncScan(void){
-  _pBLEScan->setAdvertisedDeviceCallbacks(this);
-  _pBLEScan->setActiveScan(false); //active scan uses more power, but get results faster
-  _pBLEScan->setInterval(100); // in msecs
-  _pBLEScan->setWindow(99);  // less or equal setInterval value
+  _pBLEScan->setScanCallbacks(this);
+//  _pBLEScan->setActiveScan(false); //active scan uses more power, but get results faster
+//  _pBLEScan->setInterval(100); // in msecs
+//  _pBLEScan->setWindow(100);  // less or equal setInterval value
 
-  _pBLEScan->setMaxResults(0); // don't cache anything
+//  _pBLEScan->setMaxResults(0); // don't cache anything
 
 }
 /*
@@ -114,8 +117,10 @@ void BleScanner::scanForDevices(uint32_t scanTime,ScannedDevicdFoundFunc foundCB
     }    
     _pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
     _pBLEScan->setMaxResults(32); 
+    _pBLEScan->setInterval(100); // 100 ms
+    _pBLEScan->setWindow(100);   // 50 ms
 
-    BLEScanResults result = _pBLEScan->start(scanTime, false);
+    BLEScanResults result = _pBLEScan->getResults(scanTime *1000, false);
     
     DBG_PRINTF("Devices found: %d\n",result.getCount());    
 

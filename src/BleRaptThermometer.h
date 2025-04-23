@@ -15,7 +15,7 @@ class BleRaptThermometerLisener:public BleDeviceListener{
         BleRaptThermometerLisener(uint8_t mac[6]);
         virtual ~BleRaptThermometerLisener();
         // callbacks for liseners
-        bool onDeviceFound(NimBLEAdvertisedDevice*);
+        bool onDeviceFound(const NimBLEAdvertisedDevice*);
 
         bool isReporting(void);
         double latestTemperature(void){ return _temp;}

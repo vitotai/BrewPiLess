@@ -107,9 +107,9 @@ void BleSensorListener::stop(void){
     stopListen();
 }
 
-bool BleSensorListener::onDeviceFound(NimBLEAdvertisedDevice* device){
+bool BleSensorListener::onDeviceFound(const NimBLEAdvertisedDevice* device){
     //device->isAdvertisingService() doesn't work?
-    const uint8_t *amac=device->getAddress().getNative();
+    const uint8_t *amac=device->getAddress().getBase()->val;
     if(memcmp(_macAddress,amac,6) ==0 ){
         if(_getData(device))
         return true;
@@ -127,7 +127,7 @@ static uint8_t findTagStartFrom(int sidx,uint8_t objId){
     return 0xFF;
 }
 
-static bool parseBTHomeSensorData(NimBLEAdvertisedDevice* device, float& temperature,uint8_t& humidity){
+static bool parseBTHomeSensorData(const NimBLEAdvertisedDevice* device, float& temperature,uint8_t& humidity){
     // haveServieceData() doesn't work as expected
     // copy to "data" doesn't include length information?
     
@@ -203,7 +203,7 @@ static bool parseBTHomeSensorData(NimBLEAdvertisedDevice* device, float& tempera
 
 
 
-static bool parseAtcData(NimBLEAdvertisedDevice* device, float& temperature,uint8_t& humidity,BleSensorType& type){
+static bool parseAtcData(const NimBLEAdvertisedDevice* device, float& temperature,uint8_t& humidity,BleSensorType& type){
     std::string strSvrData=device->getServiceData(ATCServiceUUID);
     uint8_t data[16];
 
@@ -230,7 +230,7 @@ static bool parseAtcData(NimBLEAdvertisedDevice* device, float& temperature,uint
     return false;
 }
 
-bool BleSensorListener::_getData(NimBLEAdvertisedDevice* device){
+bool BleSensorListener::_getData(const NimBLEAdvertisedDevice* device){
     // haveServieceData() doesn't work as expected
     // copy to "data" doesn't include length information?
 
@@ -281,7 +281,7 @@ int BleSensorListener::scanForDevice(BTHomeDevicdFoundFunc foundCb){
 }
 */
 
-bool BleSensorListener::isBleSensorDevice(NimBLEAdvertisedDevice* device,BleSensorType& type,float& temp,uint8_t& humidity){
+bool BleSensorListener::isBleSensorDevice(const NimBLEAdvertisedDevice* device,BleSensorType& type,float& temp,uint8_t& humidity){
         
     if(parseBTHomeSensorData(device,temp,humidity)){
         type = BleSensorTypeBTHome;

@@ -51,7 +51,7 @@ public:
 
     void listen(TiltColor color,TiltDataHandler onData);
     // callbacks
-    bool onDeviceFound(NimBLEAdvertisedDevice*);
+    bool onDeviceFound(const NimBLEAdvertisedDevice*);
     void setColor(TiltColor color){ _targetColor = color; }
 protected:
     TiltDataHandler _dataAvailableHandler;
@@ -65,7 +65,7 @@ public:
     void scan(TiltDataHandler onData);
     void stopScan(void);
     // callbacks
-    bool onDeviceFound(NimBLEAdvertisedDevice*);
+    bool onDeviceFound(const NimBLEAdvertisedDevice*);
 protected:
     TiltDataHandler _dataAvailableHandler;
 };

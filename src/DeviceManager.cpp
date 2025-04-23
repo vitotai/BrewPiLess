@@ -1152,7 +1152,7 @@ void DeviceManager::enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallb
 		uint8_t humidity=0xFF;
 		if(BleSensorListener::isBleSensorDevice(device,type,temp,humidity)){
 			// found BLE sensor
-			memcpy(config.hw.address , device->getAddress().getNative(),6);
+			memcpy(config.hw.address , device->getAddress().getBase()->val,6);
 			config.hw.humiditySensorType = type;
 
 			if(humidity <=100){
@@ -1164,7 +1164,7 @@ void DeviceManager::enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallb
 				handleEnumeratedDevice(config, h, callback, output);
 			}
 		}else if(BleRaptThermometer::isRaptThermemoter(device)){
-			memcpy(config.hw.address , device->getAddress().getNative(),6);
+			memcpy(config.hw.address , device->getAddress().getBase()->val,6);
 			config.deviceHardware = DEVICE_HARDWARE_RAPT_THERMOMETER;
 			handleEnumeratedDevice(config, h, callback, output);
 		}

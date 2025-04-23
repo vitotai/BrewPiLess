@@ -2,13 +2,11 @@
 #define BleListener_H
 #include <Arduino.h>
 #include <functional>
-
+#include <list>
 #include "Config.h"
 #if ESP32
 #include <NimBLEDevice.h>
 #include <NimBLEAdvertisedDevice.h>
-#include "NimBLEEddystoneURL.h"
-#include "NimBLEEddystoneTLM.h"
 #include "NimBLEBeacon.h"
 
 
@@ -37,7 +35,7 @@ public:
     void startListen(void);
     void stopListen(void);
     // called when a device found
-    virtual bool onDeviceFound(NimBLEAdvertisedDevice*)=0;
+    virtual bool onDeviceFound(const NimBLEAdvertisedDevice*)=0;
 protected:
     bool _listening;
 };
@@ -62,7 +60,8 @@ public:
     void clearScanData(void);
 
     // callbacks of BLEAdvertisedDeviceCallbacks
-    virtual void onResult(NimBLEAdvertisedDevice* advertisedDevice);
+    void onResult(const NimBLEAdvertisedDevice* advertisedDevice) override;
+    void onDiscovered(const NimBLEAdvertisedDevice* advertisedDevice) override;
 protected:
     void _startScan(void);
 

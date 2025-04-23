@@ -43,7 +43,7 @@ public:
 
     void listen(PillDataHandler onData);
     // callbacks
-    bool onDeviceFound(NimBLEAdvertisedDevice*);
+    bool onDeviceFound(const NimBLEAdvertisedDevice*);
     void setMac(uint8_t mac[6]){
             //NimBLEAddress nmac(mac);
             //_mac = nmac;
@@ -64,7 +64,7 @@ public:
     
     void scan(PillDataHandler onData);
     void stopScan(void);
-    bool onDeviceFound(NimBLEAdvertisedDevice*);
+    bool onDeviceFound(const NimBLEAdvertisedDevice*);
 protected:
     PillDataHandler _dataAvailableHandler;
 };

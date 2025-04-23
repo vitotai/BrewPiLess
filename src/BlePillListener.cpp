@@ -37,7 +37,7 @@ union FloatRaw{
 };
 
 
-bool _parsePillInfoFromAdvertise(NimBLEAdvertisedDevice* advertisedDevice,PillHydrometerInfo& info){
+bool _parsePillInfoFromAdvertise(const NimBLEAdvertisedDevice* advertisedDevice,PillHydrometerInfo& info){
 
 
     std::string strManufacturerData = advertisedDevice->getManufacturerData();
@@ -129,9 +129,9 @@ void PillListener::listen(PillDataHandler onData){
     startListen();
 }
 
-bool PillListener::onDeviceFound(NimBLEAdvertisedDevice* device){
+bool PillListener::onDeviceFound(const NimBLEAdvertisedDevice* device){
     
-    const uint8_t *amac=device->getAddress().getNative();
+    const uint8_t *amac=device->getAddress().getBase()->val;
 //    DBG_PRINTF("Target:%x:%x:%x:%x:%x:%x rcv: %x:%x:%x:%x:%x:%x\n",_macAddress[0],_macAddress[1],_macAddress[2],_macAddress[3],_macAddress[4],_macAddress[5],amac[0],amac[1],amac[2],amac[3],amac[4],amac[5]);
         //if(_mac == device->getAddress()){ 
         //  There might be tow issues here
@@ -159,7 +159,7 @@ void PillScanner::stopScan(void){
     stopListen();
 }
 
-bool PillScanner::onDeviceFound(NimBLEAdvertisedDevice* device){
+bool PillScanner::onDeviceFound(const NimBLEAdvertisedDevice* device){
     PillHydrometerInfo info;
     if(_parsePillInfoFromAdvertise(device,info)){
         DBG_PRINTF("Scan device found!!!\n");
