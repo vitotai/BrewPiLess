@@ -42,7 +42,7 @@ static const char STR_psi[] PROGMEM = "psi";
 static const char STR_IP_[] PROGMEM = "IP ";
 
 static const char STR_RH_C_R[] PROGMEM = "RH C   %      R   %";
-static const char STR_Humidity_Chamber[] PROGMEM = "Humidity Chamber   % ";
+static const char STR_Humidity_Chamber[] PROGMEM = "Humidity Chamber   %";
 static const char STR_Humidity_Room[] PROGMEM = "Humidity Room      %";
 static const char STR_Unknown[] PROGMEM = "NA";
 static const char STR_Less_1m[] PROGMEM = "<1m";
