@@ -29,7 +29,7 @@ public:
     bool onDeviceFound(const NimBLEAdvertisedDevice*);
     bool isConnected();
 
-    float temperature(void){ return _temperature;}
+    double temperature(void){ return _temperature;}
     uint8_t humidity(void){ return _humidity;}
     uint8_t broadcastFormat(){ return _broadcastFormat;}
     
@@ -43,7 +43,7 @@ protected:
     uint32_t _lastUpdate;
     uint8_t _macAddress[6];
     uint8_t _count;
-    float _temperature;
+    double _temperature;
     uint8_t _humidity;
     uint8_t _broadcastFormat;
 

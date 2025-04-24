@@ -22,7 +22,7 @@ bool BleRaptThermometerLisener::onDeviceFound(const NimBLEAdvertisedDevice* devi
         _temp = temp;
         _battery = battery;
         _rssi = device->getRSSI();
-        DBG_PRINTF("Rapt T- tempx10:%d bat:%d, rssi:%d, last seen:%ds\n",(int)(_temp*10), battery,_rssi,(millis()-_lastUpdate)/1000); 
+        //DBG_PRINTF("Rapt T- tempx10:%d bat:%d, rssi:%d, last seen:%ds\n",(int)(_temp*10), battery,_rssi,(millis()-_lastUpdate)/1000); 
         _lastUpdate= millis();
     }
     return false;
@@ -79,7 +79,7 @@ temperature BleRaptThermometer::read(){
 //const NimBLEUUID UuidRaptThermometer(UuidRaptThermometerRaw,16);
 const NimBLEUUID UuidRaptThermometer("4b6567b7-2231-4977-8526-25b74c616e64");
 
-bool _parseAdvertisedData(const NimBLEAdvertisedDevice* advertisedDevice,double &temperature,int &battery){
+bool _parseAdvertisedData(const NimBLEAdvertisedDevice* advertisedDevice,double &temp,int &battery){
 
     if(!advertisedDevice->haveManufacturerData()) return false;
 
@@ -103,7 +103,7 @@ bool _parseAdvertisedData(const NimBLEAdvertisedDevice* advertisedDevice,double 
     uint16_t major =(uint16_t)  ENDIAN_CHANGE_U16(oBeacon.getMajor());
     uint16_t minor =(uint16_t)  ENDIAN_CHANGE_U16(oBeacon.getMinor());
 
-    temperature = ((float)major / 64.0) - 273.15;
+    temp = ((double)major / 64.0) - 273.15;
     battery = minor >> 8;
 
     //DBG_PRINTF("Rapt T- temp:%d bat:%d\n", major, battery); 

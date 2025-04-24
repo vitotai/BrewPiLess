@@ -127,7 +127,7 @@ static uint8_t findTagStartFrom(int sidx,uint8_t objId){
     return 0xFF;
 }
 
-static bool parseBTHomeSensorData(const NimBLEAdvertisedDevice* device, float& temperature,uint8_t& humidity){
+static bool parseBTHomeSensorData(const NimBLEAdvertisedDevice* device, double& temperature,uint8_t& humidity){
     // haveServieceData() doesn't work as expected
     // copy to "data" doesn't include length information?
     
@@ -158,15 +158,15 @@ static bool parseBTHomeSensorData(const NimBLEAdvertisedDevice* device, float& t
 
         if(objId == ID_Temperature_2p){
                 // litle endian
-                temperature =((float)( rawdata[idx +1] | (rawdata[idx +2]<<8))* 0.01);
+                temperature =((double)( rawdata[idx +1] | (rawdata[idx +2]<<8))* 0.01);
                 gotData=true;
                 //DBG_PRINTF("\t found temp:%d\n", (int)(temperature *100));
         }else if(objId == ID_Temperature_1p){
-                temperature =( (float)(rawdata[idx +1] | (rawdata[idx +2] << 8))* 0.1);
+                temperature =( (double)(rawdata[idx +1] | (rawdata[idx +2] << 8))* 0.1);
                 gotData=true;
                 //DBG_PRINTF("\t found temp:%d\n", (int)(temperature *100));
         }else if(objId == ID_Humidity_2B){
-                humidity =(uint8_t)((float)(rawdata[idx +1] | (rawdata[idx +2]<< 8))* 0.01);
+                humidity =(uint8_t)((double)(rawdata[idx +1] | (rawdata[idx +2]<< 8))* 0.01);
                 gotData=true;
                 //DBG_PRINTF("\t found hum:%d\n", humidity);
         }else if(objId == ID_Humidity_1B){
@@ -236,11 +236,11 @@ bool BleSensorListener::_getData(const NimBLEAdvertisedDevice* device){
 
     BleSensorType type;
     if(parseBTHomeSensorData(device,_temperature,_humidity)){
-        DBG_PRINTF("\t humidity:%d, temperature:%d, seen before %lu\n", _humidity,(int)(_temperature*100), (millis()-_lastUpdate)/1000);
+        //DBG_PRINTF("\t humidity:%d, temperature:%d, seen before %lu\n", _humidity,(int)(_temperature*100), (millis()-_lastUpdate)/1000);
         _lastUpdate = millis();
         return true;
     }else if(parseAtcData(device,_temperature,_humidity,type)){
-        DBG_PRINTF("\t humidity:%d, temperature:%d, seen before %lu\n", _humidity,(int)(_temperature*100), (millis()-_lastUpdate)/1000);
+        //DBG_PRINTF("\t humidity:%d, temperature:%d, seen before %lu\n", _humidity,(int)(_temperature*100), (millis()-_lastUpdate)/1000);
         _lastUpdate = millis();
         return true;
     }
@@ -353,11 +353,11 @@ temperature BleThermometer::read(){
 		if (!isConnected()){
 			 return TEMP_SENSOR_DISCONNECTED;
 		}
-        float t = _listener->temperature();
-		if(t <-99.0) {
+        double tDouble = _listener->temperature();
+		if(tDouble <-99.0) {
 			return TEMP_SENSOR_DISCONNECTED;
 		}
-		temperature temp =  _tempOffset + doubleToTemp((double)t);
+		temperature temp =  _tempOffset + doubleToTemp(tDouble);
 		return temp;
 
 }
