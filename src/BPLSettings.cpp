@@ -3,7 +3,18 @@
 #include <string.h>
 #include <IPAddress.h>
 #include <FS.h>
+
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#if UseLittleFS
+#include <LittleFS.h>
+#else
+#include <SPIFFS.h>
+#endif
+#include <rom/spi_flash.h>
+#endif
 
 #include "Config.h"
 #include "BPLSettings.h"
@@ -13,6 +24,10 @@ BPLSettings theSettings;
 
 #define BPLSettingFileName "/bpl.cfg"
 
+
+#ifndef WL_MAC_ADDR_LENGTH
+#define WL_MAC_ADDR_LENGTH 6
+#endif
 
 void BPLSettings::preFormat(void){
 	brewLogger.onFormatFS();
@@ -33,7 +48,7 @@ void BPLSettings::load()
 		 offsetof(Settings,remoteLogginInfo),offsetof(Settings,autoCapSettings),
 		 offsetof(Settings,parasiteTempControlSettings));
 
-	fs::File f = SPIFFS.open(BPLSettingFileName, "r");
+	fs::File f = FileSystem.open(BPLSettingFileName, "r");
 	if(!f){
 		setDefault();
 		return;
@@ -41,18 +56,29 @@ void BPLSettings::load()
 	f.read((uint8_t*)&_data,sizeof(_data));
 	f.close();
 	// check invalid value, and correct
-	SystemConfiguration *cfg=  systemConfiguration();
-	if( *( cfg->hostnetworkname) == '\0'
-		|| cfg->wifiMode ==0){
+	// sanity check
+
+     if(!systemConfigurationSanity()){
 			setDefault();
-			DBG_PRINTF("invalid system configuration!\n");
-	}
-		
+	 }
+     //timeInformationSanity();
+     gravityConfigSantiy();
+     beerProfileSanity();
+     logFileIndexesSanity();
+     remoteLoggingSanity();
+     //autoCapSettingsSanity();
+#if EanbleParasiteTempControl   
+    // parasiteTempControlSettingsSanity();
+#endif
+#if EnableHumidityControlSupport
+     //humidityControlSettingsSanity();
+#endif
+	mqttSettingSanity();
 }
 
 void BPLSettings::save()
 {
-	fs::File f = SPIFFS.open(BPLSettingFileName, "w");
+	fs::File f = FileSystem.open(BPLSettingFileName, "w");
     if(!f){
 		DBG_PRINTF("error open configuratoin file\n");
 		return;
@@ -64,6 +90,9 @@ void BPLSettings::save()
 
 void BPLSettings::setDefault(void)
 {
+
+	DBG_PRINTF("\n\n*** RESET all SETTINGS ***\n\n");
+
 	// clear. to be safe
 	memset((char*)&_data,'\0',sizeof(_data));
 	// 
@@ -74,16 +103,31 @@ void BPLSettings::setDefault(void)
     defaultLogFileIndexes();
     defaultRemoteLogging();
     defaultAutoCapSettings();
+	defaultMqttSetting();
 
 #if EanbleParasiteTempControl
     defaultParasiteTempControlSettings();
+#endif
+#if EnableHumidityControlSupport
+	defaultHumidityControlSettings();
 #endif
 }
 
 void BPLSettings::defaultTimeInformation(void){}
 void BPLSettings::defaultAutoCapSettings(void){}
 
-void BPLSettings::defaultLogFileIndexes(void){}
+void BPLSettings::defaultLogFileIndexes(void){
+	FileIndexes* info= & _data.logFileIndexes;
+	info->logname[0] = '\0';
+	info->writeOnBufferFull = false;
+	
+	for(int i=0;i<MAX_LOG_FILE_NUMBER;i++){
+		info->files[i].name[0]='\0';
+	}
+
+}
+
+bool BPLSettings::autoCapSettingsSanity(void){ return true;}
 
 //***************************************************************
 // system configuration
@@ -99,6 +143,31 @@ void BPLSettings::defaultLogFileIndexes(void){}
 #define  KeyGateway   "gw"
 #define  KeyNetmask    "mask"
 #define  KeyDNS "dns"
+#define  KeySecuredAP "eap"
+
+#define KeyFlashChipId "fid"
+#define KeyFlashRealSize "frsize"
+#define KeyFlashAssignedSize "fsize"
+#define KeyFileSystemSize "fs"
+#define KeyMacAddress "mac"
+#define KeyBuildTime "date"
+
+#define KeyDisplayMode "dis"
+
+#define KeyGlycol "glycol"
+
+bool BPLSettings::systemConfigurationSanity(void){
+	SystemConfiguration *cfg=  systemConfiguration();
+	if( *( cfg->hostnetworkname) == '\0'
+		|| strlen(cfg->hostnetworkname)>32
+		|| strlen(cfg->titlelabel) > 32
+		|| cfg->wifiMode ==0){
+			DBG_PRINTF("\n\n*****invalid system configuration!*****\n\n");
+			return false;
+	}
+
+	return true;
+}
 
 extern IPAddress scanIP(const char *str);
 
@@ -123,8 +192,8 @@ void BPLSettings::defaultSystemConfiguration(void){
     stringNcopy(syscfg->hostnetworkname,DEFAULT_HOSTNAME,32);
     stringNcopy(syscfg->username,DEFAULT_USERNAME,32);
     stringNcopy(syscfg->password,DEFAULT_PASSWORD,32);
-
-    syscfg->port = 80;
+    
+	syscfg->port = 80;
     syscfg->passwordLcd = false;
     syscfg->wifiMode = WIFI_AP_STA;
     syscfg->backlite = 0;
@@ -132,6 +201,11 @@ void BPLSettings::defaultSystemConfiguration(void){
     syscfg->gw = (uint32_t) IPAddress(0,0,0,0);
     syscfg->netmask = (uint32_t) IPAddress(0,0,0,0);
     syscfg->dns = (uint32_t) IPAddress(0,0,0,0);
+    syscfg->glycolChilling = 0;
+	syscfg->securedAp = false;
+	#if TWOFACED_LCD
+	syscfg->displayMode = 0;
+	#endif
 }
 
 bool BPLSettings::dejsonSystemConfiguration(String json){
@@ -145,7 +219,8 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
 
 	auto error = deserializeJson(root,json);
 
-	if(error)
+	if(!error)
+
 	#else
 
  	StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
@@ -163,16 +238,14 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
         syscfg->passwordLcd = root[KeyProtect];
         syscfg->wifiMode = root[KeyWifi];
         syscfg->backlite = root[KeyLcdBackLight];
-
-//		if(root.containsKey(KeyDNS)){
-//			syscfg->dns = (uint32_t) scanIP(root[KeyDNS]);	
-//		}
-//        syscfg->ip = (uint32_t) scanIP(root[KeyIpAddress]);
-//        syscfg->gw = (uint32_t) scanIP(root[KeyGateway]);
-//        syscfg->netmask = (uint32_t) scanIP(root[KeyNetmask]);
+		syscfg->securedAp = root[KeySecuredAP];
+		#if TWOFACED_LCD
+		syscfg->displayMode = root[KeyDisplayMode];
+		#endif
+        syscfg->glycolChilling=root[KeyGlycol];
+		return true;
     }
-//    free(buffer);
-	return true;
+	return false;
 }
     // encod json
 String BPLSettings::jsonSystemConfiguration(void){
@@ -199,6 +272,36 @@ String BPLSettings::jsonSystemConfiguration(void){
     root[KeyGateway]= IPAddress(syscfg->gw).toString();
     root[KeyNetmask]= IPAddress(syscfg->netmask).toString();
 	root[KeyDNS] = IPAddress(syscfg->dns).toString();
+	root[KeyGlycol] = syscfg->glycolChilling;
+	root[KeySecuredAP] = syscfg->securedAp;
+	#if TWOFACED_LCD		
+	root[KeyDisplayMode] = syscfg->displayMode;
+	#endif
+
+// system info
+#if ESP32
+	root[KeyFlashChipId]=g_rom_flashchip.device_id;
+	root[KeyFlashRealSize]=g_rom_flashchip.chip_size;
+	root[KeyFileSystemSize]=FileSystem.totalBytes();
+#else
+	root[KeyFlashChipId]=ESP.getFlashChipId();
+	root[KeyFlashRealSize]=ESP.getFlashChipRealSize();
+
+	FSInfo fs_info;
+	FileSystem.info(fs_info);
+	root[KeyFileSystemSize]=fs_info.totalBytes;
+
+#endif
+
+	root[KeyFlashAssignedSize]=ESP.getFlashChipSize();
+	root[KeyBuildTime] = __DATE__ __TIME__;
+	uint8_t mac[WL_MAC_ADDR_LENGTH];
+	WiFi.macAddress(mac);
+	JsonArray data = root.createNestedArray(KeyMacAddress);
+	
+	for(int i=0;i<WL_MAC_ADDR_LENGTH;i++){
+		data.add(mac[i]);
+	}
 
     String ret;
 	#if ARDUINOJSON_VERSION_MAJOR == 6
@@ -213,23 +316,39 @@ String BPLSettings::jsonSystemConfiguration(void){
 //***************************************************************
 // gravity device configuration
 
-#define KeyEnableiSpindel "ispindel"
-#define KeyTempCorrection "tc"
-#define KeyCorrectionTemp "ctemp"
-#define KeyCalculateGravity "cbpl"
-#define KeyCoefficientA0 "a0"
-#define KeyCoefficientA1 "a1"
-#define KeyCoefficientA2 "a2"
-#define KeyCoefficientA3 "a3"
+#define KeyGravityDeviceType "dev"
+#define KeyCalibrateFormula "cal"
+#define KeyGravityOffset "off"
+
 #define KeyLPFBeta "lpc"
 #define KeyStableGravityThreshold "stpt"
 #define KeyNumberCalPoints "npt"
 #define KeyUsePlato "plato"
 
- bool BPLSettings::dejsonGravityConfig(char* json)
+#define KeyTiltColor "color"
+#define KeyCalibrationPoints "calpts"
+
+#define KeyPillMacAddress "mac"
+#define KeyTemperatureCorrection "tc"
+#define KeyTiltCorrectionCoefficient "ttce"
+#define KeyGravtyCalibrationCoefficient "gcce"
+
+bool BPLSettings::gravityConfigSantiy(){
+	GravityDeviceConfiguration *gdc = &_data.gdc;
+
+	if(gdc->gravityDeviceType > MaxDeviceTypeNumber){
+		defaultGravityConfig();
+		return false;
+	}
+
+	return true;
+}
+
+bool BPLSettings::dejsonGravityConfig(char* json)
 {
 		#if ARDUINOJSON_VERSION_MAJOR == 6
-		StaticJsonDocument<JSON_OBJECT_SIZE(16) + 256> root;
+//		StaticJsonDocument<JSON_OBJECT_SIZE(16) + 256> root;
+		StaticJsonDocument<2048> root;
 		auto error = deserializeJson(root,json);
 		if (error)
 
@@ -240,36 +359,74 @@ String BPLSettings::jsonSystemConfiguration(void){
 		if (!root.success())
 		#endif
 		{
-  			DBG_PRINTF("Invalid JSON config\n");
+  			DBG_PRINTF("Invalid JSON  data:%s\n",json);
   			return false;
 		}
         GravityDeviceConfiguration *gdc = &_data.gdc;
 
-		gdc->ispindelEnable=root[KeyEnableiSpindel];
-		gdc->ispindelTempCal = root[KeyTempCorrection];
-
-//		if(gdc->ispindelTempCal){
-		    gdc->ispindelCalibrationBaseTemp =
-                (root.containsKey(KeyCorrectionTemp))? root[KeyCorrectionTemp]:20;
-//		}
-		gdc->calculateGravity=root[KeyCalculateGravity];
-		gdc->ispindelCoefficients[0]=root[KeyCoefficientA0];
-		gdc->ispindelCoefficients[1]=root[KeyCoefficientA1];
-		gdc->ispindelCoefficients[2]=root[KeyCoefficientA2];
-		gdc->ispindelCoefficients[3]=root[KeyCoefficientA3];
-        gdc->lpfBeta =root[KeyLPFBeta];
-        gdc->stableThreshold=root[KeyStableGravityThreshold];
-		gdc->numberCalPoints=root[KeyNumberCalPoints];
+		gdc->gravityDeviceType=root[KeyGravityDeviceType];
+		gdc->stableThreshold=root[KeyStableGravityThreshold];
 		gdc->usePlato = root.containsKey(KeyUsePlato)? root[KeyUsePlato]:0;
-		// debug
-		#if SerialDebug
-		Serial.print("\nCoefficient:");
-		for(int i=0;i<4;i++){
-		    Serial.print(gdc->ispindelCoefficients[i],10);
-		    Serial.print(", ");
+		gdc->lpfBeta =root[KeyLPFBeta];
+
+		gdc->calbybpl = root[KeyCalibrateFormula];
+		gdc->offset = root[KeyGravityOffset];
+		gdc->tempCorrection = root[KeyTemperatureCorrection];
+		if(gdc->gravityDeviceType == GravityDeviceIspindel){
 		}
-		Serial.println("");
+
+		JsonArray calpts = root[KeyCalibrationPoints].as<JsonArray>();
+		int numpt=0;
+		for(JsonVariant v : calpts) {
+				JsonArray point=v.as<JsonArray>();
+				gdc->calPoints[numpt].raw=  point[0].as<int>();
+				gdc->calPoints[numpt].calsg= point[1].as<int>();
+				numpt++;
+				if(numpt >= MaxNumberCalibrationPoints) break;
+		}
+		gdc->numCalPoints = numpt;
+
+		if(root.containsKey(KeyGravtyCalibrationCoefficient)){
+			JsonArray gcce = root[KeyGravtyCalibrationCoefficient].as<JsonArray>();
+			int t=0;
+			for(JsonVariant v : gcce) {
+				gdc->gravityFormulaCoeff[t]=(float) v.as<float>();
+				t++;
+				if(t>=4) break;
+			}
+		}
+		if(root.containsKey(KeyTiltCorrectionCoefficient)){
+
+			JsonArray ttce = root[KeyTiltCorrectionCoefficient].as<JsonArray>();
+			int t=0;
+			for(JsonVariant v : ttce) {
+				gdc->tiltCorrectionCoeff[t]=(float) v.as<float>();
+				t++;
+				if(t>=4) break;
+			}
+		}
+
+		#if SupportTiltHydrometer
+		if(gdc->gravityDeviceType == GravityDeviceTilt){
+			TiltConfiguration *tcfg = & _data.bleHydrometerConfiguration.tilt;
+			tcfg->tiltColor = root[KeyTiltColor];
+		}
 		#endif
+
+		#if SupportPillHydrometer
+		if(gdc->gravityDeviceType == GravityDevicePill){
+			PillConfiguration *pcfg = & _data.bleHydrometerConfiguration.pill;
+		
+			JsonArray mac = root[KeyPillMacAddress].as<JsonArray>();
+			int a=0;
+			for(JsonVariant v : mac) {
+				pcfg->macAddress[a]=(uint8_t) v.as<int>();
+				a++;
+			}
+		}
+		#endif
+
+
 	return true;
 }
 
@@ -286,20 +443,57 @@ String BPLSettings::jsonGravityConfig(void){
 
         GravityDeviceConfiguration *gdc = &_data.gdc;
 
-		root[KeyEnableiSpindel] = gdc->ispindelEnable;
-		root[KeyTempCorrection] = gdc->ispindelTempCal;
-
-		root[KeyCorrectionTemp] = gdc->ispindelCalibrationBaseTemp;
-		root[KeyCalculateGravity] = gdc->calculateGravity;
-		root[KeyLPFBeta] =gdc->lpfBeta;
+		root[KeyGravityDeviceType] = gdc->gravityDeviceType;
 		root[KeyStableGravityThreshold] = gdc->stableThreshold;
-
-		root[KeyCoefficientA0]=gdc->ispindelCoefficients[0];
-		root[KeyCoefficientA1]=gdc->ispindelCoefficients[1];
-		root[KeyCoefficientA2]=gdc->ispindelCoefficients[2];
-		root[KeyCoefficientA3]=gdc->ispindelCoefficients[3];
-		root[KeyNumberCalPoints] = gdc->numberCalPoints;
 		root[KeyUsePlato] = gdc->usePlato;
+		root[KeyLPFBeta] =gdc->lpfBeta;
+
+		root[KeyCalibrateFormula] = gdc->calbybpl;
+
+		
+		root[KeyNumberCalPoints] = gdc->numCalPoints;
+		root[KeyGravityOffset] = gdc->offset;		
+		root[KeyTemperatureCorrection] = gdc->tempCorrection;
+
+		if(gdc->numCalPoints > 0){
+			JsonArray points = root.createNestedArray(KeyCalibrationPoints);
+			for(int i=0;i< gdc->numCalPoints;i++){
+				JsonArray point= points.createNestedArray();
+				point.add(gdc->calPoints[i].raw);
+				point.add(gdc->calPoints[i].calsg);
+			}
+		}
+
+		JsonArray gcce = root.createNestedArray(KeyGravtyCalibrationCoefficient);
+		for(int i=0;i< 4;i++){
+				gcce.add(gdc->gravityFormulaCoeff[i]);
+		}
+
+		
+		JsonArray ttce = root.createNestedArray(KeyTiltCorrectionCoefficient);
+		for(int i=0;i< 4;i++){
+				ttce.add(gdc->tiltCorrectionCoeff[i]);
+		}
+
+
+		#if SupportTiltHydrometer
+		if(gdc->gravityDeviceType == GravityDeviceTilt){
+			TiltConfiguration *tcfg = & _data.bleHydrometerConfiguration.tilt;
+
+			root[KeyTiltColor]	=	tcfg->tiltColor;
+		}
+		#endif
+		#if SupportPillHydrometer
+		if(gdc->gravityDeviceType == GravityDevicePill){
+			PillConfiguration *pcfg = & _data.bleHydrometerConfiguration.pill;
+
+			JsonArray macs = root.createNestedArray(KeyPillMacAddress);
+			for(int i=0;i< 6;i++){
+				macs.add(pcfg->macAddress[i]);
+			}
+		}
+		#endif
+
 	 String ret;
 
 	#if ARDUINOJSON_VERSION_MAJOR == 6
@@ -313,15 +507,23 @@ String BPLSettings::jsonGravityConfig(void){
 void BPLSettings::defaultGravityConfig(void)
 {
 	GravityDeviceConfiguration *gdc = &_data.gdc;
+	for(int i=0;i<4;i++){
+	    gdc->tiltCorrectionCoeff[i]=0;
+		gdc->gravityFormulaCoeff[i]=0;
+	}
+    gdc->gravityFormulaCoeff[1]=1;
 
-	//gdc->ispindelEnable=0;
-	//gdc->ispindelTempCal =0;
-
-	//gdc->calculateGravity= 0;
     gdc->lpfBeta = 0.1;
+	gdc->offset =0;
+
+	gdc->gravityDeviceType  =0;
+
+    gdc->calbybpl=0;
+	gdc->numCalPoints=0;
     gdc->stableThreshold=1;
-	//gdc->numberCalPoints=0;
-	
+
+	gdc->usePlato=0;
+    gdc->tempCorrection=0;
 }
   
 //***************************************************************
@@ -419,6 +621,28 @@ void makeTime(time_t timeInput, struct tm &tm){
   tm.tm_mday = time + 1;     // day of month
 }
 
+
+bool BPLSettings::beerProfileSanity(void){
+	BeerTempSchedule *schedule = & _data.tempSchedule;
+	if(schedule->numberOfSteps > MaximumSteps 
+		|| (schedule->unit != 'C' && schedule->unit != 'F')){
+		DBG_PRINTF("\n\n**** Error Beer invalid unit:%d  ***\n\n",schedule->unit);
+		defaultBeerProfile();
+		return false;
+	}
+	char conditions[]="tgsaouvbxwer";
+	for(int i=0;i< schedule->numberOfSteps ;i++){
+		ScheduleStep *step = &schedule->steps[i];
+		if(strchr(conditions,step->condition) == NULL){
+			DBG_PRINTF("\n\n**** Error Beer profile, invalid condition:%d ***\n\n",step->condition);
+
+			defaultBeerProfile();
+			return false;
+		}
+	}
+	return true;
+}
+
  void BPLSettings::defaultBeerProfile(void)
  {
 	BeerTempSchedule *tempSchedule = & _data.tempSchedule;
@@ -432,7 +656,7 @@ void makeTime(time_t timeInput, struct tm &tm){
 
 bool BPLSettings::dejsonBeerProfile(String json)
 {
-	const int PROFILE_JSON_BUFFER_SIZE = JSON_ARRAY_SIZE(15) + 7*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(4) + 5*JSON_OBJECT_SIZE(6);
+	const int PROFILE_JSON_BUFFER_SIZE = JSON_ARRAY_SIZE(15) + MaximumSteps *JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(4) + 5*JSON_OBJECT_SIZE(6);
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	DynamicJsonDocument root(PROFILE_JSON_BUFFER_SIZE + json.length());
 	auto error = deserializeJson(root,json);
@@ -463,29 +687,9 @@ bool BPLSettings::dejsonBeerProfile(String json)
 	}
 	BeerTempSchedule *tempSchedule = & _data.tempSchedule;
 	// get starting time
-	//ISO time:
-	//2016-07-01T05:22:33.351Z
-	//01234567890123456789
-	tm tmStart;
-	char buf[8];
-	const char* sdutc=root["s"];
 
-	#define GetValue(d,s,l) strncpy(buf,sdutc+s,l);buf[l]='\0';d=atoi(buf)
-	GetValue(tmStart.tm_year,0,4);
-	tmStart.tm_year -= 1970; //1900;
-	GetValue(tmStart.tm_mon,5,2);
-//	tmStart.tm_mon -= 1;
-	GetValue(tmStart.tm_mday,8,2);
-	GetValue(tmStart.tm_hour,11,2);
-	GetValue(tmStart.tm_min,14,2);
-	GetValue(tmStart.tm_sec,17,2);
+	tempSchedule->startDay=root["s"];
 
-	DBG_PRINTF("%d/%d/%d %d:%d:%d\n",tmStart.tm_year,tmStart.tm_mon,tmStart.tm_mday,
-		tmStart.tm_hour,tmStart.tm_min,tmStart.tm_sec);
-
-	//_startDay = mktime(&tmStart);
-
-	tempSchedule->startDay= tm_to_timet(&tmStart);
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	JsonArray schedule = root["t"];
 	#else
@@ -553,7 +757,7 @@ bool BPLSettings::dejsonBeerProfile(String json)
 	const char *uintStr=root["u"];
 	tempSchedule->unit=  *uintStr;
 
-	DBG_PRINTF("Load finished, st:%ld, unit:%c, _numberOfSteps:%d\n",tempSchedule->startDay,
+	DBG_PRINTF("Load finished, st:%ld, unit:%c, _numberOfSteps:%d\n",(long)tempSchedule->startDay,
 	tempSchedule->unit,tempSchedule->numberOfSteps);
 
 	return true;
@@ -575,16 +779,13 @@ String BPLSettings::jsonBeerProfile(void)
 	//start date
 	//ISO time:
 	//2016-07-01T05:22:33.351Z
-	struct tm * ptm;
-	ptm = localtime(& tempSchedule->startDay);
-	char timeBuf[32];
-	sprintf(timeBuf,"%d-%02d-%02dT%02d:%02d:%02d.0Z",ptm->tm_year+1900,ptm->tm_mon+1,ptm->tm_mday,
-		ptm->tm_hour,ptm->tm_min,ptm->tm_sec);
-	root["s"]=timeBuf;
+
+	root["s"]=tempSchedule->startDay;
 	// unit, unfortunatly, no "char" type in JSON. "char" will be integer.
 	//root["u"]=(char)tempSchedule->unit;
-	char unitBuffer[4];
-	sprintf(unitBuffer,"%c",tempSchedule->unit);
+	char unitBuffer[2];
+	unitBuffer[0]=tempSchedule->unit;
+	unitBuffer[1]='\0';
 	root["u"]=unitBuffer;
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	JsonArray steps=root.createNestedArray("t");
@@ -596,6 +797,7 @@ String BPLSettings::jsonBeerProfile(void)
 	char pertages[MaximumSteps][16];
 	int  pertageIndex=0;
 
+	if(tempSchedule->numberOfSteps < MaximumSteps)
 	for(int i=0;i< tempSchedule->numberOfSteps;i++){
 		ScheduleStep *s_step= & tempSchedule->steps[i];
 		#if ARDUINOJSON_VERSION_MAJOR == 6
@@ -637,8 +839,10 @@ String BPLSettings::jsonBeerProfile(void)
 				DBG_PRINTF("  sg:%d \n",s_step->gravity.sg);
 				if(_data.gdc.usePlato){
 					jstep["g"]= GravityToPlato(s_step->gravity.sg);
+					#if SerialDebug
 					Serial.print("SG:");
 					Serial.println(GravityToPlato(s_step->gravity.sg));
+					#endif
 				}else{
 					jstep["g"]= GravityToSG(s_step->gravity.sg);
 				}
@@ -661,11 +865,51 @@ String BPLSettings::jsonBeerProfile(void)
     return ret;
 }
 
+
+bool BPLSettings::logFileIndexesSanity(void){
+	FileIndexes* info= & _data.logFileIndexes;
+	if(strlen(info->logname) > MaximumLogFileName){
+		defaultLogFileIndexes();
+		return false;
+	}
+	
+	for(int i=0;i<MAX_LOG_FILE_NUMBER;i++){
+		if(info->files[i].name[0] == 0) break;
+		if(strlen(info->files[i].name) > MaximumLogFileName){
+			defaultLogFileIndexes();
+			return false;
+		}
+	}
+	return true;
+}
+
 //***************************************************************
 // Remote data logging
+
+bool BPLSettings::remoteLoggingSanity(void){
+	RemoteLoggingInformation* info = & _data.remoteLogginInfo;
+	if(info->service > 3){
+		defaultRemoteLogging();
+		return false;
+	}
+	if(strlen(info->url) > MaximumUrlLength
+		|| strlen(info->format) > MaximumFormatLength
+		|| strlen(info->contentType)> MaximumContentTypeLength){
+
+		defaultRemoteLogging();
+		return false;
+	}
+	return true;
+}
+
 void BPLSettings::defaultRemoteLogging(void)
 {
-	// OK for all zero
+	RemoteLoggingInformation* info = & _data.remoteLogginInfo;
+	info->enabled=0;
+	info->url[0]='\0';
+	info->format[0]='\0';
+	info->contentType[0]='\0';
+	info->service =0;
 }
 
 bool BPLSettings::dejsonRemoteLogging(String json)
@@ -705,8 +949,9 @@ bool BPLSettings::dejsonRemoteLogging(String json)
 	bool enabled= root["enabled"];
 	uint32_t period = root["period"];
 		
-	if(url == NULL || method==NULL || format==NULL 
-		|| strcmp(url,"") ==0 || strcmp(method,"") ==0 || strcmp(format,"") ==0){	
+	if( enabled &&( url == NULL || method==NULL || format==NULL 
+		|| strcmp(url,"") ==0 || strcmp(method,"") ==0 || strcmp(format,"") ==0)){
+		DBG_PRINTF("Enable null service\n");
 		return false;
 	}
 
@@ -848,6 +1093,8 @@ String BPLSettings::jsonParasiteTempControlSettings(bool enabled){
 #define PressureMonitorModeKey "mode"
 #define ConversionAKey "a"
 #define ConversionBKey "b"
+#define AdcTypeKey "adc"
+#define GainKey "gn"
 
 bool BPLSettings::dejsonPressureMonitorSettings(String json){
 
@@ -865,6 +1112,7 @@ bool BPLSettings::dejsonPressureMonitorSettings(String json){
 #endif
 		|| !root.containsKey(PressureMonitorModeKey)
 		|| !root.containsKey(ConversionAKey)
+		|| !root.containsKey(AdcTypeKey)
 		|| !root.containsKey(ConversionBKey)){
             return false;
         }
@@ -872,6 +1120,8 @@ bool BPLSettings::dejsonPressureMonitorSettings(String json){
 	settings->mode = root[PressureMonitorModeKey];
 	settings->fa = root[ConversionAKey];
 	settings->fb = root[ConversionBKey];
+	settings->adc_type = root[AdcTypeKey];
+	settings->adc_gain = root[GainKey];
 	return true;
 }
 
@@ -892,6 +1142,9 @@ String BPLSettings::jsonPressureMonitorSettings(void){
 	root[PressureMonitorModeKey]=settings->mode;
 	root[ConversionAKey]=settings->fa;
 	root[ConversionBKey]=settings->fb;
+	root[AdcTypeKey] = settings->adc_type;
+	root[GainKey] =	settings->adc_gain;
+
     String ret;
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	serializeJson(root,ret);
@@ -921,6 +1174,44 @@ String BPLSettings::jsonPressureMonitorSettings(void){
 #define MqttLogPeriodKey "period"
 #define ReportBasePathKey "base"
 #define MqttReportFormatKey "format"
+
+void BPLSettings::defaultMqttSetting(void){
+	MqttRemoteControlSettings *settings=mqttRemoteControlSettings();
+	settings->mode = MqttModeOff;
+	settings->reportFormat=MqttReportIndividual;
+	settings->serverOffset =0;
+	settings->usernameOffset =0;
+	settings->passwordOffset=0;
+	settings->modePathOffset=0;
+	settings->beerSetPathOffset=0;
+	settings->capControlPathOffset=0;
+	settings->ptcPathOffset=0;
+	settings->fridgeSetPathOffset=0;
+	settings->reportBasePathOffset=0;
+}
+
+bool BPLSettings::mqttSettingSanity(void){
+	MqttRemoteControlSettings *settings=mqttRemoteControlSettings();
+	if(settings->mode > 3
+		|| settings->reportFormat > 1){
+		defaultMqttSetting();
+		return false;
+	}
+	if(settings->serverOffset > MqttSettingStringSpace
+		|| settings->usernameOffset > MqttSettingStringSpace
+		|| settings->passwordOffset > MqttSettingStringSpace
+		|| settings->modePathOffset > MqttSettingStringSpace
+		|| settings->beerSetPathOffset > MqttSettingStringSpace
+		|| settings->capControlPathOffset > MqttSettingStringSpace
+		|| settings->ptcPathOffset > MqttSettingStringSpace
+		|| settings->fridgeSetPathOffset > MqttSettingStringSpace
+		|| settings->reportBasePathOffset > MqttSettingStringSpace){
+			defaultMqttSetting();
+			return false;
+		}
+
+	return true;
+}
 
 String BPLSettings::jsonMqttRemoteControlSettings(void){
 
@@ -972,7 +1263,7 @@ String BPLSettings::jsonMqttRemoteControlSettings(void){
 	}
 #endif
 
-#if Auto_CAP
+#if AUTO_CAP
 	if(settings->capControlPathOffset){
 		root[CapPathKey] = settings->_strings + settings->capControlPathOffset;
 	}
@@ -1002,7 +1293,7 @@ String BPLSettings::jsonMqttRemoteControlSettings(void){
 
 }
 #if ARDUINOJSON_VERSION_MAJOR == 6
-static char *copyIfExist(JsonDocument root,const char* key,uint16_t &offset,char* ptr,char* base){
+static char *copyIfExist(JsonDocument &root,const char* key,uint16_t &offset,char* ptr,char* base){
 #else
 static char *copyIfExist(JsonObject& root,const char* key,uint16_t &offset,char* ptr,char* base){
 #endif
@@ -1086,11 +1377,21 @@ bool BPLSettings::dejsonMqttRemoteControlSettings(String json){
 	if(!(ptr=copyIfExist(root,PtcPathKey,settings->ptcPathOffset,ptr,base))) return false;
 	#endif
 
-	#if Auto_CAP
+	#if AUTO_CAP
 	if(!(ptr=copyIfExist(root,CapPathKey,settings->capControlPathOffset,ptr,base))) return false;
 	#endif
 
 	return true;
+}
+
+#endif
+
+
+
+#if EnableHumidityControlSupport
+
+void BPLSettings::defaultHumidityControlSettings(void){
+
 }
 
 #endif

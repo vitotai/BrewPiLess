@@ -12,8 +12,10 @@
 
 #if BREWPI_OLED_SH1106   // New 
 #include "SH1106.h"
+typedef SH1106 OledDisplay;
 #else
 #include "SSD1306.h"
+typedef SSD1306 OledDisplay;
 #endif
 class IICOledLcd : public Print {
 public:
@@ -46,7 +48,7 @@ public:
 
 //  void createChar(uint8_t, uint8_t[]);
   void setCursor(uint8_t, uint8_t);
-  void print(char* str);
+  void print(const char* str);
 
 #ifdef STATUS_LINE
 	void printStatus(char* str);
@@ -58,9 +60,13 @@ public:
 #ifdef print_P_inline
   // print a string stored in PROGMEM
   void print_P(const char * str) {
-    char buf[21]; // create buffer in RAM
+    #if ESP32
+    print((char*)str);
+    #else
+    char buf[21]; // create buffer in RAM    
     strcpy_P(buf, str); // copy string to RAM
     print(buf); // print from RAM
+    #endif
   }
 #else
   void print_P(const char * str);
@@ -92,13 +98,16 @@ public:
   using Print::write;
   void setAutoOffPeriod(uint32 period){ backlightAutoOffPeriod = period; }
 
+#ifdef EMIWorkaround
+  void refresh(){}
+#endif
+
+  OledDisplay* getDisplayDriver(){ return &_display;}
+
 private:
   uint32_t backlightAutoOffPeriod;
-#if BREWPI_OLED_SH1106
-SH1106  _display;
-#else
-SSD1306  _display;
-#endif
+  OledDisplay  _display;
+
   uint8_t _Addr;
   uint8_t _currline;
   uint8_t _currpos;

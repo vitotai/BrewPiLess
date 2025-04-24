@@ -1,4 +1,4 @@
-var JSVERSION = "3.6";
+var JSVERSION = "4.4";
 
 function s_ajax(b) {
     var c = new XMLHttpRequest();
@@ -27,6 +27,10 @@ function s_ajax(b) {
 var Q = function(d) {
     return document.querySelector(d);
 };
+
+function doAll(c,act){
+    document.querySelectorAll(c).forEach(function(i){act(i)});
+}
 
 function C2F(c) {
     return Math.round((c * 1.8 + 32) * 10) / 10
@@ -97,7 +101,7 @@ function getActiveNavItem() {
     var path = window.location.pathname.split("/").pop();
     if (path == "") path = "index.htm";
     var element = Q('.options>li>a[href="/' + path + '"]');
-    element.className += 'active';
+    if(element) element.className += 'active';
 }
 
 function formatDate(dt) {

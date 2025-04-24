@@ -41,7 +41,7 @@ void TempSensor::init()
 void TempSensor::update()
 {
 	temperature temp;
-	#if FridgeSensorFallBack
+	#if 1 // FridgeSensorFallBack
 
 	if (_sensor && (temp=_sensor->read())!=TEMP_SENSOR_DISCONNECTED) {
 		_useBackupSensor = false;

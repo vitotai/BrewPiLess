@@ -10,12 +10,14 @@
     </title>
     <meta name="apple-mobile-web-app-title" content="BrewPiLess">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <script type="text/javascript" src="js/vendor/dygraph-combined.js"></script>
+    <script type="text/javascript" src="js/dygraph-2.2.1/dygraph.min.js"></script>
     <script type="text/javascript" src="js/vendor/bwf.js"></script>
     <script type="text/javascript" src="js/shared.js"></script>
     <script type="text/javascript" src="js/capper.js"></script>
     <script type="text/javascript" src="js/ptc.js"></script>
     <script type="text/javascript" src="js/script-control.js"></script>
+    <link rel="stylesheet" href="js/dygraph-2.2.1/dygraph.min.css">
+
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="style-control.css">
 </head>
@@ -143,7 +145,6 @@
         </div>
 
         <!-- capper -->
-
         <div class="card" id="capper-frame">
 
             <div layout horizontal main-justified cross-center>
@@ -167,57 +168,87 @@
                 </div>
             </div>
 
-            <div class="tab-containter" layout horizontal>
-                <div id="tab-gravity-s" class="detail spacing" main-justified cross-center>
-                    <span style="margin:16px" class=detail> <%= control_capgravity %> 
-                            <input type=number step="0.001" size=6  id="capgravityinput" style="max-width:100px;margin:16px"> </span>
-                    <span class="psi-set-group">@ <input type=number step="1" size=6  class="cappressure" style="max-width:60px;margin:16px">psi</span>
+            <div class="tab-containter" horizontal layout main-justified cross-center>
+                <div id="tab-gravity-s" main-justified cross-center>
+                    <div style="margin:16px" > <%= control_capgravity %> 
+                            <input type=number step="0.001" size=6  id="capgravityinput" style="max-width:100px;margin:16px"> </div>
                 </div>
-                <div id="tab-time-s" class="detail">
-                    <span style="margin:16px" class=detail>   <%= control_capafter %>
+                <div id="tab-time-s" >
+                    <div style="margin:16px"> 
+                        <label for="captimeinput" style="min-width: 0;">  <%= control_capafter %> </label>
                         <input type=datetime-local style="max-width:200px;margin:16px" id=captimeinput>
-                    </span>
-                    <span class="psi-set-group">@ <input type=number step="1" size=6  class="cappressure" style="max-width:60px;margin:16px">psi</span>
+                    </div>
                 </div>
-                <div id="tab-manual-s" class="detail">
-                    <span style="margin:16px" class=detail>
+                <div id="tab-manual-s">
+                    <div style="margin:16px" >
                         <input type="checkbox" id="capswitch" name="capswitch" class="switch-input" checked>
                         <label for="capswitch" class="switch-label" style="min-width: 0;"><%= control_capped %></label>
-                    </span>
-                    <span class="psi-set-group">@ <input type=number step="1" size=6  class="cappressure" style="max-width:60px;margin:16px">psi</span>
+                    </div>
                 </div>
             </div>
+            <div class="psi-set-group" layout horizontal main-justified cross-center inline-flex> to
+                 <input type=number step="1" size=6  id="cappressure" style="max-width:60px;margin:16px;display:inline">psi
+                 <button class="btn" onclick="Capper.calpsi();">...</button>
+            </div>
+
         </div>
+   
         <!-- ptc -->
         <div id="ptc-control" class="card" horizontal layout main-justified cross-center>
-            Glycol Temperature Control
+            <%= ctrl_glycol_temperature_control %>
             <div layout horizontal cross-center>
                 <h6 class="inline-header">
-                    Target Temperature
+                    <%= ctrl_glycol_target %>
                 </h6>
                 <input type="text" name="temp" size=4> &deg;C
             </div>
 
             <div layout horizontal cross-center>
                 <h6 class="inline-header">
-                    Triggering Temperauture
+                    <%= ctrl_glycol_triggering %>
                 </h6>
                 <input type="text" name="stemp" size=4> &deg;C
             </div>
             <div layout horizontal cross-center>
                 <h6 class="inline-header">
-                    Minimum Cooling Time
+                 <%= ctrl_glycol_minimum_cooling %>
                 </h6>
-                <input type="text" name="mincool" size=4>Seconds
+                <input type="text" name="mincool" size=4> <%= log_seconds %>
             </div>
             <div layout horizontal cross-center>
                 <h6 class="inline-header">
-                    Miminum Idle Time
+                    <%= ctrl_glycol_minimum_idle %>
                 </h6>
-                <input type="text" name="minidle" size=4>Seconds
+                <input type="text" name="minidle" size=4> <%= log_seconds %>
             </div>
             <div class="card-footer">
                 <button class="btn btn--raised" style="max-width: 200px;" onclick="PTC.apply()"><%= control_apply %></button>
+            </div>
+        </div>
+
+
+        <!-- Humidity Control-->
+        <div id="humidity-control" class="card" horizontal layout main-justified cross-center>
+            <h6>Humidity Control</h6>
+            <div layout horizontal cross-center>
+                <h6 class="inline-header">
+                    Mode
+                </h6>
+                <select id="hc-mode">
+                    <option value="0">Off</option>
+                    <option value="1">Control</option>
+                </select>
+            </div>
+
+            <div layout horizontal cross-center>
+                <h6 class="inline-header">
+                    Target Relative Humidity
+                </h6>
+                <input type="text" id="hc-target" name="target-humidity" size=4> %
+            </div>
+        
+            <div class="card-footer">
+                <button class="btn btn--raised" style="max-width: 200px;" onclick="HC_apply();"><%= control_apply %></button>
             </div>
         </div>
 
@@ -230,6 +261,23 @@
     <div class=error></div>
 
     <!-- Modals -->
+ 
+    <div id="dlg_carbonation" class="modal">
+        <div class="modal-content">
+            <%= dlg_co2_volume_desired %> <input id="carcal-vol" type=number step="0.1" size=6 onchange="Capper.cal()" value=2.5  style="max-width:60px;margin:6px;display:inline">
+            <br>
+            <%= dlg_beer_temperature %> <input id="carcal-temp" type=number step="1" size=6  onchange="Capper.cal()" style="max-width:60px;margin:6px;display:inline"> &deg;<span class="t_unit">C</span>
+            <br>
+            <%= dlg_pressure %> <span id="carcal-psi"></span> psi
+        <hr style="margin:12px 0 12px 0">
+        <div class="dialog-buttons" style="text-align:center">
+            <button class="btn btn--raised" onclick="Capper.calCancel();"><%= dlg_cancel %></button>
+            <button class="btn btn--raised" onclick="Capper.calOk();"><%= dlg_ok %></button>
+        </div>
+        </div>
+    </div>
+    
+
     <div id="dlg_loading" class="modal">
         <div class="modal-content">
             <p>
@@ -243,13 +291,14 @@
             <h2 class="profile-load-heading">
                 <%= dlg_profilelist_load %>
             </h2>
-            <ul class="profile-list" style="margin: 16px 0;">
-                <li layout horizontal main-justified cross-center style="margin: 8px 0;">
+            <hr style="margin:4px">
+            <ul class="profile-list">
+                <li layout horizontal main-justified>
                     <a href="#" class="profile-name"></a>
-                    <span class="btn--delete rmbutton"></span>
+                    <button class="btn rmbutton" style="color:red">DEL</button>
                 </li>
             </ul>
-            <button class="btn" onclick="PL.toggle()"><%= dlg_cancel %></button>
+            <button class="btn btn--raised" onclick="PL.toggle()"><%= dlg_cancel %></button>
         </div>
     </div>
 
@@ -258,9 +307,9 @@
             <%= dlg_startprofile %>
                 <input type="text" size="6" value="1.0">
                 <div class="dialog-buttons">
-                    <button class="oknog"><%= dlg_startprofile_oknog %></button>
-                    <button class="ok"><%= dlg_startprofile_ok %></button>
-                    <button class="cancel"><%= dlg_cancel %></button>
+                    <button class="oknog btn"><%= dlg_startprofile_oknog %></button>
+                    <button class="ok btn btn--raised"><%= dlg_startprofile_ok %></button>
+                    <button class="cancel btn btn--raised"><%= dlg_cancel %></button>
                 </div>
         </div>
     </div>
@@ -271,8 +320,8 @@
             <br><input type="text" size="32">
             <br>
             <%= dlg_saveas_2 %>
-                <button onclick="PL.cancelSave()"><%= dlg_cancel %></button>
-                <button onclick="PL.doSave()"><%= dlg_ok %></button>
+                <button onclick="PL.cancelSave()" class="btn btn--raised"><%= dlg_cancel %></button>
+                <button onclick="PL.doSave()" class="btn"><%= dlg_ok %></button>
         </div>
     </div>
 

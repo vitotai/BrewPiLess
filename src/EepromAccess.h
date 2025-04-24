@@ -25,8 +25,11 @@
 #ifdef ARDUINO
 // ARDUINO is defined for the ESP8266 implementation as well. Specifically break out
 // the ESP8266 implementation, then default to Arduino if we don't use it.
+#if defined(ESP32)
+#include "FSEepromAccess.h"
+typedef FSEepromAccess EepromAccess;
 
-#ifdef ESP8266
+#elif defined(ESP8266) 
 #include "ESPEepromAccess.h"
 typedef ESPEepromAccess EepromAccess;
 #else

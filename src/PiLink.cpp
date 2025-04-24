@@ -45,7 +45,7 @@
 #endif
 
 #ifdef ARDUINO
-#ifndef ESP8266
+#if !defined(ESP8266) && !defined(ESP32)
 #include "util/delay.h"
 #endif
 #endif
@@ -85,7 +85,7 @@ extern WiFiClient serverClient;
 #define piStream serverClient
 #else
 // Not using ESP8266 WiFi
-//#define piStream Serial
+#define piStream Serial
 #endif
 
 bool PiLink::firstPair;
@@ -106,7 +106,7 @@ printBuf = "";
 
 }
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 void formatStandardAnnotation(String &annotation, const char* str_1, const char* str_2, const char* str_3);
 #endif
 
@@ -173,7 +173,7 @@ void PiLink::print(const char *fmt, ... ){
 //void PiLink::print(char c) { piStream.print(c); }
 #endif
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 void PiLink::print(char out) {
 #ifdef ESP8266_ONE
 brewPiTxBuffer.print(out);
@@ -666,7 +666,7 @@ const PiLink::JsonOutput PiLink::jsonOutputCCMap[] PROGMEM = {
 	JSON_OUTPUT_CC_MAP(coolingTargetLower, JOCC_TEMP_DIFF),
 	JSON_OUTPUT_CC_MAP(maxHeatTimeForEstimate, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(maxCoolTimeForEstimate, JOCC_UINT16),
-#if SettableMinimumCoolTime 
+#if 1 //SettableMinimumCoolTime 
 	JSON_OUTPUT_CC_MAP(minCoolTime, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(minCoolIdleTime, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(minHeatTime, JOCC_UINT16),
@@ -737,7 +737,7 @@ inline void PiLink::printJsonSeparator() {
 void PiLink::sendJsonPair(const char * name, const char * val){
 	printJsonName(name);
 	// TODO - Fix this to use PiLink.print in all cases
-#ifndef ESP8266
+#if !defined(ESP8266) && !defined(ESP32)
 	piStream.print(val);
 #else
 	print_P(val);
@@ -902,7 +902,7 @@ void PiLink::setBeerSetting(const char* val) {
 
 //There's some kind of strange bug with the ESP8266 (probably a memory issue) where if I pass STR_WEB_INTERFACE
 //as str_3, everything dies. Same with using "printFridgeAnnotation" - Everything dies.
-#ifdef ESP8266
+#if defined(ESP8266)  || defined(ESP32)
 void formatStandardAnnotation(String &annotation, const char* str_1, const char* str_2, const char* str_3) {
 	annotation += str_1;
 	annotation += " set to ";
@@ -1015,7 +1015,7 @@ const PiLink::JsonParserConvert PiLink::jsonParserConverters[] PROGMEM = {
 	JSON_CONVERT(JSONKEY_Kp, &tempControl.cc.Kp, setStringToFixedPoint),
 	JSON_CONVERT(JSONKEY_Ki, &tempControl.cc.Ki, setStringToFixedPoint),
 	JSON_CONVERT(JSONKEY_Kd, &tempControl.cc.Kd, setStringToFixedPoint),
-#if SettableMinimumCoolTime 
+#if 1 //SettableMinimumCoolTime 
 	JSON_CONVERT(JSONKEY_minCoolTime, &tempControl.cc.minCoolTime, setUint16),
 	JSON_CONVERT(JSONKEY_minCoolIdleTime, &tempControl.cc.minCoolIdleTime, setUint16),
 	JSON_CONVERT(JSONKEY_minHeatTime, &tempControl.cc.minHeatTime, setUint16),
@@ -1061,5 +1061,5 @@ void PiLink::processJsonPair(const char * key, const char * val, void* pv){
 
 void PiLink::soundAlarm(bool active)
 {
-	alarm.setActive(active);
+	alarmActuator.setActive(active);
 }

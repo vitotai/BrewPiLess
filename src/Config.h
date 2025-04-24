@@ -65,7 +65,7 @@
 // Enable DS2413 Actuators.
 //
 // #ifndef BREWPI_DS2413
-// #define BREWPI_DS2413 0
+ #define BREWPI_DS2413 true
 // #endif
 //
 //////////////////////////////////////////////////////////////////////////
@@ -79,6 +79,42 @@
 #endif
 //
 //////////////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////////
+//
+// Enable humidity sensor
+//
+#ifndef EnableDHTSensorSupport
+#define EnableDHTSensorSupport true
+#endif
+//
+//////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////
+//
+// Enable humidity sensor
+//
+#ifndef EnableBME280Support
+#define EnableBME280Support false
+#endif
+//
+//////////////////////////////////////////////////////////////////////////
+#ifndef EnableHumidityControlSupport
+#define EnableHumidityControlSupport true
+#endif
+
+#if EnableHumidityControlSupport
+#if !EnableBME280Support && !EnableDHTSensorSupport
+#error "Humidity Sesonr is needed to support Humidity Control"
+#endif
+#else
+#undef EnableDHTSensorSupport 
+#define EnableDHTSensorSupport false
+#undef EnableBME280Support 
+#define EnableBME280Support false
+
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -153,20 +189,37 @@
 //////////////////////////////////////////////////////////////////////////
 //
 #ifndef BREWPI_ROTARY_ENCODER
+#if ESP32
+#define BREWPI_ROTARY_ENCODER 1
+#else
 #define BREWPI_ROTARY_ENCODER 0
+#endif
 #endif
 //
 //////////////////////////////////////////////////////////////////////////
 
 // default supports 2 buttons
 #ifndef BREWPI_BUTTONS
+#if ESP8266
 #define BREWPI_BUTTONS 1
+#else
+#define BREWPI_BUTTONS 0
+#endif
 #endif
 
 #ifndef ButtonViaPCF8574 
 #define ButtonViaPCF8574 0
 #endif
 
+#ifndef AUTO_CAP
+#define  AUTO_CAP true
+#endif
+
+#ifndef PressureViaADS1115
+#define PressureViaADS1115 true
+#define ADS1115_ADDRESS 0x48
+#define ADS1115_Transducer_ADC_NO 0
+#endif
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -194,6 +247,83 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
+
+//////////////////////////////////////////////////////////////////////////
+//
+// BrewPiLess feature optoins
+// #endif
+//
+//////////////////////////////////////////////////////////////////////////
+//values of Front-end
+#define ClassicFrontEnd 0
+#define TomsFrontEnd 1
+
+// default language
+#ifndef WebPageLanguage
+#define WebPageLanguage english
+#endif
+
+
+#ifndef UseClassicFrontEnd
+#define FrontEnd TomsFrontEnd
+#else
+#define FrontEnd ClassicFrontEnd
+#endif
+
+
+#ifndef EanbleParasiteTempControl
+#define EanbleParasiteTempControl true
+#endif
+
+#ifndef SupportPressureTransducer
+#define SupportPressureTransducer true
+#endif
+
+#ifndef SupportMqttRemoteControl
+#define SupportMqttRemoteControl true
+#endif
+
+#ifndef AUTO_CAP
+#define  AUTO_CAP true
+#endif
+
+
+#ifndef DEVELOPMENT_OTA
+#define DEVELOPMENT_OTA true
+#endif
+
+#define SaveWiFiConfiguration true
+
+#ifndef DEVELOPMENT_FILEMANAGER
+#define DEVELOPMENT_FILEMANAGER true
+#endif
+
+#define EnableGravitySchedule true
+#define ENABLE_LOGGING 1
+#define EARLY_DISPLAY 1
+
+//#ifdef EnableGlycolSupport
+//#define FridgeSensorFallBack true
+// always true #define SettableMinimumCoolTime true
+//#endif
+
+#ifndef UseLittleFS
+
+#define UseLittleFS true
+
+#endif
+
+#if ESP32
+#define FS_EEPROM true
+#endif
+
+#define BPL_VERSION "4.5"
+
+
+#ifndef MORE_PINS_CONFIGURATION
+#define MORE_PINS_CONFIGURATION true
+#endif
+
 //////////////////////////////////////////////////////////////////////////
 //
 // Board Definition
@@ -212,7 +342,45 @@
 // Pin Configuration - Change the settings below to match your individual pinout
 //
 // pins
+#ifdef ESP32
 
+#define PIN_SDA 21
+#define PIN_SCL 22
+
+
+#define oneWirePin    23
+
+#define actuatorPin1  16
+#define actuatorPin2  17
+#define actuatorPin3  19
+#define actuatorPin4  27
+#define actuatorPin5  26
+
+#if MORE_PINS_CONFIGURATION
+
+#define actuatorPin6  18
+
+#define fanPin 14
+#define doorPin 34
+
+#define BuzzPin 4
+
+#else
+#define BuzzPin       18
+#endif
+// 34,35,66,39 input only
+#define rotaryAPin      32
+#define rotaryBPin      33
+#define rotarySwitchPin 25
+
+// Only ADC1 (pin 32~39) is allowed 
+#if CONFIG_IDF_TARGET_ESP32S3
+#define PressureAdcPin  4
+#else
+#define PressureAdcPin  36
+#endif
+
+#else // #ifdef ESP32
 #define NODEMCU_PIN_A0 17	// Analog
 
 #define NODEMCU_PIN_D0 16	// No interrupt, do not use for rotary encoder,
@@ -237,26 +405,56 @@
 // define this option to disable webserver.
 #define SONOFF true 
 
+#if SONOFF_USE_AM2301
+// free up pin 14, so that it can be assigned to AM2301
+#define oneWirePin NODEMCU_PIN_D7  
+#define doorPin    NODEMCU_PIN_D5
+
+#else
 #define oneWirePin NODEMCU_PIN_D5  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
+#define doorPin    NODEMCU_PIN_D7
+#endif
+
 #define coolingPin NODEMCU_PIN_D6
 #define heatingPin NODEMCU_PIN_D0
-#define doorPin    NODEMCU_PIN_D7
 #define BuzzPin NODEMCU_PIN_D3
+/*
+// NO LCD, NO BUTTONs
 #ifdef BREWPI_LCD
 #undef BREWPI_LCD 
 #endif
-// NO LCD, NO BUTTONs
 #define BREWPI_LCD false
 #undef BREWPI_MENU
 #define BREWPI_MENU 0
 #undef  BREWPI_BUTTONS 
 #define  BREWPI_BUTTONS 0
 
+//overwrite feature set
+#undef EanbleParasiteTempControl
 #define EanbleParasiteTempControl flase
-#define SupportPressureTransducer false
+#undef SupportPressureTransducer
+//#define SupportPressureTransducer false
+#undef SupportMqttRemoteControl
 #define SupportMqttRemoteControl false
+#undef AUTO_CAP
 #define  AUTO_CAP false
 
+#undef UseLittleFS 
+#define UseLittleFS false
+
+#ifdef NO_SPIFFS
+    #undef DEVELOPMENT_OTA 
+    #define DEVELOPMENT_OTA true
+    #undef DEVELOPMENT_FILEMANAGER
+    #define DEVELOPMENT_FILEMANAGER false
+#else
+    #undef DEVELOPMENT_OTA 
+    #define DEVELOPMENT_OTA false
+    #undef DEVELOPMENT_FILEMANAGER
+    #define DEVELOPMENT_FILEMANAGER false
+#endif
+
+*/
 
 #elif BOARD == Thorrak_PCB
 #define oneWirePin NODEMCU_PIN_D6  // If oneWirePin is specified, beerSensorPin and fridgeSensorPin are ignored
@@ -289,9 +487,12 @@
 #error "unknown board"
 #endif
 
+#endif // #ifdef ESP32
 
 #if BREWPI_LCD
 // LCD configurations:
+#define EMIWorkaround 1
+
 #if OLED_LCD
 #define BREWPI_OLED128x64_LCD 1
 #else
@@ -299,12 +500,33 @@
 #endif
 #endif
 
+#ifndef TWOFACED_LCD
+#define TWOFACED_LCD true
+#endif
+
+#ifndef ISPINDEL_DISPLAY
+#if OLED_LCD
+#define ISPINDEL_DISPLAY true
+#else
+#define ISPINDEL_DISPLAY false
+#endif
+#endif
+
+#if TWOFACED_LCD
+    #define SMART_DISPLAY true
+    #if ISPINDEL_DISPLAY
+        #if ! OLED_LCD
+        #error "ISPINDEL_DISPLAY is only available for OLED display"    
+        #endif
+    #endif
+#endif
+
 #define IIC_LCD_ADDRESS 0x27
 #define LCD_AUTO_ADDRESSING true
 
 #ifdef BREWPI_OLED128x64_LCD
 #define OLED128x64_LCD_ADDRESS 0x3c
-#define STATUS_LINE 1
+#define STATUS_LINE true
 //////////////////////////////////////////////////////////////////////////
 //
 // OLED orientation
@@ -332,41 +554,18 @@
 //#define rotarySwitchPin 0 // INT2
 
 
-#if BREWPI_ROTARY_ENCODER
-
-#define RotaryViaPCF8574 1
-
-#ifdef RotaryViaPCF8574
-
-#define rotaryAPin 0
-#define rotaryBPin 1
-#define rotarySwitchPin 2
-
-#define PCF8574_INT NODEMCU_PIN_D3
-#define PCF8574_ADDRESS 0x20
-
-#else // #ifdef RotaryViaPCF8574
-
-#error "invalid setting"
-#define rotaryAPin NODEMCU_PIN_D3
-#define rotaryBPin NODEMCU_PIN_D7
-#define rotarySwitchPin NODEMCU_PIN_D4
-
-#endif //#ifdef RotaryViaPCF8574
-
-#endif //BREWPI_ROTARY_ENCODER
-
-
+#ifdef ESP8266
 #if ButtonViaPCF8574
 #define PCF8574_INT NODEMCU_PIN_D3
 #define PCF8574_ADDRESS 0x20
 // use the same setting as BrewManiacEx
 #define UpButtonBitMask   2  
 #define DownButtonBitMask  1
+#endif
 
 #endif //#if ButtonViaPCF8574
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 //#define ESP8266_WiFi 1			// This disables Serial and enables WiFi support
 //#define ESP8266_WiFi_Control 1	// This adds the headers for WiFi support (so you can disconnect from WiFi via serial)
 #define ESP8266_ONE 1
@@ -392,14 +591,12 @@
 
 #define EARLY_DISPLAY 1
 
-//#ifdef EnableGlycolSupport
-#define FridgeSensorFallBack true
-#define SettableMinimumCoolTime true
-//#endif
 
-#define EMIWorkaround 1
-#define BPL_VERSION "3.6"
-
+#if ESP32
+#define SupportTiltHydrometer true
+#define SupportBleHydrometer true
+#define SupportPillHydrometer true
+#endif
 /**************************************************************************************/
 /*  Configuration: 																	  */
 /*  Only one setting: the serial used to connect to.                                  */
@@ -418,30 +615,14 @@
 #define DBG_PRINT(...)
 #endif
 
-#define ENABLE_LOGGING 1
-
 /**************************************************************************************/
 /*  Advanced Configuration:  														  */
 /*   URLs .										  									  */
 /**************************************************************************************/
 
-#define EnableGravitySchedule true
 
 #define MINIMUM_TEMPERATURE_STEP 0.005
 #define MINIMUM_TEMPERATURE_SETTING_PERIOD 60
-#if SONOFF
-
-#ifdef NO_SPIFFS
-#define DEVELOPMENT_OTA true
-#else
-#define DEVELOPMENT_OTA false
-#endif
-
-#define DEVELOPMENT_FILEMANAGER false
-#else
-#define DEVELOPMENT_OTA true
-#define DEVELOPMENT_FILEMANAGER true
-#endif
 
 // for web interface update
 #define UPDATE_SERVER_PORT 8008
@@ -453,34 +634,21 @@
 #define DEFAULT_USERNAME "brewpiless"
 #define DEFAULT_PASSWORD "brewpiless"
 
-//#define english 0
-//#define spanish 1
 
-#ifndef WebPageLanguage
-#define WebPageLanguage english
-#endif
-
-#define ClassicFrontEnd 0
-#define TomsFrontEnd 1
-
-#ifndef UseClassicFrontEnd
-#define FrontEnd TomsFrontEnd
+#if UseLittleFS
+#if ESP32
+#define FileSystem LittleFS
 #else
-#define FrontEnd ClassicFrontEnd
+#define FileSystem  LittleFS
+#endif
+#else
+#define FileSystem SPIFFS
 #endif
 
-#ifndef EanbleParasiteTempControl
-#define EanbleParasiteTempControl true
-#endif
 
-#ifndef SupportPressureTransducer
-#define SupportPressureTransducer true
-#endif
-
-#ifndef SupportMqttRemoteControl
-#define SupportMqttRemoteControl true
-#endif
-
-#ifndef AUTO_CAP
-#define  AUTO_CAP true
+#if ESP32
+// when read logs, ESP32, or AsyncTCP to be exact, would request 5623 bytes
+// it seems stressful to SPIFFS. Using this option to read file in a small 
+// portion, 1480. 
+#define ReadFileByPortion true
 #endif

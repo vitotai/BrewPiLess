@@ -1,6 +1,10 @@
-
 #include <Arduino.h>
+
+#if defined(ESP32)
+#include <WiFi.h>
+#else
 #include <ESP8266WiFi.h>
+#endif
 
 #include <AsyncMqttClient.h>
 
@@ -59,7 +63,7 @@ protected:
     char* _ptcPath;
     #endif
 
-    #if Auto_CAP
+    #if AUTO_CAP
     char* _capPath;
     #endif
 
@@ -77,7 +81,7 @@ protected:
     void _onPtcChange(char* payload,size_t len);
 #endif
 
-#if Auto_CAP
+#if AUTO_CAP
     void _onCapChange(char* payload,size_t len);
 #endif
     void _loadConfig();
@@ -85,6 +89,7 @@ protected:
     void _reportData();
     uint16_t _publish(const char* key,float value,int precision);
     uint16_t _publish(const char* key,char value);
+    uint16_t _publish(const char* key,const char* value);
     uint16_t _lastPacketId;
     bool     _publishing;
 public:

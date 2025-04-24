@@ -28,6 +28,7 @@
 #include "TempSensorExternal.h"
 #include "PiLink.h"
 #include "EepromFormat.h"
+#include "Wire.h"
 
 #if AUTO_CAP
 #include "AutoCapControl.h"
@@ -54,6 +55,17 @@
 WirelessTempSensor* WirelessTempSensor::theWirelessTempSensor=NULL;
 #endif
 
+#if EnableDHTSensorSupport
+#include "HumidityControl.h"
+#include "Bme280Sensor.h"
+#include "TempSensorEnv.h"
+
+#endif
+
+#if SupportBTHomeSensor
+#include "BleSensorListener.h"
+#include "BleRaptThermometer.h"
+#endif
 /*
  * Defaults for sensors, actuators and temperature sensors when not defined in the eeprom.
  */
@@ -88,10 +100,17 @@ OneWire* DeviceManager::oneWireBus(uint8_t pin) {
 }
 
 bool DeviceManager::firstDeviceOutput;
+bool DeviceManager::fridgeSensorFallBack = false;
 
 bool DeviceManager::isDefaultTempSensor(BasicTempSensor* sensor) {
 	return sensor==&defaultTempSensor;
 }
+#if EnableHumidityControlSupport
+bool isDHTEnvironmentSensorAvailable(){
+	return humidityControl.roomSensor->sensorType() == SensorType_DHT
+			|| humidityControl.chamberSensor->sensorType() == SensorType_DHT;
+}
+#endif
 
 /**
  * Sets devices to their unconfigured states. Each device is initialized to a static no-op instance.
@@ -126,6 +145,16 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 			#else
 				return new DigitalPinSensor(config.hw.pinNr, config.hw.invert);
 			#endif
+
+#if EnableDHTSensorSupport 
+			else if(dt == DEVICETYPE_ENVIRONMENT_SENSOR){
+//				Serial.printf("create sensorType:%d, pinNr:%d\n",config.hw.humiditySensorType,config.hw.pinNr);
+				// calibration for temperature is in fixed_4_4 fromat
+				DHTSensor *dht= new DHTSensor(config.hw.pinNr,config.hw.humiditySensorType);
+				dht->setHumidityCalibration(tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));
+				return dht;
+			}
+#endif
 			else
 #if BREWPI_SIMULATE
 				return new ValueActuator();
@@ -143,6 +172,40 @@ void* DeviceManager::createDevice(DeviceConfig& config, DeviceType dt)
 		case DEVICE_HARDWARE_EXTERNAL_SENSOR:
 			return new WirelessTempSensor(false,config.hw.calibration);// initially disconnected, so init doesn't populate the filters with the default value of 0.0
 #endif
+
+#if EnableDHTSensorSupport 
+		case DEVICE_HARDWARE_ENVIRONMENT_TEMP:
+			return new EnvTempSensor( config.hw.pinNr==0? HumidityControl::chamberSensor:HumidityControl::roomSensor,
+				config.hw.calibration); //VTODO
+#endif				
+#if EnableBME280Support
+		case DEVICE_HARDWARE_BME280:{
+			Bme280Sensor* bme=new Bme280Sensor(config.hw.pinNr);
+			bme->setHumidityCalibration(tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));
+			return bme;
+		}
+#endif
+
+#if SupportBTHomeSensor
+		case DEVICE_HARDWARE_BTHOME_HUMIDITY:{
+			BleHumiditySensor* bme=new BleHumiditySensor(config.hw.address,config.hw.humiditySensorType);
+			bme->setHumidityCalibration(tempDiffToInt(temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION)));
+			return bme;
+		}
+
+		case DEVICE_HARDWARE_BTHOME_THERMOMETER:{
+			BleThermometer* bme=new BleThermometer(config.hw.address,config.hw.humiditySensorType);
+			bme->setTemperatureCalibration(config.hw.calibration);
+			return bme;
+		}
+
+		case DEVICE_HARDWARE_RAPT_THERMOMETER:{
+			Serial.printf("***Create BleRaptThermometer.\n");
+			BleRaptThermometer* raptThermometer=new BleRaptThermometer(config.hw.address,config.hw.calibration);
+			return raptThermometer;
+		}
+#endif
+
 
 #if BREWPI_DS2413
 		case DEVICE_HARDWARE_ONEWIRE_2413:
@@ -207,6 +270,23 @@ inline void** deviceTarget(DeviceConfig& config)
 		break;
 #endif
 
+#if EnableDHTSensorSupport	
+	case DEVICE_CHAMBER_HUMIDITY_SENSOR:
+		ppv =(void**) & humidityControl.chamberSensor;
+		break;
+
+	case DEVICE_CHAMBER_ROOM_HUMIDITY_SENSOR:
+		ppv =(void**) & humidityControl.roomSensor;
+		break;
+
+
+	case DEVICE_CHAMBER_HUMIDIFIER:
+		ppv = (void**) & humidityControl.humidifier;
+		break;
+	case DEVICE_CHAMBER_DEHUMIDIFIER:
+		ppv = (void**) & humidityControl.dehumidifier;
+		break;
+#endif
 	case DEVICE_BEER_TEMP:
 		ppv = (void**)&tempControl.beerSensor;
 		break;
@@ -256,12 +336,25 @@ void DeviceManager::uninstallDevice(DeviceConfig& config)
 			s = &unwrapSensor(config.deviceFunction, *ppv);
 			if (s!=&defaultTempSensor) {
 				setSensor(config.deviceFunction, ppv, &defaultTempSensor);
-				#if FridgeSensorFallBack
-				if(config.deviceFunction == DEVICE_BEER_TEMP)
-					tempControl.fridgeSensor->setBackupSensor(&defaultTempSensor);
-				#endif
+				//#if FridgeSensorFallBack
+				if(fridgeSensorFallBack){ 
+					if(config.deviceFunction == DEVICE_BEER_TEMP)
+						tempControl.fridgeSensor->setBackupSensor(&defaultTempSensor);
+				} 
+				//#endif
 
 //				DEBUG_ONLY(logInfoInt(INFO_UNINSTALL_TEMP_SENSOR, config.deviceFunction));
+				#if SupportBTHomeSensor
+
+				if(config.deviceHardware == DEVICE_HARDWARE_BTHOME_THERMOMETER)  delete (BleThermometer*)s;
+				else if(config.deviceHardware == DEVICE_HARDWARE_RAPT_THERMOMETER){
+					Serial.printf("*** Delete BleRaptThermometer.\n");
+					delete (BleRaptThermometer*)s;
+				}
+				else
+				
+				#endif
+				
 				delete s;
 			}
 			break;
@@ -279,6 +372,23 @@ void DeviceManager::uninstallDevice(DeviceConfig& config)
 				*ppv = &defaultSensor;
 			}
 			break;
+		#if EnableDHTSensorSupport	 
+		case DEVICETYPE_ENVIRONMENT_SENSOR:
+			if (*ppv!=&nullEnvironmentSensor) {
+				#if SupportBTHomeSensor
+				if( ((EnvironmentSensor*)*ppv)->sensorType() == SensorType_BleSensor)  delete (BleHumiditySensor*)*ppv;
+				else 
+				#endif
+				#if EnableBME280Support
+				if( ((EnvironmentSensor*)*ppv)->sensorType() == SensorType_BME280)  delete (Bme280Sensor*)*ppv;
+				else 
+				#endif
+				delete (DHTSensor*)*ppv;
+
+				*ppv = &nullEnvironmentSensor;
+			}
+			break;
+		#endif
 	}
 }
 
@@ -310,16 +420,22 @@ void DeviceManager::installDevice(DeviceConfig& config)
 			else {
 				ts = ((TempSensor*)*ppv);
 				ts->setSensor(s);
-				#if FridgeSensorFallBack
-				if(config.deviceFunction == DEVICE_BEER_TEMP)
-					tempControl.fridgeSensor->setBackupSensor(s);
-				#endif
+				//#if FridgeSensorFallBack
+				if(fridgeSensorFallBack){
+					if(config.deviceFunction == DEVICE_BEER_TEMP)
+						tempControl.fridgeSensor->setBackupSensor(s);
+				}
+				//#endif
 				ts->init();
 			}
 #if BREWPI_SIMULATE
 			((ExternalTempSensor*)s)->setConnected(true);	// now connect the sensor after init is called
 #endif
 			break;
+		#if EnableDHTSensorSupport
+		case DEVICETYPE_ENVIRONMENT_SENSOR:	
+		//fall through
+		#endif
 		case DEVICETYPE_SWITCH_ACTUATOR:
 		case DEVICETYPE_SWITCH_SENSOR:
 			DEBUG_ONLY(logInfoInt(INFO_INSTALL_DEVICE, config.deviceFunction));
@@ -343,16 +459,17 @@ struct DeviceDefinition {
 	int8_t pio;
 	int8_t deactivate;
 	int8_t calibrationAdjust;
+	int8_t hsensorType;
 	DeviceAddress address;
 
 	/**
 	 * Lists the first letter of the key name for each attribute.
 	 */
-	static const char ORDER[12];
+	static const char ORDER[13];
 };
 
 // the special cases are placed at the end. All others should map directly to an int8_t via atoi().
-const char DeviceDefinition::ORDER[12] = "icbfhpxndja";
+const char DeviceDefinition::ORDER[13] = "icbfhpxndjsa";
 
 const char DEVICE_ATTRIB_INDEX = 'i';
 const char DEVICE_ATTRIB_CHAMBER = 'c';
@@ -366,6 +483,9 @@ const char DEVICE_ATTRIB_ADDRESS = 'a';
 #if BREWPI_DS2413
 const char DEVICE_ATTRIB_PIO = 'n';
 #endif
+#if EnableDHTSensorSupport
+const char DEVICE_ATTRIB_HUMIDITY_SENSOR_TYPE = 's';
+#endif
 const char DEVICE_ATTRIB_CALIBRATEADJUST = 'j';	// value to add to temp sensors to bring to correct temperature
 
 const char DEVICE_ATTRIB_VALUE = 'v';		// print current values
@@ -378,7 +498,6 @@ void handleDeviceDefinition(const char* key, const char* val, void* pv)
 {
 	DeviceDefinition* def = (DeviceDefinition*) pv;
 //	logDebug("deviceDef %s:%s", key, val);
-
 	// the characters are listed in the same order as the DeviceDefinition struct.
 	int8_t idx = indexOf(DeviceDefinition::ORDER, key[0]);
 	if (key[0]==DEVICE_ATTRIB_ADDRESS)
@@ -402,6 +521,7 @@ void assignIfSet(int8_t value, uint8_t* target) {
 	if (value>=0)
 		*target = (uint8_t)value;
 }
+#define assignIfSetMacro(value,target,type)  if ((value)>=0) target =(type) value;
 
 /**
  * Updates the device definition. Only changes that result in a valid device, with no conflicts with other devices
@@ -413,7 +533,6 @@ void DeviceManager::parseDeviceDefinition()
 	fill((int8_t*)&dev, sizeof(dev));
 
 	piLink.parseJson(&handleDeviceDefinition, &dev);
-
 	if (!inRangeInt8(dev.id, 0, MAX_DEVICE_SLOT))			// no device id given, or it's out of range, can't do anything else.
 		return;
 
@@ -429,12 +548,21 @@ void DeviceManager::parseDeviceDefinition()
 	piLink.print("target Chamber: %d, target Beer: %d, target Function: %d, target Hardware: %d, target PinNr: %d\r\n", target.chamber,
 		target.beer, target.deviceFunction, target.deviceHardware, target.hw.pinNr);
 #endif
+
 	assignIfSet(dev.chamber, &target.chamber);
 	assignIfSet(dev.beer, &target.beer);
-	assignIfSet(dev.deviceFunction, (uint8_t*)&target.deviceFunction);
-	assignIfSet(dev.deviceHardware, (uint8_t*)&target.deviceHardware);
-	assignIfSet(dev.pinNr, &target.hw.pinNr);
+//	assignIfSet(dev.deviceFunction, (uint8_t*)&target.deviceFunction);
+//	assignIfSet(dev.deviceHardware, (uint8_t*)&target.deviceHardware);
+//  above code woudl break when the size of enum is 4. 
+	assignIfSetMacro(dev.deviceFunction, target.deviceFunction, DeviceFunction);
+	assignIfSetMacro(dev.deviceHardware, target.deviceHardware, DeviceHardware);
 
+	assignIfSet(dev.pinNr, &target.hw.pinNr);
+//	Serial.printf("sizeof(target.deviceFunction) =%d, sizeof(uint8_t)=%d\n",sizeof(target.deviceFunction), sizeof(uint8_t));
+
+#if EnableDHTSensorSupport
+	assignIfSet(dev.hsensorType, &target.hw.humiditySensorType);
+#endif
 
 #if BREWPI_DS2413
 	assignIfSet(dev.pio, &target.hw.pio);
@@ -443,15 +571,17 @@ void DeviceManager::parseDeviceDefinition()
 	if (dev.calibrationAdjust!=-1)		// since this is a union, it also handles pio for 2413 sensors
 		target.hw.calibration = dev.calibrationAdjust;
 
-	assignIfSet(dev.invert, (uint8_t*)&target.hw.invert);
-
+	//assignIfSet(dev.invert, (uint8_t*)&target.hw.invert);
+	assignIfSetMacro(dev.invert, target.hw.invert,bool);
+	
 	if (dev.address[0] != 0xFF) {// first byte is family identifier. I don't have a complete list, but so far 0xFF is not used.
 #ifndef ESP8266_ONE
 		piLink.print("Dev Address: %s, Target Address: %s\r\n", dev.address, target.hw.address);
 #endif
 		memcpy(target.hw.address, dev.address, 8);
 	}
-	assignIfSet(dev.deactivate, (uint8_t*)&target.hw.deactivate);
+	//assignIfSet(dev.deactivate, (uint8_t*)&target.hw.deactivate);
+	assignIfSetMacro(dev.deactivate, target.hw.deactivate,bool);
 
 	// setting function to none clears all other fields.
 	if (target.deviceFunction==DEVICE_NONE) {
@@ -618,14 +748,25 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 	appendAttrib(deviceString, DEVICE_ATTRIB_HARDWARE, config.deviceHardware);
 	appendAttrib(deviceString, DEVICE_ATTRIB_DEACTIVATED, config.hw.deactivate);
 	appendAttrib(deviceString, DEVICE_ATTRIB_PIN, config.hw.pinNr);
+#if EnableDHTSensorSupport
+	if(config.deviceFunction == DEVICE_CHAMBER_HUMIDITY_SENSOR
+			|| config.deviceFunction == DEVICE_CHAMBER_ROOM_HUMIDITY_SENSOR
+			|| config.deviceHardware == DEVICE_HARDWARE_BTHOME_HUMIDITY
+			|| config.deviceHardware == DEVICE_HARDWARE_BTHOME_THERMOMETER) //VTODO: PIN device: DHT serious, DEVICE_HARDWARE_BME280
+		appendAttrib(deviceString,DEVICE_ATTRIB_HUMIDITY_SENSOR_TYPE,config.hw.humiditySensorType);
+#endif
 	if (value && *value) {
 		deviceString += ",\"v\":";
 		deviceString += value;
 	}
 	if (hasInvert(config.deviceHardware))
 		appendAttrib(deviceString, DEVICE_ATTRIB_INVERT, config.hw.invert);
-
+#if SupportBTHomeSensor
+	if (hasOnewire(config.deviceHardware) || config.deviceHardware==DEVICE_HARDWARE_BTHOME_HUMIDITY || config.deviceHardware==DEVICE_HARDWARE_BTHOME_THERMOMETER
+	|| config.deviceHardware==DEVICE_HARDWARE_RAPT_THERMOMETER ) {
+#else
 	if (hasOnewire(config.deviceHardware)) {
+#endif
 		deviceString += ",\"a\":\"";
 		printBytes(config.hw.address, 8, buf);
 		deviceString += buf;
@@ -640,6 +781,17 @@ void DeviceManager::printDevice(device_slot_t slot, DeviceConfig& config, const 
 #if BREWPI_EXTERNAL_SENSOR
 		||  config.deviceHardware==DEVICE_HARDWARE_EXTERNAL_SENSOR
 #endif	
+#if EnableDHTSensorSupport
+
+		||  config.deviceFunction==DEVICE_CHAMBER_HUMIDITY_SENSOR //VTODO
+		||  config.deviceFunction == DEVICE_CHAMBER_ROOM_HUMIDITY_SENSOR
+		||  config.deviceHardware == DEVICE_HARDWARE_ENVIRONMENT_TEMP
+#endif
+#if SupportBTHomeSensor
+		||  config.deviceHardware == DEVICE_HARDWARE_BTHOME_HUMIDITY
+		||  config.deviceHardware == DEVICE_HARDWARE_BTHOME_THERMOMETER
+		||  config.deviceHardware == DEVICE_HARDWARE_RAPT_THERMOMETER
+#endif
 	) {
 		tempDiffToString(buf, temperature(config.hw.calibration)<<(TEMP_FIXED_POINT_BITS-CALIBRATION_OFFSET_PRECISION), 3, 8);
 		deviceString += ",\"j\":";
@@ -744,12 +896,25 @@ device_slot_t findHardwareDevice(DeviceConfig& find)
 					// fall through
 				case DEVICE_HARDWARE_PIN:
 					match &= find.hw.pinNr==config.hw.pinNr;
+					break;
+			#if EnableDHTSensorSupport
+				case DEVICE_HARDWARE_ENVIRONMENT_TEMP:
+					match &= isDHTEnvironmentSensorAvailable();
+					break;
+			#endif
+
 			#if BREWPI_EXTERNAL_SENSOR
 				case DEVICE_HARDWARE_EXTERNAL_SENSOR:
 					match &= true;
 					break;
 			#endif
-	
+			#if SupportBTHomeSensor
+				case DEVICE_HARDWARE_BTHOME_HUMIDITY:
+				case DEVICE_HARDWARE_BTHOME_THERMOMETER:
+				case DEVICE_HARDWARE_RAPT_THERMOMETER:
+					match &= matchAddress(find.hw.address, config.hw.address, 6);
+					break;
+			#endif
 					default:	// this should not happen - if it does the device will be returned as matching.
 					break;
 			}
@@ -904,6 +1069,122 @@ void DeviceManager::enumerateExternalDevices(EnumerateHardware& h, EnumDevicesCa
 }
 #endif
 
+#if EnableDHTSensorSupport
+void DeviceManager::enumerateEnvTempDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output){
+	DeviceConfig config;
+	EnvironmentSensor *sensors[]={
+		HumidityControl::chamberSensor,
+		HumidityControl::roomSensor
+	};
+
+	for(int i=0; i< 2;i++){
+		if(sensors[i]->sensorType() == SensorType_DHT){
+			clear((uint8_t*)&config, sizeof(config));
+			config.deviceHardware = DEVICE_HARDWARE_ENVIRONMENT_TEMP;
+			config.chamber = 1; // chamber 1 is default
+			config.hw.pinNr =(uint8_t) i;
+			handleEnumeratedDevice(config, h, callback, output);
+		}
+	}
+}
+#endif
+
+
+#if EnableBME280Support
+#define BME280_ADDRESS (0x77)           // Primary I2C Address
+#define BME280_ADDRESS_ALTERNATE (0x76) // Alternate Address
+
+void DeviceManager::enumerateBME280(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output){
+	// scan I2C
+	Wire.begin(PIN_SDA,PIN_SCL);
+	const uint8_t addresses[]={BME280_ADDRESS,BME280_ADDRESS_ALTERNATE};
+
+	DeviceConfig config;
+	clear((uint8_t*)&config, sizeof(config));
+	config.deviceHardware = DEVICE_HARDWARE_BME280;
+	config.chamber = 1; // chamber 1 is default
+
+	uint8_t error,address;
+ 	for(uint32_t ai = 0; ai < sizeof(addresses); ai++ ){
+		address = addresses[ai];
+		
+		Wire.beginTransmission(address);
+    	error = Wire.endTransmission();
+		
+//		Serial.printf("search %x result:%d\n",address,error);
+
+		if(error ==0){
+			// found
+//			Serial.printf("search %x found\n",address);
+			config.hw.pinNr= address;
+			handleEnumeratedDevice(config, h, callback, output);
+		}
+	}
+}
+#endif
+#if SupportBTHomeSensor
+void DeviceManager::enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output){
+
+
+	DeviceConfig config;
+	clear((uint8_t*)&config, sizeof(config));
+	config.chamber = 1; // chamber 1 is default
+
+	/*
+	BleSensorListener::scanForDevice([&](uint8_t type,const uint8_t* address,float temp,uint8_t humidity){
+		if(BleSensorListener::findBleSensor(address) == NULL){
+			memcpy(config.hw.address , address,6);
+			config.hw.humiditySensorType = type;
+			if(humidity <=100){
+				config.deviceHardware = DEVICE_HARDWARE_BTHOME_HUMIDITY;
+				handleEnumeratedDevice(config, h, callback, output);
+			}
+			if(temp > 0){
+				config.deviceHardware = DEVICE_HARDWARE_BTHOME_THERMOMETER;
+				handleEnumeratedDevice(config, h, callback, output);
+			}
+		}
+	});
+	*/
+	bleScanner.scanForDevices(ScanDeviceTime,[&](NimBLEAdvertisedDevice* device){
+		BleSensorType type;
+		double temp=-1000;
+		uint8_t humidity=0xFF;
+		if(BleSensorListener::isBleSensorDevice(device,type,temp,humidity)){
+			// found BLE sensor
+			memcpy(config.hw.address , device->getAddress().getBase()->val,6);
+			config.hw.humiditySensorType = type;
+
+			if(humidity <=100){
+				config.deviceHardware = DEVICE_HARDWARE_BTHOME_HUMIDITY;
+				handleEnumeratedDevice(config, h, callback, output);
+			}
+			if(temp != -1000){
+				config.deviceHardware = DEVICE_HARDWARE_BTHOME_THERMOMETER;
+				handleEnumeratedDevice(config, h, callback, output);
+			}
+		}else if(BleRaptThermometer::isRaptThermemoter(device)){
+			memcpy(config.hw.address , device->getAddress().getBase()->val,6);
+			config.deviceHardware = DEVICE_HARDWARE_RAPT_THERMOMETER;
+			handleEnumeratedDevice(config, h, callback, output);
+		}
+	});
+
+	// list all devices "installed"
+	for (auto bth : BleSensorListener::getAll()) {
+    		memcpy(config.hw.address , bth->macAddress(),6);
+			config.hw.humiditySensorType = bth->broadcastFormat();
+			config.deviceHardware = DEVICE_HARDWARE_BTHOME_HUMIDITY;
+			handleEnumeratedDevice(config, h, callback, output);
+			config.deviceHardware = DEVICE_HARDWARE_BTHOME_THERMOMETER;
+			handleEnumeratedDevice(config, h, callback, output);
+    }
+
+}
+
+
+#endif
+
 void DeviceManager::enumerateHardware()
 {
 	EnumerateHardware spec;
@@ -931,6 +1212,27 @@ void DeviceManager::enumerateHardware()
 		enumerateExternalDevices(spec, OutputEnumeratedDevices, out);
 	}
 	#endif
+
+	#if EnableDHTSensorSupport //vito: enumerate device
+	if (isDHTEnvironmentSensorAvailable() &&( spec.hardware==-1 || isEnvTempSensor(DeviceHardware(spec.hardware))) ) {
+		enumerateEnvTempDevices(spec, OutputEnumeratedDevices, out);
+	}
+	#endif
+
+	#if EnableBME280Support
+	if (spec.hardware==-1 || isBME280(DeviceHardware(spec.hardware))) {
+		enumerateBME280(spec, OutputEnumeratedDevices, out);
+	}
+	#endif
+
+	#if SupportBTHomeSensor
+	if (spec.hardware==-1 || isBTHomeSensorHumidity(DeviceHardware(spec.hardware))
+		|| isBTHomeThermometer(DeviceHardware(spec.hardware))
+		|| isRaptThermometer(DeviceHardware(spec.hardware))) {
+		enumerateBTHomeSensor(spec, OutputEnumeratedDevices, out);
+	}
+	#endif
+
 //	logDebug("Enumerating Hardware Complete");
 }
 
@@ -970,6 +1272,12 @@ void UpdateDeviceState(DeviceDisplay& dd, DeviceConfig& dc, char* val)
 			temperature temp = s.read();
 			tempToString(val, temp, 3, 9);
 		}
+#if EnableDHTSensorSupport	
+		else if (dt == DEVICETYPE_ENVIRONMENT_SENSOR){
+			EnvironmentSensor* sensor = (EnvironmentSensor*) *ppv;
+			sprintf_P(val, STR_FMT_D,(int)sensor->humidity());
+		}
+#endif	
 		else if (dt==DEVICETYPE_SWITCH_ACTUATOR) {
 			sprintf_P(val, STR_FMT_U, (unsigned int) ((Actuator*)*ppv)->isActive()!=0);
 		}
@@ -1005,6 +1313,11 @@ void DeviceManager::listDevices() {
 
 DeviceType deviceType(DeviceFunction id) {
 	switch (id) {
+#if EnableDHTSensorSupport	
+	case DEVICE_CHAMBER_HUMIDITY_SENSOR:
+	case DEVICE_CHAMBER_ROOM_HUMIDITY_SENSOR:
+		return DEVICETYPE_ENVIRONMENT_SENSOR;
+#endif
 	case DEVICE_CHAMBER_DOOR:
 		return DEVICETYPE_SWITCH_SENSOR;
 
@@ -1019,6 +1332,10 @@ DeviceType deviceType(DeviceFunction id) {
 #endif
 #if EanbleParasiteTempControl
 	case DEVICE_PTC_COOL:
+#endif
+#if EnableDHTSensorSupport
+	case DEVICE_CHAMBER_HUMIDIFIER:
+	case DEVICE_CHAMBER_DEHUMIDIFIER:
 #endif
 		return DEVICETYPE_SWITCH_ACTUATOR;
 

@@ -1,7 +1,5 @@
 # BrewPiLess
- **Note: ALL BPL settings will be gone after upgrading to v3.0**
-
- **Note: re-SETUP is necessary after upgrading to v2.4**
+ **Note: Beer Profile exteds to maximum 10 steps. Your setting might lost. There is an utility, /extra/backup.htm. You can upload this file and use it to backup/restore the settings.**
 
 ## Features
  * I2C LCD support.
@@ -21,7 +19,8 @@
  * Save and resuse of beer profiles.
  * Static IP setting.
  * Export saved data to csv format by offline log viewer.
- * Brew and calibrate iSpindel. **new!**
+ * Brew and calibrate.
+ * Tilt & Rapt Pill support(ESP32)
    
 # Introduction
 This project uses a single ESP8266 to replace RPI and Arduino.
@@ -38,21 +37,84 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
 ## Known issues
 * ESP8266 won't restart after saving system configuration.
  Sometimes ESP8266 can't restart after a software watchdog timer reset, which is the only way to reset the system by software. It happened on my NodeMcu and D1 mini boards that didn't connect to anything but USB. I have no solution for it.
-* ESP8266 won't start after selecting WiFi network.
- The web server used is ESPAsyncWebServer which uses ESPAsyncTCP. I found that if ESP8266 ever enters SoftAP mode before connecting to the network, the Web server will fail on tcp_bind() and the web service will be unavailable. Not tracing the source code of the LWIP, I just worked around by reseting the system. However, ESP8266 sometimes doesn't reset.
 * The page can't be loaded correctly.
  It rarely happens after HTTP caching is used, but it does happen especially when Javascript Console is opened. During developing and testing, I found corrupted html/javascript pages. Without the abliity and time to debug or develop the web server and or TCP/IP stack, I decide to live with it.
 * Incorrect temperature chart.
  The log format before v2.0 is vulnerable. There seems to be some unconsidered conditions that break the log. 
+* The gravity caluated by the controller is slightly different from that shown on chart. It is because the formula are derived speratedly. Due to different float precision, the formula is different. The difference should be small, though.
 
 ## Version History
+ * 4.5
+   * **You will lost settings. Backup before upgrading. Delete all logs also**
+   * Humidity control fixed.
+   * ESP32 framework 6.8.1
+   * NimBLE to 2.2.3
+   * No password for AP mode by default; workaround for an issue in newer framework.
+   * Add BLE sensor supports(not enabled by default)
+   * Temperature Correction for floating hydrometers
+ * 4.4
+   * Settings might be reset, save it before updgrading.
+   * (ESP32) Rapt Pill support
+   * Revise Gravity Device Setting.
+   * Removing confusing calibration temperature of wireless hydrometer
+   * Code revise
+   * update ESP32 framework to 6.3.2
+ * 4.3.1 
+   * Auto list device list on page open
+   * Advanced settings for control constants.
+   * Glycol as an option. No more dedicated Glycol build.
+   * Update Filemanager.
+ * 4.3
+   * update ESP32 framework to 5.4.0
+   * update ESP8266 framework to 4.2.0
+ * 4.2.2
+   * Dedicated GLYCOL support binary. Glycol chilling is NOT supported by default.
+ * 4.2.1
+    * [Only web front changes.] Show gravity changes of latest 48H/24H/12H instead of "stable". 
+ * 4.2
+    * BMP280 support
+    * Using environment temperature as room/chamber temperature
+    * extend maximum Beer Profile to 10 steps.
+    * experimental Humidity control
+    * Rotating LCD for extra information, like iSpiondel information, Humidity, and pressure.
+    * Dedicated additional iSpindel display of SSD1306 OLED LCD.
+    * New 'Write on buffer full' option for logging to reduce flash writing.
+    * Backup/restore settings
+    * LittleFS replaces SPIFFS for all ESP8266.
+    * LittleFS is default for ESP32.
+    * Partition table for ESP32 has changed. Flash via USB might be necessary.
+
+ * 4.1
+    * "Real" generic HTTP logging.
+    * DHT1x/DHT2x support, for humidity control 
+    * Pressure report for Brewfather.app
+    * [ESP32] HTTPS remote logging.
+    * [ESP32] TILT support
+    *  Classic frontend is no longer maintained.
+
+ * 4.0r1
+    * Fix lost of WiFi connection after a few days.
+ * 4.0
+    * Arduino Framework 2.2.0
+    * Pressure chart
+    * [Prewssure transducer ADC refined. ADS1115 support.](doc/PresssureMonitor.md)
+    * Display MAC address and Flash related information.
+
+ * v3.6r3
+    * Shorten recovering time. Resolving disconnection in AP mode for WiFi Auto Reconnect.
+ 
+ * v3.6v2
+    * Bug fixed: system config cann't be saved.
+    * Bug fixed:DHCP service not availbe in AP_STA mode
  * v3.6
     * update framework to 2.2.0
+    * **4m2m flash layout for All but SONOFF, due to size growth of framework.**
     * update OLED library to 4.0 (Not verified by me, but SOMEONE@HBT did report working)
     * update to ArduinoJson V6
     * add revised LCD page. at /lcd
     * SOFF OTA configuraton not longer available for space limit
     * Using interrupt for more responsive button operation.
+    * MQTT publish/subscribe, NEW UI only.
 
  * v3.5.1 
     * fixed iSpindel temperature unit issue

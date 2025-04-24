@@ -18,6 +18,8 @@ var PCTRL = {
                 }
                 Q("#fpb").value = d.b;
                 Q("#fpa").value = d.a;
+                Q("#pt-adc").checked = (d.adc !=0);
+                Q("#pt-gain").value = d.gn;
             },
             fail: function(b) {
                 alert("failed to connect to BPL.");
@@ -34,6 +36,8 @@ var PCTRL = {
         } else data.mode = 0;
         data.a = parseFloat(Q("#fpa").value);
         data.b = parseFloat(Q("#fpb").value);
+        data.adc = (Q("#pt-adc").checked)? 1:0;
+        data.gn = Q("#pt-gain").value;
         var json = JSON.stringify(data);
         s_ajax({
             url: "psi",

@@ -169,10 +169,10 @@ void IICOledLcd::printSpacesToRestOfLine(void){
     _display.display();
 }
 
-void IICOledLcd::print(char * str){
+void IICOledLcd::print(const char * str){
 
 
-    char *p=str;
+    const char *p=str;
     int16_t x=xpos();
     int16_t y=ypos();
     int16_t width=0;

@@ -69,6 +69,10 @@ enum DeviceType {
 	DEVICETYPE_TEMP_SENSOR = 1,		/* BasicTempSensor - OneWire */
 	DEVICETYPE_SWITCH_SENSOR = 2,		/* SwitchSensor - direct pin and onewire are supported */
 	DEVICETYPE_SWITCH_ACTUATOR = 3	/* Actuator - both direct pin and onewire are supported */
+//#if EnableDHTSensorSupport	
+	,
+	DEVICETYPE_ENVIRONMENT_SENSOR = 4
+//#endif
 };
 
 
@@ -77,12 +81,25 @@ enum DeviceType {
 
 inline bool isAssignable(DeviceType type, DeviceHardware hardware)
 {
+	//VTODO
 	return (hardware==DEVICE_HARDWARE_PIN && (type==DEVICETYPE_SWITCH_ACTUATOR || type==DEVICETYPE_SWITCH_SENSOR))
 #if BREWPI_DS2413
 	|| (hardware==DEVICE_HARDWARE_ONEWIRE_2413 && (type==DEVICETYPE_SWITCH_ACTUATOR || (DS2413_SUPPORT_SENSE && type==DEVICETYPE_SWITCH_SENSOR)))
 #endif
 #if BREWPI_EXTERNAL_SENSOR
 	|| (hardware==DEVICE_HARDWARE_EXTERNAL_SENSOR && type==DEVICETYPE_TEMP_SENSOR)
+#endif
+#if EnableHumidityControlSupport	
+	|| (hardware==DEVICE_HARDWARE_PIN && type==DEVICETYPE_ENVIRONMENT_SENSOR)
+	|| (hardware==DEVICE_HARDWARE_ENVIRONMENT_TEMP && type==DEVICETYPE_TEMP_SENSOR)
+#if EnableBME280Support
+	|| (hardware==DEVICE_HARDWARE_BME280 && type == DEVICETYPE_ENVIRONMENT_SENSOR)
+#endif
+#if SupportBTHomeSensor	
+	|| (hardware==DEVICE_HARDWARE_BTHOME_HUMIDITY && type == DEVICETYPE_ENVIRONMENT_SENSOR)
+	|| (hardware==DEVICE_HARDWARE_BTHOME_THERMOMETER && type == DEVICETYPE_TEMP_SENSOR)
+	|| (hardware==DEVICE_HARDWARE_RAPT_THERMOMETER && type == DEVICETYPE_TEMP_SENSOR)
+#endif
 #endif
 	|| (hardware==DEVICE_HARDWARE_ONEWIRE_TEMP && type==DEVICETYPE_TEMP_SENSOR)
 	|| (hardware==DEVICE_HARDWARE_NONE && type==DEVICETYPE_NONE);
@@ -108,11 +125,43 @@ inline bool isExternalSensor(DeviceHardware hardware) {
 }
 #endif
 
+
+#if EnableHumidityControlSupport
+inline bool isEnvTempSensor(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_ENVIRONMENT_TEMP;
+}
+#endif
+
+#if EnableBME280Support
+
+inline bool isBME280(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_BME280;
+}
+
+#endif
+
+#if SupportBTHomeSensor
+inline bool isBTHomeSensorHumidity(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_BTHOME_HUMIDITY;
+}
+inline bool isBTHomeThermometer(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_BTHOME_THERMOMETER;
+}
+inline bool isRaptThermometer(DeviceHardware hardware) {
+	return hardware == DEVICE_HARDWARE_RAPT_THERMOMETER;
+}
+
+#endif
+
+
 /**
  * Determines where this devices belongs.
  */
 inline DeviceOwner deviceOwner(DeviceFunction id) {
-	return id==0 ? DEVICE_OWNER_NONE : id>=DEVICE_BEER_FIRST ? DEVICE_OWNER_BEER : DEVICE_OWNER_CHAMBER;
+//	return id==0 ? DEVICE_OWNER_NONE : id>=DEVICE_BEER_FIRST ? DEVICE_OWNER_BEER : DEVICE_OWNER_CHAMBER;
+
+	return id==0 ? DEVICE_OWNER_NONE : (id>=DEVICE_BEER_FIRST && id < DEVICE_CHAMBER_EXT)?  DEVICE_OWNER_BEER : DEVICE_OWNER_CHAMBER;
+
 }
 
 
@@ -174,6 +223,20 @@ public:
 
 	int8_t enumerateActuatorPins(uint8_t offset)
 	{
+#ifdef ESP32
+		switch (offset) {
+			case 0: return actuatorPin1;
+			case 1: return actuatorPin2;
+			case 2: return actuatorPin3;
+			case 3: return actuatorPin4;
+			case 4: return actuatorPin5;
+#if MORE_PINS_CONFIGURATION
+			case 5: return actuatorPin6;
+			case 6: return fanPin;
+#endif
+			default: return -1;
+		}
+#else
 #if BREWPI_ACTUATOR_PINS && defined(ARDUINO)
 #if BREWPI_STATIC_CONFIG<=BREWPI_SHIELD_REV_A
 		switch (offset) {
@@ -192,13 +255,19 @@ public:
 		}
 #endif
 #endif
+#endif
 		return -1;
 	}
 
 	int8_t enumerateSensorPins(uint8_t offset) {
+#ifdef ESP32
+		if (offset==0)
+			return doorPin;
+#else
 #if BREWPI_SENSOR_PINS && defined(ARDUINO)
 		if (offset==0)
 			return doorPin;
+#endif
 #endif
 		return -1;
 	}
@@ -258,8 +327,17 @@ public:
 	static bool enumDevice(DeviceDisplay& dd, DeviceConfig& dc, uint8_t idx);
 
 	static void listDevices();
-
+	static void setFridgeSensorFallBack(bool fb){ fridgeSensorFallBack = fb; }
 private:
+	#if EnableDHTSensorSupport
+	static void enumerateEnvTempDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
+	#endif
+	#if EnableBME280Support
+	static void enumerateBME280(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
+	#endif
+	#if SupportBTHomeSensor
+	static void enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
+	#endif
 	#if BREWPI_EXTERNAL_SENSOR //vito: enumerate device
 	static void enumerateExternalDevices(EnumerateHardware& h, EnumDevicesCallback callback, DeviceOutput& output);
 	#endif
@@ -289,6 +367,7 @@ private:
 
 #endif
 	static bool firstDeviceOutput;
+	static bool fridgeSensorFallBack;
 };
 
 

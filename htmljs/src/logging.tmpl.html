@@ -48,29 +48,21 @@
                     </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
-                            <%= log_calibrate_ispindel %>
+                            <%= log_write_on_buffer_full %>
                         </h6>
-                        <input type=checkbox id=calispindel>
+                        <div>
+                            <input type="checkbox" id="wobf" name="cbpl" class="switch-input" checked="checked">
+                            <label for="wobf" class="switch-label" style="min-width: 0;"></label>
+                        </div>
                     </div>
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
-                            <%= log_tilt_in_water %>
+                            <%= log_record_raw %>
                         </h6>
-                        <input type=text id=tiltinw size=6>
-                    </div>
-                    <div layout horizontal cross-center class=tiltwatercorrect>
-                        <h6 class="inline-header">
-                            <%= log_hydrometer_reading %>
-                        </h6>
-                        <input type=text id=hydrometer size=6>
-                    </div>
-                    <div layout horizontal cross-center class=tiltwatercorrect>
-                        <h6 class="inline-header">
-                            <%= log_or_water_at %>
-                        </h6><input type=text id=watertemp size=4>&deg;
-                        <%= log_calibrated %> <input type=text id=caltemp size=4>&deg;
-                            <select id=tempunit><option value=C>C</option><option value=F>F</option></select>
-
+                        <div>
+                            <input type="checkbox" id="calispindel" name="cbpl" class="switch-input" checked="checked">
+                            <label for="calispindel" class="switch-label" style="min-width: 0;"></label>
+                        </div>
                     </div>
                 </div>
 
@@ -157,9 +149,9 @@
                     <div id=brewersfriend class=service-options>
                         <div layout horizontal cross-center>
                             <h6 class="inline-header">
-                                <%= log_brewersfriend_stream_url %>
+                                <%= log_brewersfriend_stream_apikey %>
                             </h6>
-                            <input type="text" id="brewersfriend-url" size="42">
+                            <input type="text" id="brewersfriend-apikey" size="42">
                         </div>
                         <div layout horizontal cross-center>
                             <h6 class="inline-header">
@@ -690,6 +682,12 @@
                 <th>%P</th>
                 <td>
                     <%= log_pressure_reading %>
+                </td>
+            </tr>
+            <tr>
+                <th>%H</th>
+                <td>
+                   Hostname
                 </td>
             </tr>
 

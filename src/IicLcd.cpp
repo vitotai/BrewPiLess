@@ -16,7 +16,7 @@
 #include <inttypes.h>
 #include "Arduino.h"
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 #include <Wire.h>
 #else
 extern "C" {
@@ -44,61 +44,24 @@ extern "C" {
 // LiquidCrystal constructor is called).
 
 
-#if LCD_AUTO_ADDRESSING == true
-
-void IIClcd::scanForAddress(void)
+IIClcd::IIClcd(uint8_t lcd_cols,uint8_t lcd_rows)
 {
-	byte error, address;
-    //Serial.println("Scan LCD Address...\n");
-
- 	for(address = 127; address > 0; address-- )
-  	{
-    	// The i2c_scanner uses the return value of
-    	// the Write.endTransmisstion to see if
-    	// a device did acknowledge to the address.
-    	#if RotaryViaPCF8574 || ButtonViaPCF8574
-    	if(address == PCF8574_ADDRESS) continue;
-    	#endif
-    	Wire.beginTransmission(address);
-    	error = Wire.endTransmission();
-
-    	if (error == 0)
-    	{
-			#if SerialDebug
-      		Serial.print("I2C device found at address 0x");
-      		Serial.print(address,HEX);
-      		Serial.println("  !");
-			#endif
-      		_Addr= address;
-      		break;
-    	}
-    }
-}
-
-#endif
-
-
-IIClcd::IIClcd(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows)
-{
-  _Addr = lcd_Addr;
   _cols = lcd_cols;
   _rows = lcd_rows;
   _backlightval = LCD_NOBACKLIGHT;
 }
 
-void IIClcd::init(){
+void IIClcd::init(uint8_t lcd_Addr){
+	_Addr=lcd_Addr;
 	init_priv();
     _backlightTime = 0;
 }
 
 void IIClcd::init_priv()
 {
-	#ifdef ESP8266
+	#if defined(ESP8266) || defined(ESP32)
 
 	Wire.begin(PIN_SDA,PIN_SCL);
-	#if LCD_AUTO_ADDRESSING == true
-	scanForAddress();
-	#endif
 #else
 	twi_init();
 #endif
@@ -156,7 +119,8 @@ void IIClcd::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 	display();
 
 	// clear it off
-	clear();
+	command(LCD_CLEARDISPLAY); //clear();
+	delayMicroseconds(2000);
 
 	// Initialize to default text direction (for roman languages)
 	_displaymode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
@@ -167,7 +131,16 @@ void IIClcd::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 	home();
 
 }
-
+#if EMIWorkaround
+  void IIClcd::refresh(){
+	begin(20,4);
+    for(int i=0;i< 4;i++){
+        setCursor(0,i);
+		content[i][20]='\0';
+        print(content[i]);
+    }
+  }
+#endif
 /********** high level commands, for the user! */
 void IIClcd::clear(){
 	command(LCD_CLEARDISPLAY);// clear display, set cursor position to zero
@@ -266,7 +239,8 @@ void IIClcd::createChar(uint8_t location, uint8_t charmap[]) {
 	location &= 0x7; // we only have 8 locations 0-7
 	command(LCD_SETCGRAMADDR | (location << 3));
 	for (int i=0; i<8; i++) {
-		write(charmap[i]);
+		//write(charmap[i]);
+		send(charmap[i], Rs);
 	}
 }
 
@@ -314,7 +288,7 @@ void IIClcd::write4bits(uint8_t value) {
 }
 
 void IIClcd::expanderWrite(uint8_t _data) {
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 #ifdef RotaryViaPCF8574
 	noInterrupts();
 #endif

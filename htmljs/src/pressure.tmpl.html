@@ -36,6 +36,31 @@
 
                 <div layout horizontal cross-center>
                     <h6 class="inline-header">
+                        <%= external_ads1115 %>
+                    </h6>
+                    <input type="checkbox" id="pt-adc" name="pt-adc" class="switch-input" checked>
+                    <label for="pt-adc" class="switch-label" style="min-width: 0;"></label>
+
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
+                        <%= ads1115_max_vol %>
+                    </h6>
+                    <select  id="pt-gain" name="pt-gain">
+                        <option value=0>6.144V</option>
+                        <option value=1>4.096V</option>
+                        <option value=2>2.048V</option>
+                        <option value=3>1.024V</option>
+                        <option value=4>0.512V</option>
+                        <option value=5>0.256V</option>
+                    </select>
+                    <label for="pt-gain" style="min-width: 0;"></label>
+
+                </div>
+
+                <div layout horizontal cross-center>
+                    <h6 class="inline-header">
                         <%= control_pressure %>
                     </h6>
                     <input type="checkbox" id="pt-control" name="p-control" class="switch-input" checked>
@@ -53,7 +78,7 @@
                     <h6 class="inline-header">
                     </h6>
                     b:<input type="text" id=fpb name="fpb" size=4> a:
-                    <input type="text" id=fpa name="fpa" size=4> <button class="btn" onclick="PCTRL.cal()">Calibrate</button>
+                    <input type="text" id=fpa name="fpa" size=4> <button class="btn btn--raised" onclick="PCTRL.cal()">Calibrate</button>
                 </div>
                 <div class="card-footer">
                     <button class="btn btn--raised" style="max-width: 200px;" onclick="PCTRL.apply()"><%= control_apply %></button>

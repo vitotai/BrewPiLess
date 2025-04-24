@@ -40,7 +40,7 @@ struct ControlConstants {
 	uint8_t lightAsHeater;		// use the light to heat rather than the configured heater device
 	uint8_t rotaryHalfSteps; // define whether to use full or half steps for the rotary encoder
 	temperature pidMax;
-#if SettableMinimumCoolTime
+#if 1 // SettableMinimumCoolTime
     uint16_t minCoolTime;
     uint16_t minCoolIdleTime;
     uint16_t minHeatTime;
@@ -66,7 +66,7 @@ enum DeviceFunction {
 	DEVICE_CHAMBER_TEMP = 5,
 	DEVICE_CHAMBER_ROOM_TEMP = 6,	// temp sensors
 	DEVICE_CHAMBER_FAN = 7,			// a fan in the chamber
-	DEVICE_CHAMBER_RESERVED1 = 8,	// reserved for future use
+	DEVICE_CHAMBER_HUMIDITY_SENSOR = 8,	//  (reserved for future use)
 	// carboy devices
 	DEVICE_BEER_FIRST = 9,
 	DEVICE_BEER_TEMP = DEVICE_BEER_FIRST,									// primary beer temp sensor
@@ -75,7 +75,13 @@ enum DeviceFunction {
 	DEVICE_BEER_SG = 13,									// SG sensor
 	DEVICE_BEER_CAPPER = 14, 
 	DEVICE_PTC_COOL = 15,	// reserved
-	DEVICE_MAX = 16
+	
+	DEVICE_CHAMBER_EXT=16,
+	DEVICE_CHAMBER_HUMIDIFIER = DEVICE_CHAMBER_EXT,
+	DEVICE_CHAMBER_DEHUMIDIFIER = 17,
+	DEVICE_CHAMBER_ROOM_HUMIDITY_SENSOR = 18,
+	
+	DEVICE_MAX = 19
 };
 
 
@@ -87,14 +93,22 @@ enum DeviceHardware {
 	DEVICE_HARDWARE_NONE = 0,
 	DEVICE_HARDWARE_PIN = 1,			// a digital pin, either input or output
 	DEVICE_HARDWARE_ONEWIRE_TEMP = 2,	// a onewire temperature sensor
-#if BREWPI_DS2413
-	DEVICE_HARDWARE_ONEWIRE_2413 = 3	// a onewire 2-channel PIO input or output.
-#endif
-#if BREWPI_EXTERNAL_SENSOR
-	DEVICE_HARDWARE_EXTERNAL_SENSOR = 5
-#endif
+//#if BREWPI_DS2413
+	DEVICE_HARDWARE_ONEWIRE_2413 = 3,	// a onewire 2-channel PIO input or output.
+//#endif
+//#if BREWPI_EXTERNAL_SENSOR
+	DEVICE_HARDWARE_EXTERNAL_SENSOR = 5,
+//#endif
+//#if EnableDHTSensorSupport
+	DEVICE_HARDWARE_ENVIRONMENT_TEMP = 6, 
+//#endif
+//#if EnableBME280Support
+	DEVICE_HARDWARE_BME280 = 7,
+//#endif
+	DEVICE_HARDWARE_BTHOME_HUMIDITY =8,
+	DEVICE_HARDWARE_BTHOME_THERMOMETER = 9,
+	DEVICE_HARDWARE_RAPT_THERMOMETER = 10
 };
-
 
 /*
 * A union of all device types.
@@ -122,7 +136,11 @@ struct DeviceConfig {
 			int8_t /* fixed4_4 */ calibration;	// for temp sensors (deviceHardware==2), calibration adjustment to add to sensor readings
 												// this is intentionally chosen to match the raw value precision returned by the ds18b20 sensors
 		};
+		#if  EnableHumidityControlSupport
+		uint8_t humiditySensorType;
+		#else
 		bool reserved;								// extra space so that additional fields can be added without breaking layout
+		#endif
 	} hw;
 	bool reserved2;
 };

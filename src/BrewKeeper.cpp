@@ -17,7 +17,8 @@
 #define INVALID_CONTROL_TEMP -100.0
 
 #define PointToGravity(p) (1000+(Gravity)((p)+0.5))
-#define SG2Gravity(sg) (uint16_t)(((sg)-1)*1000 +0.5)
+#define GravityPoint(p) ((Gravity)((p)-1000))
+#define SG2Gravity(sg) (uint16_t)(((sg))*1000 +0.5)
 #define Plato2Gravity(p) (uint16_t) ((p) * 10 + 0.5)
 
 void BrewKeeper::updateGravity(float sg){
@@ -31,17 +32,27 @@ void BrewKeeper::updateOriginalGravity(float sg){
 	if(theSettings.GravityConfig()->usePlato)
 		_profile.setOriginalGravityPoint(Plato2Gravity(sg));
 	else
-		_profile.setOriginalGravityPoint(SG2Gravity(sg)); 
+		_profile.setOriginalGravityPoint(GravityPoint(SG2Gravity(sg))); 
 }
+
+
+#if VERIFY_BEER_PROFILE
+String BrewKeeper::currentStatus(){
+	return _profile.currentStatus();
+}
+#endif
 
 void BrewKeeper::keep(time_t now)
 {
+	//DBG_PRINTF("BrewKeeper:%lu last:%lu\n",now,_lastSetTemp);
 	if((now - _lastSetTemp) < MINIMUM_TEMPERATURE_SETTING_PERIOD) return;
 	_lastSetTemp= now;
 
 	char unit, mode;
-	float beerSet,fridgeSet;
-	brewPi.getControlParameter(&unit,&mode,&beerSet,&fridgeSet);
+	float beerSet;
+	unit = brewPi.getUnit();
+	mode = brewPi.getMode();
+	beerSet = brewPi.getBeerSet();
 
 	// run in loop()
 	if (mode != 'p') return;
@@ -50,7 +61,7 @@ void BrewKeeper::keep(time_t now)
 	_profile.setUnit(unit);
 
 	float temp=_profile.tempByTimeGravity(now,_lastGravity);
-	DBG_PRINTF("beerpfoile:Temp:%d\n",(int)(temp *100));
+	DBG_PRINTF("**beerpfoile:Temp:%d\n",(int)(temp *100));
 
 	if(IS_INVALID_CONTROL_TEMP(temp)) return;
 	if(OUT_OF_RANGE(temp,beerSet,MINIMUM_TEMPERATURE_STEP)){
@@ -68,28 +79,34 @@ void BrewKeeper::keep(time_t now)
 	}
 }
 void BrewKeeper::setModeFromRemote(char mode){
-	char unit, ori_mode;
-	float beerSet,fridgeSet;
-	brewPi.getControlParameter(&unit,&ori_mode,&beerSet,&fridgeSet);
-	if(mode == 'p' && ori_mode != 'p') _profile.setScheduleStartDate(TimeKeeper.getTimeSeconds());
-	char buff[36];
+	char ori_mode;
+	ori_mode = brewPi.getMode();
+	if(mode == BrewPiModeBeerProfile && ori_mode != BrewPiModeBeerProfile) _profile.setScheduleStartDate(TimeKeeper.getTimeSeconds());
+/*	char buff[36];
 	sprintf(buff,"j{mode:%c}",mode);
 	DBG_PRINTF("write:%s\n",buff);
 	_write(buff);
+*/
+	brewPi.setMode(mode);
 }
 
 void BrewKeeper::setBeerSet(char* tempStr){
-	char buff[36];
+/*	char buff[36];
 	sprintf(buff,"j{beerSet:%s}",tempStr);
-	DBG_PRINTF("write:%s\n",buff);
+	DBG_PRINTF("*write:%s\n",buff);
 	_write(buff);
+*/
+	brewPi.setBeerSet(String(tempStr).toFloat());
 }
 
 void BrewKeeper::setFridgeSet(char* tempStr){
+	/*
 	char buff[36];
 	sprintf(buff,"j{fridgeSet:%s}",tempStr);
 	DBG_PRINTF("write:%s\n",buff);
 	_write(buff);
+	*/
+	brewPi.setFridgetSet(String(tempStr).toFloat());
 }
 
 //**********************************************************************************
@@ -146,8 +163,27 @@ void BrewProfile::_toNextStep(unsigned long time)
 	_status->timeEnterCurrentStep=time;	
 	_status->startingDate= _schedule->startDay;
 	_saveBrewingStatus();
-	DBG_PRINTF("_toNextStep:%d current:%lu, duration:%u\n",_status->currentStep,time, csd );
+	DBG_PRINTF("\n>>>>>_toNextStep:%d current:%lu, duration:%u<<<<<\n\n",_status->currentStep,time, csd );
 }
+
+#if VERIFY_BEER_PROFILE
+String BrewProfile::currentStatus(){
+	if(_status->currentStep >= _schedule->numberOfSteps){
+		return String("Reach end of profiles.");
+	}
+	ScheduleStep *step = & _schedule->steps[_status->currentStep];
+
+	return String("state:") + String(_status->currentStep)
+		+ String(" condition:") + String(step->condition)
+		+ String(" time enter step:") + String(_status->timeEnterCurrentStep)
+		+ String(" duration:") +  String( ScheduleDayToTime(step->days))
+		+ String(" Gravity:") + String(step->gravity.sg)
+		+ String(" Stable:") +String(step->stable.stableTime)
+		+ String(" StablePoint:") +String(step->stable.stablePoint)
+		;
+}
+#endif
+
 
 bool BrewProfile::checkCondition(unsigned long time,Gravity gravity){
 
@@ -159,6 +195,8 @@ bool BrewProfile::checkCondition(unsigned long time,Gravity gravity){
 
 	bool timeCondition =(csd <= (time - _status->timeEnterCurrentStep));
 	
+	DBG_PRINTF("**checkConditon: %c, time:%c\n",condition,timeCondition? 'Y':'N');
+
 	if(condition == 'r' || condition == 't'){
 		if(timeCondition) return true;
 	}else{
@@ -171,11 +209,13 @@ bool BrewProfile::checkCondition(unsigned long time,Gravity gravity){
 			else
 				stepSG =PointToGravity(((float) _status->OGPoints * (1.0 - (float)step->gravity.attenuation/100.0)));
 		}
-		if(IsGravityValid(stepSG)) sgCondition=(gravity <= stepSG);
-		bool stableSg = gravityTracker.stable(step->stable.stableTime,step->stable.stablePoint);
-
-		DBG_PRINTF("tempByTimeGravity: sgC:%c,gravity=%d, target=%d\n",sgCondition? 'Y':'N',
-			gravity,_schedule->steps[_status->currentStep].gravity.sg);
+		bool stableSg = false;
+		if(IsGravityValid(gravity) ){
+			if(IsGravityValid(stepSG)) sgCondition=(gravity <= stepSG);
+			stableSg = gravityTracker.stable(step->stable.stableTime,step->stable.stablePoint);
+		}
+		DBG_PRINTF("**tempByTimeGravity: sgC:%c,gravity=%d, target=%d stable:%c\n",sgCondition? 'Y':'N',
+			gravity,stepSG, stableSg? 'Y':'N');
 	
 		if(condition == 'g'){
 			if(sgCondition) return true;
@@ -206,7 +246,7 @@ float BrewProfile::tempByTimeGravity(time_t time,Gravity gravity)
 {
 	if(time < _schedule->startDay) return INVALID_CONTROL_TEMP;
 
-	DBG_PRINTF("currentStep:%d, timeEnterCurrentSTep:%ld, time:%ld\n",_status->currentStep,_status->timeEnterCurrentStep,time);
+	//DBG_PRINTF("*currentStep:%d, timeEnterCurrentSTep:%ld, time:%ld\n",_status->currentStep,_status->timeEnterCurrentStep,time);
 
 	if(	_status->startingDate ==0 
 	   || _status->startingDate != _schedule->startDay
@@ -215,8 +255,9 @@ float BrewProfile::tempByTimeGravity(time_t time,Gravity gravity)
 	}
 	if(_status->currentStep >= _schedule->numberOfSteps) return INVALID_CONTROL_TEMP;
 
-	DBG_PRINTF("tempByTimeGravity:now:%ld, step:%d, type=%c, last elapsed:%ld\n",time,
-		_status->currentStep,_schedule->steps[_status->currentStep].condition,time - _status->timeEnterCurrentStep);
+	DBG_PRINTF("*tempByTimeGravity:now:%ld, step:%d, type=%c, last elapsed:%ld, step duration:%u\n",(long)time,
+		_status->currentStep,_schedule->steps[_status->currentStep].condition,(long)(time - _status->timeEnterCurrentStep),
+		ScheduleDayToTime(_schedule->steps[_status->currentStep].days));
 
     if(checkCondition(time,gravity)){
     		// advance to next stage
@@ -260,6 +301,7 @@ void  BrewProfile::profileUpdated(){
 		_status->startingDate=0;
 		_status->currentStep=0;
 		_status->timeEnterCurrentStep=0;
+		DBG_PRINTF("**New Profile\n");
 	}else{
 		// assume the same schedule. do nothing.
 	}

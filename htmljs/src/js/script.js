@@ -1,14 +1,20 @@
-    var T_CHART_REQUEST = 12000;
+    var T_CHART_REQUEST = 20000;
     var T_CHART_RETRYTO = 6000;
     var T_CHART_ZERODATA = 10000;
-    var T_CHART_REFRESH = 2500;
+    var T_CHART_REFRESH = 1500;
     var T_CHART_RETRY = 10000;
     var T_LOAD_CHART = 150;
     var T_BWF_RECONNECT = 10000;
     var T_BWF_LCD = 10000;
+
+
     var BChart = {
         offset: 0,
         url: 'chart.php',
+        calibrating:function(){
+            if(typeof this.chart =="undefined") return false;
+            return this.chart.calibrating;
+        },
         toggle: function(line) {
             this.chart.toggleLine(line);
         },
@@ -43,8 +49,9 @@
             var t = this;
             if (t.chart.sg && !isNaN(t.chart.sg)) {
                 updateGravity(t.chart.sg);
+                gravityChangeUpdate(t.chart.filterSg);
                 t.chart.sg = NaN;
-                checkfgstate();
+                //checkfgstate();
             }
             t.chart.updateChart();
         },
@@ -139,8 +146,9 @@
                 }
                 if (t.chart.sg && !isNaN(t.chart.sg)) {
                     updateGravity(t.chart.sg);
+                    gravityChangeUpdate(t.chart.filterSg);
                     t.chart.sg = NaN;
-                    checkfgstate();
+                    //checkfgstate();
                 }
                 if (t.timer == null) t.settimer();
             };
@@ -166,11 +174,13 @@
                 t.reqdata();
             }, t.chart.interval * 1000);
         },
-        init: function(id, y1, y2) {
+        init: function(id, y1, y2,id2,pl,carbonation,id3,rhLabel) {
             this.chart = new BrewChart(id);
             this.chart.setLabels(y1, y2);
+            if(typeof id2 != "undefined") this.chart.setPChart(id2,pl,carbonation)
+            if(typeof id3 != "undefined") this.chart.setHChart(id3,rhLabel);
         },
-        timer: null,
+    timer: null,
         start: function() {
             if (this.running) return;
             this.running = true;
@@ -205,32 +215,40 @@
     };
     /* LCD information */
 
-    function parseStatusLine(line) {
-        var status = {};
-        var i = 0;
-        var statePatterns = [
-            /Idling\s+for\s+(\S+)\s*$/i,
-            /control\s+OFF/i,
-            /Door\s+Open/i,
-            /Heating\s+for\s+(\S+)\s*$/i,
-            /Cooling\s+for\s+(\S+)\s*$/i,
-            /Wait\s+to\s+Cool\s+(\S+)\s*$/i,
-            /Wait\s+to\s+Heat\s+(\S+)\s*$/i,
-            /Waiting\s+for\s+Peak/i,
-            /Cool\s+Time\s+left\s+(\S+)\s*$/i,
-            /Heat\s+Time\s+left\s+(\S+)\s*$/i
-        ];
-        status.ControlStateSince = "";
-        for (i = 0; i < statePatterns.length; i++) {
-            var match = statePatterns[i].exec(line);
-            if (match) {
-                if (typeof match[1] !== "undefined") status.ControlStateSince = match[1];
-                break;
-            }
+    var StateText = [
+        "<%= state_text_idle %>",
+        "<%= state_text_off %>",
+        "<%= state_text_door_Open %>",
+        "<%= state_text_heating %>",
+        "<%= state_text_cooling %>",
+        "<%= state_text_wait_to_cool %>",
+        "<%= state_text_wait_to_heat %>",
+        "<%= state_text_wait_for_peak %>",
+        "<%= state_text_cooling_min_time %>",
+        "<%= state_text_heating_min_time %>",
+        "<%= state_text_invalid %>"
+    ];
+
+    function genStateText(state, duration) {
+        if (state == 1 || state == 2 || state == 10 || state == 7) return StateText[state];
+
+        var timestr = "";
+        var mm = Math.floor(duration / 60);
+        var hh = Math.floor(mm / 60);
+        var ss = duration % 60;
+        mm = mm - hh * 60;
+
+        function zeropad(n){
+            return n>9? ""+n:"0"+n;
         }
-        status.ControlState = i;
-        status.StatusLine = line;
-        return status;
+
+        if (hh > 0) {
+            timestr = "<%= time_format_long %>".replace("{SS}", zeropad(ss)).replace("{MM}", zeropad(mm)).replace("{HH}", zeropad(hh));
+        } else{
+            // short
+            timestr = "<%= time_format_short %>".replace("{SS}", zeropad(ss)).replace("{MM}", zeropad(mm));
+        }
+        return StateText[state].replace("{time}", timestr);
     }
 
 
@@ -242,7 +260,9 @@
             if (temp < -10000) return "--.-";
             return (temp / 100).toFixed(1) + "&deg;" + info.tu;
         }
-        var status = parseStatusLine(info.sl);
+        var status = {};
+        status.ControlStateSince = info.sl;
+        status.ControlState = info.st;
         status.ControlMode = info.md;
         status.unit = info.tu;
         status.BeerTemp = T(info.bt);
@@ -258,33 +278,6 @@
             p: "<%= mode_beer_profile %>",
             i: "Invalid"
         };
-        var StateText = [
-            "<%= state_text_idle %>",
-            "<%= state_text_off %>",
-            "<%= state_text_door_Open %>",
-            "<%= state_text_heating %>",
-            "<%= state_text_cooling %>",
-            "<%= state_text_wait_to_cool %>",
-            "<%= state_text_wait_to_heat %>",
-            "<%= state_text_wait_for_peak %>",
-            "<%= state_text_cooling_min_time %>",
-            "<%= state_text_heating_min_time %>",
-            "<%= state_text_invalid %>"
-        ];
-
-        function genStateText(state, duration) {
-            if (typeof duration == "undefined") return StateText[state];
-
-            var match;
-            var timestr = "";
-            if (match = /(\d+)h(\d\d)m(\d\d)/.exec(duration)) {
-                timestr = "<%= time_format_long %>".replace("{SS}", match[3]).replace("{MM}", match[2]).replace("{HH}", match[1]);
-            } else if (match = /(\d+)m(\d\d)/.exec(duration)) {
-                // short
-                timestr = "<%= time_format_short %>".replace("{SS}", match[2]).replace("{MM}", match[1]);
-            }
-            return StateText[state].replace("{time}", timestr);
-        }
 
         Object.keys(status).map(function(key, i) {
             var div = Q("#lcd" + key);
@@ -296,11 +289,7 @@
         });
         // keep the info for other usage
         if (typeof status["unit"] != "undefined") window.tempUnit = status.unit;
-        if (typeof status["BeerTemp"] != "undefined") {
-            var tempRE = /([\d\.]+)/;
-            var temp = tempRE.exec(status.BeerTemp);
-            if (temp.length > 0) window.beerTemp = temp[0];
-        }
+        if (typeof status["BeerTemp"] != "undefined")  window.beerTemp = (info.bt> -100)? (info.bt/ 100):NaN;
     }
 
     var roomOfridge = false;
@@ -333,7 +322,7 @@
         else
             lines[2] = "Fridge" + showTemp(info.ft) + " " + showTemp(info.fs) + " &deg;" + info.tu;
         roomOfridge = !roomOfridge;
-        lines[3] = info.sl;
+        lines[3] = genStateText(info.st, info.sl);
         return lines;
     }
 
@@ -393,8 +382,37 @@
         }
     }
 
-    function gravityDevice(msg) {
+    function GDSetting(msg) {
+        function gdevice(){
+            Q(".gravity-device-pane").style.display="block";
+            doAll(".gd-option",function(d){
+                d.classList.add("no-display");
+            });
+        }
 
+        if(typeof msg["dev"] != "undefined"){
+            window.GravityDevice=msg.dev;
+            if(msg.dev ==1){ //ispindel
+                gdevice();
+                doAll(".ispindel-info",function(d){
+                    d.classList.remove("no-display");
+                });
+
+            }else if(msg.dev ==2){
+                gdevice();
+                doAll(".tilt-info",function(d){
+                    d.classList.remove("no-display");
+                });
+            }else if(msg.dev ==3){ //pill
+                gdevice();
+                doAll(".pill-info",function(d){
+                    d.classList.remove("no-display");
+                });
+            }else{
+                Q(".gravity-device-pane").style.display="none";
+                return;
+            }
+        }
         //if (typeof msg["name"] == "undefined") return;
         if (typeof msg["plato"] != "undefined") {
             window.plato = msg.plato;
@@ -403,59 +421,42 @@
         if (typeof msg["fpt"] != "undefined") {
             window.npt = msg["fpt"];
         }
+
         // before iSpindel report to BPL, the name file is "unknown"
         if (typeof msg["name"] == "undefined") return
             //The first report will be "unknown" if (msg.name.startsWith("iSpindel")) {
             // iSpindel
+        
         if (typeof msg["lu"] == "undefined") {
             console.log("iSpindel:" + JSON.stringify(msg));
             return;
-        }
-        if (msg.name.startsWith("iSpindel"))
-            if (typeof window.iSpindel == "undefined") {
-                window.iSpindel = true;
-                if (Q("#iSpindel-pane"))
-                    Q("#iSpindel-pane").style.display = "block";
-            }
+        } 
         var ndiv = Q("#iSpindel-name");
         if (ndiv) ndiv.innerHTML = msg.name;
 
-        if (typeof msg["battery"] != "undefined" && Q("#iSpindel-battery"))
-            Q("#iSpindel-battery").innerHTML = msg.battery;
-
-        var lu;
-        if (typeof msg["lu"] != "undefined")
-            lu = new Date(msg.lu * 1000);
-        else
-            lu = new Date();
-        if (Q("#iSpindel-last"))
-            Q("#iSpindel-last").innerHTML = lu.shortLocalizedString();
-
-        if (!BChart.chart.calibrating && typeof msg["sg"] != "undefined" &&
-            msg.sg > 0)
-            updateGravity(msg.sg);
-
-        if (typeof msg["angle"] != "undefined") {
-            if (Q("#iSpindel-tilt"))
-                Q("#iSpindel-tilt").innerHTML = "" + msg["angle"];
-        }
-        if (typeof msg["rssi"] != "undefined"){
-            if(Q("#ispindel-rssi")){
-                Q("#ispindel-rssi").classList.remove("no-display");
-                wifibar("#ispindel-rssi",msg.rssi);
-            }
-        }
-        //}
+    
         if (typeof msg["lpf"] != "undefined")
             GravityFilter.setBeta(msg["lpf"]);
 
-        if (typeof msg["stpt"] != "undefined")
-            GravityTracker.setThreshold(msg["stpt"]);
-
-        if (typeof msg["ctemp"] != "undefined")
-            window.caltemp = msg["ctemp"];
     }
 
+
+
+    function respPtDiff(sg,duration){
+        var preG =BChart.chart.getGravityOfTime((new Date().getTime())/1000 - duration);
+
+        if(isNaN(preG)) return "--";
+
+        var value=preG - sg;
+        if(window.plato) return value.toFixed(1);
+
+        value = value * 1000;
+         return value.toFixed(1);
+    }
+
+    function gravityChangeUpdate(fsg){
+        Q("#sgchanged").innerHTML = respPtDiff(fsg,48*3600) + "/" + respPtDiff(fsg,24*3600)+ "/" + respPtDiff(fsg,12*3600);
+    }
 
     function updateGravity(sg) {
         //if(typeof window.sg != "undefined") return;
@@ -480,6 +481,17 @@
         Q('#dlg_addgravity .sg').style.display = "none";
         Q('#dlg_addgravity .' + msg).style.display = "block";
         Q('#dlg_addgravity').style.display = "block";
+
+        var beertemp = parseFloat(Q("#gravity-device-temp").innerHTML);
+        if(isNaN(beertemp)){
+            beertemp = parseFloat(Q("#lcdBeerTemp").innerHTML);
+        }
+        if(!isNaN(beertemp)){
+            Q("#sginput-ispindel-temp").innerHTML =beertemp;
+        }
+        // show tilt
+        if(window.isog) Q("#tilt-angle").value="--";
+        else Q("#tilt-angle").value=(window.GravityDevice==2)? Q("#tilt-raw").textContent:Q("#gdevice-angle").textContent;
         // update temp.
         if (typeof window["tempUnit"] != "undefined") {
             window.celsius = false;
@@ -489,7 +501,6 @@
                 window.celsius = true;
                 defaultTemp = 20;
             }
-            Q("#dlg_addgravity .tempinput").value = defaultTemp;
 
             var tus = document.querySelectorAll("#dlg_addgravity .temp-unit");
             for (var i = 0; i < tus.length; i++)
@@ -502,50 +513,51 @@
     }
 
     function inputsg_change() {
+        if(window.isog) return;
         var gravity = parseFloat(Q("#dlg_addgravity .sginput").value);
-        var temp = parseFloat(Q("#dlg_addgravity .tempinput").value);
-        if (isNaN(gravity) || isNaN(temp)) return;
-        // if calibration info is avilable
-        var caltemp = (typeof window.caltemp != "undefined") ? window.caltemp : 20;
-        caltemp = window.celsius ? caltemp : C2F(caltemp);
-        // calibration temperature always use celsius.
-        Q("#sginput-hm-cal-temp").innerHTML = caltemp;
-        if (window.plato) {
-            var correctedSg = BrewMath.pTempCorrection(window.celsius, gravity, temp, caltemp);
-            Q("#sginput-hmc").innerHTML = correctedSg.toFixed(2);
-
-        } else {
-            var correctedSg = BrewMath.tempCorrection(window.celsius, gravity, temp, caltemp);
-            Q("#sginput-hmc").innerHTML = correctedSg.toFixed(3);
-        }
+        if (isNaN(gravity)) return;
         // if iSpindel info is available, or beer temp is available.
-        if (typeof window.beerTemp != "undefined") {
-            Q("#sginput-ispindel-temp").innerHTML = window.beerTemp;
+        var currentBeerTemp=parseFloat(Q("#sginput-ispindel-temp").innerHTML);
+        if(!isNaN(currentBeerTemp)){            
+            var temp =  window.celsius ? 20 : 68;
             if (window.plato) {
-                var sgc = BrewMath.pTempCorrection(window.celsius, gravity, temp, window.beerTemp);
+                var sgc = BrewMath.pTempCorrection(window.celsius, gravity, temp, currentBeerTemp);
                 Q("#sginput-sg-ispindel").innerHTML = sgc.toFixed(2);
             } else {
-                var sgc = BrewMath.tempCorrection(window.celsius, gravity, temp, window.beerTemp);
+                var sgc = BrewMath.tempCorrection(window.celsius, gravity, temp, currentBeerTemp);
                 Q("#sginput-sg-ispindel").innerHTML = sgc.toFixed(3);
             }
         }
+
     }
 
     function inputgravity() {
-        var gravity = parseFloat(Q("#sginput-hmc").innerHTML);
+        var gravity =window.isog?  parseFloat(Q("#dlg_addgravity .sginput").value):parseFloat(Q("#sginput-sg-ispindel").innerHTML);
+        
+        if(isNaN(gravity)) gravity=parseFloat(Q("#dlg_addgravity .sginput").value);
 
-        if (!window.plato && (gravity < 0.8 || gravity > 1.25)) return;
+        if (!window.plato && (gravity < 0.8 || gravity > 1.25) || isNaN(gravity)){
+            alert("invalid input");
+            return;
+        } 
 
         dismissgravity();
         openDlgLoading();
 
         if (window.isog) updateOriginGravity(gravity);
-        else updateGravity(gravity);
-
+        else {
+            // user input
+            updateGravity(gravity);
+            gravityChangeUpdate(gravity);
+        }
         var data = {
             name: "webjs",
             gravity: gravity
         };
+        var raw=parseFloat(Q("#tilt-angle").value);
+        if(!isNaN(raw)){
+            data.raw = raw;
+        }
         if (window.isog) data.og = 1;
         if (window.plato) data.plato = 1;
         s_ajax({
@@ -578,8 +590,8 @@
         showgravitydlg("og");
     }
 
-    function wifibar(did,x){
-        var strength = [-1000, -90, -80, -70, -67];
+    function wifibar(did,x,ble){
+        var strength =(typeof ble =="undefined")? [-1000, -90, -80, -70, -67]:[-1000,-100,-80,-55];
         var bar = 4;
         for (; bar >= 0; bar--) {
             if (strength[bar] < x) break;
@@ -588,7 +600,7 @@
         for (var i = 0; i < bars.length; i++) {
             bars[i].style.backgroundColor = (i < bar) ? window.rssiBarColor : "rgba(255,255,255,0.05)";
         }
-        Q(did).title = (x > 0) ? "?" : Math.min(Math.max(2 * (x + 100), 0), 100);
+        Q(did).title = (x > 0) ? "?" : ""+x;
 
     }
 
@@ -664,6 +676,37 @@
             units[i].style.display = "inline-block";
         }
     }
+    
+    function gDeviceInfo(info){
+
+        // last update
+        if(info.u> 84879460){
+            var lu = new Date(info.u * 1000);
+            if (Q("#gravity-device-last")) Q("#gravity-device-last").innerHTML = lu.shortLocalizedString();
+        }
+        // gravity 
+        updateGravity(window.plato? BrewMath.sg2pla(info.g/1000.0):info.g/1000.0);
+
+        // temperature
+        if(info.t > -20000){
+            Q("#gravity-device-temp").innerHTML= info.t/100 + "&deg;" + window.tempUnit;
+            window.gdtemp = info.t/100;
+        }
+        // rssi, 
+        if(Q("#gravity-device-rssi")){
+            if(window.GravityDevice ==1) wifibar("#gravity-device-rssi",info.r);
+            else wifibar("#gravity-device-rssi",info.r,true);
+        }
+        // angle
+        if(window.GravityDevice == 2){
+            if (Q("#tilt-raw")) Q("#tilt-raw").innerHTML =""  + info.a.toFixed(3);
+        }
+        else if (Q("#gdevice-angle")) Q("#gdevice-angle").innerHTML = ""  + info.a.toFixed(2) +"&deg;";
+        //battery
+        if (Q("#gdevice-battery")) Q("#gdevice-battery").innerHTML = "" +((window.GravityDevice == 1)? 
+                    (parseFloat(info.b).toFixed(2) +"V"):(""+parseInt(info.b) +"%"));
+
+    }
 
     function BPLMsg(c) {
         BWF.gotMsg = true;
@@ -707,8 +750,43 @@
                 Q("#pressure-psi").innerHTML = c.psi;
             }
         }
+        if(typeof c["G"] != "undefined") gDeviceInfo(c.G);
 
         ptcshow(c);
+        // humidity related
+        var show_h=false;
+        if(typeof c["h"] != "undefined") {
+            Q("#humidity-info").classList.remove("no-display");
+            Q("#humidity").innerHTML= (c.h <=100)?  (c.h + "%"):"--";
+            show_h=true;
+        }
+
+        if(typeof c["hr"] != "undefined") {
+            Q("#room-humidity-info").classList.remove("no-display");
+            Q("#room-humidity").innerHTML= (c.hr <=100)?  (c.hr + "%"):"--";
+            show_h=true;
+        }
+
+        if(typeof c["ht"] != "undefined") {
+            Q("#humidity-set-info").classList.remove("no-display");
+            Q("#humidity-set").innerHTML= (c.h <=100)?  (c.ht + "%"):"--";
+            show_h=true;
+        }else{
+            Q("#humidity-set-info").classList.add("no-display");
+        }
+
+        if(typeof c["hs"] != "undefined") {
+            var hstate=["Idle","Dehumidifying","Humidifying","Wait to Dehumidify","Wait to Humidify","Humidify min Time","Dehumidify min Time"];
+            Q("#hc-state-info").classList.remove("no-display");
+            Q("#hc-state").innerHTML= hstate[c.hs];
+            show_h=true;
+        }else{
+            Q("#hc-state-info").classList.add("no-display");
+        }
+        if(show_h){            
+            Q("#humidity-pan").classList.remove("no-display");
+        }
+
     }
 
     function connBWF() {
@@ -765,7 +843,7 @@
                             },*/
                 A: BPLMsg,
                 G: function(c) {
-                    gravityDevice(c);
+                    GDSetting(c);
                 },
                 // for control page. 
                 C: function(c) { if (typeof ccparameter != "undefined") ccparameter(c); },
@@ -774,21 +852,11 @@
         });
     }
 
-    function init_classic() {
-        window.plato = false;
-        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
-        initRssi();
-        Capper.init();
-        BWF.gotMsg = true;
-        initctrl_C();
-        connBWF();
-        setTimeout(function() { BChart.start(); }, T_LOAD_CHART);
-    }
-
     function init() {
         Q("#pressure-info-pane").style.display = "none";
+        Q(".gravity-device-pane").style.display = "none";
         window.plato = false;
-        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML);
+        BChart.init("div_g", Q('#ylabel').innerHTML, Q('#y2label').innerHTML,"div_p",Q('#psilabel').innerHTML,Q('#vollabel').innerHTML,"div_h",Q("#rhlabel").innerHTML);
         initRssi();
         Capper.init();
         BWF.gotMsg = true;
