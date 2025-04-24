@@ -64,8 +64,8 @@ WirelessTempSensor* WirelessTempSensor::theWirelessTempSensor=NULL;
 
 #if SupportBTHomeSensor
 #include "BleSensorListener.h"
-#endif
 #include "BleRaptThermometer.h"
+#endif
 /*
  * Defaults for sensors, actuators and temperature sensors when not defined in the eeprom.
  */

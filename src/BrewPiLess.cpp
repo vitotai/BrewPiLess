@@ -537,10 +537,12 @@ public:
 					DBG_PRINTF("config saved: %s\n",theSettings.systemConfiguration()->hostnetworkname);
 					request->send(200,ApplicationJsonType,"{}");
 					display.setAutoOffPeriod(theSettings.systemConfiguration()->backlite);
+					#if ESP32
 					if (theSettings.systemConfiguration()->securedAp){
 						WiFi.eraseAP();
 						// https://github.com/espressif/arduino-esp32/issues/8976
 					}
+					#endif
 
 					#if TWOFACED_LCD
 					sharedDisplayManager.setDisplayMode(theSettings.systemConfiguration()->displayMode);
@@ -552,7 +554,9 @@ public:
 					}
 
 					if(!request->hasParam("nb")){
+						#if ESP32
 						WiFi.eraseAP(); // https://github.com/espressif/arduino-esp32/issues/8976
+						#endif
 						requestRestart(false);
 					}
 				}else{

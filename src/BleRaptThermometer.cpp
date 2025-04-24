@@ -1,3 +1,5 @@
+#if SupportBTHomeSensor
+
 #include "BleRaptThermometer.h"
 #include <string>
 #define ONEWIRE_TEMP_SENSOR_PRECISION 4
@@ -109,3 +111,5 @@ bool _parseAdvertisedData(const NimBLEAdvertisedDevice* advertisedDevice,double 
     //DBG_PRINTF("Rapt T- temp:%d bat:%d\n", major, battery); 
     return true;
 }
+
+#endif
