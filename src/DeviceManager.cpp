@@ -1148,7 +1148,7 @@ void DeviceManager::enumerateBTHomeSensor(EnumerateHardware& h, EnumDevicesCallb
 	*/
 	bleScanner.scanForDevices(ScanDeviceTime,[&](NimBLEAdvertisedDevice* device){
 		BleSensorType type;
-		float temp=-1000;
+		double temp=-1000;
 		uint8_t humidity=0xFF;
 		if(BleSensorListener::isBleSensorDevice(device,type,temp,humidity)){
 			// found BLE sensor

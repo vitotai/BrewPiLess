@@ -44,12 +44,14 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
 * The gravity caluated by the controller is slightly different from that shown on chart. It is because the formula are derived speratedly. Due to different float precision, the formula is different. The difference should be small, though.
 
 ## Version History
- * 2025/04/05
-   * Humidity control fixed   
- * 2024/09/16 update
-   * trying ESP32 framework 6.8.1
+ * 4.5
+   * **You will lost settings. Backup before upgrading. Delete all logs also**
+   * Humidity control fixed.
+   * ESP32 framework 6.8.1
+   * NimBLE to 2.2.3
    * No password for AP mode by default; workaround for an issue in newer framework.
    * Add BLE sensor supports(not enabled by default)
+   * Temperature Correction for floating hydrometers
  * 4.4
    * Settings might be reset, save it before updgrading.
    * (ESP32) Rapt Pill support
