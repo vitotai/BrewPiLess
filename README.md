@@ -97,7 +97,7 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
  * 4.0
     * Arduino Framework 2.2.0
     * Pressure chart
-    * [Prewssure transducer ADC refined. ADS1115 support.](doc/PresssureMonitor.md)
+    * [Pressure transducer ADC refined. ADS1115 support.](docs/H0.PressureMonitor.md)
     * Display MAC address and Flash related information.
 
  * v3.6r3
