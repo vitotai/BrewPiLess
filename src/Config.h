@@ -645,6 +645,9 @@
 #define FileSystem SPIFFS
 #endif
 
+#ifndef METRICS
+#define METRICS true
+#endif
 
 #if ESP32
 // when read logs, ESP32, or AsyncTCP to be exact, would request 5623 bytes
