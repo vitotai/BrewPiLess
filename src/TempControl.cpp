@@ -418,11 +418,12 @@ void TempControl::updateState(void){
 // isIndependentCoolerOn() and is what updateOutputs() actually acts on.
 void TempControl::updateIndependentState(void){
 	temperature fridgeFast = fridgeSensor->readFastFiltered();
+	temperature beerFast = beerSensor->readFastFiltered();
 	ticks_seconds_t secs = ticks.seconds();
 
 	bool coolerAllowed = (cs.fridgeSetting != INVALID_TEMP) && fridgeSensor->isConnected()
 		&& (tempControl.cooler != &defaultActuator);
-	bool heaterAllowed = (cs.beerSetting != INVALID_TEMP) && fridgeSensor->isConnected()
+	bool heaterAllowed = (cs.beerSetting != INVALID_TEMP) && beerSensor->isConnected()
 		&& (tempControl.heater != &defaultActuator || (cc.lightAsHeater && tempControl.light != &defaultActuator));
 
 	if(!coolerAllowed){
@@ -447,12 +448,12 @@ void TempControl::updateIndependentState(void){
 		independentHeaterOn = false;
 	}
 	else if(independentHeaterOn){
-		if(fridgeFast >= (cs.beerSetting + cc.heatingTargetUpper)
+		if(beerFast >= (cs.beerSetting + cc.heatingTargetUpper)
 			&& ticks.timeSince(lastIndependentHeatOnTime) > cc.minHeatTime){
 			independentHeaterOn = false;
 		}
 	}
-	else if(fridgeFast < (cs.beerSetting + cc.heatingTargetLower)
+	else if(beerFast < (cs.beerSetting + cc.heatingTargetLower)
 		&& ticks.timeSince(lastHeatTime) > cc.minHeatIdleTime){
 		independentHeaterOn = true;
 		lastIndependentHeatOnTime = secs;
