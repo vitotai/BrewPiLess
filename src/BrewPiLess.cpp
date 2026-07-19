@@ -1373,6 +1373,18 @@ private:
 		}
 	}
 
+	// handleBody() mallocs _buffer for every request that carries (or might carry) a
+	// body; every exit point of handleRequest() must release it exactly once, or the
+	// allocation is lost for good (the next handleBody() call overwrites the pointer
+	// before it can ever be freed). Route all frees through this single helper so no
+	// future branch can forget it; safe to call even if _buffer is already NULL.
+	void _freeBuffer(void){
+		if(_buffer){
+			free(_buffer);
+			_buffer=NULL;
+		}
+	}
+
 public:
 
 	ExternalDataHandler(){
@@ -1421,6 +1433,7 @@ public:
 			 }else{
 				request->send(400);
 			 }
+			 _freeBuffer();
 			 return;
 		 }
 #endif
@@ -1452,6 +1465,7 @@ public:
 			 }else{
 				request->send(400);
 			 }
+			 _freeBuffer();
 			 return;
 		 }
 #endif
@@ -1470,12 +1484,14 @@ public:
 			}else{
 				request->send(400);
 			}
+			_freeBuffer();
 			return;
 		}
 
 		if(request->url() == GRAVITY_PATH){
 			if(request->method() != HTTP_POST){
 				request->send(400);
+				_freeBuffer();
 				return;
 			}
 			request->send(200,ApplicationJsonType,"{}");
@@ -1488,8 +1504,7 @@ public:
 			externalData.gravityDeviceSetting(_data);
 			stringAvailable(_data);
 			
-			free(_buffer);
-			_buffer=NULL;
+			_freeBuffer();
 			return;
 		}
 		if(request->url() == GravityFormulaPath){
@@ -1512,6 +1527,7 @@ public:
   				request->send(400);
 			}
 
+			_freeBuffer();
 			return;
 		}
 		// config
@@ -1522,8 +1538,7 @@ public:
 			}else{
 				request->send(400);
 			}
-			free(_buffer);
-			_buffer= NULL;
+			_freeBuffer();
 			return;
 		}//else{
 			// get
@@ -1534,6 +1549,7 @@ public:
 			request->redirect(request->url() + ".htm");
 		    //request->send_P(200, "text/html", externalData.html());
 		}
+		_freeBuffer();
 	}
 
 	virtual void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)override final{
