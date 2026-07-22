@@ -1,5 +1,6 @@
 #include <ArduinoJson.h>
 #include "ExternalData.h"
+#include "DiagCounters.h"
 #if SupportTiltHydrometer
 #include "BleTiltListener.h"
 #endif
@@ -299,6 +300,7 @@ void ExternalData::_setAuxTemperatureCelsius(float temp){
 
 bool ExternalData::processGravityReport(char data[],size_t length, bool authenticated, uint8_t& error)
 {
+	diagGravityReportCalls++;
 	//const int BUFFER_SIZE = JSON_OBJECT_SIZE(20);
 	//StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
 	#if ARDUINOJSON_VERSION_MAJOR == 6

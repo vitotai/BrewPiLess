@@ -3,6 +3,9 @@
 /.vscode/
 /.idea/
 
+# Local heap monitoring / diagnostic scripts and CSV logs (not part of firmware)
+tools/
+
 # Node/npm
 node_modules/
 

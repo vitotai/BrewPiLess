@@ -15,6 +15,7 @@
 #include "DataLogger.h"
 #include "Config.h"
 #include "LogFormatter.h"
+#include "DiagCounters.h"
 #if SupportPressureTransducer
 #include "PressureMonitor.h"
 #endif
@@ -45,6 +46,7 @@ void DataLogger::loop(time_t now)
 
 void DataLogger::sendData(void)
 {
+	diagDataLoggerSends++;
 	char data[BUFFERSIZE];
 	int len=0;
 

@@ -10,6 +10,7 @@
 
 #if defined(ESP32)
 #include <AsyncTCP.h>
+#include <esp_heap_caps.h>
 #else
 #include <ESPAsyncTCP.h>
 #endif
@@ -50,6 +51,7 @@
 #include "GravityTracker.h"
 #include "BrewKeeper.h"
 #include "DuckDNSUpdater.h"
+#include "DiagCounters.h"
 #ifdef ENABLE_LOGGING
 #include "DataLogger.h"
 #endif
@@ -1101,6 +1103,7 @@ void stringAvailable(const char *str)
 {
 	//DBG_PRINTF("BroadCast:%s\n",str);
 
+	diagWsTextAllCalls++;
 	ws.textAll(str);
 
 
@@ -1118,6 +1121,7 @@ void notifyLogStatus(void)
 void periodicalReport(void)
 {
 //	char buf[512];
+	diagPeriodicalReports++;
 
 	uint8_t mode, state;
 	char unit;
@@ -1361,15 +1365,19 @@ private:
 	size_t _dataLength;
 	bool   _error;
 
+	// HTTP response for /gravity is sent once by handleRequest (early 200 so
+	// iSpindel/GravityMon get a fast ACK). Do not call request->send() here:
+	// a second send overwrites AsyncWebServerRequest::_response without
+	// deleting the first AsyncBasicResponse and leaks ~150-200 bytes per report.
 	void processGravity(AsyncWebServerRequest *request,char data[],size_t length){
-		if(length ==0) return request->send(400);;
+		if(length ==0){
+			DBG_PRINTF("processGravity: empty body\n");
+			return;
+		}
 		SystemConfiguration *syscfg=theSettings.systemConfiguration();
-        uint8_t error;
-		if(externalData.processGravityReport(data,length,request->authenticate(syscfg->username,syscfg->password),error)){
-    		request->send(200,ApplicationJsonType,"{}");
-		}else{
-		    if(error == ErrorAuthenticateNeeded) return request->requestAuthentication();
-		    else request->send(400);
+		uint8_t error = 0;
+		if(!externalData.processGravityReport(data,length,request->authenticate(syscfg->username,syscfg->password),error)){
+			DBG_PRINTF("processGravity: report failed, error=%u\n", error);
 		}
 	}
 
@@ -1382,6 +1390,7 @@ private:
 		if(_buffer){
 			free(_buffer);
 			_buffer=NULL;
+			diagExtHandlerFrees++;
 		}
 	}
 
@@ -1494,6 +1503,8 @@ public:
 				_freeBuffer();
 				return;
 			}
+			// Single send: ACK hydrometer immediately, then process. A second
+			// send inside processGravity used to leak the first response object.
 			request->send(200,ApplicationJsonType,"{}");
 	   		_buffer[0]='G';
     		_buffer[1]=':';
@@ -1555,6 +1566,7 @@ public:
 	virtual void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)override final{
 		if(!index){
 		    DBG_PRINTF("BodyStart-len:%d total: %u\n",len, total);
+			diagExtHandlerBodyStarts++;
 			size_t asize = (total > 256)? (total+4):256;
 			_buffer =(char*) malloc(asize);
 			_error= (_buffer ==NULL);
@@ -2087,9 +2099,31 @@ void setup(void){
 
 #if defined(ESP32)
 	webServer->on("/fs",[](AsyncWebServerRequest *request){
+		// diag* fields are temporary, passive call counters (see DiagCounters.h) added
+		// to pin down a slow heap leak; minFreeHeap/largestFreeBlock let us tell a real
+		// leak (both shrink together) apart from mere fragmentation (only largest block
+		// shrinks while total free heap stays flat). allocatedBlocks growing over time
+		// while heap shrinks points at many small leaked objects rather than one big one.
+		multi_heap_info_t heapInfo;
+		heap_caps_get_info(&heapInfo, MALLOC_CAP_8BIT);
 		request->send(200,"","totalBytes:" +String(FileSystem.totalBytes()) +
 		" usedBytes:" + String(FileSystem.usedBytes()) +
-		" heap:"+String(ESP.getFreeHeap()));
+		" heap:"+String(ESP.getFreeHeap()) +
+		" minFreeHeap:"+String(ESP.getMinFreeHeap()) +
+		" largestFreeBlock:"+String(heap_caps_get_largest_free_block(MALLOC_CAP_8BIT)) +
+		" allocatedBlocks:"+String(heapInfo.allocated_blocks) +
+		" freeBlocks:"+String(heapInfo.free_blocks) +
+		" wsClients:"+String(ws.count()) +
+		" diagExtHandlerBodyStarts:"+String(diagExtHandlerBodyStarts) +
+		" diagExtHandlerFrees:"+String(diagExtHandlerFrees) +
+		" diagGravityReportCalls:"+String(diagGravityReportCalls) +
+		" diagDuckDnsUpdateCalls:"+String(diagDuckDnsUpdateCalls) +
+		" diagBleScanRestarts:"+String(diagBleScanRestarts) +
+		" diagDataLoggerSends:"+String(diagDataLoggerSends) +
+		" diagMqttPublishCalls:"+String(diagMqttPublishCalls) +
+		" diagPeriodicalReports:"+String(diagPeriodicalReports) +
+		" diagWsTextAllCalls:"+String(diagWsTextAllCalls) +
+		" diagWsCleanupClients:"+String(diagWsCleanupClients));
 	});
 #else
 	webServer->on("/fs",[](AsyncWebServerRequest *request){
@@ -2179,6 +2213,21 @@ void setup(void){
 uint32_t _periodicReportTime;
 #define PeriodicalReportTime 5
 void loop(void){
+	// Required by ESPAsyncWebServer: free slots/buffers for disconnected WS
+	// clients. Without this, dead clients (browser tab closed, WiFi blip) keep
+	// their queued textAll() buffers forever and show up as a slow heap leak.
+	// Call every loop (library recommendation); counter ticks at most 1/sec so
+	// /fs stays readable for correlation against the heap trend.
+	ws.cleanupClients();
+	{
+		static uint32_t lastCleanupCountMs = 0;
+		uint32_t nowMs = millis();
+		if((uint32_t)(nowMs - lastCleanupCountMs) >= 1000UL){
+			lastCleanupCountMs = nowMs;
+			diagWsCleanupClients++;
+		}
+	}
+
 //{brewpi
 #if BREWPI_SIMULATE
 	simulateLoop();

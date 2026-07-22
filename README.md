@@ -56,7 +56,12 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
    * iSpindel: estimated battery percentage is now shown next to the voltage (e.g. "3.57V (38%)"), calculated with the same voltage/percentage curve used by GravityMon's own web UI so the numbers match. Also sent live over WebSocket (`bp` field).
    * Added an optional DuckDNS dynamic-DNS updater (`src/DuckDNSUpdater.*`), checking every 30 minutes in the main loop (non-blocking, `millis()`-based).
    * EEPROM/LittleFS `ControlConstants` format bumped to version 5, with migration from the previous format (old `idleRange` fields are dropped, existing settings are preserved).
-   *Duckdns token and username are hardcoded in the "DuckDNSUpdater.h" file this design is by choice for me so dont forget to change it before flashing.
+   * DuckDNS token and username are hardcoded in the `DuckDNSUpdater.h` file by design — change them before flashing.
+   * Heap leak fixes / diagnostics:
+     * Fixed a pre-existing leak in `ExternalDataHandler::handleRequest` (HTTP body `_buffer` was not freed on every exit path).
+     * Fixed a slow ~1 KB/hour leak on iSpindel/GravityMon `POST /gravity`: an early HTTP `200` ACK was followed by a second `request->send()` inside `processGravity()`, which overwrote AsyncWebServer’s response pointer without freeing the first response. Only the early ACK remains; processing no longer sends again.
+     * Call `ws.cleanupClients()` from `loop()` (ESPAsyncWebServer recommendation for disconnected WebSocket clients).
+     * `/fs` on ESP32 now also reports `minFreeHeap`, `largestFreeBlock`, `allocatedBlocks`, `freeBlocks`, `wsClients`, and optional `diag*` activity counters (`DiagCounters`) used while tracking the leak.
  * 4.5
    * **You will lost settings. Backup before upgrading. Delete all logs also**
    * Humidity control fixed.
