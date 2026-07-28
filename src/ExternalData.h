@@ -169,13 +169,27 @@ protected:
 		
 	void _deriveFormula(void);
 	void _remoteHydrometerReport(float gravity,float tilt);
+	void _recordGravityDebug(float raw,float beerC,float written,float offset,float poly);
 	FormulaKeeper _formulaKeeper;
 	void userSetGravity(float sg,float tilt);
+
+	static const uint8_t GravityDbgSlots = 3;
+	struct GravityDbgEntry {
+		float raw;
+		float beerC;
+		float written;
+		float offset;
+		float poly;
+		uint32_t ts;
+	};
+	GravityDbgEntry _gDbg[GravityDbgSlots];
+	uint8_t _gDbgNext;
+	uint8_t _gDbgCount;
 
 public:
 	ExternalData(void):_gravity(INVALID_GRAVITY),_auxTemp(INVALID_TEMP),
 	_lastUpdate(0),_rssiValid(false),_deviceVoltage(INVALID_VOLTAGE)
-	,_ispindelName(NULL),_formulaValid(false){
+	,_ispindelName(NULL),_formulaValid(false),_gDbgNext(0),_gDbgCount(0){
 		_filteredGravity = INVALID_GRAVITY;
 		#if SupportTiltHydrometer || SupportPillHydrometer		
 		_bleHydrometerType = GravityDeviceNone;
@@ -207,6 +221,9 @@ public:
 	// deviceVoltage() via the LiPo discharge curve above.
 	float deviceBatteryPercent(void);
 	float tiltValue(void){return _tiltAngle;}
+
+	// Temporary /pid debug: last N GravityMon save samples (raw vs chart-written).
+	void appendGravityDebug(String& out);
 	
 	// to process web request
 	bool processGravityReport(char data[],size_t length, bool authenticated, uint8_t& error);

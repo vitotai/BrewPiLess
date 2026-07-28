@@ -34,10 +34,6 @@
 #include "Config.h"
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
-#if UseLittleFS
-#include <LittleFS.h>
-#endif
 
 TempControl tempControl;
 
@@ -118,164 +114,6 @@ static const temperature IH_MIN_SLOPE = 25;     // ~0.05 C/hour (25/512)
 static const uint16_t IH_EXTRA_SCALE_NUM = 7;
 static const uint16_t IH_EXTRA_SCALE_DEN = 10;
 
-// --- Independent cooler-stop event log (RAM ring + optional LittleFS) ---
-static const uint8_t CSR_LOG_LINES = 16;
-static const uint8_t CSR_LOG_LINE_LEN = 220;
-static char csrLog[CSR_LOG_LINES][CSR_LOG_LINE_LEN];
-static uint8_t csrLogCount = 0;
-static uint8_t csrLogNext = 0;
-static uint16_t csrCountBand = 0;
-static uint16_t csrCountDisallow = 0;
-static uint16_t csrCountResetFridge = 0;
-static uint16_t csrCountResetBeer = 0;
-static uint16_t csrCountResetOther = 0;
-
-static const char* csrReasonDetail(uint8_t reason){
-	switch(reason){
-		case TempControl::CSR_BAND:
-			return "BAND (reached fridgeSet+coolTargetL, minCoolTime ok)";
-		case TempControl::CSR_DISALLOW:
-			return "DISALLOW (fridgeSet invalid / sensor hold expired / no actuator)";
-		case TempControl::CSR_RESET_FRIDGE:
-			return "RESET_FRIDGE (setFridgeTemp called reset)";
-		case TempControl::CSR_RESET_BEER:
-			return "RESET_BEER (beerSet jumped >0.5C, reset)";
-		case TempControl::CSR_RESET_OTHER:
-			return "RESET_OTHER (other reset)";
-		default:
-			return "UNKNOWN";
-	}
-}
-
-static const char* csrStateName(uint8_t st){
-	switch(st){
-		case IDLE: return "IDLE";
-		case STATE_OFF: return "OFF";
-		case DOOR_OPEN: return "DOOR_OPEN";
-		case HEATING: return "HEATING";
-		case COOLING: return "COOLING";
-		case WAITING_TO_COOL: return "WAITING_TO_COOL";
-		case WAITING_TO_HEAT: return "WAITING_TO_HEAT";
-		case WAITING_FOR_PEAK_DETECT: return "WAITING_FOR_PEAK_DETECT";
-		case COOLING_MIN_TIME: return "COOLING_MIN_TIME";
-		case HEATING_MIN_TIME: return "HEATING_MIN_TIME";
-		default: return "?";
-	}
-}
-
-// tempToString often left-pads with spaces; copy trimmed + optional "C" / "disabled".
-static void csrFmtTemp(char* dst, size_t dstLen, temperature t, bool addUnit){
-	if(t == INVALID_TEMP){
-		strncpy(dst, "disabled", dstLen - 1);
-		dst[dstLen - 1] = 0;
-		return;
-	}
-	char raw[12];
-	tempToString(raw, t, 2, 12);
-	const char* p = raw;
-	while(*p == ' '){
-		p++;
-	}
-	if(addUnit){
-		snprintf(dst, dstLen, "%sC", p);
-	}else{
-		strncpy(dst, p, dstLen - 1);
-		dst[dstLen - 1] = 0;
-	}
-}
-
-void TempControl::clearCoolerStopLog(void){
-	csrLogCount = 0;
-	csrLogNext = 0;
-	csrCountBand = 0;
-	csrCountDisallow = 0;
-	csrCountResetFridge = 0;
-	csrCountResetBeer = 0;
-	csrCountResetOther = 0;
-#if UseLittleFS
-	LittleFS.remove("/cooler_stop.log");
-#endif
-}
-
-void TempControl::logIndependentCoolerStop(uint8_t reason){
-	// Always record when a stop path runs (even if cooler already off), so repeated
-	// setFridgeTemp→reset / DISALLOW while idle are visible. Mark real on→off vs already-off.
-	const bool wasOn = independentCoolerOn;
-	switch(reason){
-		case CSR_BAND: if(csrCountBand < 65535) csrCountBand++; break;
-		case CSR_DISALLOW: if(csrCountDisallow < 65535) csrCountDisallow++; break;
-		case CSR_RESET_FRIDGE: if(csrCountResetFridge < 65535) csrCountResetFridge++; break;
-		case CSR_RESET_BEER: if(csrCountResetBeer < 65535) csrCountResetBeer++; break;
-		default: if(csrCountResetOther < 65535) csrCountResetOther++; break;
-	}
-
-	char ftBuf[16], fsBuf[16], btBuf[16], bsBuf[16];
-	temperature ft = fridgeSensor ? fridgeSensor->readFastFiltered() : INVALID_TEMP;
-	temperature bt = beerSensor ? beerSensor->readFastFiltered() : INVALID_TEMP;
-	csrFmtTemp(ftBuf, sizeof(ftBuf), ft, true);
-	csrFmtTemp(fsBuf, sizeof(fsBuf), cs.fridgeSetting, true);
-	csrFmtTemp(btBuf, sizeof(btBuf), bt, true);
-	csrFmtTemp(bsBuf, sizeof(bsBuf), cs.beerSetting, true);
-
-	const char* sens = (fridgeSensor && fridgeSensor->isConnected(true))
-		? "physical_OK" : "physical_DISCONNECTED";
-	const char* edge = wasOn ? "ON->OFF" : "already_OFF";
-
-	char line[CSR_LOG_LINE_LEN];
-	snprintf(line, sizeof(line),
-		"afterBoot=%us | reason=%s | state=%s | indepCooler=%s | fridgeTemp=%s fridgeSet=%s | beerTemp=%s beerSet=%s | fridgeSensor=%s",
-		(unsigned)ticks.seconds(),
-		csrReasonDetail(reason),
-		csrStateName(state),
-		edge,
-		ftBuf, fsBuf, btBuf, bsBuf,
-		sens);
-
-	strncpy(csrLog[csrLogNext], line, CSR_LOG_LINE_LEN - 1);
-	csrLog[csrLogNext][CSR_LOG_LINE_LEN - 1] = 0;
-	csrLogNext = (uint8_t)((csrLogNext + 1) % CSR_LOG_LINES);
-	if(csrLogCount < CSR_LOG_LINES){
-		csrLogCount++;
-	}
-
-	Serial.print(F("COOLER_STOP "));
-	Serial.println(line);
-
-#if UseLittleFS
-	File f = LittleFS.open("/cooler_stop.log", "a");
-	if(f){
-		f.println(line);
-		f.close();
-	}
-#endif
-}
-
-void TempControl::appendCoolerStopLog(String& out){
-	out += "coolerStopCounts BAND:";
-	out += String(csrCountBand);
-	out += " DISALLOW:";
-	out += String(csrCountDisallow);
-	out += " RESET_FRIDGE:";
-	out += String(csrCountResetFridge);
-	out += " RESET_BEER:";
-	out += String(csrCountResetBeer);
-	out += " RESET_OTHER:";
-	out += String(csrCountResetOther);
-	out += "\ncoolerStopLog (newest last, also /cooler_stop.log):\n";
-	if(csrLogCount == 0){
-		out += "(empty)\n";
-		return;
-	}
-	uint8_t start = (csrLogCount < CSR_LOG_LINES)
-		? 0
-		: csrLogNext;
-	for(uint8_t i = 0; i < csrLogCount; i++){
-		uint8_t idx = (uint8_t)((start + i) % CSR_LOG_LINES);
-		out += csrLog[idx];
-		out += "\n";
-	}
-}
-
 void TempControl::init(void){
 	state=IDLE;
 	cs.mode = MODE_OFF;
@@ -303,9 +141,7 @@ void TempControl::init(void){
 	lastCoolTime = 0;
 }
 
-void TempControl::reset(uint8_t coolerStopReason){
-	// Always log: setFridgeTemp→reset fires even when cooler already off.
-	logIndependentCoolerStop(coolerStopReason);
+void TempControl::reset(void){
 	doPosPeakDetect=false;
 	doNegPeakDetect=false;
 	independentHeaterOn=false;
@@ -640,16 +476,12 @@ void TempControl::updateIndependentState(void){
 		&& (tempControl.heater != &defaultActuator || (cc.lightAsHeater && tempControl.light != &defaultActuator));
 
 	if(!coolerAllowed){
-		if(independentCoolerOn){
-			logIndependentCoolerStop(CSR_DISALLOW);
-		}
 		independentCoolerOn = false;
 	}
 	else if(independentCoolerOn){
 		// already on: only stop once we reach the lower bound AND minCoolTime has elapsed
 		if(fridgeFast <= (cs.fridgeSetting + cc.coolingTargetLower)
 			&& ticks.timeSince(lastIndependentCoolOnTime) > cc.minCoolTime){
-			logIndependentCoolerStop(CSR_BAND);
 			independentCoolerOn = false;
 		}
 	}
@@ -1365,7 +1197,6 @@ void TempControl::appendIndependentHeatDebug(String& out){
 	out += " minHeatIdleTime:";
 	out += String(cc.minHeatIdleTime);
 	out += "\n";
-	appendCoolerStopLog(out);
 }
 
 bool TempControl::applyIndependentHeatDebug(const char* key, const char* value){
@@ -1375,10 +1206,6 @@ bool TempControl::applyIndependentHeatDebug(const char* key, const char* value){
 	if(strcmp(key, "reset") == 0){
 		resetIndependentHeatLearn();
 		independentHeaterOn = false;
-		return true;
-	}
-	if(strcmp(key, "clearCoolerLog") == 0){
-		clearCoolerStopLog();
 		return true;
 	}
 	if(strcmp(key, "learned") == 0 || strcmp(key, "learnedOnSec") == 0){
@@ -1437,15 +1264,13 @@ void TempControl::appendIndependentHeatDebugForm(String& html){
 	html += F("<button type=submit>Apply</button>");
 	html += F("<button type=submit name=reset value=1>Reset learn</button>");
 	html += F("</form>");
-	html += F("<p><a href=/pid?clearCoolerLog=1>Clear cooler-stop log</a>");
-	html += F(" · file: /cooler_stop.log (via /fs)</p>");
 }
 
 void TempControl::setBeerTemp(temperature newTemp){
 	temperature oldBeerSetting = cs.beerSetting;
 	cs.beerSetting= newTemp;
 	if(abs(oldBeerSetting - newTemp) > intToTempDiff(1)/2){ // more than half degree C difference with old setting
-		reset(CSR_RESET_BEER); // reset controller
+		reset(); // reset controller
 	}
 	updatePID();
 	updateState();
@@ -1461,7 +1286,7 @@ void TempControl::setBeerTemp(temperature newTemp){
 
 void TempControl::setFridgeTemp(temperature newTemp){
 	cs.fridgeSetting = newTemp;
-	reset(CSR_RESET_FRIDGE); // reset peak detection and PID
+	reset(); // reset peak detection and PID
 	updatePID();
 	updateState();
 	eepromManager.storeTempSettings();

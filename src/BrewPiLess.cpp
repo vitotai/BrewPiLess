@@ -2151,6 +2151,8 @@ void setup(void){
 		body.reserve(512);
 		tempControl.appendIndependentHeatDebug(body);
 		if(request->hasParam("fmt") && request->getParam("fmt")->value() == "text"){
+			body += F("\n---\n");
+			externalData.appendGravityDebug(body);
 			request->send(200, "text/plain", body);
 			return;
 		}
@@ -2166,28 +2168,19 @@ void setup(void){
 		html += body;
 		html += F("</pre>");
 		tempControl.appendIndependentHeatDebugForm(html);
-		html += F("<p><a href=/pid?fmt=text>plain text</a> · <a href=/cooler_stop.log>cooler_stop.log</a> · <a href=/fs>/fs</a> · <a href=/>home</a></p>");
+		html += F("<h2>GravityMon temp-corr (last 3 saves)</h2><pre>");
+		{
+			String gdbg;
+			gdbg.reserve(480);
+			externalData.appendGravityDebug(gdbg);
+			html += gdbg;
+		}
+		html += F("</pre>");
+		html += F("<p>raw = GravityMon SG &nbsp; written = value stored to chart/log<br>");
+		html += F("Check: written ≈ raw + offset + poly(beerC)</p>");
+		html += F("<p><a href=/pid?fmt=text>plain text</a> · <a href=/fs>/fs</a> · <a href=/>home</a></p>");
 		html += F("</body></html>");
 		request->send(200, "text/html", html);
-	});
-
-	webServer->on("/cooler_stop.log", HTTP_GET, [](AsyncWebServerRequest *request){
-		String body;
-		body.reserve(2048);
-		tempControl.appendCoolerStopLog(body);
-#if UseLittleFS
-		if(LittleFS.exists("/cooler_stop.log")){
-			File f = LittleFS.open("/cooler_stop.log", "r");
-			if(f){
-				body += F("\n--- file /cooler_stop.log ---\n");
-				while(f.available()){
-					body += (char)f.read();
-				}
-				f.close();
-			}
-		}
-#endif
-		request->send(200, "text/plain", body);
 	});
 
     #if DebugSharedDisplay

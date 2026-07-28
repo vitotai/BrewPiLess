@@ -127,21 +127,7 @@ class TempControl{
 	~TempControl(){};
 
 	TEMP_CONTROL_METHOD void init(void);
-	// coolerStopReason: see CoolerStopReason — used when Independent cooler was on.
-	TEMP_CONTROL_METHOD void reset(uint8_t coolerStopReason = 5 /*CSR_RESET_OTHER*/);
-
-	// Cooler-stop diagnostics (Independent on→off). Logged to RAM + /cooler_stop.log + /pid.
-	enum CoolerStopReason : uint8_t {
-		CSR_NONE = 0,
-		CSR_BAND = 1,
-		CSR_DISALLOW = 2,
-		CSR_RESET_FRIDGE = 3,
-		CSR_RESET_BEER = 4,
-		CSR_RESET_OTHER = 5
-	};
-	TEMP_CONTROL_METHOD void logIndependentCoolerStop(uint8_t reason);
-	TEMP_CONTROL_METHOD void appendCoolerStopLog(String& out);
-	TEMP_CONTROL_METHOD void clearCoolerStopLog(void);
+	TEMP_CONTROL_METHOD void reset(void);
 
 	TEMP_CONTROL_METHOD void updateTemperatures(void);
 	TEMP_CONTROL_METHOD void updatePID(void);

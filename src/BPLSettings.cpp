@@ -508,22 +508,28 @@ void BPLSettings::defaultGravityConfig(void)
 {
 	GravityDeviceConfiguration *gdc = &_data.gdc;
 	for(int i=0;i<4;i++){
-	    gdc->tiltCorrectionCoeff[i]=0;
 		gdc->gravityFormulaCoeff[i]=0;
 	}
     gdc->gravityFormulaCoeff[1]=1;
 
+	// Default BeerTemp×SG correction (from BPLLogViewer GravityMon fit)
+	gdc->tiltCorrectionCoeff[0]=0.0030552861280739307f;
+	gdc->tiltCorrectionCoeff[1]=-0.00010718428529798985f;
+	gdc->tiltCorrectionCoeff[2]=-0.000012412606338330079f;
+	gdc->tiltCorrectionCoeff[3]=5.066802941655624e-7f;
+
     gdc->lpfBeta = 0.1;
 	gdc->offset =0;
 
-	gdc->gravityDeviceType  =0;
+	// GravityMon talks iSpindel-compatible JSON; BPL calc off by default
+	gdc->gravityDeviceType  = GravityDeviceIspindel;
 
     gdc->calbybpl=0;
 	gdc->numCalPoints=0;
     gdc->stableThreshold=1;
 
 	gdc->usePlato=0;
-    gdc->tempCorrection=0;
+    gdc->tempCorrection=1;
 }
   
 //***************************************************************

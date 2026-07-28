@@ -82,7 +82,7 @@ max-width: 140px;
     <div viewport layout vertical>
         <div main>
             <div class="card">
-                <form action="" method="post">
+                <form action="#" method="post" onsubmit="return false;">
                     <div layout horizontal cross-center class="tiltsub">
                         <h5>
                             <%= gravity_wireless_hydrometer %>
@@ -184,18 +184,18 @@ max-width: 140px;
                             <%= gravity_calculated_bpl %>
                         </h6>
                         <div>
-                            <input type="checkbox" id="cal" name="cal" class="switch-input" checked>
+                            <input type="checkbox" id="cal" name="cal" class="switch-input">
                             <label for="cal" class="switch-label" style="min-width: 0;"></label>
                         </div>
                     </div>
 
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
-                            <%= gravity_calculated_bpl %>
+                            Temp. Correction
                         </h6>
                         <div>
-                            <input type="checkbox" id="cal" name="cal" class="switch-input" checked>
-                            <label for="cal" class="switch-label" style="min-width: 0;"></label>
+                            <input type="checkbox" id="tc" name="tc" class="switch-input" checked>
+                            <label for="tc" class="switch-label" style="min-width: 0;"></label>
                         </div>
                     </div>
 
@@ -204,7 +204,7 @@ max-width: 140px;
                             Tilt Temp. Correction
                         </h6>
                         <div>
-                            <input class="notsave" type="text" name="tilt-correction-formula">
+                            <input class="notsave" type="text" id="tilt-correction-formula" name="tilt-correction-formula" style="width:480px;max-width:480px">
                         </div>
                     </div>
 
@@ -247,7 +247,7 @@ max-width: 140px;
                     </div>
 
                     <div class="card-footer">
-                        <input type="submit" name="submit" class="notesave btn btn--raised" onclick="save();return false;"></input>
+                        <input type="button" name="submit" value="Save" class="notesave btn btn--raised" onclick="save();return false;"></input>
                     </div>
                 </form>
             </div>

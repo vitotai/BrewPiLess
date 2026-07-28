@@ -404,9 +404,58 @@ void  ExternalData::_remoteHydrometerReport(float gravity,float tilt){
 			_setGravity(calculated);
 		}
 	}else{
+		// GravityMon / device-reported SG: SG' = SG + offset + poly(beerTemp °C)
 		float corrected = gravity + _cfg->offset;
+		float poly = 0;
+		float beerC = brewPi.getBeerTemp();
+		bool beerOk = (beerC > -200.0f);
+		if(beerOk && brewPi.getUnit() == 'F') beerC = F2C(beerC);
+		if(_cfg->tempCorrection && beerOk){
+			poly = _cfg->tiltCorrectionCoeff[0]
+					+ _cfg->tiltCorrectionCoeff[1] * beerC
+					+ _cfg->tiltCorrectionCoeff[2] * beerC * beerC
+					+ _cfg->tiltCorrectionCoeff[3] * beerC * beerC * beerC;
+			corrected += poly;
+		}
+		_recordGravityDebug(gravity, beerOk ? beerC : -999.0f, corrected, _cfg->offset, poly);
 		brewLogger.addGravity(corrected);
 		_setGravity(corrected);
+	}
+}
+
+void ExternalData::_recordGravityDebug(float raw,float beerC,float written,float offset,float poly){
+	GravityDbgEntry &e = _gDbg[_gDbgNext];
+	e.raw = raw;
+	e.beerC = beerC;
+	e.written = written;
+	e.offset = offset;
+	e.poly = poly;
+	e.ts = (uint32_t)TimeKeeper.getTimeSeconds();
+	_gDbgNext = (_gDbgNext + 1) % GravityDbgSlots;
+	if(_gDbgCount < GravityDbgSlots) _gDbgCount++;
+}
+
+void ExternalData::appendGravityDebug(String& out){
+	out += F("GravityMon corr debug (newest last)\n");
+	out += F("raw=GM SG  beerC=probe C  written=chart/log SG\n");
+	if(_gDbgCount == 0){
+		out += F("(no gravity reports yet)\n");
+		return;
+	}
+	char line[160];
+	uint8_t start = (_gDbgNext + GravityDbgSlots - _gDbgCount) % GravityDbgSlots;
+	for(uint8_t i = 0; i < _gDbgCount; i++){
+		const GravityDbgEntry &e = _gDbg[(start + i) % GravityDbgSlots];
+		snprintf(line, sizeof(line),
+			"#%u ts=%lu raw=%.5f beerC=%.2f offset=%.5f poly=%.5f written=%.5f\n",
+			(unsigned)(i + 1),
+			(unsigned long)e.ts,
+			(double)e.raw,
+			(double)e.beerC,
+			(double)e.offset,
+			(double)e.poly,
+			(double)e.written);
+		out += line;
 	}
 }
 

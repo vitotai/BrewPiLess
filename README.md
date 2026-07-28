@@ -65,6 +65,8 @@ You will need to run the hardware setup procedure after upgrading to v2.4 from p
   - iSpindel: battery voltage plus estimated charge %, e.g. `3.57V (38%)`.
   - Optional DuckDNS: set domain and token in `DuckDNSUpdater.h` before flashing.
   - Memory / stability fixes (gravity posts, HTTP buffers, dropped WS clients).
+  - GravityMon: turn **Calculated by BPL** off and **Temp. Correction** on. Paste the formula from the offline log viewer into **Tilt Temp. Correction**, then Save. BPL then adjusts GravityMon SG using beer temperature. Keep Calculated by BPL on only if you still use classic tilt calibration.
+  - Offline log viewer: create a beer-temp correction formula from your log, copy it, and Apply to preview on the chart.
 - 4.5
   - **You will lost settings. Backup before upgrading. Delete all logs also**
   - Humidity control fixed.
