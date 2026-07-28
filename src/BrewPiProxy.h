@@ -24,6 +24,7 @@ public:
 	float getBeerSet(void);
 	float getFridgeTemp(void);
 	float getFridgeSet(void);
+	bool  isIndependentPidOn(void);
 	char  getUnit(void);
 	float getMinSetTemp(void);
 	float getMaxSetTemp(void);

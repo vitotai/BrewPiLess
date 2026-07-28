@@ -231,7 +231,7 @@ void LcdDisplay::printState(void){
 	// Independent mode can have the heater and cooler active at the same time;
 	// `state` alone can only report one of them (see TempControl::updateIndependentState()
 	// and getDisplayState()), so use the real per-actuator flags to detect that case here
-	// and show a combined "Heat+Cool" line, without touching the shared state enum.
+	// and show a short "H+C for" line, without touching the shared state enum.
 	if(!tempControl.isDoorOpen() && tempControl.getMode() == MODE_INDEPENDENT
 		&& tempControl.isIndependentHeaterOn() && tempControl.isIndependentCoolerOn()){
 		state = LCD_STATE_HEATING_AND_COOLING;
@@ -266,8 +266,9 @@ void LcdDisplay::printState(void){
 				part2 = STR_ing_for;
 				break;
 			case LCD_STATE_HEATING_AND_COOLING:
-				part1 = PSTR("Heat+Cool");
-				part2 = STR_ing_for;
+				// Keep short: "Heat+Cool"+"ing for" overflows a 20-char line once the timer is printed.
+				part1 = PSTR("H+C for");
+				part2 = STR_empty_string;
 				break;
 			case COOLING_MIN_TIME:
 				part1 = STR_Cool;

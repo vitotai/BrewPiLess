@@ -1,0 +1,26 @@
+---
+description: Hatırlat — cooler-stop teşhis logu geçici; sorun çözülünce tamamen kaldır
+alwaysApply: true
+---
+
+# Cooler-stop log — geçici teşhis (kaldırılacak)
+
+Kullanıcı isteği: Independent cooler beklenmedik duruş sorunu **çözüldükten sonra** cooler-stop log ile ilgili **her şeyi** kaldır.
+
+## Ne zaman hatırlat
+
+- Cooler stop root-cause bulundu / fix uygulandı / kullanıcı “sorun bitti” dediğinde
+- Commit/PR / “temizlik” / RAM konuşmalarında bu log hâlâ duruyorsa
+- Kullanıcı unutmuş görünüorsa proaktif sor: “Cooler-stop log’u (RAM ring, `/cooler_stop.log`, `/pid` coolerStop*, Serial `COOLER_STOP`) kaldıralım mı?”
+
+## Kaldırılacaklar (hepsi)
+
+- `TempControl.cpp`: `csrLog*`, `logIndependentCoolerStop`, `appendCoolerStopLog`, `clearCoolerStopLog`, sayaçlar, LittleFS `/cooler_stop.log`
+- `TempControl.h`: `CoolerStopReason`, log method bildirimleri; `reset(uint8_t)` gerekirse sadeleştir
+- `BrewPiLess.cpp`: `/cooler_stop.log` route ve `/pid` linkleri
+- `README.md` 5.0 maddelerinden cooler-stop log / `/cooler_stop.log` satırları
+- Sensör hold (20 sn) **ayrı özellik** — kullanıcı özellikle söylemedikçe kaldırma
+
+## Not
+
+~3.5 KB RAM (`csrLog[16][220]`) bilerek teşhis için; kalıcı ürün özelliği değil.

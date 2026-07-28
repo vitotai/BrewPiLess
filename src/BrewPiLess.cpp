@@ -2138,6 +2138,58 @@ void setup(void){
 	});
 #endif
 
+	webServer->on("/pid", HTTP_GET, [](AsyncWebServerRequest *request){
+		// Debug/control page for Independent time+slope heater learner (RAM state).
+		for(size_t i = 0; i < request->params(); i++){
+			const AsyncWebParameter* p = request->getParam(i);
+			if(p->isFile() || p->name() == "fmt"){
+				continue;
+			}
+			tempControl.applyIndependentHeatDebug(p->name().c_str(), p->value().c_str());
+		}
+		String body;
+		body.reserve(512);
+		tempControl.appendIndependentHeatDebug(body);
+		if(request->hasParam("fmt") && request->getParam("fmt")->value() == "text"){
+			request->send(200, "text/plain", body);
+			return;
+		}
+		String html;
+		html.reserve(body.length() + 900);
+		html += F("<!DOCTYPE html><html><head><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\">");
+		html += F("<title>BPL /pid</title>");
+		html += F("<style>body{font-family:monospace;margin:1em;max-width:42em}");
+		html += F("pre{background:#f4f4f4;padding:.6em;overflow:auto}label{display:block;margin:.35em 0}");
+		html += F("input{margin:0 .4em;width:7em}button{margin:.4em .4em 0 0}</style></head><body>");
+		html += F("<h1>Independent predictive heater</h1>");
+		html += F("<pre>");
+		html += body;
+		html += F("</pre>");
+		tempControl.appendIndependentHeatDebugForm(html);
+		html += F("<p><a href=/pid?fmt=text>plain text</a> · <a href=/cooler_stop.log>cooler_stop.log</a> · <a href=/fs>/fs</a> · <a href=/>home</a></p>");
+		html += F("</body></html>");
+		request->send(200, "text/html", html);
+	});
+
+	webServer->on("/cooler_stop.log", HTTP_GET, [](AsyncWebServerRequest *request){
+		String body;
+		body.reserve(2048);
+		tempControl.appendCoolerStopLog(body);
+#if UseLittleFS
+		if(LittleFS.exists("/cooler_stop.log")){
+			File f = LittleFS.open("/cooler_stop.log", "r");
+			if(f){
+				body += F("\n--- file /cooler_stop.log ---\n");
+				while(f.available()){
+					body += (char)f.read();
+				}
+				f.close();
+			}
+		}
+#endif
+		request->send(200, "text/plain", body);
+	});
+
     #if DebugSharedDisplay
 	webServer->on("/dbdisplay",[](AsyncWebServerRequest *request){
 		String info;

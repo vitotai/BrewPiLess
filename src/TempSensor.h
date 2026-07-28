@@ -71,14 +71,7 @@ class TempSensor {
 	void init();
 	
 	#if 1 // FridgeSensorFallBack
-	bool isConnected(bool physical=false) {
-			if(physical) return _sensor->isConnected(); 
-			
-			if(_useBackupSensor && _backupSensor)
-				return _backupSensor->isConnected();
-			else
-				return _sensor->isConnected(); 
-		}
+	bool isConnected(bool physical=false);
 	#else
 	bool isConnected() { return _sensor->isConnected(); }
 	#endif
@@ -104,6 +97,9 @@ class TempSensor {
 
 	BasicTempSensor& sensor();
 
+	// Seconds of failed reads to keep last filter value / report connected (≈1 Hz update).
+	static const int8_t SENSOR_DISCONNECT_HOLD_SEC = 20;
+
 	private:
 	BasicTempSensor* _sensor;
 	TempSensorFilter fastFilter;
@@ -117,6 +113,8 @@ class TempSensor {
 	#endif
 	// An indication of how stale the data is in the filters. Each time a read fails, this value is incremented.
 	// It's used to reset the filters after a large enough disconnect delay, and on the first init.
+	// During SENSOR_DISCONNECT_HOLD_SEC failed reads, filters keep the last good value and
+	// isConnected() still returns true so heat/cool continue.
 	int8_t failedReadCount;		// -1 for uninitialized, >=0 afterwards.
 
 	friend class ChamberManager;

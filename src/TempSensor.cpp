@@ -38,6 +38,26 @@ void TempSensor::init()
 	}
 }
 
+#if 1 // FridgeSensorFallBack
+bool TempSensor::isConnected(bool physical)
+{
+	if(physical){
+		return _sensor && _sensor->isConnected();
+	}
+	if(_useBackupSensor && _backupSensor && _backupSensor->isConnected()){
+		return true;
+	}
+	if(_sensor && _sensor->isConnected()){
+		return true;
+	}
+	// Brief disconnect: keep last filter sample and stay "connected" for control.
+	if(failedReadCount >= 0 && failedReadCount < SENSOR_DISCONNECT_HOLD_SEC){
+		return true;
+	}
+	return false;
+}
+#endif
+
 void TempSensor::update()
 {
 	temperature temp;
@@ -48,18 +68,26 @@ void TempSensor::update()
 	}else if(_backupSensor && (temp=_backupSensor->read())!=TEMP_SENSOR_DISCONNECTED ){
 		_useBackupSensor = true;
 	}else{
-		failedReadCount++;
-		failedReadCount = min(failedReadCount,int8_t(127));	// limit
+		// Keep last filter outputs; failedReadCount drives hold window in isConnected().
+		if(failedReadCount < 0){
+			failedReadCount = 1;
+		}else if(failedReadCount < 127){
+			failedReadCount++;
+		}
 		return;
 	}
 	#else
 	if (!_sensor || (temp=_sensor->read())==TEMP_SENSOR_DISCONNECTED) {
-		failedReadCount++;
-		failedReadCount = min(failedReadCount,int8_t(127));	// limit
+		if(failedReadCount < 0){
+			failedReadCount = 1;
+		}else if(failedReadCount < 127){
+			failedReadCount++;
+		}
 		return;
 	}
 	#endif
 	
+	failedReadCount = 0;
 	fastFilter.add(temp);
 	slowFilter.add(temp);
 

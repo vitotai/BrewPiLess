@@ -290,6 +290,23 @@
 
             <div layout horizontal cross-center>
               <h6 class="inline-header">
+                idleRangeH
+              </h6>
+              <input type="number" id="idleRangeH" size="4" step="0.001"> &deg;
+            </div>
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
+                idleRangeL
+              </h6>
+              <input type="number" id="idleRangeL" size="4" step="0.001"> &deg;
+            </div>
+
+            <p style="margin:0.5em 0;font-size:0.9em">
+              Used as on/off bands in Independent mode: heatTargetH, heatTargetL, coolTargetH, coolTargetL.
+            </p>
+
+            <div layout horizontal cross-center>
+              <h6 class="inline-header">
                 heatTargetH
               </h6>
               <input type="number" id="heatTargetH" size="4" step="0.001"> &deg;
@@ -405,6 +422,12 @@
               minHeatTime
             </h6>
             <input type="number" id="minHeatTime" size="4"> Seconds
+          </div>
+          <div layout horizontal cross-center>
+            <h6 class="inline-header">
+              maxHeatTime
+            </h6>
+            <input type="number" id="maxHeatTime" size="4"> Seconds (0 = unlimited)
           </div>
           <div layout horizontal cross-center>
             <h6 class="inline-header">

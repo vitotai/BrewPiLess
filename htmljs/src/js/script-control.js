@@ -251,7 +251,14 @@ var profileEditor = {
         var stage;
 
         if (rowlist.length == 0) {
-            var init = (BrewPiSetting.tempUnit == 'C') ? 20 : 68;
+            // Prefer live beer temp from last status push; fall back to 20C/68F.
+            var init;
+            var bt = window.lastBeerTemp;
+            if (typeof bt === "number" && !isNaN(bt) && bt > -100 && bt < 100) {
+                init = Math.round(bt * 10) / 10;
+            } else {
+                init = (BrewPiSetting.tempUnit == 'C') ? 20 : 68;
+            }
             stage = {
                 c: 't',
                 t: init,
@@ -726,6 +733,11 @@ var modekeeper = {
     select: function(m) {
         document.getElementById(m + "-m").className += ' nav-selected';
         document.getElementById(m + "-s").style.display = "block";
+        // Empty table only: sync start datetime to now (same as Now button).
+        // Does not touch Independent mode or an already-loaded profile.
+        if (m === "profile" && profileEditor.rowList().length === 0) {
+            profileEditor.startnow();
+        }
     },
     init: function() {
         var me = this;
@@ -744,6 +756,22 @@ var modekeeper = {
         }
         me.cmode = "profile";
         me.select(me.cmode);
+        // Independent enable switches (same look as graph legend fridge-temp / beer-set)
+        function wireIndepActuator(swId, boxId) {
+            var sw = document.getElementById(swId);
+            var box = document.getElementById(boxId);
+            if (!sw || !box) return;
+            var sync = function() {
+                box.disabled = !sw.checked;
+            };
+            sw.onchange = function() {
+                sw._userTouched = true;
+                sync();
+            };
+            sync();
+        }
+        wireIndepActuator("fridge-temp", "independent-cool-t");
+        wireIndepActuator("beer-set", "independent-heat-t");
     },
     apply: function() {
         if (!BrewPiSetting.valid) {
@@ -751,7 +779,7 @@ var modekeeper = {
             //		return;
         }
         if ((this.cmode == "beer") || (this.cmode == "fridge")) {
-            var v = document.getElementById(this.cmode + "-t").value;
+            var v = String(document.getElementById(this.cmode + "-t").value || "").replace(/,/g, ".").trim();
             if (v == '' || isNaN(v) || (v > BrewPiSetting.maxDegree || v < BrewPiSetting.minDegree)) {
                 alert("<%= script_control_invalid_temperature %>" + v);
                 return;
@@ -767,17 +795,32 @@ var modekeeper = {
             //console.log("j{mode:o}");
             BWF.send("j{mode:o}");
         } else if (this.cmode == "independent") {
-            var vc = document.getElementById("independent-cool-t").value;
-            var vh = document.getElementById("independent-heat-t").value;
-            if (vc == '' || isNaN(vc) || (vc > BrewPiSetting.maxDegree || vc < BrewPiSetting.minDegree)) {
+            function normTempStr(s) {
+                return String(s == null ? "" : s).replace(/,/g, ".").trim();
+            }
+            var coolEn = document.getElementById("fridge-temp");
+            var heatEn = document.getElementById("beer-set");
+            var coolerOn = !coolEn || coolEn.checked;
+            var heaterOn = !heatEn || heatEn.checked;
+            if (!coolerOn && !heaterOn) {
+                alert("<%= script_control_invalid_temperature %>");
+                return;
+            }
+            var vc = normTempStr(document.getElementById("independent-cool-t").value);
+            var vh = normTempStr(document.getElementById("independent-heat-t").value);
+            if (coolerOn && (vc === "" || isNaN(vc) || (vc > BrewPiSetting.maxDegree || vc < BrewPiSetting.minDegree))) {
                 alert("<%= script_control_invalid_temperature %>" + vc);
                 return;
             }
-            if (vh == '' || isNaN(vh) || (vh > BrewPiSetting.maxDegree || vh < BrewPiSetting.minDegree)) {
+            if (heaterOn && (vh === "" || isNaN(vh) || (vh > BrewPiSetting.maxDegree || vh < BrewPiSetting.minDegree))) {
                 alert("<%= script_control_invalid_temperature %>" + vh);
                 return;
             }
-            BWF.send("j{mode:i, fridgeSet:" + vc + ", beerSet:" + vh + "}");
+            var pidRadio = document.querySelector('input[name=hystMode]:checked');
+            var hystMode = pidRadio ? pidRadio.value : "0";
+            var fridgePart = coolerOn ? ("fridgeSet:" + vc) : "fridgeSet:null";
+            var beerPart = heaterOn ? ("beerSet:" + vh) : "beerSet:null";
+            BWF.send("j{mode:i, " + fridgePart + ", " + beerPart + ", hystMode:" + hystMode + "}");
         } else {
             // should save first.
             if (profileEditor.dirty) {
@@ -871,6 +914,12 @@ function ccparameter(s) {
         profileEditor.setTempUnit(setting.tempUnit);
     }
     BrewPiSetting = setting;
+    if (typeof s.hystMode != "undefined") {
+        var radios = document.querySelectorAll('input[name=hystMode]');
+        for (var i = 0; i < radios.length; i++) {
+            radios[i].checked = (String(radios[i].value) === String(s.hystMode));
+        }
+    }
     s_ajax({
         url: BPURL,
         m: "GET",
@@ -942,6 +991,9 @@ function initctrl() {
         },
         handlers: {
             A: function(c) {
+                if (typeof c["bt"] != "undefined" && c["bt"] > -10000) {
+                    window.lastBeerTemp = c["bt"] / 100;
+                }
                 if (typeof c["nn"] != "undefined") {
                     Q("#hostname").innerHTML = c["nn"];
                 }
@@ -962,12 +1014,29 @@ function initctrl() {
                 // later status push.
                 if (c["md"] == "i") {
                     var coolBox = Q("#independent-cool-t");
-                    if (coolBox && coolBox.value === "" && typeof c["fs"] != "undefined" && c["fs"] > -10000) {
-                        coolBox.value = (c["fs"] / 100).toFixed(1);
-                    }
                     var heatBox = Q("#independent-heat-t");
-                    if (heatBox && heatBox.value === "" && typeof c["bs"] != "undefined" && c["bs"] > -10000) {
-                        heatBox.value = (c["bs"] / 100).toFixed(1);
+                    var coolEn = document.getElementById("fridge-temp");
+                    var heatEn = document.getElementById("beer-set");
+                    // Sync enable switches + empty boxes once from controller (don't fight in-progress edits)
+                    if (coolEn && !coolEn._userTouched && coolBox && coolBox.value === "") {
+                        if (typeof c["fs"] != "undefined" && c["fs"] > -10000) {
+                            coolEn.checked = true;
+                            coolBox.value = (c["fs"] / 100).toFixed(1);
+                            coolBox.disabled = false;
+                        } else {
+                            coolEn.checked = false;
+                            coolBox.disabled = true;
+                        }
+                    }
+                    if (heatEn && !heatEn._userTouched && heatBox && heatBox.value === "") {
+                        if (typeof c["bs"] != "undefined" && c["bs"] > -10000) {
+                            heatEn.checked = true;
+                            heatBox.value = (c["bs"] / 100).toFixed(1);
+                            heatBox.disabled = false;
+                        } else {
+                            heatEn.checked = false;
+                            heatBox.disabled = true;
+                        }
                     }
                 }
                 

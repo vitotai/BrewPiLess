@@ -81,8 +81,8 @@ struct ControlVariables{
 #define MODE_BEER_PROFILE 'p'
 #define MODE_OFF 'o'
 #define MODE_TEST 't'
-// Heater and cooler are driven fully independently (no PID/cascade), each purely
-// from its own actuator's target band. See TempControl::updateIndependentState().
+// Heater and cooler may run together. Optional predictive heater on beer
+// (time+slope learner) when hysteresisMode is on. See TempControl::updateIndependentState().
 #define MODE_INDEPENDENT 'i'
 
 
@@ -127,7 +127,21 @@ class TempControl{
 	~TempControl(){};
 
 	TEMP_CONTROL_METHOD void init(void);
-	TEMP_CONTROL_METHOD void reset(void);
+	// coolerStopReason: see CoolerStopReason — used when Independent cooler was on.
+	TEMP_CONTROL_METHOD void reset(uint8_t coolerStopReason = 5 /*CSR_RESET_OTHER*/);
+
+	// Cooler-stop diagnostics (Independent on→off). Logged to RAM + /cooler_stop.log + /pid.
+	enum CoolerStopReason : uint8_t {
+		CSR_NONE = 0,
+		CSR_BAND = 1,
+		CSR_DISALLOW = 2,
+		CSR_RESET_FRIDGE = 3,
+		CSR_RESET_BEER = 4,
+		CSR_RESET_OTHER = 5
+	};
+	TEMP_CONTROL_METHOD void logIndependentCoolerStop(uint8_t reason);
+	TEMP_CONTROL_METHOD void appendCoolerStopLog(String& out);
+	TEMP_CONTROL_METHOD void clearCoolerStopLog(void);
 
 	TEMP_CONTROL_METHOD void updateTemperatures(void);
 	TEMP_CONTROL_METHOD void updatePID(void);
@@ -155,6 +169,13 @@ class TempControl{
 
 	TEMP_CONTROL_METHOD temperature getFridgeTemp(void);
 	TEMP_CONTROL_METHOD temperature getFridgeSetting(void);
+	// Independent predictive heater helpers (/pid debug).
+	TEMP_CONTROL_METHOD bool isIndependentPidOn(void);
+	TEMP_CONTROL_METHOD void resetIndependentHeatLearn(void);
+	// Debug /pid page: apply query overrides (returns false if unknown key).
+	TEMP_CONTROL_METHOD bool applyIndependentHeatDebug(const char* key, const char* value);
+	TEMP_CONTROL_METHOD void appendIndependentHeatDebug(String& out);
+	TEMP_CONTROL_METHOD void appendIndependentHeatDebugForm(String& html);
 	TEMP_CONTROL_METHOD void setFridgeTemp(temperature newTemp);
 
 	TEMP_CONTROL_METHOD temperature getRoomTemp(void) {
@@ -215,8 +236,11 @@ class TempControl{
 	TEMP_CONTROL_METHOD void increaseEstimator(temperature * estimator, temperature error);
 	TEMP_CONTROL_METHOD void decreaseEstimator(temperature * estimator, temperature error);
 
-	TEMP_CONTROL_METHOD void updateEstimatedPeak(uint16_t estimate, temperature estimator, uint16_t sinceIdle);
+	TEMP_CONTROL_METHOD void updateEstimatedPeak(uint16_t estimate, temperature estimator, uint16_t sinceIdle,
+		temperature currentTemp, bool cooling);
 	TEMP_CONTROL_METHOD void updateIndependentState(void);
+	TEMP_CONTROL_METHOD void updateIndependentPredictiveHeater(temperature beerFast, temperature beerSlow,
+		uint16_t secs);
 	public:
 	TEMP_CONTROL_FIELD TempSensor* beerSensor;
 	TEMP_CONTROL_FIELD TempSensor* fridgeSensor;
@@ -262,6 +286,31 @@ class TempControl{
 	TEMP_CONTROL_FIELD bool independentCoolerOn;
 	TEMP_CONTROL_FIELD uint16_t lastIndependentHeatOnTime;
 	TEMP_CONTROL_FIELD uint16_t lastIndependentCoolOnTime;
+
+	// Independent predictive heater (hysteresisMode On): time+slope+lag learner (RAM only).
+	// Cycle 1 = thermostat measure; cycle 2+ = learned on-time ± correction.
+	// Early-cut uses learned thermal lag τ (not onFor): peakIfStopNow = beer + slope×τ.
+	enum {
+		IH_PHASE_IDLE = 0,
+		IH_PHASE_HEAT_MAIN = 1,
+		IH_PHASE_WAIT_PEAK = 2,
+		IH_PHASE_HEAT_EXTRA = 3
+	};
+	TEMP_CONTROL_FIELD uint8_t ihPhase;
+	TEMP_CONTROL_FIELD uint8_t ihHeatCycle;       // number of main heat starts (1,2,3…)
+	TEMP_CONTROL_FIELD uint8_t ihBelowPeakCount;  // consecutive seconds beerSlow < peak
+	TEMP_CONTROL_FIELD uint8_t ihExtraDone;       // same-cycle top-up count (max IH_EXTRA_MAX_COUNT)
+	TEMP_CONTROL_FIELD uint16_t ihSafetyCutCount; // times heater cut because beer >= U
+	TEMP_CONTROL_FIELD uint16_t ihLearnedOnSec;   // last cycle total on-time (main+extra)
+	TEMP_CONTROL_FIELD uint16_t ihPlannedOnSec;   // this cycle main on-time target
+	TEMP_CONTROL_FIELD uint16_t ihCycleOnSec;     // accumulated on-time this cycle
+	TEMP_CONTROL_FIELD uint16_t ihExtraRemainSec; // remaining extra pulse seconds
+	TEMP_CONTROL_FIELD uint16_t ihLearnedLagSec;  // thermal lag τ (s): post-cut rise / slope
+	TEMP_CONTROL_FIELD int16_t ihPendingCorrSec;  // next-cycle correction, cleared when applied
+	TEMP_CONTROL_FIELD temperature ihLastHeatSlope; // °C/hour while heating
+	TEMP_CONTROL_FIELD temperature ihPeakTemp;    // peak candidate during WAIT_PEAK
+	TEMP_CONTROL_FIELD temperature ihBeerAtCut;   // beerSlow when heater last turned off
+	TEMP_CONTROL_FIELD temperature ihSlopeAtCut;  // heat slope snapshot at cut (for τ)
 
 	friend class TempControlState;
 };

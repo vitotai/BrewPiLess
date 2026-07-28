@@ -148,12 +148,28 @@
             <div id="independent-s" class="detail" layout vertical>
                 <div style="margin: 16px 0;" layout horizontal cross-center>
                     <span>Cooling Target</span>
-                    <input type="number" size="6" id="independent-cool-t" style="max-width: 200px"></input>&deg;<span class="t_unit">C</span>
+                    <input type="number" size="6" id="independent-cool-t" style="max-width: 200px;margin-left:8px" lang="en" inputmode="decimal"></input>&deg;<span class="t_unit">C</span>
+                    <input type="checkbox" id="fridge-temp" name="indep-cooler-en" class="switch-input" checked>
+                    <label for="fridge-temp" class="switch-label" style="margin-left:12px">Enable/Disable COOLER</label>
                 </div>
                 <div style="margin: 16px 0;" layout horizontal cross-center>
                     <span>Heating Target</span>
-                    <input type="number" size="6" id="independent-heat-t" style="max-width: 200px"></input>&deg;<span class="t_unit">C</span>
+                    <input type="number" size="6" id="independent-heat-t" style="max-width: 200px;margin-left:8px" lang="en" inputmode="decimal"></input>&deg;<span class="t_unit">C</span>
+                    <input type="checkbox" id="beer-set" name="indep-heater-en" class="switch-input" checked>
+                    <label for="beer-set" class="switch-label" style="margin-left:12px">Enable/Disable HEATER</label>
                 </div>
+                <div style="margin: 16px 0;">
+                    <span>hysteresisMode (predictive heater)</span>
+                    <label style="display:block;margin:0.25em 0">
+                        <input type="radio" name="hystMode" id="independent-pid-off" value="0" checked> Off (simple thermostat on beer)
+                    </label>
+                    <label style="display:block;margin:0.25em 0">
+                        <input type="radio" name="hystMode" id="independent-pid-on" value="1"> On (time+slope learner on beer; cycle1 measure, then learned on-time + same-cycle top-up)
+                    </label>
+                </div>
+                <p style="margin: 8px 0 16px; font-size: 0.9em;">
+                    Uses heatTargetH/L and coolTargetH/L from Advanced Settings. Predictive On: cycle 1 measures thermostat on-time to beerSet+heatTargetH; later cycles heat for the learned seconds; if the beer peak is low, a same-cycle top-up runs after the peak falls (slow filter, 3 s). Over/under next-cycle correction uses full slope-based seconds; changes under 10 s are ignored (deadband). Heater always cuts if beer reaches the upper target. Cooler is unchanged.
+                </p>
             </div>
 
         </div>

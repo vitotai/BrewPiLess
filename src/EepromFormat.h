@@ -82,7 +82,7 @@ void eepromSizeCheck() {
  * Increment this value each time a change is made that is not backwardly-compatible.
  * Either the eeprom will be reset to defaults, or external code will re-establish the values via the piLink interface.
  */
-#define EEPROM_FORMAT_VERSION 5
+#define EEPROM_FORMAT_VERSION 8
 
 /*
  * Version history:
@@ -91,12 +91,14 @@ void eepromSizeCheck() {
  * rev 2: initial version dynaconfig
  * rev 3: deactivate flag in DeviceConfig, and additinoal padding to allow for some future expansion.
  * rev 4: added padding at start and reduced device count to 16. We can always increase later.
- * rev 5: removed ControlConstants.idleRangeHigh/idleRangeLow. The fridge on/off
- *        hysteresis is now driven independently per actuator by
- *        heatingTargetLower/coolingTargetUpper (see EepromStructs.h). On raw-EEPROM
- *        (ESP8266) targets this version bump causes a full reset to default constants,
- *        matching the existing behavior for prior revisions. On FS-backed targets
- *        (ESP32/LittleFS-SPIFFS), ControlConstants is migrated in place from the old
- *        layout instead of being reset - see FSEepromAccess::readControlConstants and
- *        ControlConstants_v1/migrateControlConstantsFromV1 in EepromStructs.h.
+ * rev 5: removed ControlConstants.idleRangeHigh/idleRangeLow. Classic start hysteresis was
+ *        temporarily driven by heatingTargetLower/coolingTargetUpper. On FS-backed targets
+ *        (ESP32) ControlConstants was migrated in place (see ControlConstants_v5).
+ * rev 6: restored idleRangeHigh/idleRangeLow; hysteresisMode byte added (initially
+ *        used as classic start-method select). Classic modes always use idleRange.
+ * rev 7: hysteresisMode meaning = Independent predictive heater only (0=off, 1=on).
+ *        Classic start-method radio retired. Existing hystMode values treated as
+ *        Independent predictive flag (default off on migrate from v1/v5).
+ *        (Heater: beer time+slope on-time learner; not fridge cascade / heatEst.)
+ * rev 8: added ControlConstants.maxHeatTime (seconds; 0 = unlimited heater on-time).
  */

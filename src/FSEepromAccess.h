@@ -118,16 +118,30 @@ public:
         }
         size_t fileSize = file.size();
         if(fileSize == size){
-            // current format (EEPROM_FORMAT_VERSION >= 5) - direct read
+            // current format (EEPROM_FORMAT_VERSION >= 8)
             file.readBytes((char*)&target, size);
             file.close();
             return;
         }
+        if(fileSize == sizeof(ControlConstants_v7)){
+            ControlConstants_v7 legacy;
+            file.readBytes((char*)&legacy, sizeof(legacy));
+            file.close();
+            migrateControlConstantsFromV7(legacy, target);
+            DBG_PRINTF("Migrated ControlConstants from v7 format (%u -> %u bytes)\n",(unsigned)fileSize,size);
+            writeControlConstants(offset, target, size);
+            return;
+        }
+        if(fileSize == sizeof(ControlConstants_v5)){
+            ControlConstants_v5 legacy;
+            file.readBytes((char*)&legacy, sizeof(legacy));
+            file.close();
+            migrateControlConstantsFromV5(legacy, target);
+            DBG_PRINTF("Migrated ControlConstants from v5 format (%u -> %u bytes)\n",(unsigned)fileSize,size);
+            writeControlConstants(offset, target, size);
+            return;
+        }
         if(fileSize == sizeof(ControlConstants_v1)){
-            // Migration from pre-v5 format: idleRangeHigh/idleRangeLow existed instead of
-            // today's independent heatingTargetLower/coolingTargetUpper on/off trigger.
-            // Read the old layout and remap it into the current struct, then persist the
-            // migrated data immediately so this only runs once.
             ControlConstants_v1 legacy;
             file.readBytes((char*)&legacy, sizeof(legacy));
             file.close();
@@ -136,10 +150,8 @@ public:
             writeControlConstants(offset, target, size);
             return;
         }
-        // unknown/corrupt size - fall back to the existing "no valid data" convention.
-        // The caller (EepromManager::initializeEeprom / SettingsManager) is responsible
-        // for loading ccDefaults when this happens.
-        DBG_PRINTF("ControlConstants file size mismatch (%u bytes, expected %u or %u) - using zeroed data\n",(unsigned)fileSize,size,(unsigned)sizeof(ControlConstants_v1));
+        DBG_PRINTF("ControlConstants file size mismatch (%u bytes, expected %u / %u / %u / %u) - using zeroed data\n",
+            (unsigned)fileSize,size,(unsigned)sizeof(ControlConstants_v7),(unsigned)sizeof(ControlConstants_v5),(unsigned)sizeof(ControlConstants_v1));
         file.close();
         memset(&target,0,size);
 	}

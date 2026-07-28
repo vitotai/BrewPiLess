@@ -58,7 +58,7 @@ input {
 
 #networkselection {
     text-align: left;
-    display: inline-block;
+    display: none; /* must stay hidden until Net.show(); do not use inline-block (overrides .modal) */
     min-width: 260px;
 }
 

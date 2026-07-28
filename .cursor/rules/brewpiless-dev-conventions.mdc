@@ -44,6 +44,13 @@ Bir config alanı eklerken/değiştirirken şu katmanların HEPSİ birlikte gün
 
 Bunlardan biri atlanırsa özellik yarım kalır (örn. cihazda çalışır ama arayüzde görünmez).
 
+## Secrets / DuckDNS
+
+- `src/DuckDNSUpdater.h` içinde gerçek domain/token olabilir; **asla commit/push etme**.
+- Repoda yalnızca placeholder kalsın. Yerel gerçek değerler için:
+  `git update-index --skip-worktree src/DuckDNSUpdater.h`
+- Commit hazırlarken bu dosyayı stage etme; status’ta görünürse unstage et.
+
 ## Çalışma Akışı
 
 - Kod eklemeden/değiştirmeden ÖNCE: planı (hangi dosyalar, ne değişecek, neden)
@@ -51,3 +58,4 @@ Bunlardan biri atlanırsa özellik yarım kalır (örn. cihazda çalışır ama 
 - Onaydan sonra uygula.
 - Uyguladıktan SONRA: değiştirilen dosyaları ve her birinde neyin/neden
   değiştiğini liste halinde özetle.
+- Push/commit istemeden önce sor; DuckDNS credentials içeren dosyayı asla dahil etme.

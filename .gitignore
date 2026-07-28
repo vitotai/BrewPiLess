@@ -6,6 +6,10 @@
 # Local heap monitoring / diagnostic scripts and CSV logs (not part of firmware)
 tools/
 
+# DuckDNS credentials — keep placeholders in the repo; never commit real domain/token.
+# Local file may hold real values; use: git update-index --skip-worktree src/DuckDNSUpdater.h
+src/DuckDNSUpdater.h
+
 # Node/npm
 node_modules/
 
