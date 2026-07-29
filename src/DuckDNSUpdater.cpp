@@ -8,7 +8,6 @@
 
 #include "Config.h"
 #include "DuckDNSUpdater.h"
-#include "DiagCounters.h"
 
 // Concatenated once by the preprocessor at compile time, so no runtime
 // String concatenation is needed to build the request URL. Plain HTTP is
@@ -33,7 +32,6 @@ void DuckDNSUpdaterClass::update(void)
 
 void DuckDNSUpdaterClass::sendUpdateRequest(void)
 {
-	diagDuckDnsUpdateCalls++;
 	if(DUCKDNS_DOMAIN[0] == '\0' || DUCKDNS_TOKEN[0] == '\0'){
 		return; // not configured, stay silent
 	}

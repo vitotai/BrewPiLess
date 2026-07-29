@@ -1,7 +1,6 @@
 
 #include "BleListener.h"
 #include <string>
-#include "DiagCounters.h"
 #if SupportBleHydrometer
 #define RescanTimeout 5000
 #define MaxRetryCount 10
@@ -135,7 +134,6 @@ void BleScanner::clearScanData(void){
 }
 
 void BleScanner::_startScan(void) {
-    diagBleScanRestarts++;
     // put your main code here, to run repeatedly:
     _pBLEScan->clearResults(); // delete results fromBLEScan buffer to release memory
 //    _scanning=true;

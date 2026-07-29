@@ -51,7 +51,6 @@
 #include "GravityTracker.h"
 #include "BrewKeeper.h"
 #include "DuckDNSUpdater.h"
-#include "DiagCounters.h"
 #ifdef ENABLE_LOGGING
 #include "DataLogger.h"
 #endif
@@ -1103,7 +1102,6 @@ void stringAvailable(const char *str)
 {
 	//DBG_PRINTF("BroadCast:%s\n",str);
 
-	diagWsTextAllCalls++;
 	ws.textAll(str);
 
 
@@ -1121,7 +1119,6 @@ void notifyLogStatus(void)
 void periodicalReport(void)
 {
 //	char buf[512];
-	diagPeriodicalReports++;
 
 	uint8_t mode, state;
 	char unit;
@@ -1390,7 +1387,6 @@ private:
 		if(_buffer){
 			free(_buffer);
 			_buffer=NULL;
-			diagExtHandlerFrees++;
 		}
 	}
 
@@ -1566,7 +1562,6 @@ public:
 	virtual void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)override final{
 		if(!index){
 		    DBG_PRINTF("BodyStart-len:%d total: %u\n",len, total);
-			diagExtHandlerBodyStarts++;
 			size_t asize = (total > 256)? (total+4):256;
 			_buffer =(char*) malloc(asize);
 			_error= (_buffer ==NULL);
@@ -2099,11 +2094,6 @@ void setup(void){
 
 #if defined(ESP32)
 	webServer->on("/fs",[](AsyncWebServerRequest *request){
-		// diag* fields are temporary, passive call counters (see DiagCounters.h) added
-		// to pin down a slow heap leak; minFreeHeap/largestFreeBlock let us tell a real
-		// leak (both shrink together) apart from mere fragmentation (only largest block
-		// shrinks while total free heap stays flat). allocatedBlocks growing over time
-		// while heap shrinks points at many small leaked objects rather than one big one.
 		multi_heap_info_t heapInfo;
 		heap_caps_get_info(&heapInfo, MALLOC_CAP_8BIT);
 		request->send(200,"","totalBytes:" +String(FileSystem.totalBytes()) +
@@ -2113,17 +2103,7 @@ void setup(void){
 		" largestFreeBlock:"+String(heap_caps_get_largest_free_block(MALLOC_CAP_8BIT)) +
 		" allocatedBlocks:"+String(heapInfo.allocated_blocks) +
 		" freeBlocks:"+String(heapInfo.free_blocks) +
-		" wsClients:"+String(ws.count()) +
-		" diagExtHandlerBodyStarts:"+String(diagExtHandlerBodyStarts) +
-		" diagExtHandlerFrees:"+String(diagExtHandlerFrees) +
-		" diagGravityReportCalls:"+String(diagGravityReportCalls) +
-		" diagDuckDnsUpdateCalls:"+String(diagDuckDnsUpdateCalls) +
-		" diagBleScanRestarts:"+String(diagBleScanRestarts) +
-		" diagDataLoggerSends:"+String(diagDataLoggerSends) +
-		" diagMqttPublishCalls:"+String(diagMqttPublishCalls) +
-		" diagPeriodicalReports:"+String(diagPeriodicalReports) +
-		" diagWsTextAllCalls:"+String(diagWsTextAllCalls) +
-		" diagWsCleanupClients:"+String(diagWsCleanupClients));
+		" wsClients:"+String(ws.count()));
 	});
 #else
 	webServer->on("/fs",[](AsyncWebServerRequest *request){
@@ -2151,13 +2131,11 @@ void setup(void){
 		body.reserve(512);
 		tempControl.appendIndependentHeatDebug(body);
 		if(request->hasParam("fmt") && request->getParam("fmt")->value() == "text"){
-			body += F("\n---\n");
-			externalData.appendGravityDebug(body);
 			request->send(200, "text/plain", body);
 			return;
 		}
 		String html;
-		html.reserve(body.length() + 900);
+		html.reserve(body.length() + 700);
 		html += F("<!DOCTYPE html><html><head><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\">");
 		html += F("<title>BPL /pid</title>");
 		html += F("<style>body{font-family:monospace;margin:1em;max-width:42em}");
@@ -2168,16 +2146,6 @@ void setup(void){
 		html += body;
 		html += F("</pre>");
 		tempControl.appendIndependentHeatDebugForm(html);
-		html += F("<h2>GravityMon temp-corr (last 3 saves)</h2><pre>");
-		{
-			String gdbg;
-			gdbg.reserve(480);
-			externalData.appendGravityDebug(gdbg);
-			html += gdbg;
-		}
-		html += F("</pre>");
-		html += F("<p>raw = GravityMon SG &nbsp; written = value stored to chart/log<br>");
-		html += F("Check: written ≈ raw + offset + poly(beerC)</p>");
 		html += F("<p><a href=/pid?fmt=text>plain text</a> · <a href=/fs>/fs</a> · <a href=/>home</a></p>");
 		html += F("</body></html>");
 		request->send(200, "text/html", html);
@@ -2261,17 +2229,7 @@ void loop(void){
 	// Required by ESPAsyncWebServer: free slots/buffers for disconnected WS
 	// clients. Without this, dead clients (browser tab closed, WiFi blip) keep
 	// their queued textAll() buffers forever and show up as a slow heap leak.
-	// Call every loop (library recommendation); counter ticks at most 1/sec so
-	// /fs stays readable for correlation against the heap trend.
 	ws.cleanupClients();
-	{
-		static uint32_t lastCleanupCountMs = 0;
-		uint32_t nowMs = millis();
-		if((uint32_t)(nowMs - lastCleanupCountMs) >= 1000UL){
-			lastCleanupCountMs = nowMs;
-			diagWsCleanupClients++;
-		}
-	}
 
 //{brewpi
 #if BREWPI_SIMULATE

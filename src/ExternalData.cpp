@@ -1,6 +1,5 @@
 #include <ArduinoJson.h>
 #include "ExternalData.h"
-#include "DiagCounters.h"
 #if SupportTiltHydrometer
 #include "BleTiltListener.h"
 #endif
@@ -300,7 +299,6 @@ void ExternalData::_setAuxTemperatureCelsius(float temp){
 
 bool ExternalData::processGravityReport(char data[],size_t length, bool authenticated, uint8_t& error)
 {
-	diagGravityReportCalls++;
 	//const int BUFFER_SIZE = JSON_OBJECT_SIZE(20);
 	//StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
 	#if ARDUINOJSON_VERSION_MAJOR == 6
@@ -417,45 +415,8 @@ void  ExternalData::_remoteHydrometerReport(float gravity,float tilt){
 					+ _cfg->tiltCorrectionCoeff[3] * beerC * beerC * beerC;
 			corrected += poly;
 		}
-		_recordGravityDebug(gravity, beerOk ? beerC : -999.0f, corrected, _cfg->offset, poly);
 		brewLogger.addGravity(corrected);
 		_setGravity(corrected);
-	}
-}
-
-void ExternalData::_recordGravityDebug(float raw,float beerC,float written,float offset,float poly){
-	GravityDbgEntry &e = _gDbg[_gDbgNext];
-	e.raw = raw;
-	e.beerC = beerC;
-	e.written = written;
-	e.offset = offset;
-	e.poly = poly;
-	e.ts = (uint32_t)TimeKeeper.getTimeSeconds();
-	_gDbgNext = (_gDbgNext + 1) % GravityDbgSlots;
-	if(_gDbgCount < GravityDbgSlots) _gDbgCount++;
-}
-
-void ExternalData::appendGravityDebug(String& out){
-	out += F("GravityMon corr debug (newest last)\n");
-	out += F("raw=GM SG  beerC=probe C  written=chart/log SG\n");
-	if(_gDbgCount == 0){
-		out += F("(no gravity reports yet)\n");
-		return;
-	}
-	char line[160];
-	uint8_t start = (_gDbgNext + GravityDbgSlots - _gDbgCount) % GravityDbgSlots;
-	for(uint8_t i = 0; i < _gDbgCount; i++){
-		const GravityDbgEntry &e = _gDbg[(start + i) % GravityDbgSlots];
-		snprintf(line, sizeof(line),
-			"#%u ts=%lu raw=%.5f beerC=%.2f offset=%.5f poly=%.5f written=%.5f\n",
-			(unsigned)(i + 1),
-			(unsigned long)e.ts,
-			(double)e.raw,
-			(double)e.beerC,
-			(double)e.offset,
-			(double)e.poly,
-			(double)e.written);
-		out += line;
 	}
 }
 

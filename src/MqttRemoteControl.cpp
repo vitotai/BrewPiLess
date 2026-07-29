@@ -7,7 +7,6 @@
 #include "BrewPiProxy.h"
 #include "mystrlib.h"
 #include "ExternalData.h"
-#include "DiagCounters.h"
 #if SupportPressureTransducer
 #include "PressureMonitor.h"
 #endif
@@ -116,7 +115,6 @@ uint16_t MqttRemoteControl::_publish(const char* key,const char* value){
 }
 
 void MqttRemoteControl::_reportData(void){
-    diagMqttPublishCalls++;
     _lastReportTime = millis();
 
     char data[BUFFERSIZE];
