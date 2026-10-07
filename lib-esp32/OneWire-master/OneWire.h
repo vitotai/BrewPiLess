@@ -99,10 +99,10 @@ class OneWire
 
     // Write a bit. The bus is always left powered at the end, see
     // note in write() about that.
-    void write_bit(uint8_t v);
+    void IRAM_ATTR write_bit(uint8_t v);
 
     // Read a bit.
-    uint8_t read_bit(void);
+    uint8_t IRAM_ATTR read_bit(void);
 
     // Stop forcing power onto the bus. You only need to do this if
     // you used the 'power' flag to write() or used a write_bit() call

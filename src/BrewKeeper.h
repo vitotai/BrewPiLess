@@ -10,6 +10,7 @@
 #define BrewPiModeBeerConstant 'b'
 #define BrewPiModeFridgeConstant 'f'
 #define BrewPiModeBeerProfile 'p'
+#define BrewPiModeIndependent 'i'
 
 
 class BrewProfile

@@ -402,7 +402,19 @@ void  ExternalData::_remoteHydrometerReport(float gravity,float tilt){
 			_setGravity(calculated);
 		}
 	}else{
+		// GravityMon / device-reported SG: SG' = SG + offset + poly(beerTemp °C)
 		float corrected = gravity + _cfg->offset;
+		float poly = 0;
+		float beerC = brewPi.getBeerTemp();
+		bool beerOk = (beerC > -200.0f);
+		if(beerOk && brewPi.getUnit() == 'F') beerC = F2C(beerC);
+		if(_cfg->tempCorrection && beerOk){
+			poly = _cfg->tiltCorrectionCoeff[0]
+					+ _cfg->tiltCorrectionCoeff[1] * beerC
+					+ _cfg->tiltCorrectionCoeff[2] * beerC * beerC
+					+ _cfg->tiltCorrectionCoeff[3] * beerC * beerC * beerC;
+			corrected += poly;
+		}
 		brewLogger.addGravity(corrected);
 		_setGravity(corrected);
 	}
@@ -461,6 +473,12 @@ char ExternalData::deviceBatteryUnit(void){
 	if(_cfg->gravityDeviceType == GravityDevicePill) return '%';
 
 	return 'V';
+}
+
+float ExternalData::deviceBatteryPercent(void){
+	if(!IsVoltageValid(_deviceVoltage)) return INVALID_VOLTAGE;
+	if(deviceBatteryUnit() == '%') return _deviceVoltage; // Pill: already a state-of-charge percentage
+	return voltageToLipoPercent(_deviceVoltage); // iSpindel: raw LiPo cell voltage
 }
 
 void ExternalData::setGravity(float gravity){

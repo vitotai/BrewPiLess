@@ -99,6 +99,27 @@ OneWire* DeviceManager::oneWireBus(uint8_t pin) {
 	return NULL;
 }
 
+void DeviceManager::startOneWireConversions()
+{
+#if !BREWPI_SIMULATE
+#ifdef oneWirePin
+	if (primaryOneWireBus.reset()) {
+		primaryOneWireBus.skip();
+		primaryOneWireBus.write(0x44, false);
+	}
+#else
+	if (beerSensorBus.reset()) {
+		beerSensorBus.skip();
+		beerSensorBus.write(0x44, false);
+	}
+	if (fridgeSensorBus.reset()) {
+		fridgeSensorBus.skip();
+		fridgeSensorBus.write(0x44, false);
+	}
+#endif
+#endif
+}
+
 bool DeviceManager::firstDeviceOutput;
 bool DeviceManager::fridgeSensorFallBack = false;
 

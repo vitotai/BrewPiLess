@@ -96,6 +96,10 @@ float BrewPiProxy::getFridgeSet(void){
 	return t;
 }
 
+bool BrewPiProxy::isIndependentPidOn(void){
+	return tempControl.isIndependentPidOn();
+}
+
 char BrewPiProxy::getUnit(void){
 	return tempControl.cc.tempFormat;
 }

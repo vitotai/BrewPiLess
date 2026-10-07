@@ -55,7 +55,9 @@ void BrewKeeper::keep(time_t now)
 	beerSet = brewPi.getBeerSet();
 
 	// run in loop()
-	if (mode != 'p') return;
+	// Independent mode also uses the ramp/profile schedule, but only to move the
+	// heater's own target (beerSet); the cooler's target (fridgeSet) is untouched.
+	if (mode != BrewPiModeBeerProfile && mode != BrewPiModeIndependent) return;
 
 	// check unit
 	_profile.setUnit(unit);

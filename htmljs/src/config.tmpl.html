@@ -59,6 +59,18 @@
                       </div>
                     </div>
 
+                    <div layout horizontal cross-center style="flex-wrap: wrap; gap: 8px;">
+                        <h6 class="inline-header">DuckDNS</h6>
+                      <span title="DuckDNS domain">Address</span>
+                      <input name="duckdnsDomain" type="text" size="18" maxlength="63" placeholder="domain">
+                      <span title="DuckDNS token">Token</span>
+                      <input name="duckdnsToken" type="password" size="24" maxlength="63" placeholder="token">
+                      <span title="Update interval in minutes">Minutes</span>
+                      <input name="duckdnsInterval" type="number" min="1" max="1440" size="5" maxlength="5" placeholder="30">
+                        <input type="checkbox" id="duckdnsEnabled" name="duckdnsEnabled" class="switch-input" checked>
+                      <label for="duckdnsEnabled" class="switch-label" style="min-width: 0;" title="Enable DuckDNS"></label>
+                    </div>
+
 
                     <div layout horizontal cross-center>
                         <h6 class="inline-header">
@@ -294,7 +306,6 @@
               </h6>
               <input type="number" id="idleRangeH" size="4" step="0.001"> &deg;
             </div>
-
             <div layout horizontal cross-center>
               <h6 class="inline-header">
                 idleRangeL
@@ -302,6 +313,9 @@
               <input type="number" id="idleRangeL" size="4" step="0.001"> &deg;
             </div>
 
+            <p style="margin:0.5em 0;font-size:0.9em">
+              Used as on/off bands in Independent mode: heatTargetH, heatTargetL, coolTargetH, coolTargetL.
+            </p>
 
             <div layout horizontal cross-center>
               <h6 class="inline-header">
@@ -423,6 +437,12 @@
           </div>
           <div layout horizontal cross-center>
             <h6 class="inline-header">
+              maxHeatTime
+            </h6>
+            <input type="number" id="maxHeatTime" size="4"> Seconds (0 = unlimited)
+          </div>
+          <div layout horizontal cross-center>
+            <h6 class="inline-header">
               minHeatIdleTime
             </h6>
             <input type="number" id="minHeatIdleTime" size="4"> Seconds
@@ -432,6 +452,18 @@
               deadTime
             </h6>
             <input type="number" id="deadTime" size="4"> Seconds
+          </div>
+          <div layout horizontal cross-center>
+            <h6 class="inline-header">
+              staleSensorSec
+            </h6>
+            <input type="number" id="staleSensorSec" size="4" min="0" max="120"> Seconds (hold last temp on brief disconnect; 0 = off, default 20)
+          </div>
+          <div layout horizontal cross-center>
+            <h6 class="inline-header">
+              oneWireRetryCount
+            </h6>
+            <input type="number" id="oneWireRetryCount" size="4" min="0" max="20"> Additional OneWire read attempts after failure (0 = off, default 2)
           </div>
           <hr>
             <div>

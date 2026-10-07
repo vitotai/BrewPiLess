@@ -106,8 +106,72 @@ public:
 	}
 
 	static void readControlConstants(ControlConstants& target, eptr_t offset, uint16_t size) {
-        if(!readFromFile(File_ControlConstant,(char*)&target,size))
+        if(!exists(File_ControlConstant)){
             memset(&target,0,size);
+            return;
+        }
+        File file = FileSystem.open(File_ControlConstant, "r");
+        if(!file){
+            DBG_PRINTF("read %s error:%u\n",File_ControlConstant,size);
+            memset(&target,0,size);
+            return;
+        }
+        size_t fileSize = file.size();
+        if(fileSize == size){
+            // current format (EEPROM_FORMAT_VERSION >= 10)
+            file.readBytes((char*)&target, size);
+            file.close();
+            return;
+        }
+        if(fileSize == sizeof(ControlConstants_v9)){
+            ControlConstants_v9 legacy;
+            file.readBytes((char*)&legacy, sizeof(legacy));
+            file.close();
+            migrateControlConstantsFromV9(legacy, target);
+            DBG_PRINTF("Migrated ControlConstants from v9 format (%u -> %u bytes)\n",(unsigned)fileSize,size);
+            writeControlConstants(offset, target, size);
+            return;
+        }
+        if(fileSize == sizeof(ControlConstants_v8)){
+            ControlConstants_v8 legacy;
+            file.readBytes((char*)&legacy, sizeof(legacy));
+            file.close();
+            migrateControlConstantsFromV8(legacy, target);
+            DBG_PRINTF("Migrated ControlConstants from v8 format (%u -> %u bytes)\n",(unsigned)fileSize,size);
+            writeControlConstants(offset, target, size);
+            return;
+        }
+        if(fileSize == sizeof(ControlConstants_v7)){
+            ControlConstants_v7 legacy;
+            file.readBytes((char*)&legacy, sizeof(legacy));
+            file.close();
+            migrateControlConstantsFromV7(legacy, target);
+            DBG_PRINTF("Migrated ControlConstants from v7 format (%u -> %u bytes)\n",(unsigned)fileSize,size);
+            writeControlConstants(offset, target, size);
+            return;
+        }
+        if(fileSize == sizeof(ControlConstants_v5)){
+            ControlConstants_v5 legacy;
+            file.readBytes((char*)&legacy, sizeof(legacy));
+            file.close();
+            migrateControlConstantsFromV5(legacy, target);
+            DBG_PRINTF("Migrated ControlConstants from v5 format (%u -> %u bytes)\n",(unsigned)fileSize,size);
+            writeControlConstants(offset, target, size);
+            return;
+        }
+        if(fileSize == sizeof(ControlConstants_v1)){
+            ControlConstants_v1 legacy;
+            file.readBytes((char*)&legacy, sizeof(legacy));
+            file.close();
+            migrateControlConstantsFromV1(legacy, target);
+            DBG_PRINTF("Migrated ControlConstants from pre-v5 format (%u -> %u bytes)\n",(unsigned)fileSize,size);
+            writeControlConstants(offset, target, size);
+            return;
+        }
+        DBG_PRINTF("ControlConstants file size mismatch (%u bytes, expected %u / %u / %u / %u / %u) - using zeroed data\n",
+            (unsigned)fileSize,size,(unsigned)sizeof(ControlConstants_v8),(unsigned)sizeof(ControlConstants_v7),(unsigned)sizeof(ControlConstants_v5),(unsigned)sizeof(ControlConstants_v1));
+        file.close();
+        memset(&target,0,size);
 	}
 
 	static void writeControlConstants(eptr_t target, ControlConstants& source, uint16_t size) {

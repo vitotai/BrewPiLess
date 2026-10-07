@@ -4,7 +4,9 @@
 #include <time.h>
 #include "Config.h"
 //*****************************************************
-// 156 bytes
+// 264 bytes
+#define DEFAULT_DUCKDNS_DOMAIN "orcunozden.duckdns.org"
+#define DEFAULT_DUCKDNS_TOKEN "0cae8222-0b5f-4438-962b-af3c19b28c92"
 typedef struct _SystemConfiguration{
     char  username[32];
     char  password[32];
@@ -22,6 +24,11 @@ typedef struct _SystemConfiguration{
     uint8_t glycolChilling;
     uint8_t securedAp;
     uint8_t _padding;
+    char duckdnsDomain[64];
+    char duckdnsToken[64];
+    uint16_t duckdnsInterval;
+    uint8_t duckdnsEnabled;
+    uint8_t _duckdnsPadding;
 }SystemConfiguration;
 
 //*****************************************************

@@ -29,6 +29,31 @@
 #define IsVoltageValid(v) ((v) > 0)
 //#define IsGravityValid(g) ((g) > 0)
 
+// Single-cell Li-ion/LiPo discharge curve, piecewise-linear between breakpoints.
+// This is the exact same 21-point table used by GravityMon's own web UI
+// (html/app.js, battery percentage computed property) so that a device reporting
+// through iSpindel-compatible JSON shows the same percentage here as it does on
+// GravityMon's own page for the same voltage. Breakpoint tables are function-local
+// statics, so they are only ever built once (no allocation on each call) even
+// though this runs every report tick.
+inline float voltageToLipoPercent(float voltage){
+	static const float breakpointV[]   = {4.20,4.10,4.00,3.93,3.87,3.83,3.79,3.75,3.71,3.68,3.65,3.62,3.58,3.55,3.52,3.48,3.43,3.37,3.30,3.24,3.20};
+	static const float breakpointPct[] = { 100,  95,  90,  85,  80,  75,  70,  65,  60,  55,  50,  45,  40,  35,  30,  25,  20,  15,  10,   5,   0};
+	static const uint8_t N = sizeof(breakpointV)/sizeof(breakpointV[0]);
+
+	if(voltage >= breakpointV[0]) return 100.0;
+	if(voltage <= breakpointV[N-1]) return 0.0;
+
+	for(uint8_t i=0;i<N-1;i++){
+		if(voltage <= breakpointV[i] && voltage >= breakpointV[i+1]){
+			float vHigh = breakpointV[i], vLow = breakpointV[i+1];
+			float pHigh = breakpointPct[i], pLow = breakpointPct[i+1];
+			return pLow + (voltage - vLow) * (pHigh - pLow) / (vHigh - vLow);
+		}
+	}
+	return 0.0; // unreachable, kept for safety
+}
+
 //#define IsGravityInValidRange(g) ((g) > 0.8 && (g) < 1.25)
 #define GavityDeviceConfigFilename "/gdconfig"
 #define MAX_CONFIGDATA_SIZE 256
@@ -176,8 +201,13 @@ public:
 	time_t lastUpdate(void){return _lastUpdate;}
 	int16_t rssi(void){return _rssiValid? _rssi:-999;}
 	float deviceVoltage(void){return _deviceVoltage;}
+	// Estimated battery percent (0-100), or INVALID_VOLTAGE(-1) if not available.
+	// Pill already reports state-of-charge directly (deviceBatteryUnit()=='%'); for
+	// iSpindel (and anything else reporting a raw cell voltage) it is derived from
+	// deviceVoltage() via the LiPo discharge curve above.
+	float deviceBatteryPercent(void);
 	float tiltValue(void){return _tiltAngle;}
-	
+
 	// to process web request
 	bool processGravityReport(char data[],size_t length, bool authenticated, uint8_t& error);
 

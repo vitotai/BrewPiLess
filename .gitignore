@@ -1,3 +1,27 @@
+# PlatformIO build artifacts
+.pio/
+/.vscode/
+/.idea/
+
+# Local heap monitoring / diagnostic scripts and CSV logs (not part of firmware)
+tools/
+
+# DuckDNS credentials — keep placeholders in the repo; never commit real domain/token.
+# Local file may hold real values; use: git update-index --skip-worktree src/DuckDNSUpdater.h
+src/DuckDNSUpdater.h
+
+# Node/npm
+node_modules/
+
+# Backup/configs folder should not be uploaded
+ayarlar yedek/
+
+# OS files
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
 .pio
 .pioenvs
 .piolibdeps
@@ -12,3 +36,7 @@ htmljs/node_modules/
 .DS_Store
 .vscode/*.db
 .vscode/.browse.c_cpp.db*
+
+# Cursor local agent rules (do not commit)
+.cursor/
+

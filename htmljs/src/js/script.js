@@ -229,8 +229,12 @@
         "<%= state_text_invalid %>"
     ];
 
-    function genStateText(state, duration) {
-        if (state == 1 || state == 2 || state == 10 || state == 7) return StateText[state];
+    function genStateText(state, duration, both) {
+        // "both" is only ever true in independent mode when the heater and cooler
+        // are simultaneously active; state itself stays a single COOLING/HEATING
+        // value (see TempControl::updateIndependentState()) so build the combined
+        // text here instead of adding a new state number (would break log format).
+        if (!both && (state == 1 || state == 2 || state == 10 || state == 7)) return StateText[state];
 
         var timestr = "";
         var mm = Math.floor(duration / 60);
@@ -247,6 +251,9 @@
         } else{
             // short
             timestr = "<%= time_format_short %>".replace("{SS}", zeropad(ss)).replace("{MM}", zeropad(mm));
+        }
+        if (both && (state == 3 || state == 4)) {
+            return "Heating+Cooling for " + timestr;
         }
         return StateText[state].replace("{time}", timestr);
     }
@@ -276,20 +283,33 @@
             b: "<%= mode_beer_const %>",
             f: "<%= mode_fridge_const %>",
             p: "<%= mode_beer_profile %>",
-            i: "Invalid"
+            i: "Independent"
         };
+        var bothActive = (info.md == 'i' && info.ih == 1 && info.ic == 1);
 
         Object.keys(status).map(function(key, i) {
             var div = Q("#lcd" + key);
             if (div) {
                 if (key == "ControlMode") div.innerHTML = ModeString[status[key]];
-                else if (key == "ControlState") div.innerHTML = genStateText(status[key], status.ControlStateSince);
+                else if (key == "ControlState") div.innerHTML = genStateText(status[key], status.ControlStateSince, bothActive);
                 else div.innerHTML = status[key];
             }
         });
         // keep the info for other usage
         if (typeof status["unit"] != "undefined") window.tempUnit = status.unit;
         if (typeof status["BeerTemp"] != "undefined")  window.beerTemp = (info.bt> -100)? (info.bt/ 100):NaN;
+
+        // Independent mode targets are cs.fridgeSetting/cs.beerSetting under the hood
+        // (see TempControl::updateIndependentState()), so pre-fill the control page's
+        // independent tab with the currently configured values. Only fill while the
+        // box is still empty so an in-progress edit is never overwritten by a status
+        // push (control page only - these elements don't exist elsewhere).
+        if (info.md == 'i') {
+            var coolBox = Q("#independent-cool-t");
+            if (coolBox && coolBox.value === '' && info.fs > -10000) coolBox.value = (info.fs / 100).toFixed(1);
+            var heatBox = Q("#independent-heat-t");
+            if (heatBox && heatBox.value === '' && info.bs > -10000) heatBox.value = (info.bs / 100).toFixed(1);
+        }
     }
 
     var roomOfridge = false;
@@ -301,7 +321,7 @@
             b: "Beer Const.",
             f: "Fridge Const.",
             p: "Beer Profile",
-            i: "Invalid"
+            i: "Independent"
         };
 
         function showTemp(tp) {
@@ -322,7 +342,7 @@
         else
             lines[2] = "Fridge" + showTemp(info.ft) + " " + showTemp(info.fs) + " &deg;" + info.tu;
         roomOfridge = !roomOfridge;
-        lines[3] = genStateText(info.st, info.sl);
+        lines[3] = genStateText(info.st, info.sl, info.md == 'i' && info.ih == 1 && info.ic == 1);
         return lines;
     }
 
@@ -703,8 +723,19 @@
         }
         else if (Q("#gdevice-angle")) Q("#gdevice-angle").innerHTML = ""  + info.a.toFixed(2) +"&deg;";
         //battery
-        if (Q("#gdevice-battery")) Q("#gdevice-battery").innerHTML = "" +((window.GravityDevice == 1)? 
-                    (parseFloat(info.b).toFixed(2) +"V"):(""+parseInt(info.b) +"%"));
+        if (Q("#gdevice-battery")) {
+            var battTxt;
+            if (window.GravityDevice == 1) {
+                // iSpindel: raw cell voltage, plus estimated percent when available
+                battTxt = parseFloat(info.b).toFixed(2) + "V";
+                if (typeof info.bp != "undefined" && info.bp >= 0) {
+                    battTxt += " (" + parseInt(info.bp) + "%)";
+                }
+            } else {
+                battTxt = "" + parseInt(info.b) + "%";
+            }
+            Q("#gdevice-battery").innerHTML = battTxt;
+        }
 
     }
 

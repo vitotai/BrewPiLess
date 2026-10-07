@@ -20,6 +20,7 @@
 
 #include "Brewpi.h"
 #include <stdarg.h>
+#include <string.h>
 
 #include "stddef.h"
 #include "PiLink.h"
@@ -670,6 +671,9 @@ const PiLink::JsonOutput PiLink::jsonOutputCCMap[] PROGMEM = {
 	JSON_OUTPUT_CC_MAP(minCoolTime, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(minCoolIdleTime, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(minHeatTime, JOCC_UINT16),
+	JSON_OUTPUT_CC_MAP(maxHeatTime, JOCC_UINT16),
+	JSON_OUTPUT_CC_MAP(staleSensorSec, JOCC_UINT8),
+	JSON_OUTPUT_CC_MAP(oneWireRetryCount, JOCC_UINT8),
 	JSON_OUTPUT_CC_MAP(minHeatIdleTime, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(mutexDeadTime, JOCC_UINT16),
 #endif
@@ -681,7 +685,8 @@ const PiLink::JsonOutput PiLink::jsonOutputCCMap[] PROGMEM = {
 	JSON_OUTPUT_CC_MAP(beerSlopeFilter, JOCC_UINT8),
 
 	JSON_OUTPUT_CC_MAP(lightAsHeater, JOCC_UINT8),
-	JSON_OUTPUT_CC_MAP(rotaryHalfSteps, JOCC_UINT8)
+	JSON_OUTPUT_CC_MAP(rotaryHalfSteps, JOCC_UINT8),
+	JSON_OUTPUT_CC_MAP(hysteresisMode, JOCC_UINT8)
 
 };
 
@@ -870,6 +875,11 @@ void PiLink::setMode(const char* val) {
 }
 
 void PiLink::setBeerSetting(const char* val) {
+	// Independent UI can disable the heater by sending null → INVALID_TEMP.
+	if(val && (val[0] == '\0' || strcmp(val, "null") == 0)){
+		tempControl.setBeerTemp(INVALID_TEMP);
+		return;
+	}
 #if 0 //#ifdef ESP8266
 	String annotation = "";
 #endif
@@ -914,6 +924,11 @@ void formatStandardAnnotation(String &annotation, const char* str_1, const char*
 
 
 void PiLink::setFridgeSetting(const char* val) {
+	// Independent UI can disable the cooler by sending null → INVALID_TEMP.
+	if(val && (val[0] == '\0' || strcmp(val, "null") == 0)){
+		tempControl.setFridgeTemp(INVALID_TEMP);
+		return;
+	}
 	temperature newTemp = stringToTemp(val);
 	if(tempControl.cs.mode == 'f'){
 #if 0 //#ifdef ESP8266
@@ -994,6 +1009,26 @@ void setBool(const char* value, uint8_t* target) {
 	*target = (atol(value)!=0);
 	eepromManager.storeTempConstantsAndSettings();
 }
+void setUint8(const char* value, uint8_t* target) {
+	*target = (uint8_t)atol(value);
+	eepromManager.storeTempConstantsAndSettings();
+}
+
+void setStaleSensorSec(const char* value, uint8_t* target) {
+	int v = atoi(value);
+	if (v < 0) v = 0;
+	if (v > 120) v = 120;
+	*target = (uint8_t) v;
+	eepromManager.storeTempConstantsAndSettings();
+}
+
+void setOneWireRetryCount(const char* value, uint8_t* target) {
+	int v = atoi(value);
+	if (v < 0) v = 0;
+	if (v > 20) v = 20;
+	*target = (uint8_t) v;
+	eepromManager.storeTempConstantsAndSettings();
+}
 
 
 #define JSON_CONVERT(jsonKey, target, fn) { jsonKey, target, (JsonParserHandlerFn)&fn }
@@ -1019,6 +1054,9 @@ const PiLink::JsonParserConvert PiLink::jsonParserConverters[] PROGMEM = {
 	JSON_CONVERT(JSONKEY_minCoolTime, &tempControl.cc.minCoolTime, setUint16),
 	JSON_CONVERT(JSONKEY_minCoolIdleTime, &tempControl.cc.minCoolIdleTime, setUint16),
 	JSON_CONVERT(JSONKEY_minHeatTime, &tempControl.cc.minHeatTime, setUint16),
+	JSON_CONVERT(JSONKEY_maxHeatTime, &tempControl.cc.maxHeatTime, setUint16),
+	JSON_CONVERT(JSONKEY_staleSensorSec, &tempControl.cc.staleSensorSec, setStaleSensorSec),
+	JSON_CONVERT(JSONKEY_oneWireRetryCount, &tempControl.cc.oneWireRetryCount, setOneWireRetryCount),
 	JSON_CONVERT(JSONKEY_minHeatIdleTime, &tempControl.cc.minHeatIdleTime, setUint16),
 	JSON_CONVERT(JSONKEY_mutexDeadTime, &tempControl.cc.mutexDeadTime, setUint16),
 #endif
@@ -1033,6 +1071,7 @@ const PiLink::JsonParserConvert PiLink::jsonParserConverters[] PROGMEM = {
 	JSON_CONVERT(JSONKEY_maxCoolTimeForEstimate, &tempControl.cc.maxCoolTimeForEstimate, setUint16),
 	JSON_CONVERT(JSONKEY_lightAsHeater, &tempControl.cc.lightAsHeater, setBool),
 	JSON_CONVERT(JSONKEY_rotaryHalfSteps, &tempControl.cc.rotaryHalfSteps, setBool),
+	JSON_CONVERT(JSONKEY_hysteresisMode, &tempControl.cc.hysteresisMode, setUint8),
 
 	JSON_CONVERT(JSONKEY_fridgeFastFilter, MAKE_FILTER_SETTING_TARGET(FAST, FRIDGE), applyFilterSetting),
 	JSON_CONVERT(JSONKEY_fridgeSlowFilter, MAKE_FILTER_SETTING_TARGET(SLOW, FRIDGE), applyFilterSetting),

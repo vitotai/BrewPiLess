@@ -51,6 +51,7 @@ static const char JSONKEY_heatingTargetUpper[] PROGMEM = "heatTargetH";
 static const char JSONKEY_heatingTargetLower[] PROGMEM = "heatTargetL";
 static const char JSONKEY_coolingTargetUpper[] PROGMEM = "coolTargetH";
 static const char JSONKEY_coolingTargetLower[] PROGMEM = "coolTargetL";
+static const char JSONKEY_hysteresisMode[] PROGMEM = "hystMode";
 static const char JSONKEY_maxHeatTimeForEstimate[] PROGMEM = "maxHeatTimeForEst";
 static const char JSONKEY_maxCoolTimeForEstimate[] PROGMEM = "maxCoolTimeForEst";
 static const char JSONKEY_fridgeFastFilter[] PROGMEM = "fridgeFastFilt";
@@ -65,6 +66,9 @@ static const char JSONKEY_rotaryHalfSteps[] PROGMEM = "hs";
 static const char JSONKEY_minCoolTime[] PROGMEM = "minCoolTime";
 static const char JSONKEY_minCoolIdleTime[] PROGMEM = "minCoolIdleTime";
 static const char JSONKEY_minHeatTime[] PROGMEM = "minHeatTime";
+static const char JSONKEY_maxHeatTime[] PROGMEM = "maxHeatTime";
+static const char JSONKEY_staleSensorSec[] PROGMEM = "staleSensorSec";
+static const char JSONKEY_oneWireRetryCount[] PROGMEM = "oneWireRetryCount";
 static const char JSONKEY_minHeatIdleTime[] PROGMEM = "minHeatIdleTime";
 static const char JSONKEY_mutexDeadTime[] PROGMEM = "deadTime";
 #endif

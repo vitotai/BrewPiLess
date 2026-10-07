@@ -317,7 +317,7 @@
 #define FS_EEPROM true
 #endif
 
-#define BPL_VERSION "4.5"
+#define BPL_VERSION "5.0"
 
 
 #ifndef MORE_PINS_CONFIGURATION

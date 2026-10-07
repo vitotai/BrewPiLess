@@ -62,6 +62,10 @@ static const char STR_ing_for[] PROGMEM = "ing for";
 static const char STR_Wait_to_[] PROGMEM = "Wait to ";
 static const char STR__time_left[] PROGMEM = " time left";
 static const char STR_empty_string[] PROGMEM = "";
+// Local-only "both active" display state for independent mode. `state` itself must
+// stay within 0-9 for CSV log backward compatibility (see LogFormatter), so this
+// sentinel is only ever used inside DisplayLcd and never stored/logged.
+#define LCD_STATE_HEATING_AND_COOLING 0xFE
 
 void LcdDisplay::init(void){
 #ifdef BREWPI_IIC_LCD
@@ -159,6 +163,10 @@ void LcdDisplay::printTemperature(temperature temp){
 //print the stationary text on the lcd.
 void LcdDisplay::printStationaryText(void){
 	printAt_P(0, 0, PSTR("Mode"));
+	// Row labels stay "Beer"/"Fridge" in every mode, including independent (the
+	// rows still show cs.beerSetting/cs.fridgeSetting there, see
+	// TempControl::updateIndependentState()) - only the mode name and the state
+	// line change for independent mode.
 	printAt_P(0, 1, STR_Beer_);
 	printAt_P(0, 2, (flags & LCD_FLAG_DISPLAY_ROOM) ?  PSTR("Room  ") : STR_Fridge_);
 	printDegreeUnit(18, 1);
@@ -200,6 +208,9 @@ void LcdDisplay::printMode(void){
 			lcd.print_P(STR_Beer_);
 			lcd.print_P(PSTR("Profile"));
 			break;
+		case MODE_INDEPENDENT:
+			lcd.print_P(PSTR("Independent"));
+			break;
 		case MODE_OFF:
 			lcd.print_P(PSTR("Off"));
 			break;
@@ -217,6 +228,14 @@ void LcdDisplay::printMode(void){
 void LcdDisplay::printState(void){
 	uint16_t time = UINT16_MAX; // init to max
 	uint8_t state = tempControl.getDisplayState();
+	// Independent mode can have the heater and cooler active at the same time;
+	// `state` alone can only report one of them (see TempControl::updateIndependentState()
+	// and getDisplayState()), so use the real per-actuator flags to detect that case here
+	// and show a short "H+C for" line, without touching the shared state enum.
+	if(!tempControl.isDoorOpen() && tempControl.getMode() == MODE_INDEPENDENT
+		&& tempControl.isIndependentHeaterOn() && tempControl.isIndependentCoolerOn()){
+		state = LCD_STATE_HEATING_AND_COOLING;
+	}
 	if(state != stateOnDisplay){ //only print static text when state has changed
 		stateOnDisplay = state;
 		// Reprint state and clear rest of the line
@@ -246,6 +265,11 @@ void LcdDisplay::printState(void){
 				part1 = STR_Heat;
 				part2 = STR_ing_for;
 				break;
+			case LCD_STATE_HEATING_AND_COOLING:
+				// Keep short: "Heat+Cool"+"ing for" overflows a 20-char line once the timer is printed.
+				part1 = PSTR("H+C for");
+				part2 = STR_empty_string;
+				break;
 			case COOLING_MIN_TIME:
 				part1 = STR_Cool;
 				part2 = STR__time_left;
@@ -272,7 +296,7 @@ void LcdDisplay::printState(void){
 	if(state==IDLE){
 		time = 	min(tempControl.timeSinceCooling(), tempControl.timeSinceHeating());
 	}
-	else if(state==COOLING || state==HEATING){
+	else if(state==COOLING || state==HEATING || state==LCD_STATE_HEATING_AND_COOLING){
 		time = sinceIdleTime;
 	}
 	else if(state==COOLING_MIN_TIME){

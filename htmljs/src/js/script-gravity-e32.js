@@ -23,8 +23,11 @@ function toFixed() {
     var texts = document.querySelectorAll("input[type=text]");
     for (var i = 0; i < texts.length; i++) {
         texts[i].onchange = function() {
-            if (this.value.match(/[\-\d\.]+e[\+\-][\d]+/))
-                this.value = Number(this.value).toFixed(9);
+            // Only rewrite pure scientific-notation numbers (e.g. 1.2e-3).
+            // Do NOT touch polynomial formula fields that merely contain "e-7".
+            var v = String(this.value).trim();
+            if (/^[+-]?\d+(\.\d+)?[eE][+-]?\d+$/.test(v))
+                this.value = Number(v).toFixed(9);
         };
     }
 }
@@ -68,6 +71,40 @@ function fill(setting) {
         Q("#pilladdr").innerHTML = pillAddress(setting["mac"]);
         window.pMAC = setting["mac"];
     }
+    if(typeof setting["ttce"] != "undefined"){
+        Q("#tilt-correction-formula").value = format_formula(setting.ttce);
+    }
+}
+
+function format_formula(r, t) {
+    t = (typeof t === "undefined") ? "t" : t;
+    var o = "" + r[0];
+    for (var i = 1; i < r.length; i++) {
+        if (r[i] != 0) {
+            var a = (r[i] < 0) ? " " : " +";
+            var e = (i == 1) ? (" " + t) : (" " + t + "^" + i);
+            o = o + a + r[i] + e;
+        }
+    }
+    return o;
+}
+
+function parsePolynomial(r, t) {
+    t = (typeof t === "undefined") ? "t" : t;
+    var i = [0, 0, 0, 0];
+    r = String(r).replace(/\s+/g, "").replaceAll(t, "t");
+    var a = r.match(/([-+]?\d+(\.\d+)?([eE][-+]?\d+)?)(t(?:\^(\d+))?)?/g);
+    if (!a) return i;
+    var e;
+    while (e = a.shift()) {
+        var m = e.match(/([-+]?\d+(\.\d+)?([eE][-+]?\d+)?)(t(?:\^(\d+))?)?/);
+        var coeff = m[1];
+        var o = m[4];
+        var d = m[5];
+        d = (typeof o === "undefined") ? 0 : (d || 1);
+        i[d] = parseFloat(coeff);
+    }
+    return i;
 }
 
 function getFormula(){
@@ -112,7 +149,7 @@ function save() {
        }
        setting.mac =  window.pMAC;
     }
-    //    console.log("result=" + setting);
+    setting.ttce = parsePolynomial(Q("#tilt-correction-formula").value);
     s_ajax({
         url: gdcurl,
         m: "POST",

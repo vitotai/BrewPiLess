@@ -323,6 +323,7 @@ public:
 	 * read hardware spec from stream and output matching devices
 	 */
 	static void enumerateHardware();
+	static void startOneWireConversions();
 
 	static bool enumDevice(DeviceDisplay& dd, DeviceConfig& dc, uint8_t idx);
 

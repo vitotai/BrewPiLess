@@ -10,6 +10,7 @@
 
 #if defined(ESP32)
 #include <AsyncTCP.h>
+#include <esp_heap_caps.h>
 #else
 #include <ESPAsyncTCP.h>
 #endif
@@ -49,6 +50,7 @@
 
 #include "GravityTracker.h"
 #include "BrewKeeper.h"
+#include "DuckDNSUpdater.h"
 #ifdef ENABLE_LOGGING
 #include "DataLogger.h"
 #endif
@@ -1143,6 +1145,15 @@ void periodicalReport(void)
 	doc["sl"] = brewPi.getStatusTime();
 	doc["tu"] = String(unit);
 
+	// Independent mode can have the heater and cooler on at the same time; "st"
+	// alone can only report one of them (see TempControl::updateIndependentState()),
+	// so expose the real per-actuator flags for the web UI to show a combined
+	// "Heating+Cooling" status. Only meaningful (and only sent) in independent mode.
+	if(mode == MODE_INDEPENDENT){
+		doc["ih"] = tempControl.isIndependentHeaterOn()? 1:0;
+		doc["ic"] = tempControl.isIndependentCoolerOn()? 1:0;
+	}
+
 
 #if EanbleParasiteTempControl
 	doc["ptc"] = String(parasiteTempController.getMode());
@@ -1187,6 +1198,12 @@ void periodicalReport(void)
 	G["a"] = externalData.tiltValue();
 	// battery, for iSPindel & Pill
 	G["b"] = externalData.deviceVoltage();
+	// battery percent estimate (LiPo curve for iSpindel, direct state-of-charge for
+	// Pill); -1 when not available so the frontend can fall back to voltage-only.
+	{
+		float batPct = externalData.deviceBatteryPercent();
+		G["bp"] = (batPct >= 0)? (int)(batPct + 0.5) : -1;
+	}
 
 	String out="A:";
 	serializeJson(doc,out);
@@ -1345,15 +1362,31 @@ private:
 	size_t _dataLength;
 	bool   _error;
 
+	// HTTP response for /gravity is sent once by handleRequest (early 200 so
+	// iSpindel/GravityMon get a fast ACK). Do not call request->send() here:
+	// a second send overwrites AsyncWebServerRequest::_response without
+	// deleting the first AsyncBasicResponse and leaks ~150-200 bytes per report.
 	void processGravity(AsyncWebServerRequest *request,char data[],size_t length){
-		if(length ==0) return request->send(400);;
+		if(length ==0){
+			DBG_PRINTF("processGravity: empty body\n");
+			return;
+		}
 		SystemConfiguration *syscfg=theSettings.systemConfiguration();
-        uint8_t error;
-		if(externalData.processGravityReport(data,length,request->authenticate(syscfg->username,syscfg->password),error)){
-    		request->send(200,ApplicationJsonType,"{}");
-		}else{
-		    if(error == ErrorAuthenticateNeeded) return request->requestAuthentication();
-		    else request->send(400);
+		uint8_t error = 0;
+		if(!externalData.processGravityReport(data,length,request->authenticate(syscfg->username,syscfg->password),error)){
+			DBG_PRINTF("processGravity: report failed, error=%u\n", error);
+		}
+	}
+
+	// handleBody() mallocs _buffer for every request that carries (or might carry) a
+	// body; every exit point of handleRequest() must release it exactly once, or the
+	// allocation is lost for good (the next handleBody() call overwrites the pointer
+	// before it can ever be freed). Route all frees through this single helper so no
+	// future branch can forget it; safe to call even if _buffer is already NULL.
+	void _freeBuffer(void){
+		if(_buffer){
+			free(_buffer);
+			_buffer=NULL;
 		}
 	}
 
@@ -1405,6 +1438,7 @@ public:
 			 }else{
 				request->send(400);
 			 }
+			 _freeBuffer();
 			 return;
 		 }
 #endif
@@ -1436,6 +1470,7 @@ public:
 			 }else{
 				request->send(400);
 			 }
+			 _freeBuffer();
 			 return;
 		 }
 #endif
@@ -1454,14 +1489,18 @@ public:
 			}else{
 				request->send(400);
 			}
+			_freeBuffer();
 			return;
 		}
 
 		if(request->url() == GRAVITY_PATH){
 			if(request->method() != HTTP_POST){
 				request->send(400);
+				_freeBuffer();
 				return;
 			}
+			// Single send: ACK hydrometer immediately, then process. A second
+			// send inside processGravity used to leak the first response object.
 			request->send(200,ApplicationJsonType,"{}");
 	   		_buffer[0]='G';
     		_buffer[1]=':';
@@ -1472,8 +1511,7 @@ public:
 			externalData.gravityDeviceSetting(_data);
 			stringAvailable(_data);
 			
-			free(_buffer);
-			_buffer=NULL;
+			_freeBuffer();
 			return;
 		}
 		if(request->url() == GravityFormulaPath){
@@ -1496,6 +1534,7 @@ public:
   				request->send(400);
 			}
 
+			_freeBuffer();
 			return;
 		}
 		// config
@@ -1506,8 +1545,7 @@ public:
 			}else{
 				request->send(400);
 			}
-			free(_buffer);
-			_buffer= NULL;
+			_freeBuffer();
 			return;
 		}//else{
 			// get
@@ -1518,6 +1556,7 @@ public:
 			request->redirect(request->url() + ".htm");
 		    //request->send_P(200, "text/html", externalData.html());
 		}
+		_freeBuffer();
 	}
 
 	virtual void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)override final{
@@ -2055,9 +2094,16 @@ void setup(void){
 
 #if defined(ESP32)
 	webServer->on("/fs",[](AsyncWebServerRequest *request){
+		multi_heap_info_t heapInfo;
+		heap_caps_get_info(&heapInfo, MALLOC_CAP_8BIT);
 		request->send(200,"","totalBytes:" +String(FileSystem.totalBytes()) +
 		" usedBytes:" + String(FileSystem.usedBytes()) +
-		" heap:"+String(ESP.getFreeHeap()));
+		" heap:"+String(ESP.getFreeHeap()) +
+		" minFreeHeap:"+String(ESP.getMinFreeHeap()) +
+		" largestFreeBlock:"+String(heap_caps_get_largest_free_block(MALLOC_CAP_8BIT)) +
+		" allocatedBlocks:"+String(heapInfo.allocated_blocks) +
+		" freeBlocks:"+String(heapInfo.free_blocks) +
+		" wsClients:"+String(ws.count()));
 	});
 #else
 	webServer->on("/fs",[](AsyncWebServerRequest *request){
@@ -2071,6 +2117,39 @@ void setup(void){
 		//testSPIFFS();
 	});
 #endif
+
+	webServer->on("/pid", HTTP_GET, [](AsyncWebServerRequest *request){
+		// Debug/control page for Independent time+slope heater learner (RAM state).
+		for(size_t i = 0; i < request->params(); i++){
+			const AsyncWebParameter* p = request->getParam(i);
+			if(p->isFile() || p->name() == "fmt"){
+				continue;
+			}
+			tempControl.applyIndependentHeatDebug(p->name().c_str(), p->value().c_str());
+		}
+		String body;
+		body.reserve(512);
+		tempControl.appendIndependentHeatDebug(body);
+		if(request->hasParam("fmt") && request->getParam("fmt")->value() == "text"){
+			request->send(200, "text/plain", body);
+			return;
+		}
+		String html;
+		html.reserve(body.length() + 700);
+		html += F("<!DOCTYPE html><html><head><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\">");
+		html += F("<title>BPL /pid</title>");
+		html += F("<style>body{font-family:monospace;margin:1em;max-width:42em}");
+		html += F("pre{background:#f4f4f4;padding:.6em;overflow:auto}label{display:block;margin:.35em 0}");
+		html += F("input{margin:0 .4em;width:7em}button{margin:.4em .4em 0 0}</style></head><body>");
+		html += F("<h1>Independent predictive heater</h1>");
+		html += F("<pre>");
+		html += body;
+		html += F("</pre>");
+		tempControl.appendIndependentHeatDebugForm(html);
+		html += F("<p><a href=/pid?fmt=text>plain text</a> · <a href=/fs>/fs</a> · <a href=/>home</a></p>");
+		html += F("</body></html>");
+		request->send(200, "text/html", html);
+	});
 
     #if DebugSharedDisplay
 	webServer->on("/dbdisplay",[](AsyncWebServerRequest *request){
@@ -2147,6 +2226,11 @@ void setup(void){
 uint32_t _periodicReportTime;
 #define PeriodicalReportTime 5
 void loop(void){
+	// Required by ESPAsyncWebServer: free slots/buffers for disconnected WS
+	// clients. Without this, dead clients (browser tab closed, WiFi blip) keep
+	// their queued textAll() buffers forever and show up as a slow heap leak.
+	ws.cleanupClients();
+
 //{brewpi
 #if BREWPI_SIMULATE
 	simulateLoop();
@@ -2224,6 +2308,8 @@ void loop(void){
 	if(!IS_RESTARTING){
 		WiFiSetup.stayConnected();
 	}
+
+	duckDNSUpdater.update();
 
   	if(_systemState ==SystemStateRestartPending){
 	  	_time=millis();

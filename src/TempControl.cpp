@@ -31,6 +31,9 @@
 #include "EepromManager.h"
 #include "TempSensorDisconnected.h"
 #include "RotaryEncoder.h"
+#include "Config.h"
+#include <string.h>
+#include <stdlib.h>
 
 TempControl tempControl;
 
@@ -74,7 +77,42 @@ uint16_t TempControl::lastIdleTime;
 uint16_t TempControl::lastHeatTime;
 uint16_t TempControl::lastCoolTime;
 uint16_t TempControl::waitTime;
+
+	// MODE_INDEPENDENT only
+bool TempControl::independentHeaterOn;
+bool TempControl::independentCoolerOn;
+uint16_t TempControl::lastIndependentHeatOnTime;
+uint16_t TempControl::lastIndependentCoolOnTime;
+
+uint8_t TempControl::ihPhase;
+uint8_t TempControl::ihHeatCycle;
+uint8_t TempControl::ihBelowPeakCount;
+uint8_t TempControl::ihExtraDone;
+uint16_t TempControl::ihSafetyCutCount;
+uint16_t TempControl::ihLearnedOnSec;
+uint16_t TempControl::ihPlannedOnSec;
+uint16_t TempControl::ihCycleOnSec;
+uint16_t TempControl::ihExtraRemainSec;
+uint16_t TempControl::ihLearnedLagSec;
+int16_t TempControl::ihPendingCorrSec;
+temperature TempControl::ihLastHeatSlope;
+temperature TempControl::ihPeakTemp;
+temperature TempControl::ihBeerAtCut;
+temperature TempControl::ihSlopeAtCut;
 #endif
+
+// Independent predictive learner constants (RAM state machine)
+static const uint8_t IH_PEAK_BELOW_N = 3;       // slow-filter samples below peak
+static const uint8_t IH_EXTRA_MAX_COUNT = 3;    // max same-cycle top-up pulses
+static const temperature IH_CORR_DEADBAND_TEMP = intToTempDiff(1)/40; // ~0.025°C
+static const uint16_t IH_CORR_DEADBAND_SEC_FALLBACK = 10; // if slope too small for °C→s
+static const uint16_t IH_CORR_ABS_MAX_SEC = 3600; // sanity cap on pending correction
+static const uint16_t IH_EXTRA_MAX_SEC = 600;   // max seconds per extra pulse
+static const uint16_t IH_LAG_MAX_SEC = 3600;    // sanity cap on learned lag τ
+static const temperature IH_MIN_SLOPE = 25;     // ~0.05 C/hour (25/512)
+// Same-cycle top-up uses only this fraction of the slope-based seconds (conservative).
+static const uint16_t IH_EXTRA_SCALE_NUM = 7;
+static const uint16_t IH_EXTRA_SCALE_DEN = 10;
 
 void TempControl::init(void){
 	state=IDLE;
@@ -106,10 +144,33 @@ void TempControl::init(void){
 void TempControl::reset(void){
 	doPosPeakDetect=false;
 	doNegPeakDetect=false;
+	independentHeaterOn=false;
+	independentCoolerOn=false;
+	resetIndependentHeatLearn();
+}
+
+void TempControl::resetIndependentHeatLearn(void){
+	ihPhase = IH_PHASE_IDLE;
+	ihHeatCycle = 0;
+	ihBelowPeakCount = 0;
+	ihExtraDone = 0;
+	ihSafetyCutCount = 0;
+	ihLearnedOnSec = 0;
+	ihPlannedOnSec = 0;
+	ihCycleOnSec = 0;
+	ihExtraRemainSec = 0;
+	ihLearnedLagSec = 0;
+	ihPendingCorrSec = 0;
+	ihLastHeatSlope = 0;
+	ihPeakTemp = INVALID_TEMP;
+	ihBeerAtCut = INVALID_TEMP;
+	ihSlopeAtCut = 0;
+	cv.estimatedPeak = INVALID_TEMP;
 }
 
 void updateSensor(TempSensor* sensor) {
 	sensor->update();
+	sensor->retryInitIfNeeded();
 	if(!sensor->isConnected()) {
 		sensor->init();
 	}
@@ -122,17 +183,36 @@ void TempControl::updateTemperatures(void){
 
 	// Read ambient sensor to keep the value up to date. If no sensor is connected, this does nothing.
 	// This prevents a delay in serial response because the value is not up to date.
-	if(ambientSensor->read() == TEMP_SENSOR_DISCONNECTED){
+	temperature ambientTemp = ambientSensor->read();
+	if(ambientTemp == TEMP_SENSOR_DISCONNECTED){
 		ambientSensor->init(); // try to reconnect a disconnected, but installed sensor
 	}
+	DeviceManager::startOneWireConversions();
+
+#if SerialDebug
+	char beerTemp[12];
+	char fridgeTemp[12];
+	char ambientTempString[12];
+	tempToString(beerTemp, beerSensor->readRaw(), 2, sizeof(beerTemp));
+	tempToString(fridgeTemp, fridgeSensor->readRaw(), 2, sizeof(fridgeTemp));
+	tempToString(ambientTempString, ambientTemp, 2, sizeof(ambientTempString));
+	DBG_PRINTF("TEMP Beer:%s(%d) Fridge:%s(%d) Ambient:%s(%d)\n",
+		beerTemp, beerSensor->isConnected(true), fridgeTemp, fridgeSensor->isConnected(true),
+		ambientTempString, ambientSensor->isConnected());
+#endif
 }
 
 void TempControl::updatePID(void){
 	static unsigned char integralUpdateCounter = 0;
+
+	if(cs.mode == MODE_INDEPENDENT){
+		// Independent does not use beer→fridge cascade PID (heater predictive
+		// time+slope learner lives in updateIndependentState when hysteresisMode is on).
+		return;
+	}
 	if(tempControl.modeIsBeer()){
 		if(cs.beerSetting == INVALID_TEMP){
 			// beer setting is not updated yet
-			// set fridge to unknown too
 			cs.fridgeSetting = INVALID_TEMP;
 			return;
 		}
@@ -147,8 +227,7 @@ void TempControl::updatePID(void){
 
 			temperature integratorUpdate = cv.beerDiff;
 
-			// Only update integrator in IDLE, because thats when the fridge temp has reached the fridge setting.
-			// If the beer temp is still not correct, the fridge setting is too low/high and integrator action is needed.
+			// Only update integrator in IDLE, so it does not increase when fridge is already at maximum/minimum
 			if(state != IDLE){
 				integratorUpdate = 0;
 			}
@@ -224,6 +303,11 @@ void TempControl::updateState(void){
 #endif
 	}
 
+	if(cs.mode == MODE_INDEPENDENT){
+		updateIndependentState();
+		return;
+	}
+
 	if(cs.mode == MODE_OFF){
 		state = STATE_OFF;
 		stayIdle = true;
@@ -256,7 +340,11 @@ void TempControl::updateState(void){
 				break;
 			}
 			resetWaitTime();
-			if(fridgeFast > (cs.fridgeSetting+cc.idleRangeHigh) ){  // fridge temperature is too high
+			// Classic modes (fridge/beer/profile): original vitotai start hysteresis
+			// always uses idleRange*. Independent ignores this path entirely.
+			bool coolNeeded = fridgeFast > (cs.fridgeSetting+cc.idleRangeHigh);
+			bool heatNeeded = fridgeFast < (cs.fridgeSetting+cc.idleRangeLow);
+			if(coolNeeded){  // fridge temperature is too high for the cooler's own band
 				#if 1 //SettableMinimumCoolTime
 				tempControl.updateWaitTime(cc.mutexDeadTime, sinceHeating);
 				#else
@@ -285,7 +373,7 @@ void TempControl::updateState(void){
 					}
 				}
 			}
-			else if(fridgeFast < (cs.fridgeSetting+cc.idleRangeLow)){  // fridge temperature is too low
+			if(heatNeeded){  // fridge temperature is too low for the heater's own band
 				#if 1 // SettableMinimumCoolTime
 				tempControl.updateWaitTime(cc.mutexDeadTime, sinceCooling);
 				tempControl.updateWaitTime(cc.minHeatIdleTime, sinceHeating);
@@ -308,8 +396,8 @@ void TempControl::updateState(void){
 					}
 				}
 			}
-			else{
-				state = IDLE; // within IDLE range, always go to IDLE
+			if(!coolNeeded && !heatNeeded){
+				state = IDLE; // within both actuators' bands, always go to IDLE
 				break;
 			}
 			if(state == HEATING || state == COOLING){
@@ -327,11 +415,13 @@ void TempControl::updateState(void){
 		{
 			doNegPeakDetect=true;
 			lastCoolTime = secs;
-			updateEstimatedPeak(cc.maxCoolTimeForEstimate, cs.coolEstimator, sinceIdle);
+			updateEstimatedPeak(cc.maxCoolTimeForEstimate, cs.coolEstimator, sinceIdle,
+				fridgeSensor->readFastFiltered(), true);
 			state = COOLING; // set to cooling here, so the display of COOLING/COOLING_MIN_TIME is correct
 
-			// stop cooling when estimated fridge temp peak lands on target or if beer is already too cold (1/2 sensor bit idle zone)
-			if(cv.estimatedPeak <= cs.fridgeSetting || (cs.mode != MODE_FRIDGE_CONSTANT && beerFast < (cs.beerSetting - 16))){
+			// stop cooling when estimated fridge temp peak reaches the cooler's own lower
+			// bound (coolingTargetLower) or if beer is already too cold (1/2 sensor bit idle zone)
+			if(cv.estimatedPeak <= (cs.fridgeSetting + cc.coolingTargetLower) || (cs.mode != MODE_FRIDGE_CONSTANT && beerFast < (cs.beerSetting - 16))){
 				#if 1 //SettableMinimumCoolTime
 				if(sinceIdle > cc.minCoolTime){
 				#else
@@ -353,11 +443,16 @@ void TempControl::updateState(void){
 		{
 			doPosPeakDetect=true;
 			lastHeatTime=secs;
-			updateEstimatedPeak(cc.maxHeatTimeForEstimate, cs.heatEstimator, sinceIdle);
+			updateEstimatedPeak(cc.maxHeatTimeForEstimate, cs.heatEstimator, sinceIdle,
+				fridgeSensor->readFastFiltered(), false);
 			state = HEATING; // reset to heating here, so the display of HEATING/HEATING_MIN_TIME is correct
 
-			// stop heating when estimated fridge temp peak lands on target or if beer is already too warm (1/2 sensor bit idle zone)
-			if(cv.estimatedPeak >= cs.fridgeSetting || (cs.mode != MODE_FRIDGE_CONSTANT && beerFast > (cs.beerSetting + 16))){
+			// stop heating when estimated fridge temp peak reaches the heater's own upper
+			// bound (heatingTargetUpper), beer already too warm, or maxHeatTime expired (0=off)
+			bool maxHeatExpired = (cc.maxHeatTime != 0 && sinceIdle >= cc.maxHeatTime);
+			if(cv.estimatedPeak >= (cs.fridgeSetting + cc.heatingTargetUpper)
+				|| (cs.mode != MODE_FRIDGE_CONSTANT && beerFast > (cs.beerSetting + 16))
+				|| maxHeatExpired){
 				#if 1 //SettableMinimumCoolTime
 				if(sinceIdle > cc.minHeatTime){
 				#else
@@ -377,14 +472,397 @@ void TempControl::updateState(void){
 	}
 }
 
-void TempControl::updateEstimatedPeak(uint16_t timeLimit, temperature estimator, uint16_t sinceIdle)
+// MODE_INDEPENDENT: heater and cooler may be active at the same time.
+//   Cooler target = cs.fridgeSetting (Cooling Target on the Independent tab).
+//   Heater target = cs.beerSetting (Heating Target; also profile ramp target).
+// On/off bands always use heatingTarget*/coolingTarget* (Advanced Settings).
+// hysteresisMode On: time+slope learner on beer (cycle1 thermostat measure,
+// cycle2 learned on-time, cycle3+ learned ± correction; same-cycle extra if under).
+void TempControl::updateIndependentState(void){
+	temperature fridgeFast = fridgeSensor->readFastFiltered();
+	temperature beerFast = beerSensor->readFastFiltered();
+	temperature beerSlow = beerSensor->readSlowFiltered();
+	ticks_seconds_t secs = ticks.seconds();
+	const bool heaterPredictive = (cc.hysteresisMode == HYSTERESIS_MODE_PID_ON);
+
+	bool coolerAllowed = (cs.fridgeSetting != INVALID_TEMP) && fridgeSensor->isConnected()
+		&& (tempControl.cooler != &defaultActuator);
+	bool heaterAllowed = (cs.beerSetting != INVALID_TEMP) && beerSensor->isConnected()
+		&& (tempControl.heater != &defaultActuator || (cc.lightAsHeater && tempControl.light != &defaultActuator));
+
+	if(!coolerAllowed){
+		independentCoolerOn = false;
+	}
+	else if(independentCoolerOn){
+		// already on: only stop once we reach the lower bound AND minCoolTime has elapsed
+		if(fridgeFast <= (cs.fridgeSetting + cc.coolingTargetLower)
+			&& ticks.timeSince(lastIndependentCoolOnTime) > cc.minCoolTime){
+			independentCoolerOn = false;
+		}
+	}
+	else if(fridgeFast > (cs.fridgeSetting + cc.coolingTargetUpper)
+		&& ticks.timeSince(lastCoolTime) > cc.minCoolIdleTime){
+		// off: only start once we cross the upper bound AND minCoolIdleTime has elapsed
+		independentCoolerOn = true;
+		lastIndependentCoolOnTime = secs;
+	}
+	if(independentCoolerOn) lastCoolTime = secs;
+
+	if(!heaterAllowed){
+		independentHeaterOn = false;
+		if(heaterPredictive){
+			resetIndependentHeatLearn();
+		}
+	}
+	else if(heaterPredictive){
+		updateIndependentPredictiveHeater(beerFast, beerSlow, secs);
+	}
+	else{
+		// Simple thermostat on beer (predictive Off)
+		resetIndependentHeatLearn();
+		if(independentHeaterOn){
+			uint16_t heatOnFor = ticks.timeSince(lastIndependentHeatOnTime);
+			bool atTarget = (beerFast >= (cs.beerSetting + cc.heatingTargetUpper));
+			bool maxHeatExpired = (cc.maxHeatTime != 0 && heatOnFor >= cc.maxHeatTime);
+			if((atTarget || maxHeatExpired) && heatOnFor > cc.minHeatTime){
+				independentHeaterOn = false;
+			}
+		}
+		else if(beerFast < (cs.beerSetting + cc.heatingTargetLower)
+			&& ticks.timeSince(lastHeatTime) > cc.minHeatIdleTime){
+			independentHeaterOn = true;
+			lastIndependentHeatOnTime = secs;
+		}
+	}
+	if(independentHeaterOn) lastHeatTime = secs;
+
+	if(independentCoolerOn){
+		// Cooler display priority when both; heater may still be in peak-wait.
+		state = COOLING;
+	}
+	else if(heaterPredictive && ihPhase == IH_PHASE_WAIT_PEAK){
+		lastIdleTime = secs;
+		state = WAITING_FOR_PEAK_DETECT;
+	}
+	else if(!independentHeaterOn){
+		lastIdleTime = secs;
+		state = IDLE;
+	}
+	else{
+		state = HEATING;
+	}
+}
+
+// Convert temp error / slope(°C/h) -> seconds. Returns 0 if slope too small.
+static uint16_t ihErrorToSeconds(temperature errAbs, temperature slope){
+	if(slope < IH_MIN_SLOPE || errAbs <= 0){
+		return 0;
+	}
+	int32_t sec = ((int32_t)errAbs * 3600L) / (int32_t)slope;
+	if(sec < 0){
+		return 0;
+	}
+	if(sec > 65535L){
+		return 65535;
+	}
+	return (uint16_t)sec;
+}
+
+// Deadband in °C → seconds via slope (consistent across fast/slow heaters).
+static uint16_t ihCorrDeadbandSec(temperature slope){
+	uint16_t s = ihErrorToSeconds(IH_CORR_DEADBAND_TEMP, slope);
+	if(s == 0){
+		return IH_CORR_DEADBAND_SEC_FALLBACK;
+	}
+	return s;
+}
+
+// Next-cycle correction: deadband in temperature (via slope→sec), not a fixed clamp.
+static int16_t ihCorrFromErrorSec(uint16_t errSec, bool overshoot, temperature slope){
+	if(errSec < ihCorrDeadbandSec(slope)){
+		return 0;
+	}
+	if(errSec > IH_CORR_ABS_MAX_SEC){
+		errSec = IH_CORR_ABS_MAX_SEC;
+	}
+	int16_t v = (int16_t)errSec;
+	return overshoot ? (int16_t)(-v) : v;
+}
+
+// Predicted peak if heater stops now: beer + slope×learned lag τ (not onFor).
+static temperature ihPeakIfStopNow(temperature beerSlow, temperature slope, uint16_t lagSec){
+	if(slope < IH_MIN_SLOPE || lagSec == 0){
+		return beerSlow;
+	}
+	temperature rise = (temperature)(((int32_t)slope * (int32_t)lagSec) / 3600L);
+	return beerSlow + rise;
+}
+
+// EMA-update τ from post-cut rise: tau = (peak - beerAtCut) / slopeAtCut.
+static void ihUpdateLearnedLag(uint16_t* learnedLagSec, temperature beerAtCut,
+	temperature slopeAtCut, temperature peak)
+{
+	if(beerAtCut == INVALID_TEMP || peak <= beerAtCut || slopeAtCut < IH_MIN_SLOPE){
+		return;
+	}
+	uint16_t tau = ihErrorToSeconds(peak - beerAtCut, slopeAtCut);
+	if(tau == 0){
+		return;
+	}
+	if(tau > IH_LAG_MAX_SEC){
+		tau = IH_LAG_MAX_SEC;
+	}
+	if(*learnedLagSec == 0){
+		*learnedLagSec = tau;
+	}
+	else{
+		// EMA: 3/4 old + 1/4 new
+		*learnedLagSec = (uint16_t)((((uint32_t)(*learnedLagSec) * 3UL) + (uint32_t)tau) / 4UL);
+	}
+}
+
+void TempControl::updateIndependentPredictiveHeater(temperature beerFast, temperature beerSlow,
+	uint16_t secs)
+{
+	const temperature U = cs.beerSetting + cc.heatingTargetUpper;
+	const bool beerTooWarm = (beerFast > (cs.beerSetting + 16));
+	doPosPeakDetect = false; // classic fridge/beer estimator path not used here
+
+	// --- WAIT_PEAK: heater off, track peak on slow beer, detect decline ---
+	if(ihPhase == IH_PHASE_WAIT_PEAK){
+		independentHeaterOn = false;
+		cv.estimatedPeak = ihPeakTemp;
+
+		if(ihPeakTemp == INVALID_TEMP || beerSlow > ihPeakTemp){
+			ihPeakTemp = beerSlow;
+			ihBelowPeakCount = 0;
+		}
+		else if(beerSlow < ihPeakTemp){
+			if(ihBelowPeakCount < 255){
+				ihBelowPeakCount++;
+			}
+		}
+		else{
+			ihBelowPeakCount = 0; // equal to peak: still at plateau
+		}
+
+		if(ihBelowPeakCount >= IH_PEAK_BELOW_N
+			|| ticks.timeSince(lastHeatTime) > HEAT_PEAK_DETECT_TIME){
+			// Peak broken (3s declining on slow filter), or peak-wait timeout
+			temperature peak = (ihPeakTemp != INVALID_TEMP) ? ihPeakTemp : beerSlow;
+			cv.posPeak = peak;
+			cv.posPeakEstimate = peak;
+
+			// Learn thermal lag τ from post-cut coast: (peak - beerAtCut) / slopeAtCut.
+			ihUpdateLearnedLag(&ihLearnedLagSec, ihBeerAtCut, ihSlopeAtCut, peak);
+
+			if(peak < U && ihExtraDone < IH_EXTRA_MAX_COUNT){
+				uint16_t extra = ihErrorToSeconds(U - peak, ihLastHeatSlope);
+				if(extra > IH_EXTRA_MAX_SEC){
+					extra = IH_EXTRA_MAX_SEC;
+				}
+				// Conservative top-up: only ~70% of slope-based seconds.
+				extra = (uint16_t)(((uint32_t)extra * IH_EXTRA_SCALE_NUM) / IH_EXTRA_SCALE_DEN);
+				// Skip tiny top-ups (temp deadband → seconds via slope).
+				if(extra >= ihCorrDeadbandSec(ihLastHeatSlope)){
+					ihExtraRemainSec = extra;
+					ihExtraDone++;
+					ihPhase = IH_PHASE_HEAT_EXTRA;
+					independentHeaterOn = true;
+					lastIndependentHeatOnTime = secs;
+					ihBelowPeakCount = 0;
+					ihPeakTemp = INVALID_TEMP;
+					return;
+				}
+			}
+
+			// Finish cycle: fold total on-time into learned. If peak overshot U,
+			// shorten learned immediately (time-to-U ≠ time-to-peak-at-U).
+			ihLearnedOnSec = ihCycleOnSec;
+			if(peak > U){
+				uint16_t overSec = ihErrorToSeconds(peak - U, ihLastHeatSlope);
+				if(overSec >= ihCorrDeadbandSec(ihLastHeatSlope)){
+					if(ihLearnedOnSec > overSec){
+						ihLearnedOnSec = (uint16_t)(ihLearnedOnSec - overSec);
+					}else{
+						ihLearnedOnSec = 1;
+					}
+				}
+				// Overshoot already folded into learned; do not also stack pendingCorr.
+				ihPendingCorrSec = 0;
+			}
+			else if(peak < U){
+				uint16_t underSec = ihErrorToSeconds(U - peak, ihLastHeatSlope);
+				ihPendingCorrSec = ihCorrFromErrorSec(underSec, false, ihLastHeatSlope);
+			}
+			else{
+				ihPendingCorrSec = 0;
+			}
+			ihPhase = IH_PHASE_IDLE;
+			ihExtraDone = 0;
+			ihBelowPeakCount = 0;
+			ihPeakTemp = INVALID_TEMP;
+			ihExtraRemainSec = 0;
+			cv.estimatedPeak = INVALID_TEMP;
+		}
+		return;
+	}
+
+	// --- HEAT_EXTRA: same-cycle top-up ---
+	if(ihPhase == IH_PHASE_HEAT_EXTRA){
+		independentHeaterOn = true;
+		temperature slope = beerSensor->readSlope();
+		if(slope > ihLastHeatSlope){
+			ihLastHeatSlope = slope;
+		}
+		uint16_t onFor = ticks.timeSince(lastIndependentHeatOnTime);
+		uint16_t totalOn = ihCycleOnSec + onFor;
+
+		uint16_t remain = (ihExtraRemainSec > onFor) ? (ihExtraRemainSec - onFor) : 0;
+		if(ihLastHeatSlope >= IH_MIN_SLOPE){
+			temperature overshootRemain = (temperature)(((int32_t)ihLastHeatSlope * (int32_t)remain) / 3600L);
+			cv.estimatedPeak = beerSlow + overshootRemain;
+		}
+		else{
+			cv.estimatedPeak = beerSlow;
+		}
+		temperature peakIfStopNow = ihPeakIfStopNow(beerSlow, ihLastHeatSlope, ihLearnedLagSec);
+
+		bool maxHeatExpired = (cc.maxHeatTime != 0 && totalOn >= cc.maxHeatTime);
+		bool safetyCut = (beerFast >= U);
+		// Early cut: beer + slope×τ >= U (τ=0 → no early cut until first peak).
+		bool earlyCut = (peakIfStopNow >= U && ihLearnedLagSec > 0
+			&& ihLastHeatSlope >= IH_MIN_SLOPE);
+		if(safetyCut || earlyCut || onFor >= ihExtraRemainSec || maxHeatExpired || beerTooWarm){
+			if(safetyCut && ihSafetyCutCount < 65535){
+				ihSafetyCutCount++;
+			}
+			ihCycleOnSec = totalOn;
+			independentHeaterOn = false;
+			ihBeerAtCut = beerSlow;
+			ihSlopeAtCut = ihLastHeatSlope;
+			ihPhase = IH_PHASE_WAIT_PEAK;
+			ihPeakTemp = beerSlow;
+			ihBelowPeakCount = 0;
+			ihExtraRemainSec = 0;
+			cv.posPeakEstimate = cv.estimatedPeak;
+		}
+		return;
+	}
+
+	// --- HEAT_MAIN ---
+	if(ihPhase == IH_PHASE_HEAT_MAIN){
+		independentHeaterOn = true;
+		temperature slope = beerSensor->readSlope();
+		if(slope > IH_MIN_SLOPE){
+			ihLastHeatSlope = slope;
+		}
+		uint16_t onFor = ticks.timeSince(lastIndependentHeatOnTime);
+
+		uint16_t remain = 0;
+		if(ihHeatCycle == 1){
+			// Thermostat: estimate remain loosely for chart
+			if(beerSlow < U && ihLastHeatSlope >= IH_MIN_SLOPE){
+				remain = ihErrorToSeconds(U - beerSlow, ihLastHeatSlope);
+			}
+		}
+		else if(ihPlannedOnSec > onFor){
+			remain = ihPlannedOnSec - onFor;
+		}
+		if(ihLastHeatSlope >= IH_MIN_SLOPE){
+			temperature overshootRemain = (temperature)(((int32_t)ihLastHeatSlope * (int32_t)remain) / 3600L);
+			cv.estimatedPeak = beerSlow + overshootRemain;
+		}
+		else{
+			cv.estimatedPeak = beerSlow;
+		}
+		temperature peakIfStopNow = ihPeakIfStopNow(beerSlow, ihLastHeatSlope, ihLearnedLagSec);
+
+		bool maxHeatExpired = (cc.maxHeatTime != 0 && onFor >= cc.maxHeatTime);
+		bool stop = false;
+		bool safetyCut = (beerFast >= U);
+		// Early cut once τ known: stop when beerSlow + slope×τ >= U.
+		bool earlyCut = (ihLearnedLagSec > 0 && ihLastHeatSlope >= IH_MIN_SLOPE
+			&& peakIfStopNow >= U);
+		if(safetyCut || beerTooWarm || earlyCut){
+			stop = true;
+		}
+		else if(ihHeatCycle == 1){
+			// Cycle 1: thermostat to U (minHeatTime still applies if not yet at U)
+			if(maxHeatExpired && onFor > cc.minHeatTime){
+				stop = true;
+			}
+		}
+		else{
+			// Cycle 2+: timed pulse
+			if((onFor >= ihPlannedOnSec) || maxHeatExpired){
+				stop = true;
+			}
+		}
+		if(stop){
+			if(safetyCut && ihSafetyCutCount < 65535){
+				ihSafetyCutCount++;
+			}
+			ihCycleOnSec = onFor;
+			independentHeaterOn = false;
+			ihBeerAtCut = beerSlow;
+			ihSlopeAtCut = ihLastHeatSlope;
+			ihPhase = IH_PHASE_WAIT_PEAK;
+			ihPeakTemp = beerSlow;
+			ihBelowPeakCount = 0;
+			cv.posPeakEstimate = cv.estimatedPeak;
+		}
+		return;
+	}
+
+	// --- IDLE: start new main heat when below lower band ---
+	independentHeaterOn = false;
+	cv.estimatedPeak = INVALID_TEMP;
+	if(beerFast < (cs.beerSetting + cc.heatingTargetLower)
+		&& ticks.timeSince(lastHeatTime) > cc.minHeatIdleTime){
+		ihHeatCycle++;
+		ihCycleOnSec = 0;
+		ihExtraDone = 0;
+		ihExtraRemainSec = 0;
+		ihBelowPeakCount = 0;
+		ihPeakTemp = INVALID_TEMP;
+		ihLastHeatSlope = 0;
+
+		if(ihHeatCycle == 1){
+			ihPlannedOnSec = 0; // thermostat
+			ihPendingCorrSec = 0;
+		}
+		else{
+			// Cycle 2+: learned ± pending correction (do not discard corr on cycle 2).
+			int32_t planned = (int32_t)ihLearnedOnSec + (int32_t)ihPendingCorrSec;
+			ihPendingCorrSec = 0;
+			if(planned < 1){
+				planned = 1;
+			}
+			if(planned > 65535L){
+				planned = 65535L;
+			}
+			ihPlannedOnSec = (uint16_t)planned;
+			if(ihPlannedOnSec < cc.minHeatTime && ihLearnedOnSec == 0){
+				ihPlannedOnSec = cc.minHeatTime;
+			}
+		}
+
+		ihPhase = IH_PHASE_HEAT_MAIN;
+		independentHeaterOn = true;
+		lastIndependentHeatOnTime = secs;
+	}
+}
+
+void TempControl::updateEstimatedPeak(uint16_t timeLimit, temperature estimator, uint16_t sinceIdle,
+	temperature currentTemp, bool cooling)
 {
 	uint16_t activeTime = min(timeLimit, sinceIdle); // heat or cool time in seconds
 	temperature estimatedOvershoot = ((long_temperature) estimator * activeTime)/3600; // overshoot estimator is in overshoot per hour
-	if(stateIsCooling()){
-		estimatedOvershoot = -estimatedOvershoot; // when cooling subtract overshoot from fridge temperature
+	if(cooling){
+		estimatedOvershoot = -estimatedOvershoot; // when cooling subtract overshoot from temperature
 	}
-	cv.estimatedPeak = fridgeSensor->readFastFiltered() + estimatedOvershoot;
+	cv.estimatedPeak = currentTemp + estimatedOvershoot;
 }
 
 void TempControl::updateOutputs(void) {
@@ -392,8 +870,10 @@ void TempControl::updateOutputs(void) {
 		return;
 
 	cameraLight.update();
-	bool heating = stateIsHeating();
-	bool cooling = stateIsCooling();
+	// In independent mode, `state` can only show one of heat/cool (display priority),
+	// so use the real independent per-actuator flags instead of stateIsHeating/Cooling.
+	bool heating = (cs.mode == MODE_INDEPENDENT) ? independentHeaterOn : stateIsHeating();
+	bool cooling = (cs.mode == MODE_INDEPENDENT) ? independentCoolerOn : stateIsCooling();
 	cooler->setActive(cooling);
 	heater->setActive(!cc.lightAsHeater && heating);
 	light->setActive(isDoorOpen() || (cc.lightAsHeater && heating) || cameraLightState.isActive());
@@ -402,6 +882,11 @@ void TempControl::updateOutputs(void) {
 
 
 void TempControl::detectPeaks(void){
+	// Independent predictive heater: peak wait/learn lives in updateIndependentPredictiveHeater.
+	if(cs.mode == MODE_INDEPENDENT){
+		return;
+	}
+
 	//detect peaks in fridge temperature to tune overshoot estimators
 	LOG_ID_TYPE detected = 0;
 	temperature peak, estimate, error, oldEstimator, newEstimator;
@@ -542,6 +1027,19 @@ void TempControl::storeConstants(eptr_t offset){
 
 void TempControl::loadConstants(eptr_t offset){
 	eepromAccess.readControlConstants(cc, offset, sizeof(ControlConstants));
+	bool valid = (cc.tempFormat == 'C' || cc.tempFormat == 'F')
+		&& cc.tempSettingMin < cc.tempSettingMax
+		&& cc.fridgeFastFilter <= 7 && cc.fridgeSlowFilter <= 7 && cc.fridgeSlopeFilter <= 7
+		&& cc.beerFastFilter <= 7 && cc.beerSlowFilter <= 7 && cc.beerSlopeFilter <= 7;
+	if(!valid){
+		loadDefaultConstants();
+		storeConstants(offset);
+		return;
+	}
+	// hysteresisMode = Independent predictive heater only (0/1)
+	if(cc.hysteresisMode > HYSTERESIS_MODE_PID_ON){
+		cc.hysteresisMode = HYSTERESIS_MODE_PID_OFF;
+	}
 	initFilters();
 }
 
@@ -617,6 +1115,181 @@ temperature TempControl::getFridgeSetting(void){
 	return cs.fridgeSetting;
 }
 
+bool TempControl::isIndependentPidOn(void){
+	return (cs.mode == MODE_INDEPENDENT && cc.hysteresisMode == HYSTERESIS_MODE_PID_ON);
+}
+
+static const char* ihPhaseName(uint8_t phase){
+	switch(phase){
+		case 0: return "IDLE";
+		case 1: return "HEAT_MAIN";
+		case 2: return "WAIT_PEAK";
+		case 3: return "HEAT_EXTRA";
+		default: return "?";
+	}
+}
+
+void TempControl::appendIndependentHeatDebug(String& out){
+	char tbuf[16];
+	out += "mode:";
+	out += cs.mode;
+	out += " hystMode:";
+	out += String((unsigned)cc.hysteresisMode);
+	out += " predictive:";
+	out += isIndependentPidOn() ? "1" : "0";
+	out += "\n";
+	out += "phase:";
+	out += ihPhaseName(ihPhase);
+	out += " (";
+	out += String((unsigned)ihPhase);
+	out += ")\n";
+	out += "heatCycle:";
+	out += String((unsigned)ihHeatCycle);
+	out += "\n";
+	out += "heaterOn:";
+	out += independentHeaterOn ? "1" : "0";
+	out += " coolerOn:";
+	out += independentCoolerOn ? "1" : "0";
+	out += "\n";
+	out += "learnedOnSec:";
+	out += String(ihLearnedOnSec);
+	out += "\n";
+	out += "plannedOnSec:";
+	out += String(ihPlannedOnSec);
+	out += "\n";
+	out += "cycleOnSec:";
+	out += String(ihCycleOnSec);
+	out += "\n";
+	out += "extraRemainSec:";
+	out += String(ihExtraRemainSec);
+	out += "\n";
+	out += "pendingCorrSec:";
+	out += String(ihPendingCorrSec);
+	out += "\n";
+	out += "learnedLagSec:";
+	out += String(ihLearnedLagSec);
+	out += "\n";
+	out += "extraDone:";
+	out += String((unsigned)ihExtraDone);
+	out += "\n";
+	out += "safetyCutCount:";
+	out += String(ihSafetyCutCount);
+	out += "\n";
+	out += "belowPeakCount:";
+	out += String((unsigned)ihBelowPeakCount);
+	out += "\n";
+	out += "lastHeatSlope_C_per_h:";
+	if(ihLastHeatSlope == 0){
+		out += "0";
+	}else{
+		out += tempDiffToString(tbuf, ihLastHeatSlope, 3, 12);
+	}
+	out += "\n";
+	out += "peakTemp:";
+	if(ihPeakTemp == INVALID_TEMP){
+		out += "na";
+	}else{
+		out += tempToString(tbuf, ihPeakTemp, 3, 12);
+	}
+	out += "\n";
+	out += "estPeak:";
+	if(cv.estimatedPeak == INVALID_TEMP){
+		out += "na";
+	}else{
+		out += tempToString(tbuf, cv.estimatedPeak, 3, 12);
+	}
+	out += "\n";
+	out += "beerFast:";
+	out += tempToString(tbuf, beerSensor->readFastFiltered(), 3, 12);
+	out += " beerSlow:";
+	out += tempToString(tbuf, beerSensor->readSlowFiltered(), 3, 12);
+	out += "\n";
+	out += "beerSet:";
+	out += tempToString(tbuf, cs.beerSetting, 3, 12);
+	out += " U(beerSet+heatTargetH):";
+	out += tempToString(tbuf, cs.beerSetting + cc.heatingTargetUpper, 3, 12);
+	out += "\n";
+	out += "heatTargetH:";
+	out += tempDiffToString(tbuf, cc.heatingTargetUpper, 3, 12);
+	out += " heatTargetL:";
+	out += tempDiffToString(tbuf, cc.heatingTargetLower, 3, 12);
+	out += "\n";
+	out += "minHeatTime:";
+	out += String(cc.minHeatTime);
+	out += " maxHeatTime:";
+	out += String(cc.maxHeatTime);
+	out += " minHeatIdleTime:";
+	out += String(cc.minHeatIdleTime);
+	out += "\n";
+}
+
+bool TempControl::applyIndependentHeatDebug(const char* key, const char* value){
+	if(!key || !value){
+		return false;
+	}
+	if(strcmp(key, "reset") == 0){
+		resetIndependentHeatLearn();
+		independentHeaterOn = false;
+		return true;
+	}
+	if(strcmp(key, "learned") == 0 || strcmp(key, "learnedOnSec") == 0){
+		ihLearnedOnSec = (uint16_t)atoi(value);
+		return true;
+	}
+	if(strcmp(key, "planned") == 0 || strcmp(key, "plannedOnSec") == 0){
+		ihPlannedOnSec = (uint16_t)atoi(value);
+		return true;
+	}
+	if(strcmp(key, "pending") == 0 || strcmp(key, "pendingCorrSec") == 0){
+		ihPendingCorrSec = (int16_t)atoi(value);
+		return true;
+	}
+	if(strcmp(key, "cycle") == 0 || strcmp(key, "heatCycle") == 0){
+		ihHeatCycle = (uint8_t)atoi(value);
+		return true;
+	}
+	if(strcmp(key, "hystMode") == 0 || strcmp(key, "predictive") == 0){
+		uint8_t v = (uint8_t)atoi(value);
+		cc.hysteresisMode = (v != 0) ? HYSTERESIS_MODE_PID_ON : HYSTERESIS_MODE_PID_OFF;
+		if(cc.hysteresisMode == HYSTERESIS_MODE_PID_OFF){
+			resetIndependentHeatLearn();
+		}
+		eepromManager.storeTempConstantsAndSettings();
+		return true;
+	}
+	if(strcmp(key, "maxHeatTime") == 0){
+		cc.maxHeatTime = (uint16_t)atoi(value);
+		eepromManager.storeTempConstantsAndSettings();
+		return true;
+	}
+	return false;
+}
+
+void TempControl::appendIndependentHeatDebugForm(String& html){
+	html += F("<form method=GET action=/pid>");
+	html += F("<label>learnedOnSec <input name=learned type=number value=");
+	html += String(ihLearnedOnSec);
+	html += F("> s</label>");
+	html += F("<label>plannedOnSec <input name=planned type=number value=");
+	html += String(ihPlannedOnSec);
+	html += F("> s</label>");
+	html += F("<label>pendingCorrSec <input name=pending type=number value=");
+	html += String(ihPendingCorrSec);
+	html += F("> s</label>");
+	html += F("<label>heatCycle <input name=cycle type=number min=0 max=255 value=");
+	html += String((unsigned)ihHeatCycle);
+	html += F("> #</label>");
+	html += F("<label>hystMode <input name=hystMode type=number min=0 max=1 value=");
+	html += String((unsigned)cc.hysteresisMode);
+	html += F("> 0/1</label>");
+	html += F("<label>maxHeatTime <input name=maxHeatTime type=number min=0 value=");
+	html += String(cc.maxHeatTime);
+	html += F("> s (0=unlimited)</label>");
+	html += F("<button type=submit>Apply</button>");
+	html += F("<button type=submit name=reset value=1>Reset learn</button>");
+	html += F("</form>");
+}
+
 void TempControl::setBeerTemp(temperature newTemp){
 	temperature oldBeerSetting = cs.beerSetting;
 	cs.beerSetting= newTemp;
@@ -625,10 +1298,11 @@ void TempControl::setBeerTemp(temperature newTemp){
 	}
 	updatePID();
 	updateState();
-	if(cs.mode != MODE_BEER_PROFILE || abs(storedBeerSetting - newTemp) > intToTempDiff(1)/4){
+	if((cs.mode != MODE_BEER_PROFILE && cs.mode != MODE_INDEPENDENT) || abs(storedBeerSetting - newTemp) > intToTempDiff(1)/4){
 		// more than 1/4 degree C difference with EEPROM
 		// Do not store settings every time in profile mode, because EEPROM has limited number of write cycles.
-		// A temperature ramp would cause a lot of writes
+		// A temperature ramp would cause a lot of writes. The same applies to independent mode,
+		// since the ramp there drives cs.beerSetting (the heater target) exactly the same way.
 		// If Raspberry Pi is connected, it will update the settings anyway. This is just a safety feature.
 		eepromManager.storeTempSettings();
 	}
@@ -662,11 +1336,11 @@ const ControlConstants TempControl::ccDefaults PROGMEM =
 	/* Kd	*/ intToTempDiff(-3)/2,	// -1.5
 	/* iMaxError */ intToTempDiff(5)/10,  // 0.5 deg
 
-	// Stay Idle when fridge temperature is in this range
-	/* idleRangeHigh */ intToTempDiff(1),	// +1 deg Celsius
-	/* idleRangeLow */ intToTempDiff(-1),	// -1 deg Celsius
+	// Classic idle-range start thresholds (fridge/beer/profile)
+	/* idleRangeHigh */ intToTempDiff(1),	// +1.0 deg Celsius
+	/* idleRangeLow */ intToTempDiff(-1),	// -1.0 deg Celsius
 
-	// when peak falls between these limits, its good.
+	// Peak estimator (classic) / Independent on/off bands
 	/* heatingTargetUpper */ intToTempDiff(3)/10,	// +0.3 deg Celsius
 	/* heatingTargetLower */ intToTempDiff(-2)/10,	// -0.2 deg Celsius
 	/* coolingTargetUpper */ intToTempDiff(2)/10,	// +0.2 deg Celsius
@@ -694,6 +1368,10 @@ const ControlConstants TempControl::ccDefaults PROGMEM =
     /* minCoolIdleTime */ 300,
     /* minHeatTime */  180,
     /* minHeatIdleTime */ 300,
-    /* mutexDeadTime */ 600
+    /* mutexDeadTime */ 600,
 #endif
+	/* hysteresisMode */ HYSTERESIS_MODE_PID_OFF,
+	/* maxHeatTime */ 0,
+	/* staleSensorSec */ 20,
+	/* oneWireRetryCount */ 2
 };

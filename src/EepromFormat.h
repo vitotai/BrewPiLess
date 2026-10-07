@@ -82,7 +82,7 @@ void eepromSizeCheck() {
  * Increment this value each time a change is made that is not backwardly-compatible.
  * Either the eeprom will be reset to defaults, or external code will re-establish the values via the piLink interface.
  */
-#define EEPROM_FORMAT_VERSION 4
+#define EEPROM_FORMAT_VERSION 10
 
 /*
  * Version history:
@@ -91,4 +91,16 @@ void eepromSizeCheck() {
  * rev 2: initial version dynaconfig
  * rev 3: deactivate flag in DeviceConfig, and additinoal padding to allow for some future expansion.
  * rev 4: added padding at start and reduced device count to 16. We can always increase later.
+ * rev 5: removed ControlConstants.idleRangeHigh/idleRangeLow. Classic start hysteresis was
+ *        temporarily driven by heatingTargetLower/coolingTargetUpper. On FS-backed targets
+ *        (ESP32) ControlConstants was migrated in place (see ControlConstants_v5).
+ * rev 6: restored idleRangeHigh/idleRangeLow; hysteresisMode byte added (initially
+ *        used as classic start-method select). Classic modes always use idleRange.
+ * rev 7: hysteresisMode meaning = Independent predictive heater only (0=off, 1=on).
+ *        Classic start-method radio retired. Existing hystMode values treated as
+ *        Independent predictive flag (default off on migrate from v1/v5).
+ *        (Heater: beer time+slope on-time learner; not fridge cascade / heatEst.)
+ * rev 8: added ControlConstants.maxHeatTime (seconds; 0 = unlimited heater on-time).
+ * rev 9: added ControlConstants.staleSensorSec (seconds to hold last temp on brief sensor disconnect; default 20).
+ * rev 10: added ControlConstants.oneWireRetryCount (additional OneWire read retries; default 2).
  */

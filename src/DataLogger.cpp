@@ -85,6 +85,8 @@ void DataLogger::sendData(void)
 
 	HTTPClient _http;
   	_http.setUserAgent(F("ESP8266"));
+	_http.setConnectTimeout(1000);
+	_http.setTimeout(1000);
 
 	DBG_PRINTF("[HTTP] %d...\n",_loggingInfo->method);
 	DBG_PRINTF("Content-Type:\"%s\"\n", _loggingInfo->contentType);
