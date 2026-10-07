@@ -170,6 +170,7 @@ void TempControl::resetIndependentHeatLearn(void){
 
 void updateSensor(TempSensor* sensor) {
 	sensor->update();
+	sensor->retryInitIfNeeded();
 	if(!sensor->isConnected()) {
 		sensor->init();
 	}
@@ -182,9 +183,23 @@ void TempControl::updateTemperatures(void){
 
 	// Read ambient sensor to keep the value up to date. If no sensor is connected, this does nothing.
 	// This prevents a delay in serial response because the value is not up to date.
-	if(ambientSensor->read() == TEMP_SENSOR_DISCONNECTED){
+	temperature ambientTemp = ambientSensor->read();
+	if(ambientTemp == TEMP_SENSOR_DISCONNECTED){
 		ambientSensor->init(); // try to reconnect a disconnected, but installed sensor
 	}
+	DeviceManager::startOneWireConversions();
+
+#if SerialDebug
+	char beerTemp[12];
+	char fridgeTemp[12];
+	char ambientTempString[12];
+	tempToString(beerTemp, beerSensor->readRaw(), 2, sizeof(beerTemp));
+	tempToString(fridgeTemp, fridgeSensor->readRaw(), 2, sizeof(fridgeTemp));
+	tempToString(ambientTempString, ambientTemp, 2, sizeof(ambientTempString));
+	DBG_PRINTF("TEMP Beer:%s(%d) Fridge:%s(%d) Ambient:%s(%d)\n",
+		beerTemp, beerSensor->isConnected(true), fridgeTemp, fridgeSensor->isConnected(true),
+		ambientTempString, ambientSensor->isConnected());
+#endif
 }
 
 void TempControl::updatePID(void){
@@ -1012,6 +1027,15 @@ void TempControl::storeConstants(eptr_t offset){
 
 void TempControl::loadConstants(eptr_t offset){
 	eepromAccess.readControlConstants(cc, offset, sizeof(ControlConstants));
+	bool valid = (cc.tempFormat == 'C' || cc.tempFormat == 'F')
+		&& cc.tempSettingMin < cc.tempSettingMax
+		&& cc.fridgeFastFilter <= 7 && cc.fridgeSlowFilter <= 7 && cc.fridgeSlopeFilter <= 7
+		&& cc.beerFastFilter <= 7 && cc.beerSlowFilter <= 7 && cc.beerSlopeFilter <= 7;
+	if(!valid){
+		loadDefaultConstants();
+		storeConstants(offset);
+		return;
+	}
 	// hysteresisMode = Independent predictive heater only (0/1)
 	if(cc.hysteresisMode > HYSTERESIS_MODE_PID_ON){
 		cc.hysteresisMode = HYSTERESIS_MODE_PID_OFF;
@@ -1347,5 +1371,7 @@ const ControlConstants TempControl::ccDefaults PROGMEM =
     /* mutexDeadTime */ 600,
 #endif
 	/* hysteresisMode */ HYSTERESIS_MODE_PID_OFF,
-	/* maxHeatTime */ 0
+	/* maxHeatTime */ 0,
+	/* staleSensorSec */ 20,
+	/* oneWireRetryCount */ 2
 };

@@ -7,6 +7,7 @@
 #endif
 
 #include "Config.h"
+#include "BPLSettings.h"
 #include "DuckDNSUpdater.h"
 
 // Concatenated once by the preprocessor at compile time, so no runtime
@@ -22,7 +23,12 @@ void DuckDNSUpdaterClass::update(void)
 {
 	// Unsigned subtraction: still correct once millis() wraps around
 	// after ~49 days, no separate overflow-handling branch needed.
-	if((unsigned long)(millis() - _lastUpdateMillis) < UPDATE_INTERVAL_MS){
+	SystemConfiguration *settings = theSettings.systemConfiguration();
+	if(!settings->duckdnsEnabled || settings->duckdnsInterval == 0){
+		return;
+	}
+	unsigned long interval = (unsigned long)settings->duckdnsInterval * 60UL * 1000UL;
+	if((unsigned long)(millis() - _lastUpdateMillis) < interval){
 		return;
 	}
 	_lastUpdateMillis = millis();
@@ -32,7 +38,8 @@ void DuckDNSUpdaterClass::update(void)
 
 void DuckDNSUpdaterClass::sendUpdateRequest(void)
 {
-	if(DUCKDNS_DOMAIN[0] == '\0' || DUCKDNS_TOKEN[0] == '\0'){
+	SystemConfiguration *settings = theSettings.systemConfiguration();
+	if(settings->duckdnsDomain[0] == '\0' || settings->duckdnsToken[0] == '\0'){
 		return; // not configured, stay silent
 	}
 
@@ -43,13 +50,17 @@ void DuckDNSUpdaterClass::sendUpdateRequest(void)
 
 	WiFiClient wifiClient;
 	HTTPClient http;
+	String url = String("http://www.duckdns.org/update?domains=") + settings->duckdnsDomain
+		+ "&token=" + settings->duckdnsToken + "&ip=";
 
-	if(!http.begin(wifiClient, DUCKDNS_UPDATE_URL)){
+	if(!http.begin(wifiClient, url)){
 		DBG_PRINTF("DuckDNS: http.begin() failed\n");
 		http.end();
 		return;
 	}
 
+	http.setConnectTimeout(1000);
+	http.setTimeout(1000);
 	int code = http.GET();
 	if(code > 0){
 		DBG_PRINTF("DuckDNS: update result code=%d\n", code);

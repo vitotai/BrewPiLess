@@ -19,8 +19,17 @@
 
 #include "Brewpi.h"
 #include "TempSensor.h"
+#include "TempControl.h"
 #include "PiLink.h"
 #include "Ticks.h"
+
+static uint8_t sensorDisconnectHoldSec(void) {
+	uint8_t hold = tempControl.cc.staleSensorSec;
+	if (hold > 127) {
+		return 127;
+	}
+	return hold;
+}
 
 void TempSensor::init()
 {
@@ -38,6 +47,21 @@ void TempSensor::init()
 	}
 }
 
+void TempSensor::retryInitIfNeeded()
+{
+	static const uint32_t INIT_RETRY_INTERVAL_MS = 5000;
+	if(!_sensor || _sensor->isConnected()) {
+		return;
+	}
+
+	uint32_t now = millis();
+	if((uint32_t)(now - _lastInitAttemptMillis) < INIT_RETRY_INTERVAL_MS) {
+		return;
+	}
+	_lastInitAttemptMillis = now;
+	_sensor->init();
+}
+
 #if 1 // FridgeSensorFallBack
 bool TempSensor::isConnected(bool physical)
 {
@@ -50,8 +74,9 @@ bool TempSensor::isConnected(bool physical)
 	if(_sensor && _sensor->isConnected()){
 		return true;
 	}
+	uint8_t holdSec = sensorDisconnectHoldSec();
 	// Brief disconnect: keep last filter sample and stay "connected" for control.
-	if(failedReadCount >= 0 && failedReadCount < SENSOR_DISCONNECT_HOLD_SEC){
+	if(holdSec > 0 && failedReadCount >= 0 && failedReadCount < (int8_t)holdSec){
 		return true;
 	}
 	return false;
@@ -68,6 +93,7 @@ void TempSensor::update()
 	}else if(_backupSensor && (temp=_backupSensor->read())!=TEMP_SENSOR_DISCONNECTED ){
 		_useBackupSensor = true;
 	}else{
+		rawTemperature = INVALID_TEMP;
 		// Keep last filter outputs; failedReadCount drives hold window in isConnected().
 		if(failedReadCount < 0){
 			failedReadCount = 1;
@@ -78,6 +104,7 @@ void TempSensor::update()
 	}
 	#else
 	if (!_sensor || (temp=_sensor->read())==TEMP_SENSOR_DISCONNECTED) {
+		rawTemperature = INVALID_TEMP;
 		if(failedReadCount < 0){
 			failedReadCount = 1;
 		}else if(failedReadCount < 127){
@@ -88,6 +115,7 @@ void TempSensor::update()
 	#endif
 	
 	failedReadCount = 0;
+	rawTemperature = temp;
 	fastFilter.add(temp);
 	slowFilter.add(temp);
 

@@ -82,7 +82,7 @@ void eepromSizeCheck() {
  * Increment this value each time a change is made that is not backwardly-compatible.
  * Either the eeprom will be reset to defaults, or external code will re-establish the values via the piLink interface.
  */
-#define EEPROM_FORMAT_VERSION 8
+#define EEPROM_FORMAT_VERSION 10
 
 /*
  * Version history:
@@ -101,4 +101,6 @@ void eepromSizeCheck() {
  *        Independent predictive flag (default off on migrate from v1/v5).
  *        (Heater: beer time+slope on-time learner; not fridge cascade / heatEst.)
  * rev 8: added ControlConstants.maxHeatTime (seconds; 0 = unlimited heater on-time).
+ * rev 9: added ControlConstants.staleSensorSec (seconds to hold last temp on brief sensor disconnect; default 20).
+ * rev 10: added ControlConstants.oneWireRetryCount (additional OneWire read retries; default 2).
  */

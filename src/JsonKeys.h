@@ -67,6 +67,8 @@ static const char JSONKEY_minCoolTime[] PROGMEM = "minCoolTime";
 static const char JSONKEY_minCoolIdleTime[] PROGMEM = "minCoolIdleTime";
 static const char JSONKEY_minHeatTime[] PROGMEM = "minHeatTime";
 static const char JSONKEY_maxHeatTime[] PROGMEM = "maxHeatTime";
+static const char JSONKEY_staleSensorSec[] PROGMEM = "staleSensorSec";
+static const char JSONKEY_oneWireRetryCount[] PROGMEM = "oneWireRetryCount";
 static const char JSONKEY_minHeatIdleTime[] PROGMEM = "minHeatIdleTime";
 static const char JSONKEY_mutexDeadTime[] PROGMEM = "deadTime";
 #endif

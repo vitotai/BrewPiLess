@@ -672,6 +672,8 @@ const PiLink::JsonOutput PiLink::jsonOutputCCMap[] PROGMEM = {
 	JSON_OUTPUT_CC_MAP(minCoolIdleTime, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(minHeatTime, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(maxHeatTime, JOCC_UINT16),
+	JSON_OUTPUT_CC_MAP(staleSensorSec, JOCC_UINT8),
+	JSON_OUTPUT_CC_MAP(oneWireRetryCount, JOCC_UINT8),
 	JSON_OUTPUT_CC_MAP(minHeatIdleTime, JOCC_UINT16),
 	JSON_OUTPUT_CC_MAP(mutexDeadTime, JOCC_UINT16),
 #endif
@@ -1012,6 +1014,22 @@ void setUint8(const char* value, uint8_t* target) {
 	eepromManager.storeTempConstantsAndSettings();
 }
 
+void setStaleSensorSec(const char* value, uint8_t* target) {
+	int v = atoi(value);
+	if (v < 0) v = 0;
+	if (v > 120) v = 120;
+	*target = (uint8_t) v;
+	eepromManager.storeTempConstantsAndSettings();
+}
+
+void setOneWireRetryCount(const char* value, uint8_t* target) {
+	int v = atoi(value);
+	if (v < 0) v = 0;
+	if (v > 20) v = 20;
+	*target = (uint8_t) v;
+	eepromManager.storeTempConstantsAndSettings();
+}
+
 
 #define JSON_CONVERT(jsonKey, target, fn) { jsonKey, target, (JsonParserHandlerFn)&fn }
 
@@ -1037,6 +1055,8 @@ const PiLink::JsonParserConvert PiLink::jsonParserConverters[] PROGMEM = {
 	JSON_CONVERT(JSONKEY_minCoolIdleTime, &tempControl.cc.minCoolIdleTime, setUint16),
 	JSON_CONVERT(JSONKEY_minHeatTime, &tempControl.cc.minHeatTime, setUint16),
 	JSON_CONVERT(JSONKEY_maxHeatTime, &tempControl.cc.maxHeatTime, setUint16),
+	JSON_CONVERT(JSONKEY_staleSensorSec, &tempControl.cc.staleSensorSec, setStaleSensorSec),
+	JSON_CONVERT(JSONKEY_oneWireRetryCount, &tempControl.cc.oneWireRetryCount, setOneWireRetryCount),
 	JSON_CONVERT(JSONKEY_minHeatIdleTime, &tempControl.cc.minHeatIdleTime, setUint16),
 	JSON_CONVERT(JSONKEY_mutexDeadTime, &tempControl.cc.mutexDeadTime, setUint16),
 #endif

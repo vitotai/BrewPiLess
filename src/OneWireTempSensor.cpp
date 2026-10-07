@@ -26,6 +26,7 @@
 #include "PiLink.h"
 #include "Ticks.h"
 #include "TemperatureFormats.h"
+#include "TempControl.h"
 
 OneWireTempSensor::~OneWireTempSensor(){
 	delete sensor;
@@ -102,13 +103,15 @@ temperature OneWireTempSensor::read(){
 		return TEMP_SENSOR_DISCONNECTED;
 
 	temperature temp = readAndConstrainTemp();
-	requestConversion();
 	return temp;
 }
 
 temperature OneWireTempSensor::readAndConstrainTemp()
 {
 	temperature temp = sensor->getTempRaw(sensorAddress);
+	for(uint8_t retry=0; temp==DEVICE_DISCONNECTED && retry<tempControl.cc.oneWireRetryCount; retry++){
+		temp = sensor->getTempRaw(sensorAddress);
+	}
 	if(temp == DEVICE_DISCONNECTED){
 		setConnected(false);
 		return TEMP_SENSOR_DISCONNECTED;

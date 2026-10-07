@@ -48,6 +48,8 @@ class TempSensor {
 	public:
 	TempSensor(TempSensorType sensorType, BasicTempSensor* sensor =NULL)  {
 		updateCounter = 255; // first update for slope filter after (255-4s)
+		_lastInitAttemptMillis = 0;
+		rawTemperature = INVALID_TEMP;
 		setSensor(sensor);
 		#if 1 // FridgeSensorFallBack
 		_useBackupSensor=false;
@@ -57,6 +59,7 @@ class TempSensor {
 
 	 void setSensor(BasicTempSensor* sensor) {
 		 _sensor = sensor;
+		 _lastInitAttemptMillis = 0;
 		 failedReadCount = -1;
 	 }
 	#if 1 //FridgeSensorFallBack
@@ -69,6 +72,7 @@ class TempSensor {
 	bool hasSlopeFilter() { return true; }
 
 	void init();
+	void retryInitIfNeeded();
 	
 	#if 1 // FridgeSensorFallBack
 	bool isConnected(bool physical=false);
@@ -78,6 +82,7 @@ class TempSensor {
 	void update();
 
 	temperature readFastFiltered(void);
+	temperature readRaw(void) { return rawTemperature; }
 
 	temperature readSlowFiltered(void){
 		return slowFilter.readOutput(); //return most recent unfiltered value
@@ -97,9 +102,6 @@ class TempSensor {
 
 	BasicTempSensor& sensor();
 
-	// Seconds of failed reads to keep last filter value / report connected (≈1 Hz update).
-	static const int8_t SENSOR_DISCONNECT_HOLD_SEC = 20;
-
 	private:
 	BasicTempSensor* _sensor;
 	TempSensorFilter fastFilter;
@@ -111,9 +113,11 @@ class TempSensor {
 	BasicTempSensor* _backupSensor;
 	bool _useBackupSensor;
 	#endif
+	uint32_t _lastInitAttemptMillis;
+	temperature rawTemperature;
 	// An indication of how stale the data is in the filters. Each time a read fails, this value is incremented.
 	// It's used to reset the filters after a large enough disconnect delay, and on the first init.
-	// During SENSOR_DISCONNECT_HOLD_SEC failed reads, filters keep the last good value and
+	// During staleSensorSec failed reads, filters keep the last good value and
 	// isConnected() still returns true so heat/cool continue.
 	int8_t failedReadCount;		// -1 for uninitialized, >=0 afterwards.
 

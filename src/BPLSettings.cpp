@@ -24,6 +24,7 @@ BPLSettings theSettings;
 
 #define BPLSettingFileName "/bpl.cfg"
 
+static void stringNcopy(char *dst,const char *src,size_t n);
 
 #ifndef WL_MAC_ADDR_LENGTH
 #define WL_MAC_ADDR_LENGTH 6
@@ -55,6 +56,16 @@ void BPLSettings::load()
 	}
 	f.read((uint8_t*)&_data,sizeof(_data));
 	f.close();
+	// Older config files end before the DuckDNS fields were added.
+	if(_data.syscfg.duckdnsDomain[0] == '\0'
+		&& _data.syscfg.duckdnsToken[0] == '\0'
+		&& _data.syscfg.duckdnsInterval == 0){
+		stringNcopy(_data.syscfg.duckdnsDomain, DEFAULT_DUCKDNS_DOMAIN, sizeof(_data.syscfg.duckdnsDomain));
+		stringNcopy(_data.syscfg.duckdnsToken, DEFAULT_DUCKDNS_TOKEN, sizeof(_data.syscfg.duckdnsToken));
+		_data.syscfg.duckdnsInterval = 30;
+		_data.syscfg.duckdnsEnabled = true;
+		save();
+	}
 	// check invalid value, and correct
 	// sanity check
 
@@ -155,6 +166,10 @@ bool BPLSettings::autoCapSettingsSanity(void){ return true;}
 #define KeyDisplayMode "dis"
 
 #define KeyGlycol "glycol"
+#define KeyDuckdnsDomain "duckdnsDomain"
+#define KeyDuckdnsToken "duckdnsToken"
+#define KeyDuckdnsInterval "duckdnsInterval"
+#define KeyDuckdnsEnabled "duckdnsEnabled"
 
 bool BPLSettings::systemConfigurationSanity(void){
 	SystemConfiguration *cfg=  systemConfiguration();
@@ -203,6 +218,10 @@ void BPLSettings::defaultSystemConfiguration(void){
     syscfg->dns = (uint32_t) IPAddress(0,0,0,0);
     syscfg->glycolChilling = 0;
 	syscfg->securedAp = false;
+	stringNcopy(syscfg->duckdnsDomain, DEFAULT_DUCKDNS_DOMAIN, sizeof(syscfg->duckdnsDomain));
+	stringNcopy(syscfg->duckdnsToken, DEFAULT_DUCKDNS_TOKEN, sizeof(syscfg->duckdnsToken));
+	syscfg->duckdnsInterval = 30;
+	syscfg->duckdnsEnabled = true;
 	#if TWOFACED_LCD
 	syscfg->displayMode = 0;
 	#endif
@@ -212,7 +231,7 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
 
 	SystemConfiguration *syscfg=&_data.syscfg;
 
-    const int BUFFER_SIZE = JSON_OBJECT_SIZE(15);
+	const int BUFFER_SIZE = JSON_OBJECT_SIZE(19);
 	
 	#if ARDUINOJSON_VERSION_MAJOR == 6
 	DynamicJsonDocument root(BUFFER_SIZE +json.length());
@@ -243,6 +262,13 @@ bool BPLSettings::dejsonSystemConfiguration(String json){
 		syscfg->displayMode = root[KeyDisplayMode];
 		#endif
         syscfg->glycolChilling=root[KeyGlycol];
+		if(root.containsKey(KeyDuckdnsDomain)) stringNcopy(syscfg->duckdnsDomain,root[KeyDuckdnsDomain],sizeof(syscfg->duckdnsDomain));
+		if(root.containsKey(KeyDuckdnsToken)) stringNcopy(syscfg->duckdnsToken,root[KeyDuckdnsToken],sizeof(syscfg->duckdnsToken));
+		if(root.containsKey(KeyDuckdnsInterval)){
+			uint32_t interval = root[KeyDuckdnsInterval];
+			syscfg->duckdnsInterval = (interval > 1440) ? 1440 : (uint16_t)interval;
+		}
+		if(root.containsKey(KeyDuckdnsEnabled)) syscfg->duckdnsEnabled=root[KeyDuckdnsEnabled];
 		return true;
     }
 	return false;
@@ -273,6 +299,10 @@ String BPLSettings::jsonSystemConfiguration(void){
     root[KeyNetmask]= IPAddress(syscfg->netmask).toString();
 	root[KeyDNS] = IPAddress(syscfg->dns).toString();
 	root[KeyGlycol] = syscfg->glycolChilling;
+	root[KeyDuckdnsDomain] = syscfg->duckdnsDomain;
+	root[KeyDuckdnsToken] = syscfg->duckdnsToken;
+	root[KeyDuckdnsInterval] = syscfg->duckdnsInterval;
+	root[KeyDuckdnsEnabled] = syscfg->duckdnsEnabled;
 	root[KeySecuredAP] = syscfg->securedAp;
 	#if TWOFACED_LCD		
 	root[KeyDisplayMode] = syscfg->displayMode;

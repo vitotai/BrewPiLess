@@ -57,6 +57,91 @@ struct ControlConstants {
 	uint8_t hysteresisMode;
 	// Max heater on-time in seconds; 0 = unlimited. After expiry, heater waits minHeatIdleTime.
 	uint16_t maxHeatTime;
+	// Seconds to keep last good temp / report connected after failed reads (~1 Hz). 0 = no hold.
+	uint8_t staleSensorSec;
+	// Number of additional attempts after a failed OneWire read. 0 = no retry.
+	uint8_t oneWireRetryCount;
+};
+
+/*
+ * Layout used by EEPROM_FORMAT_VERSION 8 (maxHeatTime present, no staleSensorSec).
+ * Kept ONLY for in-place migration to v9.
+ */
+struct ControlConstants_v8 {
+	char tempFormat;
+	temperature tempSettingMin;
+	temperature tempSettingMax;
+	temperature Kp;
+	temperature Ki;
+	temperature Kd;
+	temperature iMaxError;
+	temperature idleRangeHigh;
+	temperature idleRangeLow;
+	temperature heatingTargetUpper;
+	temperature heatingTargetLower;
+	temperature coolingTargetUpper;
+	temperature coolingTargetLower;
+	uint16_t maxHeatTimeForEstimate;
+	uint16_t maxCoolTimeForEstimate;
+	uint8_t fridgeFastFilter;
+	uint8_t fridgeSlowFilter;
+	uint8_t fridgeSlopeFilter;
+	uint8_t beerFastFilter;
+	uint8_t beerSlowFilter;
+	uint8_t beerSlopeFilter;
+	uint8_t lightAsHeater;
+	uint8_t rotaryHalfSteps;
+	temperature pidMax;
+#if 1 // SettableMinimumCoolTime
+	uint16_t minCoolTime;
+	uint16_t minCoolIdleTime;
+	uint16_t minHeatTime;
+	uint16_t minHeatIdleTime;
+	uint16_t mutexDeadTime;
+#endif
+	uint8_t hysteresisMode;
+	uint16_t maxHeatTime;
+};
+
+/*
+ * Layout used by EEPROM_FORMAT_VERSION 9 (staleSensorSec present, no OneWire retry count).
+ * Kept ONLY for in-place migration to v10.
+ */
+struct ControlConstants_v9 {
+	char tempFormat;
+	temperature tempSettingMin;
+	temperature tempSettingMax;
+	temperature Kp;
+	temperature Ki;
+	temperature Kd;
+	temperature iMaxError;
+	temperature idleRangeHigh;
+	temperature idleRangeLow;
+	temperature heatingTargetUpper;
+	temperature heatingTargetLower;
+	temperature coolingTargetUpper;
+	temperature coolingTargetLower;
+	uint16_t maxHeatTimeForEstimate;
+	uint16_t maxCoolTimeForEstimate;
+	uint8_t fridgeFastFilter;
+	uint8_t fridgeSlowFilter;
+	uint8_t fridgeSlopeFilter;
+	uint8_t beerFastFilter;
+	uint8_t beerSlowFilter;
+	uint8_t beerSlopeFilter;
+	uint8_t lightAsHeater;
+	uint8_t rotaryHalfSteps;
+	temperature pidMax;
+#if 1 // SettableMinimumCoolTime
+	uint16_t minCoolTime;
+	uint16_t minCoolIdleTime;
+	uint16_t minHeatTime;
+	uint16_t minHeatIdleTime;
+	uint16_t mutexDeadTime;
+#endif
+	uint8_t hysteresisMode;
+	uint16_t maxHeatTime;
+	uint8_t staleSensorSec;
 };
 
 /*
@@ -210,6 +295,8 @@ static inline void migrateControlConstantsFromV1(const ControlConstants_v1& lega
 #endif
 	target.hysteresisMode = HYSTERESIS_MODE_PID_OFF;
 	target.maxHeatTime = 0;
+	target.staleSensorSec = 20;
+	target.oneWireRetryCount = 2;
 }
 
 /*
@@ -250,6 +337,8 @@ static inline void migrateControlConstantsFromV5(const ControlConstants_v5& lega
 #endif
 	target.hysteresisMode = HYSTERESIS_MODE_PID_OFF;
 	target.maxHeatTime = 0;
+	target.staleSensorSec = 20;
+	target.oneWireRetryCount = 2;
 }
 
 static inline void migrateControlConstantsFromV7(const ControlConstants_v7& legacy, ControlConstants& target) {
@@ -286,9 +375,85 @@ static inline void migrateControlConstantsFromV7(const ControlConstants_v7& lega
 #endif
 	target.hysteresisMode = legacy.hysteresisMode;
 	target.maxHeatTime = 0;
+	target.staleSensorSec = 20;
+	target.oneWireRetryCount = 2;
 }
 
+static inline void migrateControlConstantsFromV8(const ControlConstants_v8& legacy, ControlConstants& target) {
+	target.tempFormat = legacy.tempFormat;
+	target.tempSettingMin = legacy.tempSettingMin;
+	target.tempSettingMax = legacy.tempSettingMax;
+	target.Kp = legacy.Kp;
+	target.Ki = legacy.Ki;
+	target.Kd = legacy.Kd;
+	target.iMaxError = legacy.iMaxError;
+	target.idleRangeHigh = legacy.idleRangeHigh;
+	target.idleRangeLow = legacy.idleRangeLow;
+	target.heatingTargetUpper = legacy.heatingTargetUpper;
+	target.heatingTargetLower = legacy.heatingTargetLower;
+	target.coolingTargetUpper = legacy.coolingTargetUpper;
+	target.coolingTargetLower = legacy.coolingTargetLower;
+	target.maxHeatTimeForEstimate = legacy.maxHeatTimeForEstimate;
+	target.maxCoolTimeForEstimate = legacy.maxCoolTimeForEstimate;
+	target.fridgeFastFilter = legacy.fridgeFastFilter;
+	target.fridgeSlowFilter = legacy.fridgeSlowFilter;
+	target.fridgeSlopeFilter = legacy.fridgeSlopeFilter;
+	target.beerFastFilter = legacy.beerFastFilter;
+	target.beerSlowFilter = legacy.beerSlowFilter;
+	target.beerSlopeFilter = legacy.beerSlopeFilter;
+	target.lightAsHeater = legacy.lightAsHeater;
+	target.rotaryHalfSteps = legacy.rotaryHalfSteps;
+	target.pidMax = legacy.pidMax;
+#if 1 // SettableMinimumCoolTime
+	target.minCoolTime = legacy.minCoolTime;
+	target.minCoolIdleTime = legacy.minCoolIdleTime;
+	target.minHeatTime = legacy.minHeatTime;
+	target.minHeatIdleTime = legacy.minHeatIdleTime;
+	target.mutexDeadTime = legacy.mutexDeadTime;
+#endif
+	target.hysteresisMode = legacy.hysteresisMode;
+	target.maxHeatTime = legacy.maxHeatTime;
+	target.staleSensorSec = 20;
+	target.oneWireRetryCount = 2;
+}
 
+static inline void migrateControlConstantsFromV9(const ControlConstants_v9& legacy, ControlConstants& target) {
+	target.tempFormat = legacy.tempFormat;
+	target.tempSettingMin = legacy.tempSettingMin;
+	target.tempSettingMax = legacy.tempSettingMax;
+	target.Kp = legacy.Kp;
+	target.Ki = legacy.Ki;
+	target.Kd = legacy.Kd;
+	target.iMaxError = legacy.iMaxError;
+	target.idleRangeHigh = legacy.idleRangeHigh;
+	target.idleRangeLow = legacy.idleRangeLow;
+	target.heatingTargetUpper = legacy.heatingTargetUpper;
+	target.heatingTargetLower = legacy.heatingTargetLower;
+	target.coolingTargetUpper = legacy.coolingTargetUpper;
+	target.coolingTargetLower = legacy.coolingTargetLower;
+	target.maxHeatTimeForEstimate = legacy.maxHeatTimeForEstimate;
+	target.maxCoolTimeForEstimate = legacy.maxCoolTimeForEstimate;
+	target.fridgeFastFilter = legacy.fridgeFastFilter;
+	target.fridgeSlowFilter = legacy.fridgeSlowFilter;
+	target.fridgeSlopeFilter = legacy.fridgeSlopeFilter;
+	target.beerFastFilter = legacy.beerFastFilter;
+	target.beerSlowFilter = legacy.beerSlowFilter;
+	target.beerSlopeFilter = legacy.beerSlopeFilter;
+	target.lightAsHeater = legacy.lightAsHeater;
+	target.rotaryHalfSteps = legacy.rotaryHalfSteps;
+	target.pidMax = legacy.pidMax;
+#if 1 // SettableMinimumCoolTime
+	target.minCoolTime = legacy.minCoolTime;
+	target.minCoolIdleTime = legacy.minCoolIdleTime;
+	target.minHeatTime = legacy.minHeatTime;
+	target.minHeatIdleTime = legacy.minHeatIdleTime;
+	target.mutexDeadTime = legacy.mutexDeadTime;
+#endif
+	target.hysteresisMode = legacy.hysteresisMode;
+	target.maxHeatTime = legacy.maxHeatTime;
+	target.staleSensorSec = legacy.staleSensorSec;
+	target.oneWireRetryCount = 2;
+}
 
 
 

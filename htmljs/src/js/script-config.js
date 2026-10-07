@@ -270,7 +270,7 @@ function cResponse(cc){
         if(el) el.value = cc[key];
     });
 }
-var testConfig={"tempFormat":"C","tempSetMin": 1.0,"tempSetMax": 30.0,"pidMax": 10.000,"Kp": 5.000,"Ki": 0.250,"Kd":-1.500,"iMaxErr": 0.500,"idleRangeH": 1.000,"idleRangeL":-1.000,"heatTargetH": 0.299,"heatTargetL":-0.199,"coolTargetH": 0.199,"coolTargetL":-0.299,"maxHeatTimeForEst":600,"maxCoolTimeForEst":1200,"minCoolTime":180,"minCoolIdleTime":300,"minHeatTime":180,"maxHeatTime":0,"minHeatIdleTime":300,"deadTime":600,"fridgeFastFilt":1,"fridgeSlowFilt":4,"fridgeSlopeFilt":3,"beerFastFilt":3,"beerSlowFilt":4,"beerSlopeFilt":4,"lah":0,"hs":0,"hystMode":0};
+var testConfig={"tempFormat":"C","tempSetMin": 1.0,"tempSetMax": 30.0,"pidMax": 10.000,"Kp": 5.000,"Ki": 0.250,"Kd":-1.500,"iMaxErr": 0.500,"idleRangeH": 1.000,"idleRangeL":-1.000,"heatTargetH": 0.299,"heatTargetL":-0.199,"coolTargetH": 0.199,"coolTargetL":-0.299,"maxHeatTimeForEst":600,"maxCoolTimeForEst":1200,"minCoolTime":180,"minCoolIdleTime":300,"minHeatTime":180,"maxHeatTime":0,"minHeatIdleTime":300,"deadTime":600,"staleSensorSec":20,"oneWireRetryCount":2,"fridgeFastFilt":1,"fridgeSlowFilt":4,"fridgeSlopeFilt":3,"beerFastFilt":3,"beerSlowFilt":4,"beerSlopeFilt":4,"lah":0,"hs":0,"hystMode":0};
 
 function showAdvanced(){
     Q("#advanced").style.display = "block";
